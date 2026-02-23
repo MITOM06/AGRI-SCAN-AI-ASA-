@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.thumbsdb
+.DS_Store
+
+# Environment
+.env
+.env.local
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# OS files
+Thumbs.db
+ehthumbs.db
