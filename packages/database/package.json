@@ -1,0 +1,9 @@
+{
+  "name": "@agri-scan/database",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "dependencies": {
+    "mongoose": "^8.0.0"
+  }
+}
