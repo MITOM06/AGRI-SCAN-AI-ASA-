@@ -1,0 +1,58 @@
+name: agri-scan-ai # Tên Project trong Docker Desktop cho dễ tìm
+
+services:
+  # 1. CƠ SỞ DỮ LIỆU CHÍNH (MONGODB)
+  mongodb:
+    image: mongo:8.0
+    container_name: asa-mongodb
+    restart: always
+    ports:
+      - "27018:27017" 
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secretPassword
+    volumes:
+      - asa-mongo-data:/data/db 
+    networks:
+      - agri-net
+
+  # 2. BỘ NHỚ ĐỆM (REDIS)
+  redis:
+    image: redis:7.4-alpine
+    container_name: asa-redis
+    restart: always
+    ports:
+      - "6380:6379" 
+    volumes:
+      - asa-redis-data:/data
+    networks:
+      - agri-net
+
+  # 3. BACKEND API (Tùy chọn: Dùng để test môi trường thật)
+  # Khi dev bình thường thì comment đoạn này lại để chạy lệnh pnpm start:dev cho nhanh
+  backend:
+    build:
+      context: ../../ # Trỏ ra thư mục gốc Monorepo
+      dockerfile: apps/backend/Dockerfile
+    container_name: asa-backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+      - redis
+    environment:
+      # Lưu ý: Khi chạy trong Docker, host là tên service (mongodb), không phải localhost
+      - DB_URI=mongodb://admin:secretPassword@mongodb:27017/agriscan?authSource=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - agri-net
+
+# ĐỊNH NGHĨA VOLUME & NETWORK
+volumes:
+  asa-mongo-data:
+  asa-redis-data:
+
+networks:
+  agri-net:
+    driver: bridge
