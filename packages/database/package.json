@@ -4,6 +4,8 @@
   "private": true,
   "main": "./src/index.ts",
   "dependencies": {
-    "mongoose": "^8.0.0"
+    "@nestjs/common": "^11.1.14",
+    "@nestjs/mongoose": "^11.0.4",
+    "mongoose": "^8.23.0"
   }
 }
