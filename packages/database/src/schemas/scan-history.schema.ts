@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
-import { User } from './user.schema';
-import { Disease } from './disease.schema';
+import { User } from './user.schema.js';
+import { Disease } from './disease.schema.js';
 
 export type ScanHistoryDocument = HydratedDocument<ScanHistory>;
 
