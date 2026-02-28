@@ -30,8 +30,12 @@ export function FeatureCard({
       >
         {icon}
       </div>
-      <h4 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">{title}</h4>
-      <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{description}</p>
+      <h4 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
+        {title}
+      </h4>
+      <p className="text-gray-600 leading-relaxed text-sm sm:text-base">
+        {description}
+      </p>
     </motion.div>
   );
 }
