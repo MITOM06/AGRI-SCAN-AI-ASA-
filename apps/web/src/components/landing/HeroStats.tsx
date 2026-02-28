@@ -12,11 +12,11 @@ interface HeroStatsProps {
 
 export function HeroStats({ stats }: HeroStatsProps) {
   return (
-    <div className="flex items-center gap-8 pt-8 border-t border-gray-200/50">
+    <div className="flex flex-wrap items-center gap-4 sm:gap-6 lg:gap-8 pt-6 sm:pt-8 border-t border-gray-200/50">
       {stats.map((stat, index) => (
-        <div key={index}>
-          <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-          <p className="text-sm text-gray-500">{stat.label}</p>
+        <div key={index} className="text-center sm:text-left">
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stat.value}</p>
+          <p className="text-xs sm:text-sm text-gray-500">{stat.label}</p>
         </div>
       ))}
     </div>

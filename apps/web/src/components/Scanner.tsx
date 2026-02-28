@@ -147,22 +147,22 @@ export function Scanner() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6">
-      <div className="text-center mb-6 md:mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-primary mb-2">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6">
+      <div className="text-center mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-2">
           Chẩn Đoán Bệnh Cây
         </h2>
-        <p className="text-gray-600 text-sm md:text-base">
+        <p className="text-gray-600 text-sm sm:text-base">
           Sử dụng camera hoặc tải ảnh lên để AI phân tích sức khỏe cây trồng.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 md:gap-8">
+      <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">, 
         {/* Input Section */}
         <div className="space-y-4">
           <div
             className={cn(
-              "border-2 border-dashed rounded-2xl h-[400px] md:h-96 flex flex-col items-center justify-center transition-colors relative overflow-hidden bg-gray-900",
+              "border-2 border-dashed rounded-2xl h-[320px] sm:h-[400px] lg:h-96 flex flex-col items-center justify-center transition-colors relative overflow-hidden bg-gray-900",
               image ? "border-primary" : "border-gray-300",
             )}
           >
@@ -175,24 +175,27 @@ export function Scanner() {
                   videoConstraints={{ facingMode }}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center items-center gap-6 z-10">
+                <div className="absolute bottom-3 sm:bottom-4 left-0 right-0 flex justify-center items-center gap-4 sm:gap-6 z-10">
                   <button
                     onClick={() => setIsCameraOpen(false)}
-                    className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors"
+                    className="p-2 sm:p-3 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors touch-manipulation"
+                    aria-label="Đóng camera"
                   >
-                    <X size={24} />
+                    <X size={20} className="sm:size-6" />
                   </button>
                   <button
                     onClick={capture}
-                    className="p-1 rounded-full border-4 border-white/50"
+                    className="p-1 rounded-full border-3 sm:border-4 border-white/50 touch-manipulation"
+                    aria-label="Chụp ảnh"
                   >
-                    <div className="w-14 h-14 bg-white rounded-full hover:scale-95 transition-transform" />
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-full hover:scale-95 transition-transform" />
                   </button>
                   <button
                     onClick={toggleCamera}
-                    className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors"
+                    className="p-2 sm:p-3 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors touch-manipulation"
+                    aria-label="Chuyển camera"
                   >
-                    <RefreshCw size={24} />
+                    <RefreshCw size={20} className="sm:size-6" />
                   </button>
                 </div>
               </>
@@ -211,30 +214,30 @@ export function Scanner() {
                 </button>
               </>
             ) : (
-              <div className="text-center p-6 bg-gray-50 w-full h-full flex flex-col items-center justify-center">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary animate-pulse">
-                  <Camera size={40} />
+              <div className="text-center p-4 sm:p-6 bg-gray-50 w-full h-full flex flex-col items-center justify-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-primary animate-pulse">
+                  <Camera size={32} className="sm:size-10" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
                   Bắt đầu chẩn đoán
                 </h3>
-                <p className="text-gray-500 mb-6 max-w-xs mx-auto">
+                <p className="text-gray-500 mb-4 sm:mb-6 max-w-xs mx-auto text-sm sm:text-base">
                   Chọn phương thức nhập ảnh để bắt đầu phân tích
                 </p>
 
                 <div className="flex flex-col gap-3 w-full max-w-xs">
                   <button
                     onClick={() => setIsCameraOpen(true)}
-                    className="w-full py-3 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                    className="w-full py-3 sm:py-4 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20 touch-manipulation text-sm sm:text-base"
                   >
-                    <Camera size={20} />
+                    <Camera size={18} className="sm:size-5" />
                     Chụp ảnh trực tiếp
                   </button>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full py-3 bg-white text-gray-700 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-3 sm:py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base"
                   >
-                    <ImageIcon size={20} />
+                    <ImageIcon size={18} className="sm:size-5" />
                     Tải ảnh từ thư viện
                   </button>
                 </div>
