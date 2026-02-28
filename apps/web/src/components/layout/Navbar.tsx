@@ -11,7 +11,7 @@ export function Navbar() {
 
   const navItems = [
     { name: "Trang chủ", path: "/" },
-    { name: "Chẩn đoán AI", path: "/scanner" },
+    { name: "Chẩn đoán AI", path: "/scan" },
     { name: "Từ điển cây", path: "/encyclopedia" },
     { name: "Cộng đồng", path: "/community" },
   ];
