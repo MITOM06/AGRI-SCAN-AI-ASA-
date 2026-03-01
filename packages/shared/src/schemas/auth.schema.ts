@@ -34,8 +34,13 @@ export const forgotPasswordSchema = z.object({
     .email({ message: "Email không hợp lệ" })
 });
 
+export const otpSchema = z.object({
+  otp: z.string()
+    .length(6, { message: "Mã OTP phải có 6 ký tự" })
+    .regex(/^[0-9]+$/, { message: "Mã OTP chỉ chứa số" })
+});
+
 export const resetPasswordSchema = z.object({
-  token: z.string().min(1, { message: "Token không hợp lệ" }),
   password: z.string()
     .min(8, { message: "Mật khẩu phải có ít nhất 8 ký tự" })
     .regex(/[A-Z]/, { message: "Mật khẩu phải chứa ít nhất 1 chữ hoa" })
@@ -52,4 +57,5 @@ export const resetPasswordSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+export type OtpFormData = z.infer<typeof otpSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;

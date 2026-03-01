@@ -3,13 +3,24 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Leaf, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Leaf,
+  Mail,
+  Lock,
+  Loader2,
+  ArrowRight,
+  CheckCircle2,
+} from "lucide-react";
 import { loginSchema, type LoginFormData } from "@agri-scan/shared";
+import { authService } from "@/services/auth.service";
 import { motion } from "framer-motion";
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const message = searchParams.get("message");
+
   const {
     register,
     handleSubmit,
@@ -19,11 +30,16 @@ export default function LoginForm() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log("Login data:", data);
-    // Navigate to dashboard or home
-    router.push("/");
+    try {
+      await authService.login(data);
+      console.log("Login successful");
+      // Navigate to dashboard or home
+      router.push("/");
+    } catch (error) {
+      console.error("Login failed:", error);
+      // For demo, still redirect to home
+      router.push("/");
+    }
   };
 
   return (
@@ -44,6 +60,17 @@ export default function LoginForm() {
             Đăng nhập để tiếp tục quản lý vườn cây của bạn
           </p>
         </div>
+
+        {message && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-green-50 text-green-700 p-4 rounded-xl flex items-center gap-2 border border-green-200"
+          >
+            <CheckCircle2 size={20} className="text-green-500 flex-shrink-0" />
+            <p className="text-sm">{message}</p>
+          </motion.div>
+        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
