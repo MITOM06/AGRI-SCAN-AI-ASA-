@@ -1,11 +1,19 @@
-export const APP_NAME = "Agri-Scan AI";
+/**
+ * @agri-scan/shared - Thư viện dùng chung cho Web và Mobile
+ * 
+ * Export tất cả types, constants và utilities
+ */
 
-export interface User {
-  id: string;
-  email: string;
-  fullName: string;
-}
+// Types
+export * from './types';
 
+// Constants
+export * from './constants';
+
+// Utilities
+export * from './utils';
+
+// Legacy export (để không break code cũ)
 export const helloWorld = () => {
   return "Hello from Shared Logic!";
 };
