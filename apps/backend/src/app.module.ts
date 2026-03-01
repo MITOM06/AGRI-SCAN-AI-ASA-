@@ -3,11 +3,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config'; // 1. Import Confi
 import { MongooseModule } from '@nestjs/mongoose';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
-import { 
-  User, UserSchema, 
-  Plant, PlantSchema, 
-  Disease, DiseaseSchema, 
-  ScanHistory, ScanHistorySchema 
+import {
+  User,
+  UserSchema,
+  Plant,
+  PlantSchema,
+  Disease,
+  DiseaseSchema,
+  ScanHistory,
+  ScanHistorySchema,
 } from '@agri-scan/database';
 
 @Module({
@@ -15,7 +19,7 @@ import {
     // 2. Load file .env
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env', 
+      envFilePath: '.env',
     }),
 
     // 3. Kết nối Mongo dùng biến môi trường
