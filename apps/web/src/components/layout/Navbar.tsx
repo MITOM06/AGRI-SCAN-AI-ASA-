@@ -54,13 +54,16 @@ export function Navbar() {
           </div>
 
           {/* Actions */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-3">
             <button className="p-2 text-gray-500 hover:text-primary transition-colors">
               <Search size={20} />
             </button>
-            <button className="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary-dark transition-colors shadow-md shadow-primary/20">
+            <Link
+              href="/login"
+              className="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary-dark transition-colors shadow-md shadow-primary/20"
+            >
               Đăng nhập
-            </button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -95,9 +98,13 @@ export function Navbar() {
                 <Search size={18} />
                 Tìm kiếm
               </button>
-              <button className="w-full px-4 py-3 bg-primary text-white rounded-xl font-medium text-center touch-manipulation">
+              <Link
+                href="/login"
+                className="w-full px-4 py-3 bg-primary text-white rounded-xl font-medium text-center touch-manipulation block"
+                onClick={() => setIsOpen(false)}
+              >
                 Đăng nhập
-              </button>
+              </Link>
             </div>
           </div>
         </div>

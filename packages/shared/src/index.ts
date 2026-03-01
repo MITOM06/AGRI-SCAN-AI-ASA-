@@ -13,6 +13,9 @@ export * from './constants';
 // Utilities
 export * from './utils';
 
+// Schemas
+export * from './schemas';
+
 // Legacy export (để không break code cũ)
 export const helloWorld = () => {
   return "Hello from Shared Logic!";

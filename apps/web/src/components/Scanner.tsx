@@ -157,8 +157,8 @@ export function Scanner() {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">, 
-        {/* Input Section */}
+      <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
+        ,{/* Input Section */}
         <div className="space-y-4">
           <div
             className={cn(
@@ -276,7 +276,6 @@ export function Scanner() {
             </div>
           )}
         </div>
-
         {/* Results Section */}
         <div className="space-y-6">
           <AnimatePresence mode="wait">
