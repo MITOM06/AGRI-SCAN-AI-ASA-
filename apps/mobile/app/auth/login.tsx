@@ -46,12 +46,12 @@ export default function LoginScreen() {
     setIsSubmitting(false);
 
     // Đăng nhập xong chuyển về trang chủ
-    router.replace("/");
+    router.replace("/user");
   };
 
   return (
     <View style={styles.container}>
-      <AuthHeader showBack={false} />
+      <AuthHeader showBack={true} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
