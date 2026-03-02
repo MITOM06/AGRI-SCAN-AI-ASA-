@@ -16,6 +16,7 @@ import { Leaf } from "lucide-react-native";
 // Import các component dùng chung mà chúng ta vừa tạo
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { AuthHeader } from "./AuthHeader";
 
 // Tạm thời định nghĩa Schema nội bộ để xử lý dứt điểm lỗi Zod
 const loginSchema = z.object({
@@ -50,6 +51,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <AuthHeader showBack={false} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
