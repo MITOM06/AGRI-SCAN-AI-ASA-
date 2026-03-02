@@ -1,14 +1,9 @@
 /**
  * Utility functions for Web app
+ * Re-export from shared package to maintain import paths
  */
 
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+// Re-export cn utility from shared package
+export { cn } from '@agri-scan/shared';
 
-/**
- * Merge Tailwind CSS classes với clsx
- * Hỗ trợ conditional classes và merge các classes xung đột
- */
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+// Additional web-specific utilities can be added here
