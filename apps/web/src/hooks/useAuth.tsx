@@ -1,11 +1,9 @@
 'use client';
 
-/**
- * useAuth Hook - Quản lý authentication state trong React
- */
-
 import React, { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
-import { authService } from '@/services/auth.service';
+import { authApi } from '@agri-scan/shared'; 
+
+// Giả định bạn đã định nghĩa các Interface này trong packages/shared/src/types
 import type { IUserResponse, IUserLogin, IUserCreate } from '@agri-scan/shared';
 
 interface AuthContextType {
@@ -18,21 +16,24 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<IUserResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Hàm tự động gọi lên Backend để lấy thông tin User thông qua Token đang có
   const refreshUser = useCallback(async () => {
     try {
-      if (authService.isAuthenticated()) {
-        const userData = await authService.getCurrentUser();
-        setUser(userData);
+      if (localStorage.getItem('accessToken')) {
+        // Sử dụng authApi từ gói shared
+        const response = await authApi.getProfile(); 
+        setUser(response.user);
       } else {
         setUser(null);
       }
-    } catch {
+    } catch (error) {
+      console.error('Lỗi lấy thông tin user:', error);
       setUser(null);
     }
   }, []);
@@ -49,7 +50,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (credentials: IUserLogin) => {
     setIsLoading(true);
     try {
-      const response = await authService.login(credentials);
+      const response = await authApi.login(credentials);
+      
+      // Lưu lại Token vào LocalStorage (Bắt buộc phải làm ở Web)
+      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
+      
       setUser(response.user);
     } finally {
       setIsLoading(false);
@@ -59,7 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = useCallback(async (userData: IUserCreate) => {
     setIsLoading(true);
     try {
-      const response = await authService.register(userData);
+      const response = await authApi.register(userData);
+      
+      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
+      
       setUser(response.user);
     } finally {
       setIsLoading(false);
@@ -69,9 +79,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      await authService.logout();
-      setUser(null);
+      await authApi.logout();
+    } catch (error) {
+      console.warn('Backend báo lỗi hoặc token đã chết trước khi gọi logout', error);
     } finally {
+      // Bất chấp Backend nói gì, Frontend phải dọn sạch nhà cửa
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setUser(null);
       setIsLoading(false);
     }
   }, []);
@@ -86,13 +101,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser,
   };
 
-  return React.createElement(AuthContext.Provider, { value }, children);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth bắt buộc phải được bọc bên trong AuthProvider');
   }
   return context;
 }

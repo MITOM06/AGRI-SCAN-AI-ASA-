@@ -1,0 +1,182 @@
+.
+├── DOC
+│   └── README.md
+├── apps
+│   ├── backend
+│   │   ├── Dockerfile
+│   │   ├── README.md
+│   │   ├── eslint.config.mjs
+│   │   ├── nest-cli.json
+│   │   ├── package.json
+│   │   ├── src
+│   │   │   ├── app.controller.spec.ts
+│   │   │   ├── app.controller.ts
+│   │   │   ├── app.module.ts
+│   │   │   ├── app.service.ts
+│   │   │   ├── main.ts
+│   │   │   └── modules
+│   │   │       ├── ai-scan
+│   │   │       ├── auth
+│   │   │       │   ├── auth.controller.spec.ts
+│   │   │       │   ├── auth.controller.ts
+│   │   │       │   ├── auth.module.ts
+│   │   │       │   ├── auth.service.spec.ts
+│   │   │       │   ├── auth.service.ts
+│   │   │       │   ├── dto
+│   │   │       │   │   ├── login.dto.ts
+│   │   │       │   │   ├── register.dto.ts
+│   │   │       │   │   └── verify-otp.dto.ts
+│   │   │       │   ├── guards
+│   │   │       │   │   └── jwt-auth.guard.ts
+│   │   │       │   └── strategies
+│   │   │       │       └── jwt.strategy.ts
+│   │   │       ├── plants
+│   │   │       └── users
+│   │   │           ├── users.module.ts
+│   │   │           ├── users.service.spec.ts
+│   │   │           └── users.service.ts
+│   │   ├── test
+│   │   │   ├── app.e2e-spec.ts
+│   │   │   └── jest-e2e.json
+│   │   ├── tsconfig.build.json
+│   │   └── tsconfig.json
+│   ├── mobile
+│   │   ├── App.tsx
+│   │   ├── app.json
+│   │   ├── assets
+│   │   │   ├── android-icon-background.png
+│   │   │   ├── android-icon-foreground.png
+│   │   │   ├── android-icon-monochrome.png
+│   │   │   ├── favicon.png
+│   │   │   ├── icon.png
+│   │   │   └── splash-icon.png
+│   │   ├── index.ts
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   └── web
+│       ├── README.md
+│       ├── eslint.config.mjs
+│       ├── next-env.d.ts
+│       ├── next.config.ts
+│       ├── package.json
+│       ├── postcss.config.mjs
+│       ├── public
+│       │   ├── file.svg
+│       │   ├── globe.svg
+│       │   ├── next.svg
+│       │   ├── vercel.svg
+│       │   └── window.svg
+│       ├── src
+│       │   ├── app
+│       │   │   ├── (auth)
+│       │   │   │   ├── forgot-password
+│       │   │   │   │   └── page.tsx
+│       │   │   │   ├── layout.tsx
+│       │   │   │   ├── login
+│       │   │   │   │   └── page.tsx
+│       │   │   │   └── register
+│       │   │   │       └── page.tsx
+│       │   │   ├── favicon.ico
+│       │   │   ├── globals.css
+│       │   │   ├── layout.tsx
+│       │   │   ├── page.tsx
+│       │   │   ├── privacy
+│       │   │   │   └── page.tsx
+│       │   │   ├── providers.tsx
+│       │   │   ├── scan
+│       │   │   │   └── page.tsx
+│       │   │   └── terms
+│       │   │       └── page.tsx
+│       │   ├── components
+│       │   │   ├── LandingPage.tsx
+│       │   │   ├── Scanner.tsx
+│       │   │   ├── auth
+│       │   │   │   ├── ForgotPasswordForm.tsx
+│       │   │   │   ├── LoginForm.tsx
+│       │   │   │   ├── RegisterForm.tsx
+│       │   │   │   └── index.ts
+│       │   │   ├── common
+│       │   │   │   ├── Button.tsx
+│       │   │   │   ├── Card.tsx
+│       │   │   │   ├── Input.tsx
+│       │   │   │   └── index.ts
+│       │   │   ├── index.ts
+│       │   │   ├── landing
+│       │   │   │   ├── FeatureCard.tsx
+│       │   │   │   ├── FeaturesSection.tsx
+│       │   │   │   ├── FloatingCards.tsx
+│       │   │   │   ├── HeroSection.tsx
+│       │   │   │   ├── HeroStats.tsx
+│       │   │   │   └── index.ts
+│       │   │   └── layout
+│       │   │       ├── Footer.tsx
+│       │   │       ├── Header.tsx
+│       │   │       ├── Navbar.tsx
+│       │   │       └── index.ts
+│       │   ├── hooks
+│       │   │   ├── index.ts
+│       │   │   ├── useAuth.ts
+│       │   │   └── useScan.ts
+│       │   ├── lib
+│       │   │   ├── api-client.ts
+│       │   │   ├── index.ts
+│       │   │   └── utils.ts
+│       │   └── services
+│       │       ├── auth.service.ts
+│       │       ├── disease.service.ts
+│       │       ├── index.ts
+│       │       ├── plant.service.ts
+│       │       └── scan.service.ts
+│       └── tsconfig.json
+├── infra
+│   └── docker-compose
+│       └── docker-compose.yml
+├── package.json
+├── packages
+│   ├── database
+│   │   ├── package.json
+│   │   ├── src
+│   │   │   ├── index.ts
+│   │   │   └── schemas
+│   │   │       ├── disease.schema.ts
+│   │   │       ├── plant.schema.ts
+│   │   │       ├── scan-history.schema.ts
+│   │   │       └── user.schema.ts
+│   │   └── tsconfig.json
+│   ├── shared
+│   │   ├── package.json
+│   │   ├── src
+│   │   │   ├── api
+│   │   │   │   ├── auth.api.ts
+│   │   │   │   ├── axios-client.ts
+│   │   │   │   └── token-manager.ts
+│   │   │   ├── constants
+│   │   │   │   ├── api.constants.ts
+│   │   │   │   ├── app.constants.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── index.ts
+│   │   │   ├── schemas
+│   │   │   │   ├── auth.schema.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── types
+│   │   │   │   ├── api.types.ts
+│   │   │   │   ├── disease.types.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── plant.types.ts
+│   │   │   │   ├── scan-history.types.ts
+│   │   │   │   └── user.types.ts
+│   │   │   └── utils
+│   │   │       ├── cn.utils.ts
+│   │   │       ├── format.utils.ts
+│   │   │       ├── index.ts
+│   │   │       └── validation.utils.ts
+│   │   └── tsconfig.json
+│   └── tsconfig
+│       ├── package.json
+│       └── tsconfig.base.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+└── project_tree.txt
+
+49 directories, 131 files
