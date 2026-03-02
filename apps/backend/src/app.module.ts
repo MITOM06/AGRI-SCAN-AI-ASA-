@@ -13,6 +13,8 @@ import {
   ScanHistory,
   ScanHistorySchema,
 } from '@agri-scan/database';
+import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -53,6 +55,10 @@ import {
       { name: Disease.name, schema: DiseaseSchema },
       { name: ScanHistory.name, schema: ScanHistorySchema },
     ]),
+
+    UsersModule,
+
+    AuthModule,
   ],
 })
 export class AppModule {}
