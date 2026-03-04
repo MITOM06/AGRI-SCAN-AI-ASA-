@@ -17,7 +17,7 @@ export default function RegisterForm() {
   
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  
+  0
   const { register, handleSubmit, watch, setError, formState: { errors, isSubmitting } } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema)
   })

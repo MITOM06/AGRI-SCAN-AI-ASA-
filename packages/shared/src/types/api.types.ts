@@ -1,7 +1,3 @@
-/**
- * API Types - Dùng chung cho Web và Mobile
- * Chuẩn hóa response từ Backend NestJS
- */
 
 export interface IApiResponse<T> {
   success: boolean;

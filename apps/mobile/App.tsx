@@ -1,16 +1,23 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { helloWorld } from '@agri-scan/shared'; // <-- Lấy từ chung
+import * as SecureStore from 'expo-secure-store';
+import { setTokenStorage } from '@agri-scan/shared';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Agri-Scan AI Mobile</Text>
-      <Text style={styles.message}>
-        Shared: {helloWorld()}
-      </Text>
-    </View>
-  );
-}
+setTokenStorage({
+  getAccessToken: async () => {
+    return await SecureStore.getItemAsync('accessToken');
+  },
+  getRefreshToken: async () => {
+    return await SecureStore.getItemAsync('refreshToken');
+  },
+  saveTokens: async (access: string, refresh: string) => {
+    await SecureStore.setItemAsync('accessToken', access);
+    await SecureStore.setItemAsync('refreshToken', refresh);
+  },
+  clearTokens: async () => {
+    await SecureStore.deleteItemAsync('accessToken');
+    await SecureStore.deleteItemAsync('refreshToken');
+  }
+});
 
 const styles = StyleSheet.create({
   container: {
