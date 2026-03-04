@@ -11,5 +11,8 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@types/multer": "^2.0.0"
+  }
 }
