@@ -9,30 +9,38 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useRouter } from "expo-router";
-import { z } from "zod";
 import { Leaf, Eye, EyeOff } from "lucide-react-native";
+
+// Import schema từ package shared
+import { registerSchema, type RegisterFormData } from "@agri-scan/shared";
 
 // Import các component dùng chung
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { AuthHeader } from "./AuthHeader";
 
-// Định nghĩa Schema validation
-const registerSchema = z
-  .object({
-    fullName: z.string().min(1, "Vui lòng nhập họ tên"),
-    email: z.string().email("Email không hợp lệ"),
-    password: z.string().min(8, "Mật khẩu tối thiểu 8 ký tự"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Mật khẩu xác nhận không khớp",
-    path: ["confirmPassword"],
-  });
+// 🌟 BÍ KÍP CHỐNG VĂNG APP TRONG MONOREPO 🌟
+const customZodResolver = async (values: any) => {
+  const result = registerSchema.safeParse(values);
 
-type RegisterFormData = z.infer<typeof registerSchema>;
+  if (result.success) {
+    return { values: result.data, errors: {} };
+  }
+
+  // Hứng lỗi nhẹ nhàng và định dạng lại cho react-hook-form
+  const formErrors: Record<string, any> = {};
+  const fieldErrors = result.error.flatten().fieldErrors;
+
+  for (const key in fieldErrors) {
+    formErrors[key] = {
+      type: "validation",
+      message: fieldErrors[key as keyof typeof fieldErrors]?.[0], // Lấy câu báo lỗi Tiếng Việt
+    };
+  }
+
+  return { values: {}, errors: formErrors };
+};
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -40,35 +48,40 @@ export default function RegisterScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const {
-    control,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema as any),
+  const { control, handleSubmit, watch } = useForm<RegisterFormData>({
+    resolver: customZodResolver, // Sử dụng Resolver tự chế an toàn tuyệt đối
+    mode: "onChange",
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
   // Theo dõi mật khẩu để hiển thị gợi ý độ mạnh
   const password = watch("password", "");
   const isPasswordLengthValid = password.length >= 8;
   const hasUpperCase = /[A-Z]/.test(password);
-  const hasNumber = /\d/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsSubmitting(true);
-    // Giả lập gọi API
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log("Dữ liệu đăng ký:", data);
+    console.log("Dữ liệu đăng ký hợp lệ:", data);
     setIsSubmitting(false);
-    router.replace("/auth/login");
+
+    router.replace({
+      pathname: "/auth/login",
+      params: { registered: "true" },
+    });
   };
 
   return (
     <View style={styles.container}>
-      {/* Nút quay lại luôn cố định ở trên cùng */}
-      <AuthHeader showBack={false} />
+      <AuthHeader showBack={true} />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -81,7 +94,7 @@ export default function RegisterScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
-            {/* --- Header --- */}
+            {/* Header */}
             <View style={styles.header}>
               <View style={styles.iconContainer}>
                 <Leaf size={28} color="#16a34a" />
@@ -92,68 +105,84 @@ export default function RegisterScreen() {
               </Text>
             </View>
 
-            {/* --- Form Nhập liệu --- */}
             <View style={styles.form}>
+              {/* Họ và tên */}
               <Controller
                 control={control}
                 name="fullName"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    label="Họ và tên"
-                    placeholder="Nguyễn Văn A"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    error={errors.fullName?.message}
-                  />
+                render={({
+                  field: { onChange, onBlur, value },
+                  fieldState: { error },
+                }) => (
+                  <View style={styles.inputGroup}>
+                    <Input
+                      label="Họ và tên"
+                      placeholder="Nguyễn Văn A"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={error?.message} // Input tự động bôi đỏ và hiện text bên dưới
+                    />
+                  </View>
                 )}
               />
 
+              {/* Email */}
               <Controller
                 control={control}
                 name="email"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    label="Email"
-                    placeholder="name@example.com"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                    error={errors.email?.message}
-                  />
+                render={({
+                  field: { onChange, onBlur, value },
+                  fieldState: { error },
+                }) => (
+                  <View style={styles.inputGroup}>
+                    <Input
+                      label="Email"
+                      placeholder="name@example.com"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={error?.message}
+                    />
+                  </View>
                 )}
               />
 
               {/* Mật khẩu */}
-              <View style={styles.passwordWrapper}>
-                <Controller
-                  control={control}
-                  name="password"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      label="Mật khẩu"
-                      placeholder="••••••••"
-                      secureTextEntry={!showPassword}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      error={errors.password?.message}
-                    />
-                  )}
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#9ca3af" />
-                  ) : (
-                    <Eye size={20} color="#9ca3af" />
-                  )}
-                </TouchableOpacity>
-              </View>
+              <Controller
+                control={control}
+                name="password"
+                render={({
+                  field: { onChange, onBlur, value },
+                  fieldState: { error },
+                }) => (
+                  <View style={styles.inputGroup}>
+                    <View style={styles.passwordWrapper}>
+                      <Input
+                        label="Mật khẩu"
+                        placeholder="••••••••"
+                        secureTextEntry={!showPassword}
+                        onBlur={onBlur}
+                        onChangeText={onChange}
+                        value={value}
+                        error={error?.message}
+                      />
+                      <TouchableOpacity
+                        style={styles.eyeIcon}
+                        onPress={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff size={20} color="#9ca3af" />
+                        ) : (
+                          <Eye size={20} color="#9ca3af" />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              />
 
               {/* Gợi ý độ mạnh mật khẩu */}
               <View style={styles.requirementsContainer}>
@@ -168,46 +197,58 @@ export default function RegisterScreen() {
                 <Text
                   style={hasUpperCase ? styles.reqValid : styles.reqInvalid}
                 >
-                  • Chứa chữ in hoa
+                  • Chứa ít nhất 1 chữ hoa
+                </Text>
+                <Text
+                  style={hasLowerCase ? styles.reqValid : styles.reqInvalid}
+                >
+                  • Chứa ít nhất 1 chữ thường
                 </Text>
                 <Text style={hasNumber ? styles.reqValid : styles.reqInvalid}>
-                  • Chứa số
+                  • Chứa ít nhất 1 số
                 </Text>
                 <Text
                   style={hasSpecialChar ? styles.reqValid : styles.reqInvalid}
                 >
-                  • Chứa ký tự đặc biệt
+                  • Chứa ít nhất 1 ký tự đặc biệt
                 </Text>
               </View>
 
               {/* Xác nhận mật khẩu */}
-              <View style={styles.passwordWrapper}>
-                <Controller
-                  control={control}
-                  name="confirmPassword"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      label="Xác nhận mật khẩu"
-                      placeholder="••••••••"
-                      secureTextEntry={!showConfirmPassword}
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      error={errors.confirmPassword?.message}
-                    />
-                  )}
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff size={20} color="#9ca3af" />
-                  ) : (
-                    <Eye size={20} color="#9ca3af" />
-                  )}
-                </TouchableOpacity>
-              </View>
+              <Controller
+                control={control}
+                name="confirmPassword"
+                render={({
+                  field: { onChange, onBlur, value },
+                  fieldState: { error },
+                }) => (
+                  <View style={styles.inputGroup}>
+                    <View style={styles.passwordWrapper}>
+                      <Input
+                        label="Xác nhận mật khẩu"
+                        placeholder="••••••••"
+                        secureTextEntry={!showConfirmPassword}
+                        onBlur={onBlur}
+                        onChangeText={onChange}
+                        value={value}
+                        error={error?.message}
+                      />
+                      <TouchableOpacity
+                        style={styles.eyeIcon}
+                        onPress={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={20} color="#9ca3af" />
+                        ) : (
+                          <Eye size={20} color="#9ca3af" />
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              />
 
               <Button
                 title="Tạo tài khoản"
@@ -281,6 +322,9 @@ const styles = StyleSheet.create({
   form: {
     width: "100%",
   },
+  inputGroup: {
+    marginBottom: 14, // Giữ khoảng cách giữa các ô
+  },
   passwordWrapper: {
     position: "relative",
   },
@@ -291,7 +335,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   requirementsContainer: {
-    marginTop: -8,
+    marginTop: -4,
     marginBottom: 16,
     paddingHorizontal: 4,
   },
