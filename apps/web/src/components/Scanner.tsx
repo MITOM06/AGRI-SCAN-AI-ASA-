@@ -1,403 +1,456 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
-  Upload,
+  Send,
+  Image as ImageIcon,
   Camera,
   X,
   Loader2,
   Leaf,
-  AlertCircle,
-  CheckCircle2,
-  RefreshCw,
-  Image as ImageIcon,
+  User,
+  Bot,
+  Plus,
+  MessageSquare,
+  PanelLeftClose,
+  PanelLeft,
+  History,
+  Settings,
+  LogOut,
 } from "lucide-react";
-import Webcam from "react-webcam";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { default as ReactWebcam } from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@agri-scan/shared";
 
-// Initialize Gemini API
-const ai = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
-
-interface DiagnosisResult {
-  diseaseName: string;
-  confidence: number;
-  description: string;
-  treatment: {
-    biological: string[];
-    chemical: string[];
-    preventive: string[];
-  };
+interface Message {
+  id: string;
+  text?: string;
+  image?: string;
+  sender: "user" | "bot";
+  timestamp: Date;
 }
 
-export function Scanner() {
-  const [image, setImage] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [result, setResult] = useState<DiagnosisResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [facingMode, setFacingMode] = useState<"user" | "environment">(
-    "environment",
-  );
+interface ChatHistory {
+  id: string;
+  title: string;
+  date: string;
+}
 
+const MOCK_HISTORY: ChatHistory[] = [
+  { id: "1", title: "Bệnh đốm lá trên cây Cà phê", date: "Hôm nay" },
+  { id: "2", title: "Cách bón phân NPK", date: "Hôm qua" },
+  { id: "3", title: "Sâu bệnh hại lúa mùa mưa", date: "7 ngày trước" },
+  { id: "4", title: "Tưới nước cho Sầu riêng", date: "30 ngày trước" },
+];
+
+export function Scanner() {
+  const [history, setHistory] = useState<ChatHistory[]>(MOCK_HISTORY);
+  const [messages, setMessages] = useState<Message[]>([]); // Start empty for "New Chat" state
+  const [inputText, setInputText] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isBotTyping, setIsBotTyping] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const webcamRef = useRef<Webcam>(null);
+  const webcamRef = useRef<ReactWebcam>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isBotTyping]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      if (!inputText) {
+        textareaRef.current.style.height = "40px";
+      } else {
+        textareaRef.current.style.height = `${Math.min(
+          textareaRef.current.scrollHeight,
+          120,
+        )}px`;
+      }
+    }
+  }, [inputText]);
+
+  // Responsive sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(true);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImage(reader.result as string);
-        setResult(null);
-        setError(null);
-        setIsCameraOpen(false);
+        setSelectedImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const capture = useCallback(() => {
+  const capture = React.useCallback(() => {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
-      setImage(imageSrc);
+      setSelectedImage(imageSrc);
       setIsCameraOpen(false);
-      setResult(null);
-      setError(null);
     }
   }, [webcamRef]);
 
-  const toggleCamera = () => {
-    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
+  const handleSend = async () => {
+    if (!inputText.trim() && !selectedImage) return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: inputText,
+      image: selectedImage || undefined,
+      sender: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
+    setInputText("");
+    setSelectedImage(null);
+    setIsBotTyping(true);
+
+    // Reset height
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
+
+    // Simulate Bot Response
+    setTimeout(() => {
+      const botResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "Cảm ơn bạn đã gửi thông tin. Hệ thống đang phân tích dữ liệu hình ảnh và triệu chứng bạn cung cấp... \n\nĐây là giao diện demo, chưa kết nối API thực tế.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, botResponse]);
+      setIsBotTyping(false);
+    }, 1500);
   };
 
-  const analyzeImage = async () => {
-    if (!image) return;
-
-    setIsAnalyzing(true);
-    setError(null);
-
-    try {
-      // Remove data URL prefix for API
-      const base64Data = image.split(",")[1];
-
-      const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt = `
-        Analyze this plant image for diseases. 
-        Return a JSON object with the following structure:
-        {
-          "diseaseName": "Name of the disease or 'Healthy' if no disease found",
-          "confidence": 0.95,
-          "description": "Brief description of the condition",
-          "treatment": {
-            "biological": ["List of biological treatments"],
-            "chemical": ["List of chemical treatments"],
-            "preventive": ["List of preventive measures"]
-          }
-        }
-        If the image is not a plant, return null.
-      `;
-
-      const response = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            mimeType: "image/jpeg",
-            data: base64Data,
-          },
-        },
-      ]);
-
-      const text = response.response.text();
-      if (!text) throw new Error("No response from AI");
-
-      let jsonString = text.trim();
-      if (jsonString.startsWith("```json")) {
-        jsonString = jsonString
-          .replace(/^```json\s*/, "")
-          .replace(/\s*```$/, "");
-      } else if (jsonString.startsWith("```")) {
-        jsonString = jsonString.replace(/^```\s*/, "").replace(/\s*```$/, "");
-      }
-
-      const data = JSON.parse(jsonString);
-
-      if (!data) {
-        setError(
-          "Không nhận diện được cây trồng. Vui lòng thử lại với ảnh rõ nét hơn.",
-        );
-      } else {
-        setResult(data);
-      }
-    } catch (err) {
-      console.error("Analysis error:", err);
-      setError("Có lỗi xảy ra khi phân tích ảnh. Vui lòng thử lại.");
-    } finally {
-      setIsAnalyzing(false);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
-  const resetScan = () => {
-    setImage(null);
-    setResult(null);
-    setError(null);
-    setIsCameraOpen(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const startNewChat = () => {
+    setMessages([]);
+    setInputText("");
+    setSelectedImage(null);
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6">
-      <div className="text-center mb-6 sm:mb-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-primary mb-2">
-          Chẩn Đoán Bệnh Cây
-        </h2>
-        <p className="text-gray-600 text-sm sm:text-base">
-          Sử dụng camera hoặc tải ảnh lên để AI phân tích sức khỏe cây trồng.
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-6 sm:gap-8">
-        ,{/* Input Section */}
-        <div className="space-y-4">
-          <div
-            className={cn(
-              "border-2 border-dashed rounded-2xl h-[320px] sm:h-[400px] lg:h-96 flex flex-col items-center justify-center transition-colors relative overflow-hidden bg-gray-900",
-              image ? "border-primary" : "border-gray-300",
-            )}
+    <div className="fixed top-16 left-0 w-full h-[calc(100vh-4rem)] flex bg-white overflow-hidden font-sans text-gray-800">
+      {/* Sidebar */}
+      <motion.div
+        initial={false}
+        animate={{
+          width: isSidebarOpen ? 260 : 0,
+          opacity: isSidebarOpen ? 1 : 0,
+        }}
+        className="bg-[#1B5E20] text-green-50 shrink-0 flex flex-col overflow-hidden border-r border-green-800 relative z-20"
+      >
+        <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
+          <button
+            onClick={startNewChat}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg border border-green-700/50 hover:bg-green-800/50 transition-colors text-sm text-left mb-4 bg-green-800/20 text-white"
           >
-            {isCameraOpen ? (
-              <>
-                <Webcam
-                  audio={false}
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={{ facingMode }}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute bottom-3 sm:bottom-4 left-0 right-0 flex justify-center items-center gap-4 sm:gap-6 z-10">
-                  <button
-                    onClick={() => setIsCameraOpen(false)}
-                    className="p-2 sm:p-3 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors touch-manipulation"
-                    aria-label="Đóng camera"
-                  >
-                    <X size={20} className="sm:size-6" />
-                  </button>
-                  <button
-                    onClick={capture}
-                    className="p-1 rounded-full border-3 sm:border-4 border-white/50 touch-manipulation"
-                    aria-label="Chụp ảnh"
-                  >
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-full hover:scale-95 transition-transform" />
-                  </button>
-                  <button
-                    onClick={toggleCamera}
-                    className="p-2 sm:p-3 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/30 transition-colors touch-manipulation"
-                    aria-label="Chuyển camera"
-                  >
-                    <RefreshCw size={20} className="sm:size-6" />
-                  </button>
-                </div>
-              </>
-            ) : image ? (
-              <>
-                <img
-                  src={image}
-                  alt="Uploaded plant"
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  onClick={resetScan}
-                  className="absolute top-2 right-2 p-2 bg-white/80 rounded-full hover:bg-white text-red-500 transition-colors shadow-sm"
-                >
-                  <X size={20} />
-                </button>
-              </>
-            ) : (
-              <div className="text-center p-4 sm:p-6 bg-gray-50 w-full h-full flex flex-col items-center justify-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-primary animate-pulse">
-                  <Camera size={32} className="sm:size-10" />
-                </div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
-                  Bắt đầu chẩn đoán
-                </h3>
-                <p className="text-gray-500 mb-4 sm:mb-6 max-w-xs mx-auto text-sm sm:text-base">
-                  Chọn phương thức nhập ảnh để bắt đầu phân tích
-                </p>
+            <Plus size={16} />
+            <span>Cuộc trò chuyện mới</span>
+          </button>
 
-                <div className="flex flex-col gap-3 w-full max-w-xs">
-                  <button
-                    onClick={() => setIsCameraOpen(true)}
-                    className="w-full py-3 sm:py-4 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20 touch-manipulation text-sm sm:text-base"
-                  >
-                    <Camera size={18} className="sm:size-5" />
-                    Chụp ảnh trực tiếp
-                  </button>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full py-3 sm:py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 touch-manipulation text-sm sm:text-base"
-                  >
-                    <ImageIcon size={18} className="sm:size-5" />
-                    Tải ảnh từ thư viện
-                  </button>
-                </div>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                />
-              </div>
-            )}
+          <div className="mb-2 px-3 text-xs font-medium text-green-200/70">
+            Hôm nay
           </div>
-
-          {image && !result && !isAnalyzing && (
-            <button
-              onClick={analyzeImage}
-              className="w-full py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
-            >
-              <Leaf size={20} />
-              Phân tích ngay
-            </button>
-          )}
-
-          {isAnalyzing && (
-            <div className="w-full py-4 bg-white border border-gray-100 shadow-sm rounded-xl font-medium flex flex-col items-center justify-center gap-2 text-primary">
-              <Loader2 size={24} className="animate-spin" />
-              <span className="text-sm">Đang phân tích dữ liệu...</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="p-4 bg-red-50 text-red-600 rounded-xl flex items-start gap-3 border border-red-100">
-              <AlertCircle size={20} className="shrink-0 mt-0.5" />
-              <span className="text-sm">{error}</span>
-            </div>
-          )}
-        </div>
-        {/* Results Section */}
-        <div className="space-y-6">
-          <AnimatePresence mode="wait">
-            {result ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+          {history
+            .filter((h) => h.date === "Hôm nay")
+            .map((h) => (
+              <button
+                key={h.id}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-green-800/50 transition-colors text-sm text-left group truncate text-green-50"
               >
-                <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-primary/5 to-transparent">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-900">
-                        {result.diseaseName}
-                      </h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Độ tin cậy: {(result.confidence * 100).toFixed(0)}%
-                      </p>
-                    </div>
+                <MessageSquare size={16} className="text-green-300" />
+                <span className="truncate flex-1">{h.title}</span>
+              </button>
+            ))}
+
+          <div className="mt-6 mb-2 px-3 text-xs font-medium text-green-200/70">
+            7 ngày trước
+          </div>
+          {history
+            .filter((h) => h.date !== "Hôm nay")
+            .map((h) => (
+              <button
+                key={h.id}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-green-800/50 transition-colors text-sm text-left group truncate text-green-50"
+              >
+                <MessageSquare size={16} className="text-green-300" />
+                <span className="truncate flex-1">{h.title}</span>
+              </button>
+            ))}
+        </div>
+      </motion.div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col h-full relative bg-white">
+        {/* Top Bar (Mobile/Toggle) */}
+        <div className="absolute top-0 left-0 z-10">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-1 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+          >
+            {isSidebarOpen ? (
+              <PanelLeftClose size={20} />
+            ) : (
+              <PanelLeft size={20} />
+            )}
+          </button>
+        </div>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center px-8 text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6 text-primary">
+                <Leaf size={32} />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Agri-Scan AI
+              </h2>
+              <p className="text-gray-500 mb-8 max-w-md">
+                Trợ lý nông nghiệp thông minh của bạn. Hãy hỏi tôi về bệnh cây
+                trồng, cách chăm sóc hoặc gửi ảnh để chẩn đoán.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col pb-32">
+              {messages.map((msg) => (
+                <div key={msg.id} className="w-full py-2 px-4">
+                  <div
+                    className={cn(
+                      "max-w-3xl mx-auto flex gap-3",
+                      msg.sender === "user" ? "flex-row-reverse" : "flex-row",
+                    )}
+                  >
                     <div
                       className={cn(
-                        "px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1",
-                        result.diseaseName.toLowerCase().includes("healthy") ||
-                          result.diseaseName.toLowerCase().includes("khỏe")
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700",
+                        "w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 shadow-sm",
+                        msg.sender === "user"
+                          ? "bg-gray-200 text-gray-600"
+                          : "bg-primary text-white",
                       )}
                     >
-                      {result.diseaseName.toLowerCase().includes("healthy") ||
-                      result.diseaseName.toLowerCase().includes("khỏe") ? (
-                        <CheckCircle2 size={14} />
+                      {msg.sender === "user" ? (
+                        <User size={16} />
                       ) : (
-                        <AlertCircle size={14} />
+                        <Leaf size={16} />
                       )}
-                      {result.diseaseName.toLowerCase().includes("healthy") ||
-                      result.diseaseName.toLowerCase().includes("khỏe")
-                        ? "Cây khỏe mạnh"
-                        : "Cần xử lý"}
+                    </div>
+
+                    <div
+                      className={cn(
+                        "flex flex-col max-w-[80%]",
+                        msg.sender === "user" ? "items-end" : "items-start",
+                      )}
+                    >
+                      <div className="text-xs text-gray-400 mb-1 px-1">
+                        {msg.sender === "user" ? "Bạn" : "Agri-Scan AI"}
+                      </div>
+
+                      <div
+                        className={cn(
+                          "rounded-2xl px-4 py-3 shadow-sm overflow-hidden",
+                          msg.sender === "user"
+                            ? "bg-primary text-white rounded-tr-none"
+                            : "bg-white border border-gray-100 text-gray-800 rounded-tl-none",
+                        )}
+                      >
+                        {msg.image && (
+                          <div className="mb-3 rounded-lg overflow-hidden bg-black/5">
+                            <img
+                              src={msg.image}
+                              alt="User upload"
+                              className="w-full h-auto max-h-60 object-cover"
+                            />
+                          </div>
+                        )}
+
+                        {msg.text && (
+                          <div
+                            className={cn(
+                              "prose prose-sm max-w-none leading-relaxed whitespace-pre-wrap break-words",
+                              msg.sender === "user"
+                                ? "text-white prose-invert"
+                                : "text-gray-800",
+                            )}
+                          >
+                            {msg.text}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <p className="text-gray-700 mt-4">{result.description}</p>
                 </div>
+              ))}
 
-                <div className="p-6 space-y-6 max-h-[500px] overflow-y-auto">
-                  {result.treatment && (
-                    <>
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                          Biện pháp sinh học
-                        </h4>
-                        <ul className="space-y-2">
-                          {result.treatment.biological.map((item, idx) => (
-                            <li
-                              key={idx}
-                              className="text-gray-600 text-sm pl-4 border-l-2 border-green-100"
-                            >
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
+              {isBotTyping && (
+                <div className="w-full py-2 px-4">
+                  <div className="max-w-3xl mx-auto flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shrink-0 mt-1 shadow-sm">
+                      <Leaf size={16} />
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <div className="text-xs text-gray-400 mb-1 px-1">
+                        Agri-Scan AI
                       </div>
-
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                          Biện pháp hóa học
-                        </h4>
-                        <ul className="space-y-2">
-                          {result.treatment.chemical.map((item, idx) => (
-                            <li
-                              key={idx}
-                              className="text-gray-600 text-sm pl-4 border-l-2 border-orange-100"
-                            >
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
+                      <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-none px-4 py-4 shadow-sm flex items-center gap-1">
+                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
                       </div>
-
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                          Phòng ngừa
-                        </h4>
-                        <ul className="space-y-2">
-                          {result.treatment.preventive.map((item, idx) => (
-                            <li
-                              key={idx}
-                              className="text-gray-600 text-sm pl-4 border-l-2 border-blue-100"
-                            >
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </>
-                  )}
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="hidden md:flex h-full flex-col items-center justify-center text-center p-8 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50"
-              >
-                <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4">
-                  <Leaf className="text-gray-300" size={32} />
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+
+        {/* Input Area */}
+        <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-white via-white to-transparent pt-5 pb-6 px-4">
+          <div className="max-w-3xl mx-auto">
+            {selectedImage && (
+              <div className="mb-3 relative inline-block">
+                <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                  <img
+                    src={selectedImage}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Chưa có kết quả
-                </h3>
-                <p className="text-gray-500 max-w-xs">
-                  Kết quả phân tích và phác đồ điều trị sẽ hiển thị tại đây sau
-                  khi bạn chụp hoặc tải ảnh lên.
-                </p>
-              </motion.div>
+                <button
+                  onClick={() => setSelectedImage(null)}
+                  className="absolute -top-2 -right-2 bg-gray-900 text-white rounded-full p-1 hover:bg-gray-700"
+                >
+                  <X size={12} />
+                </button>
+              </div>
             )}
-          </AnimatePresence>
+
+            <div className="flex items-center w-full p-1.5 bg-white border border-gray-300 shadow-sm rounded-3xl transition-all">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors shrink-0"
+                title="Tải ảnh lên"
+              >
+                <Plus size={20} />
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+
+              <textarea
+                ref={textareaRef}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Nhắn tin..."
+                className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none outline-none py-2 px-3 text-gray-900 placeholder-gray-500 resize-none max-h-[120px] text-sm leading-relaxed overflow-hidden"
+                rows={1}
+              />
+
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => setIsCameraOpen(true)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                  title="Chụp ảnh"
+                >
+                  <Camera size={20} />
+                </button>
+                <button
+                  onClick={handleSend}
+                  disabled={!inputText.trim() && !selectedImage}
+                  className={cn(
+                    "p-2 rounded-full transition-all flex items-center justify-center",
+                    inputText.trim() || selectedImage
+                      ? "bg-primary text-white shadow-sm hover:bg-primary-dark"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed",
+                  )}
+                >
+                  <Send size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="text-center mt-2">
+              <p className="text-xs text-gray-400">
+                Agri-Scan AI có thể mắc lỗi. Hãy kiểm tra lại thông tin quan
+                trọng.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Camera Modal */}
+      <AnimatePresence>
+        {isCameraOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4"
+          >
+            <div className="relative w-full max-w-lg aspect-[3/4] bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
+              {/* @ts-ignore */}
+              <ReactWebcam
+                audio={false}
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                className="w-full h-full object-cover"
+              />
+              <button
+                onClick={() => setIsCameraOpen(false)}
+                className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70"
+              >
+                <X size={24} />
+              </button>
+              <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+                <button
+                  onClick={capture}
+                  className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center hover:scale-95 transition-transform"
+                >
+                  <div className="w-12 h-12 bg-white rounded-full"></div>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
