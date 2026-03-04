@@ -1,8 +1,3 @@
-/**
- * @agri-scan/shared - Thư viện dùng chung cho Web và Mobile
- * 
- * Export tất cả types, constants và utilities
- */
 
 // Types
 export * from './types';
@@ -23,6 +18,10 @@ export type { IScanResult, IScanHistoryDetail } from './types/scan-history.types
 export { forgotPasswordSchema, type ForgotPasswordFormData } from './schemas/auth.schema';
 
 // Legacy export (để không break code cũ)
+
+export * from './api/token-manager';
+export * from './api/axios-client';
+export * from './api/auth.api';
 export const helloWorld = () => {
   return "Hello from Shared Logic!";
 };

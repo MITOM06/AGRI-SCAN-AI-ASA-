@@ -1,30 +1,27 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config'; // 1. Import Config
+import { ConfigModule, ConfigService } from '@nestjs/config'; 
 import { MongooseModule } from '@nestjs/mongoose';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import {
-  User,
-  UserSchema,
-  Plant,
-  PlantSchema,
-  Disease,
-  DiseaseSchema,
-  ScanHistory,
-  ScanHistorySchema,
+  User, UserSchema,
+  Plant, PlantSchema,
+  Disease, DiseaseSchema,
+  ScanHistory, ScanHistorySchema
+
 } from '@agri-scan/database';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
-    // 2. Load file .env
+    // 1. Load file .env
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
 
-    // 3. Kết nối Mongo dùng biến môi trường
+    // 2. Kết nối Mongo
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -33,7 +30,7 @@ import { AuthModule } from './modules/auth/auth.module';
       inject: [ConfigService],
     }),
 
-    // 4. Kết nối Redis dùng biến môi trường
+    // 3. Kết nối Redis
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
@@ -48,17 +45,20 @@ import { AuthModule } from './modules/auth/auth.module';
       inject: [ConfigService],
     }),
 
-    // Đăng ký Schema như cũ...
+    // 4. Đăng ký Schema cho Root
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Plant.name, schema: PlantSchema },
       { name: Disease.name, schema: DiseaseSchema },
       { name: ScanHistory.name, schema: ScanHistorySchema },
     ]),
-
+    
+    // 5. Nạp các Module con (Không khai báo nội dung của chúng ở đây)
     UsersModule,
-
     AuthModule,
   ],
+  controllers: [],
+  providers: [], // Đã dọn dẹp sạch sẽ
 })
-export class AppModule {}
+export class AppModule { }
+
