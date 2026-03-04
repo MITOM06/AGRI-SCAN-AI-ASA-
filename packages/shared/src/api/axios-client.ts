@@ -1,8 +1,17 @@
-import axios from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { getTokenStorage } from './token-manager';
 
-// Điền IP máy của bạn hoặc localhost. Nếu chạy máy ảo Android thì dùng 10.0.2.2
-const BASE_URL = 'http://localhost:3000'; 
+declare module 'axios' {
+  export interface AxiosInstance {
+    upload<T = any, R = AxiosResponse<T>>(
+      url: string,
+      data: FormData,
+      config?: AxiosRequestConfig
+    ): Promise<R>;
+  }
+}
+
+const BASE_URL = 'http://localhost:4000';
 
 export const axiosClient = axios.create({
   baseURL: BASE_URL,
@@ -10,6 +19,21 @@ export const axiosClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// 2. Định nghĩa logic thực sự cho hàm upload (Thực chất là gọi POST và ép header chứa file)
+axiosClient.upload = function <T = any, R = AxiosResponse<T>>(
+  url: string,
+  data: FormData,
+  config?: AxiosRequestConfig
+): Promise<R> {
+  return this.post<T, R>(url, data, {
+    ...config,
+    headers: {
+      ...config?.headers,
+      'Content-Type': 'multipart/form-data', // Ép kiểu để gửi file ảnh
+    },
+  });
+};
 
 // BƯỚC CHẶN TRƯỚC KHI GỬI: Tự động gắn Access Token
 axiosClient.interceptors.request.use(async (config) => {
@@ -40,7 +64,7 @@ axiosClient.interceptors.response.use(
 
         // Đi xin Token mới
         const res = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
-        
+
         // Lưu cặp Token mới
         const { accessToken, refreshToken: newRefreshToken } = res.data;
         await storage?.saveTokens(accessToken, newRefreshToken);
@@ -48,7 +72,7 @@ axiosClient.interceptors.response.use(
         // Đổi Token mới vào cái Request vừa bị xịt và gọi lại
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return axiosClient(originalRequest);
-        
+
       } catch (refreshError) {
         // Xin Token thất bại (Refresh token chết) -> Đuổi về màn hình Login
         await storage?.clearTokens();

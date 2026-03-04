@@ -7,23 +7,33 @@ import { useRouter } from "next/navigation";
 import { Leaf, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 import { loginSchema, type LoginFormData } from "@agri-scan/shared";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth"; // <-- KẾT NỐI HOOK Ở ĐÂY
 
 export default function LoginForm() {
   const router = useRouter();
+  const { login } = useAuth(); // <-- LẤY HÀM LOGIN
+  
   const {
     register,
     handleSubmit,
+    setError, // <-- Dùng để set lỗi từ Backend
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log("Login data:", data);
-    // Navigate to dashboard or home
-    router.push("/");
+    try {
+      // Gọi API thực tế thay vì setTimeout
+      await login(data);
+      // Đăng nhập thành công, đá về trang chủ
+      router.push("/");
+    } catch (error: any) {
+      console.error("Lỗi đăng nhập:", error);
+      // Bắt lỗi từ Backend trả về (Ví dụ: "Sai email hoặc mật khẩu")
+      const errorMessage = error.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại sau.";
+      setError("root", { type: "server", message: errorMessage });
+    }
   };
 
   return (
@@ -47,10 +57,9 @@ export default function LoginForm() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
+            {/* ... (Phần UI Email giữ nguyên) ... */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                   <Mail size={20} />
@@ -62,22 +71,14 @@ export default function LoginForm() {
                   placeholder="name@example.com"
                 />
               </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.email.message}
-                </p>
-              )}
+              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
             </div>
 
+            {/* ... (Phần UI Mật khẩu giữ nguyên) ... */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Mật khẩu
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-sm font-medium text-primary hover:text-primary-dark"
-                >
+                <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
+                <Link href="/forgot-password" className="text-sm font-medium text-primary hover:text-primary-dark">
                   Quên mật khẩu?
                 </Link>
               </div>
@@ -92,13 +93,16 @@ export default function LoginForm() {
                   placeholder="••••••••"
                 />
               </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.password.message}
-                </p>
-              )}
+              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>}
             </div>
           </div>
+
+          {/* HIỂN THỊ LỖI TỪ BACKEND TRẢ VỀ Ở ĐÂY */}
+          {errors.root && (
+            <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center border border-red-100">
+              {errors.root.message}
+            </div>
+          )}
 
           <button
             type="submit"
@@ -120,10 +124,7 @@ export default function LoginForm() {
 
           <div className="text-center text-sm">
             <span className="text-gray-500">Chưa có tài khoản? </span>
-            <Link
-              href="/register"
-              className="font-medium text-primary hover:text-primary-dark"
-            >
+            <Link href="/register" className="font-medium text-primary hover:text-primary-dark">
               Đăng ký ngay
             </Link>
           </div>

@@ -1,8 +1,5 @@
-/**
- * Plant Service - Xử lý API liên quan đến cây trồng (Từ điển thực vật học)
- */
 
-import { apiClient } from '@/lib/api-client';
+import { axiosClient } from '@agri-scan/shared';
 import { API_ENDPOINTS } from '@agri-scan/shared';
 import type {
   IPlant,
@@ -21,7 +18,7 @@ export const plantService = {
     const queryString = params
       ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
       : '';
-    const response = await apiClient.get<IPaginatedResponse<IPlantListItem>>(
+    const response = await axiosClient.get<IPaginatedResponse<IPlantListItem>>(
       `${API_ENDPOINTS.PLANTS.BASE}${queryString}`
     );
     return response.data;
@@ -31,7 +28,7 @@ export const plantService = {
    * Lấy chi tiết một cây trồng theo ID
    */
   async getPlantById(id: string): Promise<IPlantDetail> {
-    const response = await apiClient.get<IPlantDetail>(
+    const response = await axiosClient.get<IPlantDetail>(
       API_ENDPOINTS.PLANTS.BY_ID(id)
     );
     return response.data;
@@ -47,7 +44,7 @@ export const plantService = {
     if (params?.sortBy) searchParams.sortBy = params.sortBy;
     if (params?.sortOrder) searchParams.sortOrder = params.sortOrder;
     const queryString = new URLSearchParams(searchParams).toString();
-    const response = await apiClient.get<IPaginatedResponse<IPlantListItem>>(
+    const response = await axiosClient.get<IPaginatedResponse<IPlantListItem>>(
       `${API_ENDPOINTS.PLANTS.SEARCH}?${queryString}`
     );
     return response.data;
@@ -57,7 +54,7 @@ export const plantService = {
    * Lấy cây trồng theo bệnh
    */
   async getPlantsByDisease(diseaseId: string): Promise<IPlantListItem[]> {
-    const response = await apiClient.get<IPlantListItem[]>(
+    const response = await axiosClient.get<IPlantListItem[]>(
       API_ENDPOINTS.PLANTS.BY_DISEASE(diseaseId)
     );
     return response.data;
@@ -67,7 +64,7 @@ export const plantService = {
    * Tạo cây trồng mới (Admin only)
    */
   async createPlant(data: IPlantCreate): Promise<IPlant> {
-    const response = await apiClient.post<IPlant>(
+    const response = await axiosClient.post<IPlant>(
       API_ENDPOINTS.PLANTS.BASE,
       data
     );
@@ -78,7 +75,7 @@ export const plantService = {
    * Cập nhật cây trồng (Admin only)
    */
   async updatePlant(id: string, data: Partial<IPlantCreate>): Promise<IPlant> {
-    const response = await apiClient.put<IPlant>(
+    const response = await axiosClient.put<IPlant>(
       API_ENDPOINTS.PLANTS.BY_ID(id),
       data
     );
@@ -89,6 +86,6 @@ export const plantService = {
    * Xóa cây trồng (Admin only)
    */
   async deletePlant(id: string): Promise<void> {
-    await apiClient.delete(API_ENDPOINTS.PLANTS.BY_ID(id));
+    await axiosClient.delete(API_ENDPOINTS.PLANTS.BY_ID(id));
   },
 };
