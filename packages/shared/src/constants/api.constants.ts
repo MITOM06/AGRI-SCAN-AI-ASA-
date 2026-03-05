@@ -1,6 +1,5 @@
 /**
  * API Endpoints - Dùng chung cho Web và Mobile
- * Định nghĩa các endpoint của Backend NestJS
  */
 
 export const API_ENDPOINTS = {
@@ -10,7 +9,12 @@ export const API_ENDPOINTS = {
     REGISTER: '/auth/register',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
-    ME: '/auth/me',
+    // BUG FIX: '/auth/me' không tồn tại trong controller → đổi thành '/auth/profile'
+    PROFILE: '/auth/profile',
+    // BUG FIX: 3 endpoint forgot-password flow còn thiếu trong constants
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    VERIFY_OTP: '/auth/verify-otp',
+    RESET_PASSWORD: '/auth/reset-password',
   },
 
   // Users

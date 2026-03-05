@@ -5,16 +5,21 @@ export interface ITokenStorage {
   clearTokens: () => Promise<void> | void;
 }
 
-// Biến lưu trữ cấu hình do Web/Mobile truyền vào
 let tokenStorage: ITokenStorage | null = null;
 
-export const setTokenStorage = (storage: ITokenStorage) => {
+export const setTokenStorage = (storage: ITokenStorage): void => {
   tokenStorage = storage;
 };
 
-export const getTokenStorage = () => {
+export const getTokenStorage = (): ITokenStorage | null => {
   if (!tokenStorage) {
-    console.warn('⚠️ TokenStorage chưa được cấu hình. Hãy gọi setTokenStorage() ở file khởi tạo App.');
+    // BUG FIX: warn rõ hơn để dev dễ trace nguyên nhân
+    console.warn(
+      '[Agri-Scan] ⚠️ TokenStorage chưa được cấu hình!\n' +
+      'Hãy gọi setTokenStorage() ở file khởi tạo App:\n' +
+      '  - Web: trong AuthProvider (useAuth.tsx)\n' +
+      '  - Mobile: trước khi render App root (App.tsx hoặc màn login đầu tiên)'
+    );
   }
   return tokenStorage;
 };

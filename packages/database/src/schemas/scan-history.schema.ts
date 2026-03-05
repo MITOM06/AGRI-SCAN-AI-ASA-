@@ -11,7 +11,7 @@ class AIPrediction {
   diseaseId: Disease;
 
   @Prop()
-  confidence: number; // Độ tin cậy (0.95)
+  confidence: number; // Độ tin cậy (0.95 = 95%)
 }
 
 @Schema({ timestamps: true })
@@ -20,13 +20,20 @@ export class ScanHistory {
   userId: User;
 
   @Prop({ required: true })
-  imageUrl: string; // Link ảnh đã upload
+  imageUrl: string;
 
   @Prop([AIPrediction])
   aiPredictions: AIPrediction[];
 
-  @Prop({ default: false })
-  isAccurate: boolean; // Người dùng feedback đúng/sai
+  @Prop({ default: null })
+  isAccurate: boolean | null; // null = chưa feedback, true/false = đã feedback
+
+  // BUG FIX: scannedAt bị thiếu trong schema nhưng type IScanHistory có dùng.
+  // timestamps: true chỉ tạo createdAt + updatedAt, không tạo scannedAt.
+  // → Thêm field này để schema khớp với type.
+  // Default = thời điểm tạo document (= lúc scan xong)
+  @Prop({ default: () => new Date() })
+  scannedAt: Date;
 }
 
 export const ScanHistorySchema = SchemaFactory.createForClass(ScanHistory);

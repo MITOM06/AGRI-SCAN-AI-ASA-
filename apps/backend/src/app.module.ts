@@ -1,64 +1,57 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config'; 
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
-import {
-  User, UserSchema,
-  Plant, PlantSchema,
-  Disease, DiseaseSchema,
-  ScanHistory, ScanHistorySchema
-
-} from '@agri-scan/database';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
-    // 1. Load file .env
+    // 1. Load .env toàn cục
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
 
-    // 2. Kết nối Mongo
+    // 2. Kết nối MongoDB
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('DB_URI'),
+        uri: configService.getOrThrow<string>('DB_URI'),
       }),
       inject: [ConfigService],
     }),
 
-    // 3. Kết nối Redis
+    // 3. Kết nối Redis - isGlobal: true → tất cả module con nhận CACHE_MANAGER tự động
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         store: await redisStore({
           socket: {
-            host: configService.get<string>('REDIS_HOST'),
-            port: parseInt(configService.get<string>('REDIS_PORT')!),
+            host: configService.getOrThrow<string>('REDIS_HOST'),
+            port: parseInt(configService.getOrThrow<string>('REDIS_PORT')),
           },
         }),
       }),
       inject: [ConfigService],
     }),
 
-    // 4. Đăng ký Schema cho Root
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-      { name: Plant.name, schema: PlantSchema },
-      { name: Disease.name, schema: DiseaseSchema },
-      { name: ScanHistory.name, schema: ScanHistorySchema },
-    ]),
-    
-    // 5. Nạp các Module con (Không khai báo nội dung của chúng ở đây)
+    // BUG FIX: Đã XÓA MongooseModule.forFeature([...]) khỏi AppModule.
+    // Lý do: mỗi Feature Module (UsersModule, PlantsModule...) tự đăng ký
+    // schema của mình bên trong module đó. Đăng ký lại ở AppModule gây
+    // duplicate registration - Mongoose có thể throw lỗi hoặc dùng sai model.
+    //
+    // Quy tắc: AppModule chỉ chứa MongooseModule.forRoot (kết nối DB),
+    // KHÔNG chứa forFeature (đăng ký schema).
+
+    // 4. Feature Modules
     UsersModule,
     AuthModule,
+    // Thêm PlantsModule, DiseasesModule, AiScanModule vào đây khi làm xong
   ],
   controllers: [],
-  providers: [], // Đã dọn dẹp sạch sẽ
+  providers: [],
 })
-export class AppModule { }
-
+export class AppModule {}

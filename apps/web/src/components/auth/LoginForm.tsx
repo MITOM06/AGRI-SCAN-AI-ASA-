@@ -4,19 +4,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Leaf, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { Leaf, Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { loginSchema, type LoginFormData } from "@agri-scan/shared";
 import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth"; // <-- KẾT NỐI HOOK Ở ĐÂY
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login } = useAuth(); // <-- LẤY HÀM LOGIN
-  
+  const { login } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+
   const {
     register,
     handleSubmit,
-    setError, // <-- Dùng để set lỗi từ Backend
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -24,14 +26,13 @@ export default function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // Gọi API thực tế thay vì setTimeout
-      await login(data);
-      // Đăng nhập thành công, đá về trang chủ
+      // BUG FIX: trước chỉ gọi login(data.email) → mật khẩu không bao giờ được gửi lên BE
+      await login(data.email, data.password);
       router.push("/");
     } catch (error: any) {
-      console.error("Lỗi đăng nhập:", error);
-      // Bắt lỗi từ Backend trả về (Ví dụ: "Sai email hoặc mật khẩu")
-      const errorMessage = error.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại sau.";
+      const errorMessage =
+        error.response?.data?.message ||
+        "Đăng nhập thất bại. Vui lòng thử lại sau.";
       setError("root", { type: "server", message: errorMessage });
     }
   };
@@ -47,9 +48,7 @@ export default function LoginForm() {
           <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mx-auto mb-4">
             <Leaf size={28} />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">
-            Chào mừng trở lại
-          </h2>
+          <h2 className="text-3xl font-bold text-gray-900">Chào mừng trở lại</h2>
           <p className="mt-2 text-gray-600">
             Đăng nhập để tiếp tục quản lý vườn cây của bạn
           </p>
@@ -57,9 +56,11 @@ export default function LoginForm() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
-            {/* ... (Phần UI Email giữ nguyên) ... */}
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                   <Mail size={20} />
@@ -71,14 +72,21 @@ export default function LoginForm() {
                   placeholder="name@example.com"
                 />
               </div>
-              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
+              )}
             </div>
 
-            {/* ... (Phần UI Mật khẩu giữ nguyên) ... */}
+            {/* Mật khẩu */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
-                <Link href="/forgot-password" className="text-sm font-medium text-primary hover:text-primary-dark">
+                <label className="block text-sm font-medium text-gray-700">
+                  Mật khẩu
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-medium text-primary hover:text-primary-dark"
+                >
                   Quên mật khẩu?
                 </Link>
               </div>
@@ -88,16 +96,27 @@ export default function LoginForm() {
                 </div>
                 <input
                   {...register("password")}
-                  type="password"
-                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  type={showPassword ? "text" : "password"}
+                  className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
-              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* HIỂN THỊ LỖI TỪ BACKEND TRẢ VỀ Ở ĐÂY */}
+          {/* Lỗi từ backend */}
           {errors.root && (
             <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center border border-red-100">
               {errors.root.message}
@@ -116,15 +135,17 @@ export default function LoginForm() {
               </>
             ) : (
               <>
-                Đăng nhập
-                <ArrowRight className="ml-2" size={20} />
+                Đăng nhập <ArrowRight className="ml-2" size={20} />
               </>
             )}
           </button>
 
           <div className="text-center text-sm">
             <span className="text-gray-500">Chưa có tài khoản? </span>
-            <Link href="/register" className="font-medium text-primary hover:text-primary-dark">
+            <Link
+              href="/register"
+              className="font-medium text-primary hover:text-primary-dark"
+            >
               Đăng ký ngay
             </Link>
           </div>

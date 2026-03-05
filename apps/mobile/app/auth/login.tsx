@@ -11,7 +11,6 @@ import {
   Animated,
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-// ĐÃ XÓA: import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import {
   Leaf,
@@ -21,33 +20,39 @@ import {
   EyeOff,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// CHUẨN MONOREPO: Import schema từ shared
-import { loginSchema, type LoginFormData } from "@agri-scan/shared";
-
-// Import các component UI chung
+import { loginSchema, type LoginFormData, authApi, setTokenStorage } from "@agri-scan/shared";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 
-// 🌟 TUYỆT CHIÊU CHỐNG VĂNG APP CHO TRANG LOGIN 🌟
+// ─── Mobile Token Storage (AsyncStorage) ─────────────────────────────────────
+// BUG FIX: setTokenStorage chưa được gọi → axios interceptor không gắn được token
+setTokenStorage({
+  getAccessToken: () => AsyncStorage.getItem("accessToken"),
+  getRefreshToken: () => AsyncStorage.getItem("refreshToken"),
+  saveTokens: async (access, refresh) => {
+    await AsyncStorage.setItem("accessToken", access);
+    await AsyncStorage.setItem("refreshToken", refresh);
+  },
+  clearTokens: async () => {
+    await AsyncStorage.multiRemove(["accessToken", "refreshToken", "user"]);
+  },
+});
+
+// ─── Custom Zod Resolver (tránh crash app trên React Native) ─────────────────
 const customLoginResolver = async (values: any) => {
   const result = loginSchema.safeParse(values);
+  if (result.success) return { values: result.data, errors: {} };
 
-  if (result.success) {
-    return { values: result.data, errors: {} };
-  }
-
-  // Hứng lỗi nhẹ nhàng và định dạng lại cho react-hook-form
   const formErrors: Record<string, any> = {};
   const fieldErrors = result.error.flatten().fieldErrors;
-
   for (const key in fieldErrors) {
     formErrors[key] = {
       type: "validation",
-      message: fieldErrors[key as keyof typeof fieldErrors]?.[0], // Lấy câu báo lỗi Tiếng Việt
+      message: fieldErrors[key as keyof typeof fieldErrors]?.[0],
     };
   }
-
   return { values: {}, errors: formErrors };
 };
 
@@ -58,65 +63,59 @@ export default function LoginScreen() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [apiError, setApiError] = useState("");
 
-  // --- HOOK FORM ---
   const { control, handleSubmit } = useForm<LoginFormData>({
-    resolver: customLoginResolver, // SỬ DỤNG RESOLVER TỰ CHẾ AN TOÀN
+    resolver: customLoginResolver,
     mode: "onChange",
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
-  // --- ANIMATION CHO THÔNG BÁO THÀNH CÔNG ---
+  // Animation thông báo đăng ký thành công
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(-10)).current;
 
   useEffect(() => {
     if (registered === "true") {
       Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateYAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(translateYAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
       ]).start();
     }
   }, [registered]);
 
-  // --- XỬ LÝ CHẶN NÚT QUAY LẠI TRÊN ANDROID ---
+  // Chặn nút back Android
   useEffect(() => {
-    const onBackPress = () => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       router.replace("/");
       return true;
-    };
-    const subscription = BackHandler.addEventListener(
-      "hardwareBackPress",
-      onBackPress,
-    );
-    return () => subscription.remove();
+    });
+    return () => sub.remove();
   }, []);
 
+  // BUG FIX: trước đây chỉ console.log và redirect, không gọi API thật
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log("Dữ liệu đăng nhập:", data);
-    setIsSubmitting(false);
-
-    router.replace("/user");
+    setApiError("");
+    try {
+      const response = await authApi.login({ email: data.email, password: data.password });
+      // Lưu token và user vào AsyncStorage
+      await AsyncStorage.setItem("accessToken", response.accessToken);
+      await AsyncStorage.setItem("refreshToken", response.refreshToken);
+      await AsyncStorage.setItem("user", JSON.stringify(response.user));
+      router.replace("/user");
+    } catch (error: any) {
+      setApiError(
+        error.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      <View
-        style={[styles.customHeader, { paddingTop: Math.max(insets.top, 20) }]}
-      >
+      <View style={[styles.customHeader, { paddingTop: Math.max(insets.top, 20) }]}>
         <TouchableOpacity
           onPress={() => router.replace("/")}
           style={styles.backButton}
@@ -136,7 +135,6 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
-            {/* Header */}
             <View style={styles.header}>
               <View style={styles.iconContainer}>
                 <Leaf size={28} color="#16a34a" />
@@ -147,22 +145,14 @@ export default function LoginScreen() {
               </Text>
             </View>
 
-            {/* Thông báo đăng ký thành công */}
             {registered === "true" && (
               <Animated.View
                 style={[
                   styles.successAlert,
-                  {
-                    opacity: fadeAnim,
-                    transform: [{ translateY: translateYAnim }],
-                  },
+                  { opacity: fadeAnim, transform: [{ translateY: translateYAnim }] },
                 ]}
               >
-                <CheckCircle2
-                  size={20}
-                  color="#15803d"
-                  style={{ marginTop: 2 }}
-                />
+                <CheckCircle2 size={20} color="#15803d" style={{ marginTop: 2 }} />
                 <View style={styles.successTextContainer}>
                   <Text style={styles.successTitle}>Đăng ký thành công!</Text>
                   <Text style={styles.successDesc}>
@@ -172,16 +162,18 @@ export default function LoginScreen() {
               </Animated.View>
             )}
 
-            {/* Form */}
+            {/* Lỗi từ API */}
+            {apiError !== "" && (
+              <View style={styles.errorAlert}>
+                <Text style={styles.errorText}>{apiError}</Text>
+              </View>
+            )}
+
             <View style={styles.form}>
-              {/* Cột Email */}
               <Controller
                 control={control}
                 name="email"
-                render={({
-                  field: { onChange, onBlur, value },
-                  fieldState: { error },
-                }) => (
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <View style={styles.inputGroup}>
                     <Input
                       label="Email"
@@ -191,7 +183,7 @@ export default function LoginScreen() {
                       onBlur={onBlur}
                       onChangeText={onChange}
                       value={value}
-                      error={error?.message} // Đẩy lỗi cho thẻ Input tự in chữ đỏ
+                      error={error?.message}
                     />
                   </View>
                 )}
@@ -204,19 +196,15 @@ export default function LoginScreen() {
                 </Link>
               </View>
 
-              {/* Cột Mật khẩu */}
               <Controller
                 control={control}
                 name="password"
-                render={({
-                  field: { onChange, onBlur, value },
-                  fieldState: { error },
-                }) => (
+                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                   <View style={styles.inputGroup}>
                     <View style={styles.passwordWrapper}>
                       <Input
                         placeholder="••••••••"
-                        secureTextEntry={!showPassword} // Bật/tắt theo state
+                        secureTextEntry={!showPassword}
                         onBlur={onBlur}
                         onChangeText={onChange}
                         value={value}
@@ -261,20 +249,9 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f9fafb",
-  },
-  customHeader: {
-    paddingHorizontal: 16,
-    zIndex: 10,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: "center",
-  },
+  container: { flex: 1, backgroundColor: "#f9fafb" },
+  customHeader: { paddingHorizontal: 16, zIndex: 10 },
+  backButton: { width: 44, height: 44, borderRadius: 22, justifyContent: "center" },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
@@ -291,10 +268,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
-  header: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
+  header: { alignItems: "center", marginBottom: 24 },
   iconContainer: {
     width: 48,
     height: 48,
@@ -304,17 +278,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#111827",
-    marginBottom: 8,
-  },
-  subtitle: {
-    color: "#4b5563",
-    textAlign: "center",
-    fontSize: 14,
-  },
+  title: { fontSize: 24, fontWeight: "bold", color: "#111827", marginBottom: 8 },
+  subtitle: { color: "#4b5563", textAlign: "center", fontSize: 14 },
   successAlert: {
     flexDirection: "row",
     backgroundColor: "#f0fdf4",
@@ -325,27 +290,20 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     alignItems: "flex-start",
   },
-  successTextContainer: {
-    marginLeft: 12,
-    flex: 1,
+  successTextContainer: { marginLeft: 12, flex: 1 },
+  successTitle: { fontSize: 15, fontWeight: "bold", color: "#15803d", marginBottom: 4 },
+  successDesc: { fontSize: 13, color: "#166534", lineHeight: 20 },
+  errorAlert: {
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
   },
-  successTitle: {
-    fontSize: 15,
-    fontWeight: "bold",
-    color: "#15803d",
-    marginBottom: 4,
-  },
-  successDesc: {
-    fontSize: 13,
-    color: "#166534",
-    lineHeight: 20,
-  },
-  form: {
-    width: "100%",
-  },
-  inputGroup: {
-    marginBottom: 16, // Cách dãn giữa các ô input
-  },
+  errorText: { color: "#dc2626", fontSize: 14, textAlign: "center" },
+  form: { width: "100%" },
+  inputGroup: { marginBottom: 16 },
   passwordHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -353,40 +311,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 4,
   },
-  customLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#374151",
-  },
-  forgotLink: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#16a34a",
-  },
-  passwordWrapper: {
-    position: "relative",
-  },
-  eyeIcon: {
-    position: "absolute",
-    right: 12,
-    top: 12, // Căn giữa nút con mắt so với chiều cao ô text
-    padding: 4,
-  },
-  submitButton: {
-    marginTop: 12,
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 24,
-  },
-  footerText: {
-    color: "#6b7280",
-    fontSize: 14,
-  },
-  registerLink: {
-    color: "#16a34a",
-    fontWeight: "600",
-    fontSize: 14,
-  },
+  customLabel: { fontSize: 14, fontWeight: "500", color: "#374151" },
+  forgotLink: { fontSize: 14, fontWeight: "500", color: "#16a34a" },
+  passwordWrapper: { position: "relative" },
+  eyeIcon: { position: "absolute", right: 12, top: 12, padding: 4 },
+  submitButton: { marginTop: 12 },
+  footer: { flexDirection: "row", justifyContent: "center", marginTop: 24 },
+  footerText: { color: "#6b7280", fontSize: 14 },
+  registerLink: { color: "#16a34a", fontWeight: "600", fontSize: 14 },
 });

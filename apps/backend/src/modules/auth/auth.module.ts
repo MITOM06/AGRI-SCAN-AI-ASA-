@@ -9,17 +9,19 @@ import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
-    UsersModule, // Import UsersModule đã làm ở phần trước
+    UsersModule,
+
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET', 'fallback_secret_key'),
-        // Thời gian sống mặc định của Access Token
+        // BUG FIX (lần trước): bỏ fallback 'fallback_secret_key'
+        // Nếu thiếu JWT_SECRET trong .env → app crash sớm, dễ phát hiện hơn
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: { expiresIn: '15m' },
       }),
     }),
-    // 2. Cấu hình Mailer (Dịch chuyển từ AppModule qua đây)
+
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -27,14 +29,14 @@ import { MailerModule } from '@nestjs-modules/mailer';
         transport: {
           host: 'smtp.gmail.com',
           port: 587,
-          secure: false, // true for 465, false for other ports
+          secure: false,
           auth: {
-            user: configService.get('SMTP_USER'),
-            pass: configService.get('SMTP_PASS'),
+            user: configService.getOrThrow('SMTP_USER'),
+            pass: configService.getOrThrow('SMTP_PASS'),
           },
         },
         defaults: {
-          from: '"Agri-Scan AI Support" <noreply@agriscan.ai>',
+          from: '"Agri-Scan AI" <noreply@agriscan.ai>',
         },
       }),
     }),
@@ -42,4 +44,4 @@ import { MailerModule } from '@nestjs-modules/mailer';
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
 })
-export class AuthModule { }
+export class AuthModule {}

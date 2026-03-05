@@ -8,117 +8,117 @@ import React, {
   useContext,
   ReactNode,
 } from "react";
+import { authApi } from "@agri-scan/shared";
+import type { IUser } from "@agri-scan/shared";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-}
-
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface AuthContextType {
-  user: User | null;
+  user: IUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string) => Promise<void>;
-  register: (email: string, name: string) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  register: (
+    email: string,
+    fullName: string,
+    password: string,
+  ) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
-const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Khôi phục session từ localStorage khi app load
   useEffect(() => {
-    // Check for persisted user session
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const accessToken = localStorage.getItem("accessToken");
+    if (storedUser && accessToken) {
       try {
         setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse user from local storage", e);
+      } catch {
+        // JSON lỗi → xóa sạch
         localStorage.removeItem("user");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
       }
     }
     setIsLoading(false);
   }, []);
 
-  const login = useCallback(async (email: string) => {
+  // ── ĐĂNG NHẬP ────────────────────────────────────────────────────────────────
+  // BUG FIX (lần trước): login giờ nhận đủ email + password, gọi API thật
+  // BUG FIX (lần này): bỏ setTokenStorage() - providers.tsx đã gọi rồi, gọi 2 lần gây ghi đè
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Check if we have this user in our "database" (localStorage)
-      const usersDb = JSON.parse(localStorage.getItem("users_db") || "{}");
-      const existingUser = usersDb[email];
-
-      // If user exists in DB, use saved name; otherwise fallback to email username
-      const name = existingUser ? existingUser.name : email.split("@")[0];
-
-      const newUser: User = {
-        id: existingUser
-          ? existingUser.id
-          : Math.random().toString(36).substr(2, 9),
-        name: name,
-        email: email,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
-      };
-
-      setUser(newUser);
-      localStorage.setItem("user", JSON.stringify(newUser));
+      const response = await authApi.login({ email, password });
+      localStorage.setItem("accessToken", response.accessToken);
+      localStorage.setItem("refreshToken", response.refreshToken);
+      localStorage.setItem("user", JSON.stringify(response.user));
+      setUser(response.user);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const register = useCallback(async (email: string, name: string) => {
-    setIsLoading(true);
+  // ── ĐĂNG KÝ ─────────────────────────────────────────────────────────────────
+  // BUG FIX (lần trước): thêm password - giờ gửi đủ thông tin lên BE
+  const register = useCallback(
+    async (
+      email: string,
+      fullName: string,
+      password: string
+    ) => {
+      setIsLoading(true);
+      try {
+        await authApi.register({ email, fullName, password });
+        // Đăng ký xong KHÔNG tự đăng nhập → user cần login thủ công
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  // ── ĐĂNG XUẤT ────────────────────────────────────────────────────────────────
+  const logout = useCallback(async () => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: name,
-        email: email,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
-      };
-
-      // Save to "database"
-      const usersDb = JSON.parse(localStorage.getItem("users_db") || "{}");
-      usersDb[email] = newUser;
-      localStorage.setItem("users_db", JSON.stringify(usersDb));
-
-      // Registration complete - user needs to login manually
+      await authApi.logout();
+    } catch {
+      // Lỗi mạng vẫn phải xóa token local
     } finally {
-      setIsLoading(false);
+      // BUG FIX: providers.tsx clearTokens không xóa 'user' → đã fix bên providers.tsx
+      // useAuth.tsx cũng xóa user state để đồng bộ UI ngay lập tức
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      setUser(null);
     }
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem("user");
-  }, []);
-
-  const value: AuthContextType = {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
-    login,
-    register,
-    logout,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth bắt buộc phải được bọc bên trong AuthProvider");
+    throw new Error("useAuth bắt buộc phải được bọc bên trong <AuthProvider>");
   }
   return context;
 }

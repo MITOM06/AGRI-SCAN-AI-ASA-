@@ -1,4 +1,4 @@
-name: agri-scan-ai # Tên Project trong Docker Desktop cho dễ tìm
+name: agri-scan-ai
 
 services:
   # 1. CƠ SỞ DỮ LIỆU CHÍNH (MONGODB)
@@ -7,12 +7,12 @@ services:
     container_name: asa-mongodb
     restart: always
     ports:
-      - "27018:27017" 
+      - "27018:27017"   # host:container — dev kết nối qua cổng 27018
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: secretPassword
     volumes:
-      - asa-mongo-data:/data/db 
+      - asa-mongo-data:/data/db
     networks:
       - agri-net
 
@@ -22,17 +22,17 @@ services:
     container_name: asa-redis
     restart: always
     ports:
-      - "6380:6379" 
+      - "6380:6379"     # host:container — dev kết nối qua cổng 6380
     volumes:
       - asa-redis-data:/data
     networks:
       - agri-net
 
-  # 3. BACKEND API (Tùy chọn: Dùng để test môi trường thật)
-  # Khi dev bình thường thì comment đoạn này lại để chạy lệnh pnpm start:dev cho nhanh
+  # 3. BACKEND API
+  # Khi dev bình thường thì comment service này lại để chạy `pnpm start:dev` cho nhanh
   backend:
     build:
-      context: ../../ # Trỏ ra thư mục gốc Monorepo
+      context: ../../
       dockerfile: apps/backend/Dockerfile
     container_name: asa-backend
     ports:
@@ -41,14 +41,22 @@ services:
       - mongodb
       - redis
     environment:
-      # Lưu ý: Khi chạy trong Docker, host là tên service (mongodb), không phải localhost
+      # DB & Cache — dùng tên service làm host khi chạy trong Docker network
       - DB_URI=mongodb://admin:secretPassword@mongodb:27017/agriscan?authSource=admin
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - PORT=4000
+
+      # BUG FIX: 3 biến sau bị thiếu hoàn toàn → app crash khi start trong Docker
+      # vì auth.module.ts dùng configService.getOrThrow() cho các key này.
+      # QUAN TRỌNG: Thay các giá trị placeholder bên dưới bằng giá trị thật
+      # trước khi deploy. Không commit giá trị thật lên Git — dùng .env file hoặc secret manager.
+      - JWT_SECRET=CHANGE_ME_use_a_long_random_string_min_32_chars
+      - SMTP_USER=your_gmail@gmail.com
+      - SMTP_PASS=your_gmail_app_password
     networks:
       - agri-net
 
-# ĐỊNH NGHĨA VOLUME & NETWORK
 volumes:
   asa-mongo-data:
   asa-redis-data:
