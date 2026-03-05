@@ -7,9 +7,15 @@ async function bootstrap() {
 
   // 1. BẬT CORS CHO FRONTEND GỌI API KHÔNG BỊ CHẶN
   app.enableCors({
-    origin: '*', // Trong lúc dev thì cho phép tất cả (*). Sau này deploy thật thì điền link domain web vào đây.
+      origin: [
+    'http://localhost:8081',  // Expo Web
+    'http://localhost:3000',  // Next.js dev
+    // Thêm domain production sau khi deploy
+    // 'https://agriscan.ai',
+  ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
+     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   // 2. BẬT TỰ ĐỘNG KIỂM TRA DỮ LIỆU ĐẦU VÀO

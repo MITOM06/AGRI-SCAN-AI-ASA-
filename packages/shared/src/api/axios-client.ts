@@ -11,16 +11,30 @@ declare module 'axios' {
   }
 }
 
-const BASE_URL = 'http://localhost:4000';
+// ─── BUG FIX: 'localhost' trỏ vào chính điện thoại, không phải máy tính ───────
+//
+// Cách lấy IP máy tính của bạn:
+//   Windows: ipconfig → tìm "IPv4 Address" (VD: 192.168.1.5)
+//   macOS/Linux: ifconfig | grep "inet " (VD: 192.168.1.5)
+//
+// Sau đó tạo file apps/mobile/.env với nội dung:
+//   EXPO_PUBLIC_API_URL=http://192.168.1.5:4000
+//
+// Lưu ý: Điện thoại và máy tính phải cùng wifi.
+// Nếu test bằng Android Emulator trên máy thật thì dùng: http://10.0.2.2:4000
+// Nếu deploy production thì đổi thành domain thật: https://api.agriscan.ai
+//
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
 export const axiosClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000, // 15s timeout - tránh treo app khi mạng yếu
 });
 
-// 2. Định nghĩa logic thực sự cho hàm upload (Thực chất là gọi POST và ép header chứa file)
+// Upload file ảnh (multipart/form-data)
 axiosClient.upload = function <T = any, R = AxiosResponse<T>>(
   url: string,
   data: FormData,
@@ -30,12 +44,12 @@ axiosClient.upload = function <T = any, R = AxiosResponse<T>>(
     ...config,
     headers: {
       ...config?.headers,
-      'Content-Type': 'multipart/form-data', // Ép kiểu để gửi file ảnh
+      'Content-Type': 'multipart/form-data',
     },
   });
 };
 
-// BƯỚC CHẶN TRƯỚC KHI GỬI: Tự động gắn Access Token
+// Interceptor: Tự động gắn Access Token vào mọi request
 axiosClient.interceptors.request.use(async (config) => {
   const storage = getTokenStorage();
   if (storage) {
@@ -47,36 +61,32 @@ axiosClient.interceptors.request.use(async (config) => {
   return config;
 });
 
-// BƯỚC CHẶN KHI NHẬN KẾT QUẢ: Xử lý lỗi 401 (Hết hạn Token)
+// Interceptor: Tự động refresh token khi gặp lỗi 401
 axiosClient.interceptors.response.use(
-  (response) => response, // Nếu thành công thì cho qua
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
     const storage = getTokenStorage();
 
-    // Nếu lỗi 401 và không phải đang gọi API refresh (để tránh lặp vô hạn)
-    if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== '/auth/refresh') {
-      originalRequest._retry = true; // Đánh dấu đã thử lại
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      originalRequest.url !== '/auth/refresh'
+    ) {
+      originalRequest._retry = true;
 
       try {
         const refreshToken = await storage?.getRefreshToken();
         if (!refreshToken) throw new Error('Không có Refresh Token');
 
-        // Đi xin Token mới
         const res = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
-
-        // Lưu cặp Token mới
         const { accessToken, refreshToken: newRefreshToken } = res.data;
         await storage?.saveTokens(accessToken, newRefreshToken);
 
-        // Đổi Token mới vào cái Request vừa bị xịt và gọi lại
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return axiosClient(originalRequest);
-
       } catch (refreshError) {
-        // Xin Token thất bại (Refresh token chết) -> Đuổi về màn hình Login
         await storage?.clearTokens();
-        // Ở đây có thể bắn event để ép App chuyển trang
         return Promise.reject(refreshError);
       }
     }

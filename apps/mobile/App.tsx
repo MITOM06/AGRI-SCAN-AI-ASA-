@@ -1,38 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
-import { setTokenStorage } from '@agri-scan/shared';
+// App.tsx - Entry point setup cho Expo Router
+//
+// Với expo-router ("main": "expo-router/entry"), file này KHÔNG được
+// dùng làm root component tự động.
+// → Đã chuyển setTokenStorage vào app/_layout.tsx (xem file đó).
+//
+// File này có thể để trống hoặc giữ lại như dưới đây nếu
+// bạn muốn dùng App.tsx làm entry thủ công.
 
-setTokenStorage({
-  getAccessToken: async () => {
-    return await SecureStore.getItemAsync('accessToken');
-  },
-  getRefreshToken: async () => {
-    return await SecureStore.getItemAsync('refreshToken');
-  },
-  saveTokens: async (access: string, refresh: string) => {
-    await SecureStore.setItemAsync('accessToken', access);
-    await SecureStore.setItemAsync('refreshToken', refresh);
-  },
-  clearTokens: async () => {
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
-  }
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  message: {
-    marginTop: 10,
-    fontSize: 18,
-    color: 'green',
-  },
-});
+export { default } from 'expo-router/entry';

@@ -16,7 +16,8 @@
     "@types/multer": "^2.0.0"
   },
   "dependencies": {
+    "expo": "~54.0.33",
     "lucide-react-native": "^0.576.0",
-    "react-native-svg": "^15.15.3"
+    "react-native-svg": "15.12.1"
   }
 }

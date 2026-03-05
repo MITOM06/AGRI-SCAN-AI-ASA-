@@ -44,11 +44,19 @@ export default function ResetPasswordScreen() {
     resolver: customResetResolver,
     mode: "onChange",
     defaultValues: {
-      token,  // BUG FIX: gán token thật từ params thay vì hardcode
+      email: email,
+      token,
       password: "",
       confirmPassword: "",
     },
   });
+
+  const onValidationError = (errors: any) => {
+    console.log("Lỗi Validation từ Zod:", errors);
+    if (errors.email || errors.token) {
+      Alert.alert("Lỗi dữ liệu", "Thông tin phiên bản cập nhật không đầy đủ, vui lòng thử lại OTP.");
+    }
+  };
 
   const password = watch("password", "");
   const isPasswordLengthValid = password.length >= 8;
@@ -147,8 +155,15 @@ export default function ResetPasswordScreen() {
               )}
             />
 
-            <Button title="Cập nhật mật khẩu" variant="primary" size="lg"
-              isLoading={isSubmitting} onPress={handleSubmit(onSubmit)} style={styles.submitButton} />
+            <Button
+              title="Cập nhật mật khẩu"
+              variant="primary"
+              size="lg"
+              isLoading={isSubmitting}
+              // CẬP NHẬT DÒNG NÀY:
+              onPress={handleSubmit(onSubmit, onValidationError)}
+              style={styles.submitButton}
+            />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
