@@ -9,53 +9,62 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useRouter } from "expo-router";
-import { z } from "zod";
-// Thêm icon CheckCircle2 và ArrowLeft cho đẹp
 import { Leaf, ArrowLeft, CheckCircle2 } from "lucide-react-native";
+
+// CHUẨN MONOREPO: Import schema từ shared
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordFormData,
+} from "@agri-scan/shared";
 
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 
-// Schema chỉ cần mỗi Email là đủ
-const forgotPasswordSchema = z.object({
-  email: z.string().email("Email không hợp lệ. Vui lòng kiểm tra lại."),
-});
+// 🌟 TUYỆT CHIÊU CUSTOM RESOLVER 🌟
+const customForgotResolver = async (values: any) => {
+  const result = forgotPasswordSchema.safeParse(values);
+  if (result.success) return { values: result.data, errors: {} };
 
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+  const formErrors: Record<string, any> = {};
+  const fieldErrors = result.error.flatten().fieldErrors;
+  for (const key in fieldErrors) {
+    formErrors[key] = {
+      type: "validation",
+      message: fieldErrors[key as keyof typeof fieldErrors]?.[0],
+    };
+  }
+  return { values: {}, errors: formErrors };
+};
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Thêm state để theo dõi xem đã gửi email thành công chưa
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema as any), // Tạm thời ép kiểu để xử lý lỗi Zod
+  const { control, handleSubmit } = useForm<ForgotPasswordFormData>({
+    resolver: customForgotResolver, // Dùng resolver an toàn
+    mode: "onChange",
+    defaultValues: {
+      email: "", // Khởi tạo rỗng để tránh ZodError
+    },
   });
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsSubmitting(true);
-    // TODO: Gọi API gửi email reset password sau
+    // TODO: Gọi API gửi email reset password
     await new Promise((resolve) => setTimeout(resolve, 1500));
     console.log("Yêu cầu khôi phục cho email:", data);
     setIsSubmitting(false);
 
-    // Gửi xong thì bật giao diện thành công lên
+    // Chuyển sang trang OTP
     router.push({
       pathname: "/auth/otp-verification",
-      params: { email: data.email }, // Truyền email để trang OTP hiển thị cho user biết
+      params: { email: data.email },
     });
   };
 
-  // ------------------------------------------------------------------
-  // GIAO DIỆN 2: Hiển thị khi đã bấm gửi email thành công
-  // ------------------------------------------------------------------
+  // --- Giao diện Thành công (nếu cần dùng) ---
   if (isSuccess) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -69,7 +78,7 @@ export default function ForgotPasswordScreen() {
             <Text style={styles.title}>Đã gửi email khôi phục!</Text>
             <Text style={styles.subtitle}>
               Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu. Vui lòng kiểm tra hộp
-              thư đến (và cả hộp thư rác) của bạn nhé.
+              thư đến.
             </Text>
           </View>
           <Button
@@ -84,9 +93,7 @@ export default function ForgotPasswordScreen() {
     );
   }
 
-  // ------------------------------------------------------------------
-  // GIAO DIỆN 1: Form nhập email (Mặc định)
-  // ------------------------------------------------------------------
+  // --- Giao diện Form ---
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -95,10 +102,9 @@ export default function ForgotPasswordScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled" // Kế thừa bí kíp trị bàn phím iOS
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.card}>
-          {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconContainer}>
               <Leaf size={28} color="#16a34a" />
@@ -110,22 +116,26 @@ export default function ForgotPasswordScreen() {
             </Text>
           </View>
 
-          {/* Form */}
           <View style={styles.form}>
             <Controller
               control={control}
               name="email"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Email của bạn"
-                  placeholder="name@example.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                  error={errors.email?.message}
-                />
+              render={({
+                field: { onChange, onBlur, value },
+                fieldState: { error },
+              }) => (
+                <View style={{ marginBottom: 16 }}>
+                  <Input
+                    label="Email của bạn"
+                    placeholder="name@example.com"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    error={error?.message} // Truyền lỗi để Input tự in chữ đỏ
+                  />
+                </View>
               )}
             />
 
@@ -138,7 +148,6 @@ export default function ForgotPasswordScreen() {
               style={styles.submitButton}
             />
 
-            {/* Footer có nút Quay lại xịn xò */}
             <View style={styles.footer}>
               <Link href="/auth/login" asChild>
                 <TouchableOpacity style={styles.backLink}>
@@ -158,19 +167,12 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f9fafb",
-  },
-  centerContent: {
-    justifyContent: "center",
-    padding: 16,
-  },
+  container: { flex: 1, backgroundColor: "#f9fafb" },
+  centerContent: { justifyContent: "center", padding: 16 },
   scrollContent: {
     flexGrow: 1,
-    paddingTop: 80, // Vẫn giữ padding để chống văng form trên iOS
+    paddingTop: 80,
     paddingBottom: 60,
     paddingHorizontal: 16,
   },
@@ -184,10 +186,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
   },
-  header: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
+  header: { alignItems: "center", marginBottom: 24 },
   iconContainer: {
     width: 48,
     height: 48,
@@ -211,26 +210,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     paddingHorizontal: 8,
   },
-  form: {
-    width: "100%",
-  },
-  submitButton: {
-    marginTop: 12,
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 24,
-  },
+  form: { width: "100%" },
+  submitButton: { marginTop: 12 },
+  footer: { flexDirection: "row", justifyContent: "center", marginTop: 24 },
   backLink: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
-  backText: {
-    color: "#4b5563",
-    fontWeight: "500",
-    fontSize: 15,
-  },
+  backText: { color: "#4b5563", fontWeight: "500", fontSize: 15 },
 });

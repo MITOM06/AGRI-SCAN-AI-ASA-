@@ -9,8 +9,7 @@ import {
   Platform,
   ScrollView,
   Alert,
-} from "react-native"; // Hoặc từ react-native
-import { View as RNView, StyleSheet as RNStyleSheet } from "react-native";
+} from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Timer, Smartphone } from "lucide-react-native";
 
@@ -21,17 +20,17 @@ import { AuthHeader } from "./AuthHeader";
 export default function OTPVerificationScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const email = params.email || "email của bạn"; // Lấy email truyền từ trang trước sang
+  const email = params.email || "email của bạn"; // Lấy email truyền từ trang Quên mật khẩu
 
   const [otp, setOtp] = useState("");
   const [seconds, setSeconds] = useState(60);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Xử lý bộ đếm ngược
+  // Xử lý bộ đếm ngược thời gian
   useEffect(() => {
     const interval = setInterval(() => {
       if (seconds > 0) {
-        setSeconds(seconds - 1);
+        setSeconds((prev) => prev - 1);
       }
     }, 1000);
     return () => clearInterval(interval);
@@ -41,22 +40,26 @@ export default function OTPVerificationScreen() {
     if (otp.length < 6) return;
 
     setIsSubmitting(true);
-    // Giả lập check OTP
+    // TODO: Gọi API kiểm tra mã OTP tại đây
     await new Promise((res) => setTimeout(res, 1500));
     setIsSubmitting(false);
 
-    // Chuyển sang trang đặt lại mật khẩu
-    router.push("/auth/reset-password");
+    // Chuyển sang trang đặt lại mật khẩu và truyền token (nếu API có trả về)
+    router.push({
+      pathname: "/auth/reset-password",
+      params: { token: "dummy_token" },
+    });
   };
 
   const handleResend = () => {
-    setSeconds(60);
-    setOtp("");
+    setSeconds(60); // Reset lại 60s
+    setOtp(""); // Xóa mã cũ
+    // TODO: Gọi API gửi lại mã OTP
     Alert.alert("Thông báo", "Mã OTP mới đã được gửi lại vào email.");
   };
 
   return (
-    <RNView style={styles.container}>
+    <View style={styles.container}>
       {/* Nút quay lại để user có thể sửa lại Email nếu nhập sai ở trang trước */}
       <AuthHeader showBack={true} />
 
@@ -66,22 +69,23 @@ export default function OTPVerificationScreen() {
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <RNView style={styles.card}>
-            <RNView style={styles.header}>
-              <RNView style={styles.iconContainer}>
+          <View style={styles.card}>
+            {/* --- Header --- */}
+            <View style={styles.header}>
+              <View style={styles.iconContainer}>
                 <Smartphone size={28} color="#16a34a" />
-              </RNView>
+              </View>
               <Text style={styles.title}>Xác thực OTP</Text>
               <Text style={styles.subtitle}>
                 Vui lòng nhập mã 6 số được gửi đến:{"\n"}
-                <Text style={{ fontWeight: "600", color: "#374151" }}>
-                  {email}
-                </Text>
+                <Text style={styles.emailText}>{email}</Text>
               </Text>
-            </RNView>
+            </View>
 
+            {/* --- Input OTP --- */}
             <TextInput
               style={styles.otpInput}
               placeholder="000000"
@@ -90,30 +94,33 @@ export default function OTPVerificationScreen() {
               maxLength={6}
               value={otp}
               onChangeText={setOtp}
-              autoFocus={true} // Tự động hiện bàn phím khi vào trang
+              autoFocus={true} // Tự động bật bàn phím khi vào trang cho tiện
             />
 
-            <RNView style={styles.timerRow}>
+            {/* --- Hẹn giờ --- */}
+            <View style={styles.timerRow}>
               <Timer size={16} color={seconds > 0 ? "#6b7280" : "#ef4444"} />
               <Text
                 style={[
                   styles.timerText,
-                  seconds === 0 && { color: "#ef4444", fontWeight: "600" },
+                  seconds === 0 && styles.timerTextExpired,
                 ]}
               >
                 {seconds > 0 ? ` Gửi lại sau ${seconds}s` : " Mã đã hết hạn"}
               </Text>
-            </RNView>
+            </View>
 
+            {/* --- Nút xác nhận --- */}
             <Button
               title="Xác nhận mã"
               variant="primary"
               size="lg"
               isLoading={isSubmitting}
               onPress={handleVerify}
-              disabled={otp.length < 6}
+              disabled={otp.length < 6} // Khóa nút nếu chưa nhập đủ 6 số
             />
 
+            {/* --- Nút gửi lại mã (chỉ hiện khi hết giờ) --- */}
             {seconds === 0 && (
               <TouchableOpacity
                 onPress={handleResend}
@@ -123,10 +130,10 @@ export default function OTPVerificationScreen() {
                 <Text style={styles.resendText}>Gửi lại mã mới</Text>
               </TouchableOpacity>
             )}
-          </RNView>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </RNView>
+    </View>
   );
 }
 
@@ -176,6 +183,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
   },
+  emailText: {
+    fontWeight: "600",
+    color: "#374151",
+  },
   otpInput: {
     borderBottomWidth: 2,
     borderBottomColor: "#16a34a",
@@ -183,7 +194,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     paddingVertical: 10,
-    letterSpacing: 15, // Tạo khoảng cách rộng giữa các con số cho dễ nhìn
+    letterSpacing: 15, // Tạo khoảng cách rộng giữa các số cho dễ nhìn
     marginBottom: 25,
     color: "#111827",
   },
@@ -196,6 +207,11 @@ const styles = StyleSheet.create({
   timerText: {
     fontSize: 14,
     color: "#6b7280",
+    marginLeft: 4,
+  },
+  timerTextExpired: {
+    color: "#ef4444",
+    fontWeight: "600",
   },
   resendBtn: {
     marginTop: 20,
