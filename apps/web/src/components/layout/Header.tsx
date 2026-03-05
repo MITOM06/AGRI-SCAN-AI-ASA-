@@ -59,7 +59,7 @@ export function Header() {
             ) : isAuthenticated ? (
               <>
                 <span className="text-sm text-gray-600">
-                  Xin chào, <strong>{user?.fullName}</strong>
+                  Xin chào, <strong>{user?.email}</strong>
                 </span>
                 <Button variant="outline" size="sm" onClick={logout}>
                   Đăng xuất
@@ -67,12 +67,12 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link href="/login">
+                <Link href="/auth/login">
                   <Button variant="ghost" size="sm">
                     Đăng nhập
                   </Button>
                 </Link>
-                <Link href="/register">
+                <Link href="/auth/register">
                   <Button variant="primary" size="sm">
                     Đăng ký
                   </Button>

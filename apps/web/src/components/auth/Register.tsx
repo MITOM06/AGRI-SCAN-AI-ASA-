@@ -51,9 +51,9 @@ export function Register() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      await registerUser(data.email, data.fullName);
+      await registerUser(data.email, data.password, data.fullName);
       // Registration successful - redirect to login
-      router.push("/login?message=registration_success");
+      router.push("/auth/login?message=registration_success");
     } catch (error) {
       console.error("Registration failed:", error);
     }
@@ -271,7 +271,7 @@ export function Register() {
           <div className="text-center text-sm">
             <span className="text-gray-500">Đã có tài khoản? </span>
             <Link
-              href="/login"
+              href="/auth/login"
               className="font-medium text-primary hover:text-primary-dark"
             >
               Đăng nhập ngay

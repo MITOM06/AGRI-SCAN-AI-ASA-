@@ -8,10 +8,12 @@ import React, {
   useContext,
   ReactNode,
 } from "react";
+import { authApi, tokenStorage } from "@/lib/api-client";
+import type { IAuthResponse } from "@agri-scan/shared";
 
+// Simple User interface matching backend response
 interface User {
   id: string;
-  name: string;
   email: string;
   avatar?: string;
 }
@@ -20,9 +22,15 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string) => Promise<void>;
-  register: (email: string, name: string) => Promise<void>;
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    fullName: string,
+  ) => Promise<void>;
   logout: () => void;
+  clearError: () => void;
 }
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
@@ -30,86 +38,129 @@ const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check for persisted user session
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse user from local storage", e);
-        localStorage.removeItem("user");
+    // Check for persisted user session and get profile if token exists
+    const checkAuthSession = async () => {
+      const accessToken = tokenStorage.getAccessToken();
+      if (accessToken) {
+        try {
+          const userData = await authApi.getProfile();
+          const userWithAvatar: User = {
+            id: userData.id,
+            email: userData.email,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.email)}&background=random`,
+          };
+          setUser(userWithAvatar);
+        } catch (error) {
+          console.error("Failed to get user profile:", error);
+          tokenStorage.clearTokens();
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    checkAuthSession();
   }, []);
 
-  const login = useCallback(async (email: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
+    setError(null);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Call real login API
+      const authResponse: IAuthResponse = await authApi.login({
+        email,
+        password,
+      });
 
-      // Check if we have this user in our "database" (localStorage)
-      const usersDb = JSON.parse(localStorage.getItem("users_db") || "{}");
-      const existingUser = usersDb[email];
+      // Validate response structure
+      if (!authResponse || !authResponse.user) {
+        throw new Error("Invalid response format from server");
+      }
 
-      // If user exists in DB, use saved name; otherwise fallback to email username
-      const name = existingUser ? existingUser.name : email.split("@")[0];
+      const { user, accessToken, refreshToken } = authResponse;
 
-      const newUser: User = {
-        id: existingUser
-          ? existingUser.id
-          : Math.random().toString(36).substr(2, 9),
-        name: name,
-        email: email,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+      // Validate user object
+      if (!user.id || !user.email) {
+        throw new Error("Invalid user data from server");
+      }
+
+      // Save tokens
+      tokenStorage.saveTokens(accessToken, refreshToken || "");
+
+      // Set user with avatar - use email for avatar name
+      const userWithAvatar: User = {
+        id: user.id,
+        email: user.email,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random`,
       };
+      setUser(userWithAvatar);
+    } catch (error: any) {
+      console.error("Login failed:", error);
 
-      setUser(newUser);
-      localStorage.setItem("user", JSON.stringify(newUser));
+      // Handle different error types
+      let errorMessage = "Đăng nhập thất bại. Vui lòng thử lại.";
+
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      setError(errorMessage);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const register = useCallback(async (email: string, name: string) => {
-    setIsLoading(true);
+  const register = useCallback(
+    async (email: string, password: string, fullName: string) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Call real register API
+        await authApi.register({ email, password, fullName });
+        // Registration complete - user needs to login manually
+      } catch (error: any) {
+        console.error("Registration failed:", error);
+        setError(
+          error.response?.data?.message ||
+            "Đăng ký thất bại. Vui lòng thử lại.",
+        );
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  const logout = useCallback(async () => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: name,
-        email: email,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
-      };
-
-      // Save to "database"
-      const usersDb = JSON.parse(localStorage.getItem("users_db") || "{}");
-      usersDb[email] = newUser;
-      localStorage.setItem("users_db", JSON.stringify(usersDb));
-
-      // Registration complete - user needs to login manually
+      await authApi.logout();
+    } catch (error) {
+      console.error("Logout API failed:", error);
     } finally {
-      setIsLoading(false);
+      setUser(null);
+      tokenStorage.clearTokens();
     }
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem("user");
+  const clearError = useCallback(() => {
+    setError(null);
   }, []);
 
   const value: AuthContextType = {
     user,
     isLoading,
     isAuthenticated: !!user,
+    error,
     login,
     register,
     logout,
+    clearError,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -42,7 +42,7 @@ export function Login() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(data.email);
+      await login(data.email, data.password);
       router.push("/");
     } catch (error) {
       console.error("Login failed:", error);
@@ -119,7 +119,7 @@ export function Login() {
                   Mật khẩu
                 </label>
                 <Link
-                  href="/forgot-password"
+                  href="/auth/forgot-password"
                   className="text-sm font-medium text-primary hover:text-primary-dark"
                 >
                   Quên mật khẩu?
@@ -165,7 +165,7 @@ export function Login() {
           <div className="text-center text-sm">
             <span className="text-gray-500">Chưa có tài khoản? </span>
             <Link
-              href="/register"
+              href="/auth/register"
               className="font-medium text-primary hover:text-primary-dark"
             >
               Đăng ký ngay
