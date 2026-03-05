@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,610 +6,721 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Modal,
   ActivityIndicator,
-  Alert,
+  Animated,
+  Dimensions,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useRouter } from "expo-router"; // Import thêm useRouter
 import {
+  Send,
   Camera as CameraIcon,
-  Image as ImageIcon,
   X,
-  RefreshCw,
   Leaf,
-  AlertCircle,
-  CheckCircle2,
+  User,
+  Plus,
+  PanelLeft,
+  MessageSquare,
+  ArrowLeft, // Import thêm ArrowLeft
 } from "lucide-react-native";
 
-// Khởi tạo Gemini AI (Lưu ý: Đổi NEXT_PUBLIC thành EXPO_PUBLIC trong file .env của mobile nhé)
-const API_KEY =
-  process.env.EXPO_PUBLIC_GEMINI_API_KEY ||
-  "NHAP_API_KEY_CUA_BAN_VAO_DAY_NEU_CHUA_CO_ENV";
+const { width } = Dimensions.get("window");
+
+// Khởi tạo Gemini AI
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || "YOUR_API_KEY_HERE";
 const ai = new GoogleGenerativeAI(API_KEY);
 
-interface DiagnosisResult {
-  diseaseName: string;
-  confidence: number;
-  description: string;
-  treatment: {
-    biological: string[];
-    chemical: string[];
-    preventive: string[];
-  };
+interface Message {
+  id: string;
+  text?: string;
+  image?: string;
+  sender: "user" | "bot";
+  timestamp: Date;
 }
 
-export default function ScanScreen() {
+const MOCK_HISTORY = [
+  { id: "1", title: "Bệnh đốm lá trên cây Cà phê", date: "Hôm nay" },
+  { id: "2", title: "Cách bón phân NPK", date: "Hôm qua" },
+  { id: "3", title: "Sâu bệnh hại lúa mùa mưa", date: "7 ngày trước" },
+];
+
+export default function ScanChatScreen() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter(); // Khởi tạo router
   const [permission, requestPermission] = useCameraPermissions();
-  const [image, setImage] = useState<string | null>(null); // Lưu base64
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputText, setInputText] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [facing, setFacing] = useState<"back" | "front">("back");
+  const [isBotTyping, setIsBotTyping] = useState(false);
 
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [result, setResult] = useState<DiagnosisResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // --- STATE VÀ HIỆU ỨNG MENU BÊN TRÁI ---
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Bắt đầu từ -width (ẩn hoàn toàn bên trái màn hình)
+  const slideAnim = useRef(new Animated.Value(-width)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  const openSidebar = () => {
+    setIsSidebarOpen(true);
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: 0, // Kéo vào trong màn hình
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1, // Làm mờ nền
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const closeSidebar = () => {
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: -width, // Đẩy ngược ra ngoài bên trái
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsSidebarOpen(false);
+    });
+  };
+
+  const scrollViewRef = useRef<ScrollView>(null);
   const cameraRef = useRef<any>(null);
 
-  // 1. Xử lý mở Camera
+  // Cuộn xuống cuối khi có tin nhắn mới
+  useEffect(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, [messages, isBotTyping]);
+
+  // Mở Camera
   const handleOpenCamera = async () => {
     if (!permission?.granted) {
       const { granted } = await requestPermission();
       if (!granted) {
-        Alert.alert("Lỗi", "Cần cấp quyền camera để chụp ảnh cây trồng.");
+        alert("Cần cấp quyền camera để chụp ảnh.");
         return;
       }
     }
     setIsCameraOpen(true);
   };
 
-  // 2. Chụp ảnh
   const takePicture = async () => {
     if (cameraRef.current) {
-      try {
-        const photo = await cameraRef.current.takePictureAsync({
-          base64: true,
-          quality: 0.7,
-        });
-        setImage(photo.base64);
-        setIsCameraOpen(false);
-        setResult(null);
-        setError(null);
-      } catch (err) {
-        Alert.alert("Lỗi", "Không thể chụp ảnh, vui lòng thử lại.");
-      }
+      const photo = await cameraRef.current.takePictureAsync({
+        base64: true,
+        quality: 0.7,
+      });
+      setSelectedImage(`data:image/jpeg;base64,${photo.base64}`);
+      setIsCameraOpen(false);
     }
   };
 
-  // 3. Chọn ảnh từ thư viện
+  // Mở Thư viện ảnh
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
       quality: 0.7,
       base64: true,
     });
 
     if (!result.canceled && result.assets[0].base64) {
-      setImage(result.assets[0].base64);
-      setResult(null);
-      setError(null);
+      setSelectedImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
     }
   };
 
-  // 4. Gọi Gemini AI phân tích
-  const analyzeImage = async () => {
-    if (!image) return;
+  // Gửi tin nhắn và gọi AI
+  const handleSend = async () => {
+    if (!inputText.trim() && !selectedImage) return;
 
-    setIsAnalyzing(true);
-    setError(null);
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: inputText.trim(),
+      image: selectedImage || undefined,
+      sender: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, newMessage]);
+    const userText = inputText;
+    const userImage = selectedImage;
+
+    setInputText("");
+    setSelectedImage(null);
+    setIsBotTyping(true);
 
     try {
       const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+
       const prompt = `
-        Analyze this plant image for diseases. 
-        Return a JSON object with the following structure:
-        {
-          "diseaseName": "Name of the disease or 'Healthy' if no disease found",
-          "confidence": 0.95,
-          "description": "Brief description of the condition",
-          "treatment": {
-            "biological": ["List of biological treatments"],
-            "chemical": ["List of chemical treatments"],
-            "preventive": ["List of preventive measures"]
-          }
-        }
-        If the image is not a plant, return null.
+        Bạn là Agri-Scan AI, một chuyên gia nông nghiệp thân thiện. 
+        Câu hỏi: "${userText}".
+        ${userImage ? "Đính kèm: Bức ảnh cây trồng." : ""}
+        Hãy trả lời bằng tiếng Việt, phân tích bệnh (nếu có), đưa ra nguyên nhân và cách điều trị.
       `;
 
-      const response = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            mimeType: "image/jpeg",
-            data: image,
-          },
-        },
-      ]);
-
-      const text = response.response.text();
-      if (!text) throw new Error("Không nhận được phản hồi từ AI");
-
-      // Xử lý chuỗi JSON bị kẹp trong Markdown block (```json ... ```)
-      let jsonString = text.trim();
-      if (jsonString.startsWith("```json")) {
-        jsonString = jsonString
-          .replace(/^```json\s*/, "")
-          .replace(/\s*```$/, "");
-      } else if (jsonString.startsWith("```")) {
-        jsonString = jsonString.replace(/^```\s*/, "").replace(/\s*```$/, "");
-      }
-
-      const data = JSON.parse(jsonString);
-
-      if (!data) {
-        setError(
-          "Không nhận diện được cây trồng. Vui lòng thử lại với ảnh rõ nét hơn.",
-        );
+      let response;
+      if (userImage) {
+        const base64Data = userImage.split(",")[1];
+        response = await model.generateContent([
+          prompt,
+          { inlineData: { data: base64Data, mimeType: "image/jpeg" } },
+        ]);
       } else {
-        setResult(data);
+        response = await model.generateContent(prompt);
       }
-    } catch (err) {
-      console.error("Analysis error:", err);
-      setError("Có lỗi xảy ra khi phân tích ảnh. Vui lòng thử lại.");
+
+      const botText = response.response.text();
+
+      const botResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: botText,
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, botResponse]);
+    } catch (error) {
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "Xin lỗi, hiện tại tôi không thể kết nối tới hệ thống. Vui lòng thử lại sau!",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
-      setIsAnalyzing(false);
+      setIsBotTyping(false);
     }
   };
 
-  const resetScan = () => {
-    setImage(null);
-    setResult(null);
-    setError(null);
-  };
-
-  // --- GIAO DIỆN CAMERA MỞ TOÀN MÀN HÌNH MỘT PHẦN ---
-  if (isCameraOpen) {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }}>
-        <CameraView style={{ flex: 1 }} facing={facing} ref={cameraRef}>
-          <View style={styles.cameraOverlay}>
-            <TouchableOpacity
-              onPress={() => setIsCameraOpen(false)}
-              style={styles.iconButton}
-            >
-              <X size={28} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={takePicture}
-              style={styles.captureButton}
-            >
-              <View style={styles.captureInner} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                setFacing((f) => (f === "back" ? "front" : "back"))
-              }
-              style={styles.iconButton}
-            >
-              <RefreshCw size={28} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        </CameraView>
-      </SafeAreaView>
-    );
-  }
-
-  // --- GIAO DIỆN CHÍNH ---
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+    <View style={styles.container}>
+      {/* Header Bar */}
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: Platform.OS === "ios" ? 10 : Math.max(insets.top, 10),
+          },
+        ]}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Chẩn Đoán Bệnh Cây</Text>
-          <Text style={styles.subtitle}>
-            Chụp hoặc tải ảnh lên để AI phân tích sức khỏe cây trồng
-          </Text>
-        </View>
-
-        {/* Khung chứa ảnh hoặc nút chọn */}
-        <View
-          style={[
-            styles.imageContainer,
-            image ? styles.imageContainerActive : null,
-          ]}
-        >
-          {image ? (
-            <>
-              <Image
-                source={{ uri: `data:image/jpeg;base64,${image}` }}
-                style={styles.previewImage}
-              />
-              <TouchableOpacity style={styles.closeBtn} onPress={resetScan}>
-                <X size={20} color="#ef4444" />
-              </TouchableOpacity>
-            </>
-          ) : (
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIconBox}>
-                <CameraIcon size={36} color="#16a34a" />
-              </View>
-              <Text style={styles.emptyTitle}>Bắt đầu chẩn đoán</Text>
-
-              <TouchableOpacity
-                style={styles.actionBtnPrimary}
-                onPress={handleOpenCamera}
-              >
-                <CameraIcon size={20} color="#fff" />
-                <Text style={styles.actionBtnTextPrimary}>
-                  Chụp ảnh trực tiếp
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.actionBtnSecondary}
-                onPress={pickImage}
-              >
-                <ImageIcon size={20} color="#374151" />
-                <Text style={styles.actionBtnTextSecondary}>
-                  Tải ảnh từ thư viện
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
-        {/* Nút Phân tích */}
-        {image && !result && !isAnalyzing && (
-          <TouchableOpacity style={styles.analyzeBtn} onPress={analyzeImage}>
-            <Leaf size={20} color="#fff" />
-            <Text style={styles.analyzeBtnText}>Phân tích ngay</Text>
+        {/* Nút Quay lại và Nút Sidebar được nhóm chung */}
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.iconBtn}
+          >
+            <ArrowLeft size={24} color="#374151" />
           </TouchableOpacity>
-        )}
 
-        {/* Đang Load */}
-        {isAnalyzing && (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator size="large" color="#16a34a" />
-            <Text style={styles.loadingText}>AI đang phân tích dữ liệu...</Text>
-          </View>
-        )}
+          <TouchableOpacity
+            onPress={openSidebar}
+            style={[styles.iconBtn, { marginLeft: 4 }]}
+          >
+            <PanelLeft size={24} color="#374151" />
+          </TouchableOpacity>
+        </View>
 
-        {/* Báo Lỗi */}
-        {error && (
-          <View style={styles.errorBox}>
-            <AlertCircle size={20} color="#ef4444" />
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+        <Text style={styles.headerTitle}>Agri-Scan AI</Text>
 
-        {/* Kết quả trả về */}
-        {result && (
-          <View style={styles.resultCard}>
-            <View style={styles.resultHeader}>
-              <View>
-                <Text style={styles.diseaseName}>{result.diseaseName}</Text>
-                <Text style={styles.confidence}>
-                  Độ tin cậy: {(result.confidence * 100).toFixed(0)}%
-                </Text>
+        {/* Nút tạo cuộc trò chuyện mới */}
+        <TouchableOpacity
+          onPress={() => setMessages([])}
+          style={styles.iconBtn}
+        >
+          <Plus size={24} color="#374151" />
+        </TouchableOpacity>
+      </View>
+
+      {/* --- Sidebar Lịch sử trượt từ trái sang (Animated Drawer) --- */}
+      <Modal visible={isSidebarOpen} transparent={true} animationType="none">
+        <View style={styles.modalContainer}>
+          {/* Lớp nền mờ */}
+          <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
+            <TouchableOpacity
+              style={{ flex: 1 }}
+              activeOpacity={1}
+              onPress={closeSidebar}
+            />
+          </Animated.View>
+
+          {/* Menu Trượt từ trái qua */}
+          <Animated.View
+            style={[
+              styles.leftDrawer,
+              { transform: [{ translateX: slideAnim }] },
+            ]}
+          >
+            <View
+              style={[
+                styles.sidebarContent,
+                { paddingTop: Math.max(insets.top, 20) },
+              ]}
+            >
+              <View style={styles.sidebarHeader}>
+                <Text style={styles.sidebarTitle}>Lịch sử trò chuyện</Text>
+                <TouchableOpacity onPress={closeSidebar}>
+                  <X size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView
+                style={styles.historyList}
+                showsVerticalScrollIndicator={false}
+              >
+                {MOCK_HISTORY.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.historyItem}
+                    onPress={closeSidebar}
+                  >
+                    <MessageSquare size={18} color="#86efac" />
+                    <View style={{ marginLeft: 10 }}>
+                      <Text style={styles.historyText} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.historyDate}>{item.date}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      {/* Vùng Tin nhắn */}
+      <KeyboardAvoidingView
+        style={styles.chatArea}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {messages.length === 0 ? (
+            <View style={styles.emptyState}>
+              <View style={styles.botAvatarLarge}>
+                <Leaf size={36} color="#16a34a" />
+              </View>
+              <Text style={styles.emptyTitle}>Xin chào!</Text>
+              <Text style={styles.emptyDesc}>
+                Tôi là chuyên gia nông nghiệp AI. Hãy hỏi tôi về sâu bệnh, cách
+                chăm sóc cây hoặc gửi ảnh để tôi phân tích nhé.
+              </Text>
+            </View>
+          ) : (
+            messages.map((msg) => (
+              <View
+                key={msg.id}
+                style={[
+                  styles.messageWrapper,
+                  msg.sender === "user" ? styles.msgRight : styles.msgLeft,
+                ]}
+              >
+                {msg.sender === "bot" && (
+                  <View style={styles.botAvatarSmall}>
+                    <Leaf size={14} color="#fff" />
+                  </View>
+                )}
+
+                <View
+                  style={[
+                    styles.messageBubble,
+                    msg.sender === "user"
+                      ? styles.bubbleUser
+                      : styles.bubbleBot,
+                  ]}
+                >
+                  {msg.image && (
+                    <Image
+                      source={{ uri: msg.image }}
+                      style={styles.msgImage}
+                    />
+                  )}
+                  {msg.text ? (
+                    <Text
+                      style={[
+                        styles.msgText,
+                        msg.sender === "user"
+                          ? styles.textUser
+                          : styles.textBot,
+                      ]}
+                    >
+                      {msg.text}
+                    </Text>
+                  ) : null}
+                </View>
+
+                {msg.sender === "user" && (
+                  <View style={styles.userAvatarSmall}>
+                    <User size={14} color="#4b5563" />
+                  </View>
+                )}
+              </View>
+            ))
+          )}
+
+          {isBotTyping && (
+            <View style={[styles.messageWrapper, styles.msgLeft]}>
+              <View style={styles.botAvatarSmall}>
+                <Leaf size={14} color="#fff" />
               </View>
               <View
                 style={[
-                  styles.statusBadge,
-                  result.diseaseName.toLowerCase().includes("healthy") ||
-                  result.diseaseName.toLowerCase().includes("khỏe")
-                    ? styles.badgeSafe
-                    : styles.badgeDanger,
+                  styles.messageBubble,
+                  styles.bubbleBot,
+                  { paddingVertical: 14, paddingHorizontal: 16 },
                 ]}
               >
-                {result.diseaseName.toLowerCase().includes("healthy") ||
-                result.diseaseName.toLowerCase().includes("khỏe") ? (
-                  <CheckCircle2 size={16} color="#15803d" />
-                ) : (
-                  <AlertCircle size={16} color="#b91c1c" />
-                )}
-                <Text
-                  style={[
-                    styles.statusText,
-                    result.diseaseName.toLowerCase().includes("healthy") ||
-                    result.diseaseName.toLowerCase().includes("khỏe")
-                      ? { color: "#15803d" }
-                      : { color: "#b91c1c" },
-                  ]}
-                >
-                  {result.diseaseName.toLowerCase().includes("healthy") ||
-                  result.diseaseName.toLowerCase().includes("khỏe")
-                    ? "Khỏe mạnh"
-                    : "Cần xử lý"}
-                </Text>
+                <ActivityIndicator size="small" color="#16a34a" />
               </View>
             </View>
+          )}
+        </ScrollView>
 
-            <Text style={styles.description}>{result.description}</Text>
-
-            <View style={styles.treatments}>
-              {/* Biện pháp sinh học */}
-              <View style={styles.treatmentSection}>
-                <View style={styles.treatmentTitleRow}>
-                  <View style={[styles.dot, { backgroundColor: "#22c55e" }]} />
-                  <Text style={styles.treatmentTitle}>BIỆN PHÁP SINH HỌC</Text>
-                </View>
-                {result.treatment.biological.map((item, idx) => (
-                  <Text
-                    key={idx}
-                    style={[
-                      styles.treatmentItem,
-                      { borderLeftColor: "#bbf7d0" },
-                    ]}
-                  >
-                    • {item}
-                  </Text>
-                ))}
-              </View>
-
-              {/* Biện pháp hóa học */}
-              <View style={styles.treatmentSection}>
-                <View style={styles.treatmentTitleRow}>
-                  <View style={[styles.dot, { backgroundColor: "#f97316" }]} />
-                  <Text style={styles.treatmentTitle}>BIỆN PHÁP HÓA HỌC</Text>
-                </View>
-                {result.treatment.chemical.map((item, idx) => (
-                  <Text
-                    key={idx}
-                    style={[
-                      styles.treatmentItem,
-                      { borderLeftColor: "#fed7aa" },
-                    ]}
-                  >
-                    • {item}
-                  </Text>
-                ))}
-              </View>
-
-              {/* Phòng ngừa */}
-              <View style={styles.treatmentSection}>
-                <View style={styles.treatmentTitleRow}>
-                  <View style={[styles.dot, { backgroundColor: "#3b82f6" }]} />
-                  <Text style={styles.treatmentTitle}>PHÒNG NGỪA</Text>
-                </View>
-                {result.treatment.preventive.map((item, idx) => (
-                  <Text
-                    key={idx}
-                    style={[
-                      styles.treatmentItem,
-                      { borderLeftColor: "#bfdbfe" },
-                    ]}
-                  >
-                    • {item}
-                  </Text>
-                ))}
-              </View>
+        {/* Thanh Nhập Liệu (Input Area) */}
+        <View
+          style={[
+            styles.inputContainer,
+            { paddingBottom: Math.max(insets.bottom, 10) },
+          ]}
+        >
+          {selectedImage && (
+            <View style={styles.previewContainer}>
+              <Image
+                source={{ uri: selectedImage }}
+                style={styles.previewImg}
+              />
+              <TouchableOpacity
+                style={styles.removePreviewBtn}
+                onPress={() => setSelectedImage(null)}
+              >
+                <X size={14} color="#fff" />
+              </TouchableOpacity>
             </View>
+          )}
+
+          <View style={styles.inputBar}>
+            <TouchableOpacity style={styles.actionBtn} onPress={pickImage}>
+              <Plus size={22} color="#6b7280" />
+            </TouchableOpacity>
+
+            <TextInput
+              style={styles.textInput}
+              placeholder="Hỏi về bệnh cây..."
+              placeholderTextColor="#9ca3af"
+              multiline
+              value={inputText}
+              onChangeText={setInputText}
+            />
+
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={handleOpenCamera}
+            >
+              <CameraIcon size={22} color="#6b7280" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.sendBtn,
+                inputText.trim() || selectedImage
+                  ? styles.sendBtnActive
+                  : styles.sendBtnDisabled,
+              ]}
+              onPress={handleSend}
+              disabled={!inputText.trim() && !selectedImage}
+            >
+              <Send
+                size={18}
+                color={inputText.trim() || selectedImage ? "#fff" : "#9ca3af"}
+              />
+            </TouchableOpacity>
           </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+          <Text style={styles.disclaimer}>
+            Agri-Scan AI có thể mắc lỗi. Hãy kiểm tra lại thông tin.
+          </Text>
+        </View>
+      </KeyboardAvoidingView>
+
+      {/* Modal Camera Fullscreen */}
+      <Modal visible={isCameraOpen} transparent={true}>
+        <View style={styles.cameraContainer}>
+          <CameraView style={{ flex: 1 }} facing="back" ref={cameraRef}>
+            <View style={styles.cameraOverlay}>
+              <TouchableOpacity
+                style={styles.camCloseBtn}
+                onPress={() => setIsCameraOpen(false)}
+              >
+                <X size={28} color="#fff" />
+              </TouchableOpacity>
+              <View style={styles.camBottomBar}>
+                <TouchableOpacity
+                  style={styles.captureBtn}
+                  onPress={takePicture}
+                >
+                  <View style={styles.captureBtnInner} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </CameraView>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
-  scrollContent: { padding: 20, paddingBottom: 60 },
-  header: { alignItems: "center", marginBottom: 24 },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#16a34a",
-    marginBottom: 8,
+  container: { flex: 1, backgroundColor: "#fff" },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f3f4f6",
+    backgroundColor: "#fff",
   },
-  subtitle: {
-    fontSize: 14,
-    color: "#6b7280",
-    textAlign: "center",
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#111827",
+    marginRight: 24,
+  }, // Thêm marginRight để căn giữa title tốt hơn
+  iconBtn: { padding: 8 },
+
+  // --- Styles Sidebar Trái (Lịch sử) ---
+  modalContainer: { flex: 1, flexDirection: "row" },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  leftDrawer: {
+    position: "absolute",
+    left: 0, // Cố định ở mép trái
+    top: 0,
+    bottom: 0,
+    width: width * 0.75, // Chiếm 75% màn hình
+    backgroundColor: "#1B5E20", // Màu xanh lá đậm giống ảnh Web
+    shadowColor: "#000",
+    shadowOffset: { width: 5, height: 0 }, // Đổ bóng sang phải
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 20,
+  },
+  sidebarContent: { flex: 1 },
+  sidebarHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.1)",
+  },
+  sidebarTitle: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  historyList: { flex: 1, padding: 16 },
+  historyItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 15,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    marginBottom: 10,
+  },
+  historyText: { color: "#fff", fontSize: 15, fontWeight: "500" },
+  historyDate: { color: "#86efac", fontSize: 12, marginTop: 4 },
+
+  // --- Styles Chat ---
+  chatArea: { flex: 1 },
+  scrollContent: { padding: 16, paddingBottom: 20 },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 80,
     paddingHorizontal: 20,
   },
-
-  // Khung chứa ảnh
-  imageContainer: {
-    width: "100%",
-    height: 350,
-    backgroundColor: "#fff",
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: "#e5e7eb",
-    borderStyle: "dashed",
-    overflow: "hidden",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  imageContainerActive: {
-    borderStyle: "solid",
-    borderColor: "#16a34a",
-    borderWidth: 1,
-  },
-  previewImage: { width: "100%", height: "100%", resizeMode: "cover" },
-  closeBtn: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    padding: 8,
-    borderRadius: 20,
-  },
-
-  // Empty State (Chưa có ảnh)
-  emptyState: { alignItems: "center", padding: 20 },
-  emptyIconBox: {
+  botAvatarLarge: {
     width: 70,
     height: 70,
     backgroundColor: "#dcfce3",
     borderRadius: 35,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 24,
+    fontWeight: "bold",
     color: "#111827",
-    marginBottom: 24,
+    marginBottom: 10,
   },
-  actionBtnPrimary: {
-    width: "100%",
+  emptyDesc: {
+    fontSize: 15,
+    color: "#6b7280",
+    textAlign: "center",
+    lineHeight: 22,
+  },
+  messageWrapper: {
     flexDirection: "row",
+    marginBottom: 20,
+    alignItems: "flex-end",
+  },
+  msgLeft: { justifyContent: "flex-start" },
+  msgRight: { justifyContent: "flex-end" },
+  botAvatarSmall: {
+    width: 28,
+    height: 28,
     backgroundColor: "#16a34a",
-    paddingVertical: 14,
-    borderRadius: 16,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    gap: 10,
-    marginBottom: 12,
+    marginRight: 8,
+    marginBottom: 4,
   },
-  actionBtnTextPrimary: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  actionBtnSecondary: {
-    width: "100%",
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    paddingVertical: 14,
-    borderRadius: 16,
+  userAvatarSmall: {
+    width: 28,
+    height: 28,
+    backgroundColor: "#f3f4f6",
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    gap: 10,
+    marginLeft: 8,
+    marginBottom: 4,
+  },
+  messageBubble: {
+    maxWidth: "75%",
+    padding: 12,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  bubbleUser: { backgroundColor: "#16a34a", borderBottomRightRadius: 4 },
+  bubbleBot: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderBottomLeftRadius: 4,
+  },
+  msgText: { fontSize: 15, lineHeight: 22 },
+  textUser: { color: "#fff" },
+  textBot: { color: "#374151" },
+  msgImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 8,
+    resizeMode: "cover",
+  },
+
+  // --- Styles Input ---
+  inputContainer: {
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  previewContainer: {
+    position: "relative",
+    alignSelf: "flex-start",
+    marginBottom: 10,
+  },
+  previewImg: {
+    width: 70,
+    height: 70,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
-  actionBtnTextSecondary: { color: "#374151", fontSize: 16, fontWeight: "600" },
-
-  // Nút phân tích
-  analyzeBtn: {
-    flexDirection: "row",
-    backgroundColor: "#16a34a",
-    paddingVertical: 16,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 10,
-    shadowColor: "#16a34a",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+  removePreviewBtn: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: "#374151",
+    borderRadius: 12,
+    padding: 4,
   },
-  analyzeBtnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-
-  // Trạng thái Loading / Error
-  loadingBox: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 16,
-    alignItems: "center",
+  inputBar: {
     flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
-    borderWidth: 1,
-    borderColor: "#f3f4f6",
-  },
-  loadingText: { color: "#16a34a", fontWeight: "500", fontSize: 15 },
-  errorBox: {
-    backgroundColor: "#fef2f2",
-    padding: 16,
-    borderRadius: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderWidth: 1,
-    borderColor: "#fee2e2",
-  },
-  errorText: { color: "#ef4444", flex: 1, fontSize: 14 },
-
-  // Kết quả
-  resultCard: {
-    backgroundColor: "#fff",
+    alignItems: "flex-end",
+    backgroundColor: "#f9fafb",
     borderRadius: 24,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#f3f4f6",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  resultHeader: {
-    padding: 20,
-    backgroundColor: "#f0fdf4",
-    borderBottomWidth: 1,
-    borderBottomColor: "#dcfce3",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  diseaseName: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#111827",
-    marginBottom: 4,
-  },
-  confidence: { fontSize: 13, color: "#6b7280" },
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  actionBtn: { padding: 10 },
+  textInput: {
+    flex: 1,
+    maxHeight: 100,
+    minHeight: 40,
+    fontSize: 15,
+    color: "#111827",
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingHorizontal: 4,
+  },
+  sendBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+    marginLeft: 4,
+  },
+  sendBtnActive: { backgroundColor: "#16a34a" },
+  sendBtnDisabled: { backgroundColor: "#f3f4f6" },
+  disclaimer: {
+    textAlign: "center",
+    fontSize: 11,
+    color: "#9ca3af",
+    marginTop: 8,
+  },
+
+  cameraContainer: { flex: 1, backgroundColor: "#000" },
+  cameraOverlay: { flex: 1, justifyContent: "space-between" },
+  camCloseBtn: {
+    alignSelf: "flex-end",
+    marginTop: 50,
+    marginRight: 20,
+    padding: 10,
+    backgroundColor: "rgba(0,0,0,0.4)",
     borderRadius: 20,
   },
-  badgeSafe: { backgroundColor: "#dcfce3" },
-  badgeDanger: { backgroundColor: "#fee2e2" },
-  statusText: { fontSize: 12, fontWeight: "600" },
-  description: { padding: 20, fontSize: 15, color: "#4b5563", lineHeight: 24 },
-
-  treatments: { paddingHorizontal: 20, paddingBottom: 20, gap: 20 },
-  treatmentSection: { gap: 8 },
-  treatmentTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  treatmentTitle: {
-    fontSize: 13,
-    fontWeight: "bold",
-    color: "#111827",
-    letterSpacing: 0.5,
-  },
-  treatmentItem: {
-    fontSize: 14,
-    color: "#4b5563",
-    paddingLeft: 12,
-    borderLeftWidth: 2,
-    paddingVertical: 2,
-    lineHeight: 22,
-  },
-
-  // Camera Overlay
-  cameraOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "flex-end",
-    paddingBottom: 40,
-  },
-  iconButton: {
-    width: 50,
-    height: 50,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  captureButton: {
+  camBottomBar: { paddingBottom: 50, alignItems: "center" },
+  captureBtn: {
     width: 70,
     height: 70,
     borderRadius: 35,
@@ -618,7 +729,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  captureInner: {
+  captureBtnInner: {
     width: 54,
     height: 54,
     backgroundColor: "#fff",

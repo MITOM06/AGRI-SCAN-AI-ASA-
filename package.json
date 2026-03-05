@@ -14,5 +14,9 @@
   "license": "ISC",
   "devDependencies": {
     "@types/multer": "^2.0.0"
+  },
+  "dependencies": {
+    "lucide-react-native": "^0.576.0",
+    "react-native-svg": "^15.15.3"
   }
 }

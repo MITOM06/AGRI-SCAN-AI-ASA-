@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,19 +6,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableOpacity,
+  BackHandler, // Thêm để xử lý nút lùi Android
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useRouter } from "expo-router";
 import { z } from "zod";
-import { Leaf } from "lucide-react-native";
+import { Leaf, ArrowLeft } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Import các component dùng chung mà chúng ta vừa tạo
+// Import các component UI chung
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import { AuthHeader } from "./AuthHeader";
 
-// Tạm thời định nghĩa Schema nội bộ để xử lý dứt điểm lỗi Zod
+// Định nghĩa Schema validation
 const loginSchema = z.object({
   email: z.string().email("Email không hợp lệ"),
   password: z.string().min(8, "Mật khẩu tối thiểu 8 ký tự"),
@@ -28,45 +30,72 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // --- XỬ LÝ CHẶN NÚT QUAY LẠI TRÊN ANDROID ---
+  useEffect(() => {
+    const onBackPress = () => {
+      // Khi bấm nút lùi cứng, thay vì quay lại trang cũ (như trang Đổi mật khẩu),
+      // ta ép app quay về hẳn trang chủ (Home).
+      router.replace("/");
+      return true; // Trả về true để ngăn hệ thống thực hiện hành động lùi mặc định
+    };
+
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress,
+    );
+
+    return () => subscription.remove();
+  }, []);
+  // ------------------------------------------
 
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema as any), // Tạm thời ép kiểu để xử lý lỗi Zod
+    resolver: zodResolver(loginSchema as any),
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
-    // TODO: Tích hợp API đăng nhập sau
+    // Giả lập gọi API đăng nhập
     await new Promise((resolve) => setTimeout(resolve, 1500));
     console.log("Dữ liệu đăng nhập:", data);
     setIsSubmitting(false);
 
-    // Đăng nhập xong chuyển về trang chủ
-    router.replace("/");
+    // Đăng nhập thành công, thay thế lịch sử bằng trang User đã đăng nhập
+    router.replace("/user");
   };
 
   return (
     <View style={styles.container}>
-      <AuthHeader showBack={false} />
+      {/* Nút Back tùy chỉnh: Ép về Home để xóa dấu vết các trang Quên mật khẩu trước đó */}
+      <View
+        style={[styles.customHeader, { paddingTop: Math.max(insets.top, 20) }]}
+      >
+        <TouchableOpacity
+          onPress={() => router.replace("/")}
+          style={styles.backButton}
+          activeOpacity={0.7}
+        >
+          <ArrowLeft size={26} color="#374151" />
+        </TouchableOpacity>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { justifyContent: "center" },
-          ]}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
-            {/* --- Phần Header --- */}
+            {/* Header */}
             <View style={styles.header}>
               <View style={styles.iconContainer}>
                 <Leaf size={28} color="#16a34a" />
@@ -77,7 +106,7 @@ export default function LoginScreen() {
               </Text>
             </View>
 
-            {/* --- Phần Form Nhập liệu --- */}
+            {/* Form */}
             <View style={styles.form}>
               <Controller
                 control={control}
@@ -141,17 +170,24 @@ export default function LoginScreen() {
   );
 }
 
-// Styles cho các phần bố cục (Layout)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb", // Tương đương bg-gray-50
+    backgroundColor: "#f9fafb",
+  },
+  customHeader: {
+    paddingHorizontal: 16,
+    zIndex: 10,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
   },
   scrollContent: {
     flexGrow: 1,
-    // justifyContent: "center",
-    // padding: 16,
-    paddingTop: Platform.OS === "ios" ? 100 : 60,
+    justifyContent: "center",
     paddingBottom: 40,
     paddingHorizontal: 16,
   },
@@ -172,7 +208,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 48,
     height: 48,
-    backgroundColor: "rgba(22, 163, 74, 0.1)", // bg-primary/10
+    backgroundColor: "rgba(22, 163, 74, 0.1)",
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -197,7 +233,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 6,
-    marginTop: -4, // Căn chỉnh lại khoảng cách do Input email phía trên
+    marginTop: 4,
   },
   customLabel: {
     fontSize: 14,
@@ -210,7 +246,7 @@ const styles = StyleSheet.create({
     color: "#16a34a",
   },
   submitButton: {
-    marginTop: 8,
+    marginTop: 16,
   },
   footer: {
     flexDirection: "row",
