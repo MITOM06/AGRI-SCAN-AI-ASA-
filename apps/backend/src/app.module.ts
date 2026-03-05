@@ -8,6 +8,7 @@ import {
   Plant, PlantSchema,
   Disease, DiseaseSchema,
   ScanHistory, ScanHistorySchema
+
 } from '@agri-scan/database';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -60,3 +61,4 @@ import { AuthModule } from './modules/auth/auth.module';
   providers: [], // Đã dọn dẹp sạch sẽ
 })
 export class AppModule { }
+

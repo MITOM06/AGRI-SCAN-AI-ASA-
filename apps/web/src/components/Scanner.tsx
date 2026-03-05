@@ -72,7 +72,12 @@ export function Scanner() {
       if (!inputText) {
         textareaRef.current.style.height = "40px";
       } else {
-        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+
+        textareaRef.current.style.height = `${Math.min(
+          textareaRef.current.scrollHeight,
+          120,
+        )}px`;
+
       }
     }
   }, [inputText]);

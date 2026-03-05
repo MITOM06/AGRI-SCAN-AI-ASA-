@@ -1,11 +1,6 @@
-/**
- * Scan Service - Xử lý API chẩn đoán bằng AI
- */
-
-import { apiClient } from '@/lib/api-client';
+import { axiosClient } from '@agri-scan/shared';
 import { API_ENDPOINTS } from '@agri-scan/shared';
 import type {
-  IScanHistory,
   IScanHistoryListItem,
   IScanHistoryDetail,
   IScanResult,
@@ -18,10 +13,20 @@ export const scanService = {
    * Upload ảnh và chẩn đoán bệnh
    */
   async scanImage(imageFile: File): Promise<IScanResult> {
-    const response = await apiClient.upload<IScanResult>(
+    // Tạo FormData chuẩn của trình duyệt để chứa file
+    const formData = new FormData();
+    // 'image' ở đây là tên trường (field name) mà Backend NestJS dùng @UseInterceptors(FileInterceptor('image')) để bắt lấy
+    formData.append('image', imageFile); 
+
+    // Sử dụng hàm .post() mặc định thay vì .upload()
+    const response = await axiosClient.post<IScanResult>(
       API_ENDPOINTS.SCAN.UPLOAD,
-      imageFile,
-      'image'
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data', // Ép kiểu header để gửi file
+        },
+      }
     );
     return response.data;
   },
@@ -30,7 +35,7 @@ export const scanService = {
    * Lấy kết quả chẩn đoán theo ID
    */
   async getScanResult(scanId: string): Promise<IScanHistoryDetail> {
-    const response = await apiClient.get<IScanHistoryDetail>(
+    const response = await axiosClient.get<IScanHistoryDetail>(
       API_ENDPOINTS.SCAN.RESULT(scanId)
     );
     return response.data;
@@ -40,7 +45,7 @@ export const scanService = {
    * Gửi feedback cho kết quả chẩn đoán (đúng/sai)
    */
   async sendFeedback(scanId: string, isAccurate: boolean): Promise<void> {
-    await apiClient.post(
+    await axiosClient.post(
       API_ENDPOINTS.SCAN.FEEDBACK(scanId),
       { isAccurate }
     );
@@ -53,7 +58,7 @@ export const scanService = {
     const queryString = params
       ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
       : '';
-    const response = await apiClient.get<IPaginatedResponse<IScanHistoryListItem>>(
+    const response = await axiosClient.get<IPaginatedResponse<IScanHistoryListItem>>(
       `${API_ENDPOINTS.HISTORY.MY_HISTORY}${queryString}`
     );
     return response.data;
@@ -63,7 +68,7 @@ export const scanService = {
    * Lấy chi tiết một lịch sử quét
    */
   async getHistoryById(historyId: string): Promise<IScanHistoryDetail> {
-    const response = await apiClient.get<IScanHistoryDetail>(
+    const response = await axiosClient.get<IScanHistoryDetail>(
       API_ENDPOINTS.HISTORY.BY_ID(historyId)
     );
     return response.data;
@@ -73,6 +78,6 @@ export const scanService = {
    * Xóa lịch sử quét
    */
   async deleteHistory(historyId: string): Promise<void> {
-    await apiClient.delete(API_ENDPOINTS.HISTORY.BY_ID(historyId));
+    await axiosClient.delete(API_ENDPOINTS.HISTORY.BY_ID(historyId));
   },
 };

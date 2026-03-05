@@ -1,38 +1,51 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Leaf, Mail, Lock, Loader2, ArrowRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Leaf,
+  Mail,
+  Lock,
+  Loader2,
+  ArrowRight,
+  CheckCircle,
+} from "lucide-react";
 import { loginSchema, type LoginFormData } from "@agri-scan/shared";
 import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth"; // <-- KẾT NỐI HOOK Ở ĐÂY
+import { useAuth } from "../../hooks/useAuth";
 
-export default function LoginForm() {
+export function Login() {
   const router = useRouter();
-  const { login } = useAuth(); // <-- LẤY HÀM LOGIN
-  
+  const searchParams = useSearchParams();
+  const { login } = useAuth();
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
   const {
     register,
     handleSubmit,
-    setError, // <-- Dùng để set lỗi từ Backend
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
+  useEffect(() => {
+    if (searchParams.get("message") === "registration_success") {
+      setShowSuccessMessage(true);
+      // Hide message after 5 seconds
+      const timer = setTimeout(() => setShowSuccessMessage(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
+
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // Gọi API thực tế thay vì setTimeout
-      await login(data);
-      // Đăng nhập thành công, đá về trang chủ
+      await login(data.email);
       router.push("/");
-    } catch (error: any) {
-      console.error("Lỗi đăng nhập:", error);
-      // Bắt lỗi từ Backend trả về (Ví dụ: "Sai email hoặc mật khẩu")
-      const errorMessage = error.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại sau.";
-      setError("root", { type: "server", message: errorMessage });
+    } catch (error) {
+      console.error("Login failed:", error);
     }
   };
 
@@ -55,11 +68,33 @@ export default function LoginForm() {
           </p>
         </div>
 
+        {showSuccessMessage && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-green-50 border border-green-200 rounded-xl p-4"
+          >
+            <div className="flex items-center">
+              <CheckCircle className="text-green-500 mr-3" size={20} />
+              <div>
+                <p className="text-green-700 font-medium text-sm">
+                  Đăng ký thành công!
+                </p>
+                <p className="text-green-600 text-xs mt-1">
+                  Vui lòng đăng nhập bằng email và mật khẩu vừa tạo.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
-            {/* ... (Phần UI Email giữ nguyên) ... */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                   <Mail size={20} />
@@ -71,14 +106,22 @@ export default function LoginForm() {
                   placeholder="name@example.com"
                 />
               </div>
-              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
-            {/* ... (Phần UI Mật khẩu giữ nguyên) ... */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
-                <Link href="/forgot-password" className="text-sm font-medium text-primary hover:text-primary-dark">
+                <label className="block text-sm font-medium text-gray-700">
+                  Mật khẩu
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-medium text-primary hover:text-primary-dark"
+                >
                   Quên mật khẩu?
                 </Link>
               </div>
@@ -93,16 +136,13 @@ export default function LoginForm() {
                   placeholder="••••••••"
                 />
               </div>
-              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
           </div>
-
-          {/* HIỂN THỊ LỖI TỪ BACKEND TRẢ VỀ Ở ĐÂY */}
-          {errors.root && (
-            <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center border border-red-100">
-              {errors.root.message}
-            </div>
-          )}
 
           <button
             type="submit"
@@ -124,7 +164,10 @@ export default function LoginForm() {
 
           <div className="text-center text-sm">
             <span className="text-gray-500">Chưa có tài khoản? </span>
-            <Link href="/register" className="font-medium text-primary hover:text-primary-dark">
+            <Link
+              href="/register"
+              className="font-medium text-primary hover:text-primary-dark"
+            >
               Đăng ký ngay
             </Link>
           </div>

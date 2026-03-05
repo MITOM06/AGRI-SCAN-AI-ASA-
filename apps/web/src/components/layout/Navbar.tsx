@@ -1,13 +1,27 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Leaf, Menu, X, Search, User } from "lucide-react";
-import { useState } from "react";
+import {
+  Leaf,
+  Menu,
+  X,
+  Search,
+  User,
+  LogOut,
+  Settings,
+  ChevronDown,
+} from "lucide-react";
 import { cn } from "@agri-scan/shared";
+import { useAuth } from "../../hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const router = useRouter();
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const navItems = [
     { name: "Trang chủ", path: "/" },
@@ -15,6 +29,28 @@ export function Navbar() {
     { name: "Từ điển cây", path: "/encyclopedia" },
     { name: "Cộng đồng", path: "/community" },
   ];
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [userMenuRef]);
+
+  const handleLogout = () => {
+    logout();
+    setIsUserMenuOpen(false);
+    router.push("/");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
@@ -58,12 +94,86 @@ export function Navbar() {
             <button className="p-2 text-gray-500 hover:text-primary transition-colors">
               <Search size={20} />
             </button>
-            <Link
-              href="/login"
-              className="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary-dark transition-colors shadow-md shadow-primary/20"
-            >
-              Đăng nhập
-            </Link>
+
+            {user ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 focus:outline-none"
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
+                    {user.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User size={16} />
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">
+                    {user.name}
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={cn(
+                      "text-gray-400 transition-transform",
+                      isUserMenuOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 overflow-hidden z-50">
+                    <div className="px-4 py-2 border-b border-gray-50">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {user.email}
+                      </p>
+                    </div>
+
+                    <div className="py-1">
+                      <Link
+                        href="/profile"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
+                      >
+                        <User size={16} />
+                        Hồ sơ của tôi
+                      </Link>
+                      <Link
+                        href="/settings"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
+                      >
+                        <Settings size={16} />
+                        Cài đặt
+                      </Link>
+                    </div>
+
+                    <div className="border-t border-gray-50 py-1">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                      >
+                        <LogOut size={16} />
+                        Đăng xuất
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="px-4 py-2 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary-dark transition-colors shadow-md shadow-primary/20"
+              >
+                Đăng nhập
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -98,13 +208,49 @@ export function Navbar() {
                 <Search size={18} />
                 Tìm kiếm
               </button>
-              <Link
-                href="/login"
-                className="w-full px-4 py-3 bg-primary text-white rounded-xl font-medium text-center touch-manipulation block"
-                onClick={() => setIsOpen(false)}
-              >
-                Đăng nhập
-              </Link>
+
+              {user ? (
+                <div className="space-y-2">
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
+                      {user.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt={user.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User size={16} />
+                      )}
+                    </div>
+                    <span className="font-medium text-gray-900">
+                      {user.name}
+                    </span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <LogOut size={20} />
+                    <span className="font-medium">Đăng xuất</span>
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full px-4 py-3 bg-primary text-white rounded-xl font-medium text-center touch-manipulation block"
+                >
+                  Đăng nhập
+                </Link>
+              )}
             </div>
           </div>
         </div>

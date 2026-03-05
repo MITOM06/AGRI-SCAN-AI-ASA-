@@ -1,94 +1,106 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
-import { authApi } from '@agri-scan/shared'; 
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  createContext,
+  useContext,
+  ReactNode,
+} from "react";
 
-// Giả định bạn đã định nghĩa các Interface này trong packages/shared/src/types
-import type { IUserResponse, IUserLogin, IUserCreate } from '@agri-scan/shared';
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
 
 interface AuthContextType {
-  user: IUserResponse | null;
+  user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (credentials: IUserLogin) => Promise<void>;
-  register: (userData: IUserCreate) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  login: (email: string) => Promise<void>;
+  register: (email: string, name: string) => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<IUserResponse | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Hàm tự động gọi lên Backend để lấy thông tin User thông qua Token đang có
-  const refreshUser = useCallback(async () => {
-    try {
-      if (localStorage.getItem('accessToken')) {
-        // Sử dụng authApi từ gói shared
-        const response = await authApi.getProfile(); 
-        setUser(response.user);
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error('Lỗi lấy thông tin user:', error);
-      setUser(null);
-    }
-  }, []);
-
   useEffect(() => {
-    const initAuth = async () => {
-      setIsLoading(true);
-      await refreshUser();
-      setIsLoading(false);
-    };
-    initAuth();
-  }, [refreshUser]);
+    // Check for persisted user session
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user from local storage", e);
+        localStorage.removeItem("user");
+      }
+    }
+    setIsLoading(false);
+  }, []);
 
-  const login = useCallback(async (credentials: IUserLogin) => {
+  const login = useCallback(async (email: string) => {
     setIsLoading(true);
     try {
-      const response = await authApi.login(credentials);
-      
-      // Lưu lại Token vào LocalStorage (Bắt buộc phải làm ở Web)
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
-      
-      setUser(response.user);
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Check if we have this user in our "database" (localStorage)
+      const usersDb = JSON.parse(localStorage.getItem("users_db") || "{}");
+      const existingUser = usersDb[email];
+
+      // If user exists in DB, use saved name; otherwise fallback to email username
+      const name = existingUser ? existingUser.name : email.split("@")[0];
+
+      const newUser: User = {
+        id: existingUser
+          ? existingUser.id
+          : Math.random().toString(36).substr(2, 9),
+        name: name,
+        email: email,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+      };
+
+      setUser(newUser);
+      localStorage.setItem("user", JSON.stringify(newUser));
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const register = useCallback(async (userData: IUserCreate) => {
+  const register = useCallback(async (email: string, name: string) => {
     setIsLoading(true);
     try {
-      const response = await authApi.register(userData);
-      
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
-      
-      setUser(response.user);
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const newUser: User = {
+        id: Math.random().toString(36).substr(2, 9),
+        name: name,
+        email: email,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+      };
+
+      // Save to "database"
+      const usersDb = JSON.parse(localStorage.getItem("users_db") || "{}");
+      usersDb[email] = newUser;
+      localStorage.setItem("users_db", JSON.stringify(usersDb));
+
+      // Registration complete - user needs to login manually
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const logout = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      await authApi.logout();
-    } catch (error) {
-      console.warn('Backend báo lỗi hoặc token đã chết trước khi gọi logout', error);
-    } finally {
-      // Bất chấp Backend nói gì, Frontend phải dọn sạch nhà cửa
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      setUser(null);
-      setIsLoading(false);
-    }
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem("user");
   }, []);
 
   const value: AuthContextType = {
@@ -98,7 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     register,
     logout,
-    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -107,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth bắt buộc phải được bọc bên trong AuthProvider');
+    throw new Error("useAuth bắt buộc phải được bọc bên trong AuthProvider");
   }
   return context;
 }

@@ -2,7 +2,7 @@
  * Disease Service - Xử lý API liên quan đến bệnh cây (Từ điển bệnh lý)
  */
 
-import { apiClient } from '@/lib/api-client';
+import { axiosClient } from '@agri-scan/shared';
 import { API_ENDPOINTS } from '@agri-scan/shared';
 import type {
   IDisease,
@@ -21,7 +21,7 @@ export const diseaseService = {
     const queryString = params
       ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
       : '';
-    const response = await apiClient.get<IPaginatedResponse<IDiseaseListItem>>(
+    const response = await axiosClient.get<IPaginatedResponse<IDiseaseListItem>>(
       `${API_ENDPOINTS.DISEASES.BASE}${queryString}`
     );
     return response.data;
@@ -31,7 +31,7 @@ export const diseaseService = {
    * Lấy chi tiết bệnh theo ID
    */
   async getDiseaseById(id: string): Promise<IDisease> {
-    const response = await apiClient.get<IDisease>(
+    const response = await axiosClient.get<IDisease>(
       API_ENDPOINTS.DISEASES.BY_ID(id)
     );
     return response.data;
@@ -47,7 +47,7 @@ export const diseaseService = {
     if (params?.sortBy) searchParams.sortBy = params.sortBy;
     if (params?.sortOrder) searchParams.sortOrder = params.sortOrder;
     const queryString = new URLSearchParams(searchParams).toString();
-    const response = await apiClient.get<IPaginatedResponse<IDiseaseListItem>>(
+    const response = await axiosClient.get<IPaginatedResponse<IDiseaseListItem>>(
       `${API_ENDPOINTS.DISEASES.SEARCH}?${queryString}`
     );
     return response.data;
@@ -57,7 +57,7 @@ export const diseaseService = {
    * Lấy bệnh theo loại (Nấm, Vi khuẩn, Virus...)
    */
   async getDiseasesByType(type: DiseaseType): Promise<IDiseaseListItem[]> {
-    const response = await apiClient.get<IDiseaseListItem[]>(
+    const response = await axiosClient.get<IDiseaseListItem[]>(
       API_ENDPOINTS.DISEASES.BY_TYPE(type)
     );
     return response.data;
@@ -67,7 +67,7 @@ export const diseaseService = {
    * Tạo bệnh mới (Admin only)
    */
   async createDisease(data: IDiseaseCreate): Promise<IDisease> {
-    const response = await apiClient.post<IDisease>(
+    const response = await axiosClient.post<IDisease>(
       API_ENDPOINTS.DISEASES.BASE,
       data
     );
@@ -78,7 +78,7 @@ export const diseaseService = {
    * Cập nhật bệnh (Admin only)
    */
   async updateDisease(id: string, data: Partial<IDiseaseCreate>): Promise<IDisease> {
-    const response = await apiClient.put<IDisease>(
+    const response = await axiosClient.put<IDisease>(
       API_ENDPOINTS.DISEASES.BY_ID(id),
       data
     );
@@ -89,6 +89,6 @@ export const diseaseService = {
    * Xóa bệnh (Admin only)
    */
   async deleteDisease(id: string): Promise<void> {
-    await apiClient.delete(API_ENDPOINTS.DISEASES.BY_ID(id));
+    await axiosClient.delete(API_ENDPOINTS.DISEASES.BY_ID(id));
   },
 };
