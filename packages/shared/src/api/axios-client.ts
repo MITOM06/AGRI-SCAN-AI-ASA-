@@ -1,12 +1,12 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { getTokenStorage } from './token-manager';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { getTokenStorage } from "./token-manager";
 
-declare module 'axios' {
+declare module "axios" {
   export interface AxiosInstance {
     upload<T = any, R = AxiosResponse<T>>(
       url: string,
       data: FormData,
-      config?: AxiosRequestConfig
+      config?: AxiosRequestConfig,
     ): Promise<R>;
   }
 }
@@ -24,12 +24,12 @@ declare module 'axios' {
 // Nếu test bằng Android Emulator trên máy thật thì dùng: http://10.0.2.2:4000
 // Nếu deploy production thì đổi thành domain thật: https://api.agriscan.ai
 //
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.0.104:4000";
 
 export const axiosClient = axios.create({
   baseURL: BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   timeout: 15000, // 15s timeout - tránh treo app khi mạng yếu
 });
@@ -38,13 +38,13 @@ export const axiosClient = axios.create({
 axiosClient.upload = function <T = any, R = AxiosResponse<T>>(
   url: string,
   data: FormData,
-  config?: AxiosRequestConfig
+  config?: AxiosRequestConfig,
 ): Promise<R> {
   return this.post<T, R>(url, data, {
     ...config,
     headers: {
       ...config?.headers,
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
 };
@@ -71,15 +71,17 @@ axiosClient.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      originalRequest.url !== '/auth/refresh'
+      originalRequest.url !== "/auth/refresh"
     ) {
       originalRequest._retry = true;
 
       try {
         const refreshToken = await storage?.getRefreshToken();
-        if (!refreshToken) throw new Error('Không có Refresh Token');
+        if (!refreshToken) throw new Error("Không có Refresh Token");
 
-        const res = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
+        const res = await axios.post(`${BASE_URL}/auth/refresh`, {
+          refreshToken,
+        });
         const { accessToken, refreshToken: newRefreshToken } = res.data;
         await storage?.saveTokens(accessToken, newRefreshToken);
 
@@ -92,5 +94,5 @@ axiosClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );

@@ -116,10 +116,7 @@ export default function HomeScreen() {
         style={[
           styles.navbar,
           {
-            paddingTop:
-              Platform.OS === "ios" || Platform.OS === "android"
-                ? StatusBar.currentHeight
-                : Math.max(insets.top, 20),
+            paddingTop: Math.max(insets.top, 10) + 10,
           },
         ]}
       >
@@ -153,10 +150,7 @@ export default function HomeScreen() {
               style={[
                 styles.menuContent,
                 {
-                  paddingTop:
-                    Platform.OS === "android"
-                      ? StatusBar.currentHeight
-                      : Math.max(insets.top, 20),
+                  paddingTop: Math.max(insets.top, 10) + 10,
                 },
               ]}
             >
