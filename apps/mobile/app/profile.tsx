@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store"; // BẮT BUỘC IMPORT ĐỂ LẤY DATA
 import {
   ArrowLeft,
   LogOut,
@@ -22,7 +23,63 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  // Dữ liệu giả lập (Mock Data) dựa theo hình ảnh Web của bạn
+  // STATE LƯU THÔNG TIN USER
+  const [userData, setUserData] = useState<{
+    fullName?: string;
+    name?: string;
+    email?: string;
+  } | null>(null);
+
+  // LẤY DỮ LIỆU TỪ BỘ NHỚ LÊN
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        let userStr = null;
+        if (Platform.OS === "web") {
+          userStr = localStorage.getItem("user");
+        } else {
+          userStr = await SecureStore.getItemAsync("user");
+        }
+
+        if (userStr) {
+          setUserData(JSON.parse(userStr));
+        }
+      } catch (error) {
+        console.error("Lỗi khi load thông tin Profile:", error);
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  // HÀM TẠO CHỮ CÁI AVATAR
+  const getInitials = (name?: string) => {
+    if (!name) return "U";
+    const words = name.trim().split(" ");
+    if (words.length === 1) return words[0].charAt(0).toUpperCase();
+    return (
+      words[0].charAt(0) + words[words.length - 1].charAt(0)
+    ).toUpperCase();
+  };
+
+  // HOÀN THIỆN LOGIC ĐĂNG XUẤT (XÓA SẠCH TOKEN)
+  const handleLogout = async () => {
+    try {
+      if (Platform.OS === "web") {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+      } else {
+        await SecureStore.deleteItemAsync("accessToken");
+        await SecureStore.deleteItemAsync("refreshToken");
+        await SecureStore.deleteItemAsync("user");
+      }
+      router.replace("/auth/login");
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất:", error);
+    }
+  };
+
+  // Dữ liệu giả lập (Mock Data) cho phần Thống kê & Hoạt động
   const STATS = [
     { id: 1, label: "Cây đã quét", value: "12" },
     { id: 2, label: "Bệnh phát hiện", value: "5" },
@@ -50,10 +107,8 @@ export default function ProfileScreen() {
     },
   ];
 
-  const handleLogout = () => {
-    // Xử lý logic xóa token/phiên đăng nhập tại đây
-    router.replace("/auth/login");
-  };
+  // Lấy tên hiển thị (Đề phòng trường hợp Backend trả về 'name' thay vì 'fullName')
+  const displayName = userData?.fullName || userData?.name || "Người Dùng";
 
   return (
     <View style={styles.container}>
@@ -86,7 +141,10 @@ export default function ProfileScreen() {
             <View style={styles.profileHeader}>
               <View style={styles.avatarWrapper}>
                 <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarText}>CS</Text>
+                  {/* Hiển thị chữ cái đầu động */}
+                  <Text style={styles.avatarText}>
+                    {getInitials(displayName)}
+                  </Text>
                 </View>
                 <TouchableOpacity style={styles.settingsBadge}>
                   <Settings size={12} color="#4b5563" />
@@ -94,8 +152,13 @@ export default function ProfileScreen() {
               </View>
 
               <View style={styles.userInfo}>
-                <Text style={styles.userName}>Châu Băng Sơn</Text>
-                <Text style={styles.userEmail}>bangson.chau@gmail.com</Text>
+                {/* Hiển thị Tên và Email động */}
+                <Text style={styles.userName} numberOfLines={1}>
+                  {displayName}
+                </Text>
+                <Text style={styles.userEmail} numberOfLines={1}>
+                  {userData?.email || "Đang tải email..."}
+                </Text>
               </View>
             </View>
 
@@ -168,7 +231,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f3f4f6" }, // Màu nền xám nhạt như web
+  container: { flex: 1, backgroundColor: "#f3f4f6" },
 
   // Navigation
   headerNav: {
@@ -193,15 +256,15 @@ const styles = StyleSheet.create({
 
   // Background Cover
   coverBg: {
-    backgroundColor: "#16a34a", // Xanh lá
-    height: 180, // Độ cao của phần màu xanh
+    backgroundColor: "#16a34a",
+    height: 180,
     width: "100%",
   },
 
   contentContainer: {
     paddingHorizontal: 16,
     paddingBottom: 40,
-    marginTop: -40, // Kéo nội dung lên đè vào phần cover xanh lá (Negative margin)
+    marginTop: -40,
   },
 
   // Card chung
@@ -214,7 +277,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
-    elevation: 3, // Bóng cho Android
+    elevation: 3,
   },
 
   // 1. Profile Info
@@ -227,7 +290,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#dc2626", // Đỏ
+    backgroundColor: "#dc2626",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -314,7 +377,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#dcfce3", // Xanh lá nhạt
+    backgroundColor: "#dcfce3",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
@@ -329,12 +392,12 @@ const styles = StyleSheet.create({
   activityDesc: { fontSize: 13, color: "#6b7280", marginBottom: 8 },
   statusBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#fee2e2", // Nền đỏ siêu nhạt
+    backgroundColor: "#fee2e2",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  statusText: { fontSize: 11, color: "#ef4444", fontWeight: "600" }, // Chữ đỏ
+  statusText: { fontSize: 11, color: "#ef4444", fontWeight: "600" },
 
   viewAllBtn: {
     alignItems: "center",

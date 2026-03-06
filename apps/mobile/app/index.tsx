@@ -1,3 +1,4 @@
+import { Footer } from "../components/ui/Footer";
 import React, { useState, useRef } from "react";
 import {
   View,
@@ -116,10 +117,7 @@ export default function HomeScreen() {
         style={[
           styles.navbar,
           {
-            paddingTop:
-              Platform.OS === "ios" || Platform.OS === "android"
-                ? StatusBar.currentHeight
-                : Math.max(insets.top, 20),
+            paddingTop: Math.max(insets.top, 10) + 10,
           },
         ]}
       >
@@ -153,10 +151,7 @@ export default function HomeScreen() {
               style={[
                 styles.menuContent,
                 {
-                  paddingTop:
-                    Platform.OS === "android"
-                      ? StatusBar.currentHeight
-                      : Math.max(insets.top, 20),
+                  paddingTop: Math.max(insets.top, 10) + 10,
                 },
               ]}
             >
@@ -332,11 +327,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            © 2026 Agri-Scan AI. All rights reserved.
-          </Text>
-        </View>
+        <Footer />
       </ScrollView>
     </View>
   );

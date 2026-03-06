@@ -41,14 +41,19 @@ export default function OTPVerificationScreen() {
     setApiError("");
     try {
       const res = await authApi.verifyOtp(email, otp);
+      console.log("VERIFY OTP RESULT:", res);
       // BE trả về resetToken sau khi OTP đúng
       router.push({
         pathname: "/auth/reset-password",
-        params: { token: res.resetToken, email },
+        // params: { token: res.resetToken, email },
+        params: {
+          token: res.resetToken || res.data?.resetToken,
+          email,
+        },
       });
     } catch (error: any) {
       setApiError(
-        error.response?.data?.message || "Mã OTP không hợp lệ hoặc đã hết hạn."
+        error.response?.data?.message || "Mã OTP không hợp lệ hoặc đã hết hạn.",
       );
     } finally {
       setIsSubmitting(false);
@@ -66,7 +71,7 @@ export default function OTPVerificationScreen() {
     } catch (error: any) {
       Alert.alert(
         "Lỗi",
-        error.response?.data?.message || "Không thể gửi lại OTP. Thử lại sau."
+        error.response?.data?.message || "Không thể gửi lại OTP. Thử lại sau.",
       );
     }
   };
@@ -115,7 +120,12 @@ export default function OTPVerificationScreen() {
 
             <View style={styles.timerRow}>
               <Timer size={16} color={seconds > 0 ? "#6b7280" : "#ef4444"} />
-              <Text style={[styles.timerText, seconds === 0 && styles.timerTextExpired]}>
+              <Text
+                style={[
+                  styles.timerText,
+                  seconds === 0 && styles.timerTextExpired,
+                ]}
+              >
                 {seconds > 0 ? ` Gửi lại sau ${seconds}s` : " Mã đã hết hạn"}
               </Text>
             </View>
@@ -130,7 +140,11 @@ export default function OTPVerificationScreen() {
             />
 
             {seconds === 0 && (
-              <TouchableOpacity onPress={handleResend} style={styles.resendBtn} activeOpacity={0.7}>
+              <TouchableOpacity
+                onPress={handleResend}
+                style={styles.resendBtn}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.resendText}>Gửi lại mã mới</Text>
               </TouchableOpacity>
             )}
@@ -143,17 +157,71 @@ export default function OTPVerificationScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb" },
-  scrollContent: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 16, paddingBottom: 40 },
-  card: { backgroundColor: "#ffffff", padding: 24, borderRadius: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    padding: 24,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
   header: { alignItems: "center", marginBottom: 30 },
-  iconContainer: { width: 52, height: 52, backgroundColor: "rgba(22, 163, 74, 0.1)", borderRadius: 14, justifyContent: "center", alignItems: "center", marginBottom: 16 },
-  title: { fontSize: 24, fontWeight: "bold", color: "#111827", marginBottom: 8 },
-  subtitle: { fontSize: 14, color: "#4b5563", textAlign: "center", lineHeight: 22 },
+  iconContainer: {
+    width: 52,
+    height: 52,
+    backgroundColor: "rgba(22, 163, 74, 0.1)",
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#111827",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#4b5563",
+    textAlign: "center",
+    lineHeight: 22,
+  },
   emailText: { fontWeight: "600", color: "#374151" },
-  errorAlert: { backgroundColor: "#fef2f2", borderWidth: 1, borderColor: "#fecaca", borderRadius: 12, padding: 12, marginBottom: 16 },
+  errorAlert: {
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
   errorText: { color: "#dc2626", fontSize: 14, textAlign: "center" },
-  otpInput: { borderBottomWidth: 2, borderBottomColor: "#16a34a", fontSize: 32, fontWeight: "bold", textAlign: "center", paddingVertical: 10, letterSpacing: 15, marginBottom: 25, color: "#111827" },
-  timerRow: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 25 },
+  otpInput: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#16a34a",
+    fontSize: 32,
+    fontWeight: "bold",
+    textAlign: "center",
+    paddingVertical: 10,
+    letterSpacing: 15,
+    marginBottom: 25,
+    color: "#111827",
+  },
+  timerRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 25,
+  },
   timerText: { fontSize: 14, color: "#6b7280", marginLeft: 4 },
   timerTextExpired: { color: "#ef4444", fontWeight: "600" },
   resendBtn: { marginTop: 20, alignItems: "center", padding: 10 },

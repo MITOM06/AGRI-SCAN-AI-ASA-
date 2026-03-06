@@ -1,13 +1,23 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, KeyboardAvoidingView,
-  Platform, ScrollView, TouchableOpacity, Alert,
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Lock, Eye, EyeOff } from "lucide-react-native";
 
-import { resetPasswordSchema, type ResetPasswordFormData, authApi } from "@agri-scan/shared";
+import {
+  resetPasswordSchema,
+  type ResetPasswordFormData,
+  authApi,
+} from "@agri-scan/shared";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { AuthHeader } from "./AuthHeader";
@@ -32,7 +42,7 @@ export default function ResetPasswordScreen() {
   const params = useLocalSearchParams();
   // BUG FIX: trước dùng "dummy_token_from_otp" hardcode → không đổi được pass thật
   // Giờ lấy token và email thật từ params được truyền qua từ OTP screen
-  const token = (params.token as string) || "";
+  const tokenFromUrl = (params.token as string) || "";
   const email = (params.email as string) || "";
 
   const [showPassword, setShowPassword] = useState(false);
@@ -40,12 +50,12 @@ export default function ResetPasswordScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
 
-  const { control, handleSubmit, watch } = useForm<ResetPasswordFormData>({
+  const { control, handleSubmit, watch } = useForm<any>({
     resolver: customResetResolver,
     mode: "onChange",
     defaultValues: {
       email: email,
-      token,
+      token: tokenFromUrl,
       password: "",
       confirmPassword: "",
     },
@@ -54,7 +64,10 @@ export default function ResetPasswordScreen() {
   const onValidationError = (errors: any) => {
     console.log("Lỗi Validation từ Zod:", errors);
     if (errors.email || errors.token) {
-      Alert.alert("Lỗi dữ liệu", "Thông tin phiên bản cập nhật không đầy đủ, vui lòng thử lại OTP.");
+      Alert.alert(
+        "Lỗi dữ liệu",
+        "Thông tin phiên bản cập nhật không đầy đủ, vui lòng thử lại OTP.",
+      );
     }
   };
 
@@ -71,16 +84,30 @@ export default function ResetPasswordScreen() {
     setApiError("");
     try {
       await authApi.resetPassword({
-        email,
-        resetToken: data.token,
+        email: email,
+        resetToken: tokenFromUrl,
         newPassword: data.password,
       });
-      Alert.alert("Thành công", "Mật khẩu của bạn đã được cập nhật!", [
-        { text: "Đăng nhập ngay", onPress: () => router.replace("/auth/login") },
-      ]);
+
+      // BẮT ĐẦU ĐOẠN SỬA LỖI CHO WEB
+      if (Platform.OS === "web") {
+        // Trên Web: Dùng alert mặc định của trình duyệt, sau đó tự động chuyển trang luôn
+        window.alert("Thành công! Mật khẩu của bạn đã được cập nhật.");
+        router.replace("/auth/login");
+      } else {
+        // Trên Mobile: Giữ nguyên Alert xịn xò của Native
+        Alert.alert("Thành công", "Mật khẩu của bạn đã được cập nhật!", [
+          {
+            text: "Đăng nhập ngay",
+            onPress: () => router.replace("/auth/login"),
+          },
+        ]);
+      }
+      // KẾT THÚC ĐOẠN SỬA LỖI
     } catch (error: any) {
       setApiError(
-        error.response?.data?.message || "Đổi mật khẩu thất bại. Phiên có thể đã hết hạn."
+        error.response?.data?.message ||
+          "Đổi mật khẩu thất bại. Phiên có thể đã hết hạn.",
       );
     } finally {
       setIsSubmitting(false);
@@ -91,8 +118,15 @@ export default function ResetPasswordScreen() {
     <View style={styles.container}>
       <AuthHeader showBack={true} />
 
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.card}>
             <View style={styles.header}>
               <View style={styles.iconContainer}>
@@ -110,15 +144,33 @@ export default function ResetPasswordScreen() {
               </View>
             )}
 
-            <Controller control={control} name="password"
-              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <Controller
+              control={control}
+              name="password"
+              render={({
+                field: { onChange, onBlur, value },
+                fieldState: { error },
+              }) => (
                 <View style={styles.inputGroup}>
                   <View style={styles.passwordWrapper}>
-                    <Input label="Mật khẩu mới" placeholder="••••••••"
+                    <Input
+                      label="Mật khẩu mới"
+                      placeholder="••••••••"
                       secureTextEntry={!showPassword}
-                      onBlur={onBlur} onChangeText={onChange} value={value} error={error?.message} />
-                    <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-                      {showPassword ? <EyeOff size={20} color="#9ca3af" /> : <Eye size={20} color="#9ca3af" />}
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={error?.message}
+                    />
+                    <TouchableOpacity
+                      style={styles.eyeIcon}
+                      onPress={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff size={20} color="#9ca3af" />
+                      ) : (
+                        <Eye size={20} color="#9ca3af" />
+                      )}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -134,21 +186,44 @@ export default function ResetPasswordScreen() {
                 [hasNumber, "Ít nhất 1 số"],
                 [hasSpecialChar, "Ít nhất 1 ký tự đặc biệt"],
               ].map(([valid, label]) => (
-                <Text key={label as string} style={valid ? styles.reqValid : styles.reqInvalid}>
+                <Text
+                  key={label as string}
+                  style={valid ? styles.reqValid : styles.reqInvalid}
+                >
                   • {label as string}
                 </Text>
               ))}
             </View>
 
-            <Controller control={control} name="confirmPassword"
-              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+            <Controller
+              control={control}
+              name="confirmPassword"
+              render={({
+                field: { onChange, onBlur, value },
+                fieldState: { error },
+              }) => (
                 <View style={styles.inputGroup}>
                   <View style={styles.passwordWrapper}>
-                    <Input label="Xác nhận mật khẩu" placeholder="••••••••"
+                    <Input
+                      label="Xác nhận mật khẩu"
+                      placeholder="••••••••"
                       secureTextEntry={!showConfirmPassword}
-                      onBlur={onBlur} onChangeText={onChange} value={value} error={error?.message} />
-                    <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                      {showConfirmPassword ? <EyeOff size={20} color="#9ca3af" /> : <Eye size={20} color="#9ca3af" />}
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      error={error?.message}
+                    />
+                    <TouchableOpacity
+                      style={styles.eyeIcon}
+                      onPress={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={20} color="#9ca3af" />
+                      ) : (
+                        <Eye size={20} color="#9ca3af" />
+                      )}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -173,19 +248,63 @@ export default function ResetPasswordScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb" },
-  scrollContent: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 16, paddingBottom: 40 },
-  card: { backgroundColor: "#ffffff", padding: 24, borderRadius: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    padding: 24,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
   header: { alignItems: "center", marginBottom: 25 },
-  iconContainer: { width: 52, height: 52, backgroundColor: "#dcfce3", borderRadius: 14, justifyContent: "center", alignItems: "center", marginBottom: 16 },
+  iconContainer: {
+    width: 52,
+    height: 52,
+    backgroundColor: "#dcfce3",
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   title: { fontSize: 22, fontWeight: "bold", color: "#111827" },
-  subtitle: { fontSize: 14, color: "#6b7280", textAlign: "center", marginTop: 6, lineHeight: 20 },
-  errorAlert: { backgroundColor: "#fef2f2", borderWidth: 1, borderColor: "#fecaca", borderRadius: 12, padding: 12, marginBottom: 16 },
+  subtitle: {
+    fontSize: 14,
+    color: "#6b7280",
+    textAlign: "center",
+    marginTop: 6,
+    lineHeight: 20,
+  },
+  errorAlert: {
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
   errorText: { color: "#dc2626", fontSize: 14, textAlign: "center" },
   inputGroup: { marginBottom: 14 },
   passwordWrapper: { position: "relative" },
   eyeIcon: { position: "absolute", right: 12, top: 38, padding: 4, zIndex: 1 },
-  requirementsContainer: { marginTop: -4, marginBottom: 16, paddingHorizontal: 4 },
-  requirementsTitle: { fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 },
+  requirementsContainer: {
+    marginTop: -4,
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  requirementsTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 6,
+  },
   reqValid: { fontSize: 12, color: "#16a34a", marginBottom: 2 },
   reqInvalid: { fontSize: 12, color: "#9ca3af", marginBottom: 2 },
   submitButton: { marginTop: 10 },

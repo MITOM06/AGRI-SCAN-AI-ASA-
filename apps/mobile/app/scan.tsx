@@ -215,11 +215,13 @@ export default function ScanChatScreen() {
   return (
     <View style={styles.container}>
       {/* Header Bar */}
+      {/* Header Bar */}
       <View
         style={[
           styles.header,
           {
-            paddingTop: Platform.OS === "ios" ? 10 : Math.max(insets.top, 10),
+            // Dùng insets.top chuẩn cho mọi dòng máy giống trang Home
+            paddingTop: Math.max(insets.top, 10) + 10,
           },
         ]}
       >
@@ -273,7 +275,7 @@ export default function ScanChatScreen() {
             <View
               style={[
                 styles.sidebarContent,
-                { paddingTop: Math.max(insets.top, 20) },
+                { paddingTop: Math.max(insets.top, 10) + 10 },
               ]}
             >
               <View style={styles.sidebarHeader}>
