@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
@@ -14,14 +20,15 @@ export class AuthService {
     private jwtService: JwtService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache, // Gọi Redis
     private mailerService: MailerService,
-  ) { }
+  ) {}
 
+  // 1. ĐĂNG KÝ
   // 1. ĐĂNG KÝ
   async register(data: any) {
     const existingUser = await this.usersService.findByEmail(data.email);
-    if (existingUser) throw new BadRequestException('Email này đã được sử dụng!');
+    if (existingUser)
+      throw new BadRequestException('Email này đã được sử dụng!');
 
-    // Băm mật khẩu (SaltRounds = 10)
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const newUser = await this.usersService.create({
@@ -29,7 +36,12 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    return this.generateTokens(newUser._id.toString(), newUser.email);
+    // Cập nhật dòng này:
+    return this.generateTokens(
+      newUser._id.toString(),
+      newUser.email,
+      newUser.fullName,
+    );
   }
 
   // 2. ĐĂNG NHẬP
@@ -40,7 +52,8 @@ export class AuthService {
     const isMatch = await bcrypt.compare(data.password, user.password);
     if (!isMatch) throw new UnauthorizedException('Sai email hoặc mật khẩu!');
 
-    return this.generateTokens(user._id.toString(), user.email);
+    // Cập nhật dòng này:
+    return this.generateTokens(user._id.toString(), user.email, user.fullName);
   }
 
   // 3. ĐĂNG XUẤT
@@ -58,54 +71,66 @@ export class AuthService {
   }
 
   // HÀM TIỆN ÍCH: TẠO TOKEN & LƯU REDIS
-  private async generateTokens(userId: string, email: string) {
+  private async generateTokens(
+    userId: string,
+    email: string,
+    fullName?: string,
+  ) {
     const payload = { sub: userId, email };
 
-    // Access Token (sống 15 phút, dùng để gọi API liên tục)
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-
-    // Refresh Token (sống 7 ngày, dùng để xin lại Access Token mới)
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    // Lưu Refresh Token vào Redis (Thời gian tính bằng mili-giây: 7 ngày)
-    await this.cacheManager.set(`refresh_token:${userId}`, refreshToken, 7 * 24 * 60 * 60 * 1000);
+    await this.cacheManager.set(
+      `refresh_token:${userId}`,
+      refreshToken,
+      7 * 24 * 60 * 60 * 1000,
+    );
 
     return {
-      user: { id: userId, email },
+      user: { id: userId, email, fullName }, // <--- QUAN TRỌNG: Trả về fullName cho Mobile
       accessToken,
-      refreshToken
+      refreshToken,
     };
   }
   // 4. CẤP LẠI TOKEN MỚI (Refresh Token)
   async refreshToken(refreshToken: string) {
     try {
-      // Bước 1: Giải mã để xem token này của ai và còn hạn không
       const payload = this.jwtService.verify(refreshToken);
       const userId = payload.sub;
 
-      // Bước 2: Kiểm tra đối chiếu với Redis xem token này có bị thu hồi chưa
-      // (Ví dụ: Đã ấn Đăng xuất trên máy khác thì Redis sẽ mất token này)
-      const cachedToken = await this.cacheManager.get(`refresh_token:${userId}`);
+      const cachedToken = await this.cacheManager.get(
+        `refresh_token:${userId}`,
+      );
       if (cachedToken !== refreshToken) {
-        throw new UnauthorizedException('Token không hợp lệ hoặc bạn đã đăng xuất!');
+        throw new UnauthorizedException(
+          'Token không hợp lệ hoặc bạn đã đăng xuất!',
+        );
       }
 
-      // Bước 3: Nếu mọi thứ OK, cấp cho họ cặp token hoàn toàn mới
-      // Vòng đời 15 phút / 7 ngày lại được reset từ đầu
-      return this.generateTokens(userId, payload.email);
+      // Lấy user từ DB để lấy fullName
+      const user = await this.usersService.findByEmail(payload.email);
+
+      // Cập nhật dòng này:
+      return this.generateTokens(userId, payload.email, user?.fullName);
     } catch (error) {
-      // Nếu token hết hạn hoặc giải mã thất bại
-      throw new UnauthorizedException('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!');
+      throw new UnauthorizedException(
+        'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!',
+      );
     }
   }
   // 5. QUÊN MẬT KHẨU - GỬI OTP
   async forgotPassword(email: string) {
     // 5.1 Kiểm tra xem có đang bị khóa 30p không
     const isLocked = await this.cacheManager.get(`lockout:${email}`);
-    if (isLocked) throw new BadRequestException('Tài khoản đang bị vô hiệu hóa 30 phút do nhập sai OTP quá nhiều lần.');
+    if (isLocked)
+      throw new BadRequestException(
+        'Tài khoản đang bị vô hiệu hóa 30 phút do nhập sai OTP quá nhiều lần.',
+      );
 
     const user = await this.usersService.findByEmail(email);
-    if (!user) throw new NotFoundException('Email không tồn tại trong hệ thống!');
+    if (!user)
+      throw new NotFoundException('Email không tồn tại trong hệ thống!');
 
     // 5.2 Tạo mã OTP 6 số
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -141,14 +166,19 @@ export class AuthService {
   // 6. XÁC NHẬN OTP
   async verifyOtp(email: string, otp: string) {
     const isLocked = await this.cacheManager.get(`lockout:${email}`);
-    if (isLocked) throw new BadRequestException('Tài khoản đang bị vô hiệu hóa 30 phút do nhập sai OTP quá nhiều lần.');
+    if (isLocked)
+      throw new BadRequestException(
+        'Tài khoản đang bị vô hiệu hóa 30 phút do nhập sai OTP quá nhiều lần.',
+      );
 
     const cachedOtp = await this.cacheManager.get(`otp:${email}`);
-    if (!cachedOtp) throw new BadRequestException('Mã OTP đã hết hạn hoặc không tồn tại!');
+    if (!cachedOtp)
+      throw new BadRequestException('Mã OTP đã hết hạn hoặc không tồn tại!');
 
     // Nếu nhập SAI OTP
     if (cachedOtp !== otp) {
-      let attempts = await this.cacheManager.get<number>(`otp_attempts:${email}`) || 0;
+      let attempts =
+        (await this.cacheManager.get<number>(`otp_attempts:${email}`)) || 0;
       attempts += 1;
 
       if (attempts >= 5) {
@@ -156,11 +186,19 @@ export class AuthService {
         await this.cacheManager.set(`lockout:${email}`, true, 30 * 60 * 1000);
         await this.cacheManager.del(`otp_attempts:${email}`);
         await this.cacheManager.del(`otp:${email}`);
-        throw new BadRequestException('Bạn đã nhập sai 5 lần. Chức năng khôi phục bị khóa trong 30 phút!');
+        throw new BadRequestException(
+          'Bạn đã nhập sai 5 lần. Chức năng khôi phục bị khóa trong 30 phút!',
+        );
       }
 
-      await this.cacheManager.set(`otp_attempts:${email}`, attempts, 10 * 60 * 1000); // Lưu số lần sai trong 10p
-      throw new BadRequestException(`Mã OTP không chính xác! Bạn còn ${5 - attempts} lần thử.`);
+      await this.cacheManager.set(
+        `otp_attempts:${email}`,
+        attempts,
+        10 * 60 * 1000,
+      ); // Lưu số lần sai trong 10p
+      throw new BadRequestException(
+        `Mã OTP không chính xác! Bạn còn ${5 - attempts} lần thử.`,
+      );
     }
 
     // Nếu đúng: Xóa OTP, xóa số lần sai, cấp Reset Token (sống 5 phút)
@@ -168,11 +206,15 @@ export class AuthService {
     await this.cacheManager.del(`otp_attempts:${email}`);
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-    await this.cacheManager.set(`reset_token:${email}`, resetToken, 5 * 60 * 1000);
+    await this.cacheManager.set(
+      `reset_token:${email}`,
+      resetToken,
+      5 * 60 * 1000,
+    );
 
     return {
       message: 'Xác thực OTP thành công!',
-      resetToken // Frontend cần giữ mã này để gửi kèm mật khẩu mới ở bước cuối
+      resetToken, // Frontend cần giữ mã này để gửi kèm mật khẩu mới ở bước cuối
     };
   }
 
@@ -181,7 +223,9 @@ export class AuthService {
     const cachedToken = await this.cacheManager.get(`reset_token:${email}`);
 
     if (!cachedToken || cachedToken !== resetToken) {
-      throw new BadRequestException('Phiên đổi mật khẩu đã hết hạn hoặc không hợp lệ!');
+      throw new BadRequestException(
+        'Phiên đổi mật khẩu đã hết hạn hoặc không hợp lệ!',
+      );
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
