@@ -38,15 +38,6 @@ export default function RootLayout({
           <div className="min-h-screen bg-gray-50 font-sans">
             <Navbar />
             <main>{children}</main>
-
-            <footer className="bg-white border-t border-gray-100 py-12 mt-20">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500">
-                <p>© 2026 Agri-Scan AI. All rights reserved.</p>
-                <p className="text-sm mt-2">
-                  Website & AI Innovation Contest 2026 - Foundation Track
-                </p>
-              </div>
-            </footer>
           </div>
         </Providers>
       </body>
