@@ -102,18 +102,10 @@ export function Navbar() {
                   className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 focus:outline-none"
                 >
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
-                    {user.avatar ? (
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User size={16} />
-                    )}
+                    <User size={16} />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">
-                    {user.name}
+                  <span className="text-sm font-medium text-gray-700 max-w-25 truncate">
+                    {user.fullName}
                   </span>
                   <ChevronDown
                     size={14}
@@ -128,7 +120,7 @@ export function Navbar() {
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 overflow-hidden z-50">
                     <div className="px-4 py-2 border-b border-gray-50">
                       <p className="text-sm font-medium text-gray-900 truncate">
-                        {user.name}
+                        {user.fullName}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
                         {user.email}
@@ -217,18 +209,10 @@ export function Navbar() {
                     className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
-                      {user.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User size={16} />
-                      )}
+                      <User size={16} />
                     </div>
                     <span className="font-medium text-gray-900">
-                      {user.name}
+                      {user.fullName}
                     </span>
                   </Link>
                   <button
