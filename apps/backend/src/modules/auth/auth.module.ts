@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { MailerModule } from '@nestjs-modules/mailer';
 
+
 @Module({
   imports: [
     UsersModule,

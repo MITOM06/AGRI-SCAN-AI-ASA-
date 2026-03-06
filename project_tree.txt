@@ -44,6 +44,7 @@
 │   ├── mobile
 │   │   ├── App.tsx
 │   │   ├── app
+│   │   │   ├── _layout.tsx
 │   │   │   ├── auth
 │   │   │   │   ├── AuthHeader.tsx
 │   │   │   │   ├── forgot-password.tsx
@@ -67,6 +68,8 @@
 │   │   │   └── ui
 │   │   │       ├── Button.tsx
 │   │   │       └── Input.tsx
+│   │   ├── expo-env.d.ts
+│   │   ├── expo-router.d.ts
 │   │   ├── index.ts
 │   │   ├── package-lock.json
 │   │   ├── package.json
@@ -113,9 +116,7 @@
 │       │   │   ├── UserProfile.tsx
 │       │   │   ├── auth
 │       │   │   │   ├── ForgotPasswordForm.tsx
-│       │   │   │   ├── Login.tsx
 │       │   │   │   ├── LoginForm.tsx
-│       │   │   │   ├── Register.tsx
 │       │   │   │   ├── RegisterForm.tsx
 │       │   │   │   └── index.ts
 │       │   │   ├── common
@@ -152,6 +153,7 @@
 ├── infra
 │   └── docker-compose
 │       └── docker-compose.yml
+├── mobile_full.zip
 ├── package-lock.json
 ├── package.json
 ├── packages
@@ -200,4 +202,4 @@
 ├── pnpm-workspace.yaml
 └── project_tree.txt
 
-54 directories, 147 files
+54 directories, 149 files

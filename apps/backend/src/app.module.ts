@@ -5,6 +5,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { PlantsModule } from './modules/plants/plants.module';
 
 @Module({
   imports: [
@@ -38,17 +39,10 @@ import { AuthModule } from './modules/auth/auth.module';
       inject: [ConfigService],
     }),
 
-    // BUG FIX: Đã XÓA MongooseModule.forFeature([...]) khỏi AppModule.
-    // Lý do: mỗi Feature Module (UsersModule, PlantsModule...) tự đăng ký
-    // schema của mình bên trong module đó. Đăng ký lại ở AppModule gây
-    // duplicate registration - Mongoose có thể throw lỗi hoặc dùng sai model.
-    //
-    // Quy tắc: AppModule chỉ chứa MongooseModule.forRoot (kết nối DB),
-    // KHÔNG chứa forFeature (đăng ký schema).
-
-    // 4. Feature Modules
+    
     UsersModule,
     AuthModule,
+    PlantsModule,
     // Thêm PlantsModule, DiseasesModule, AiScanModule vào đây khi làm xong
   ],
   controllers: [],
