@@ -6,7 +6,7 @@ import { redisStore } from 'cache-manager-redis-yet';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { PlantsModule } from './modules/plants/plants.module';
-
+import {AiScanModule} from './modules/ai-scan/ai-scan.module';
 @Module({
   imports: [
     // 1. Load .env toàn cục
@@ -43,7 +43,7 @@ import { PlantsModule } from './modules/plants/plants.module';
     UsersModule,
     AuthModule,
     PlantsModule,
-    // Thêm PlantsModule, DiseasesModule, AiScanModule vào đây khi làm xong
+    AiScanModule,
   ],
   controllers: [],
   providers: [],
