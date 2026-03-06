@@ -25,7 +25,7 @@ export class ScanHistory {
   @Prop([AIPrediction])
   aiPredictions: AIPrediction[];
 
-  @Prop({ default: null })
+  @Prop({ type: Boolean, default: null })
   isAccurate: boolean | null; // null = chưa feedback, true/false = đã feedback
 
   // BUG FIX: scannedAt bị thiếu trong schema nhưng type IScanHistory có dùng.
