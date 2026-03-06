@@ -32,7 +32,7 @@ export function UserProfile() {
           className="bg-white rounded-2xl shadow-xl overflow-hidden"
         >
           {/* Header Background */}
-          <div className="h-24 bg-gradient-to-r from-primary to-emerald-600 relative">
+          <div className="h-24 bg-linear-to-r from-primary to-emerald-600 relative">
             <div className="absolute inset-0 opacity-20 pattern-grid-lg"></div>
           </div>
 
@@ -41,17 +41,9 @@ export function UserProfile() {
             <div className="relative flex flex-col sm:flex-row items-center sm:items-center -mt-12 mb-8 gap-6">
               <div className="relative">
                 <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg bg-white overflow-hidden">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
-                      <User size={40} />
-                    </div>
-                  )}
+                  <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                    <User size={40} />
+                  </div>
                 </div>
                 <button className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-colors">
                   <Settings size={16} />
@@ -61,7 +53,7 @@ export function UserProfile() {
               <div className="text-center sm:text-left flex-1">
                 <div className="flex items-center justify-center sm:justify-start gap-2">
                   <h1 className="text-3xl font-extrabold text-white drop-shadow-md">
-                    {user.name}
+                    {user.fullName}
                   </h1>
                 </div>
                 <p className="text-gray-500 font-medium">{user.email}</p>
@@ -116,7 +108,7 @@ export function UserProfile() {
                         key={i}
                         className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100"
                       >
-                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-primary flex-shrink-0">
+                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-primary shrink-0">
                           <Leaf size={24} />
                         </div>
                         <div>
