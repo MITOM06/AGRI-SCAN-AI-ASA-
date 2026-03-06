@@ -1,3 +1,4 @@
+import { Footer } from "../components/ui/Footer";
 import React, { useState, useRef } from "react";
 import {
   View,
@@ -326,11 +327,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            © 2026 Agri-Scan AI. All rights reserved.
-          </Text>
-        </View>
+        <Footer />
       </ScrollView>
     </View>
   );

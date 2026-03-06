@@ -88,12 +88,22 @@ export default function ResetPasswordScreen() {
         resetToken: tokenFromUrl,
         newPassword: data.password,
       });
-      Alert.alert("Thành công", "Mật khẩu của bạn đã được cập nhật!", [
-        {
-          text: "Đăng nhập ngay",
-          onPress: () => router.replace("/auth/login"),
-        },
-      ]);
+
+      // BẮT ĐẦU ĐOẠN SỬA LỖI CHO WEB
+      if (Platform.OS === "web") {
+        // Trên Web: Dùng alert mặc định của trình duyệt, sau đó tự động chuyển trang luôn
+        window.alert("Thành công! Mật khẩu của bạn đã được cập nhật.");
+        router.replace("/auth/login");
+      } else {
+        // Trên Mobile: Giữ nguyên Alert xịn xò của Native
+        Alert.alert("Thành công", "Mật khẩu của bạn đã được cập nhật!", [
+          {
+            text: "Đăng nhập ngay",
+            onPress: () => router.replace("/auth/login"),
+          },
+        ]);
+      }
+      // KẾT THÚC ĐOẠN SỬA LỖI
     } catch (error: any) {
       setApiError(
         error.response?.data?.message ||
