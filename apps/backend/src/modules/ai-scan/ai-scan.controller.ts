@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Body, Param, UseInterceptors, UploadedFile, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, UseInterceptors, UploadedFile, Req, UseGuards, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator  } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AiScanService } from './ai-scan.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -9,12 +9,21 @@ export class AiScanController {
     constructor(private readonly aiScanService: AiScanService) { }
 
     @Post('analyze')
-    @UseInterceptors(FileInterceptor('image')) // 'image' là tên field Mobile gửi lên
+    @UseInterceptors(FileInterceptor('image'))
     async analyzePlantImage(
-        @UploadedFile() file: Express.Multer.File,
+        @UploadedFile(
+            new ParseFilePipe({
+                validators: [
+                    // 1. Cho phép dung lượng lên tới 10MB (10 * 1024 * 1024 bytes)
+                    new MaxFileSizeValidator({ maxSize: 10485760 }),
+                    // 2. Hỗ trợ đa dạng: JPG, PNG, WebP và đặc biệt là HEIC (định dạng ảnh gốc của Apple)
+                    new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|heic)$/i }),
+                ],
+            }),
+        ) file: Express.Multer.File,
         @Req() req: any,
     ) {
-        const userId = req.user.id; // Lấy ID user từ token đăng nhập
+        const userId = req.user.id;
         return this.aiScanService.processImageAndDiagnose(userId, file);
     }
 
