@@ -1,9 +1,8 @@
-# app/main.py
 import io, os, traceback
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 from PIL import Image
 
@@ -13,24 +12,33 @@ from ai.llm import get_llm
 
 app = FastAPI(title="Agri-Scan AI Service")
 
-# init components at startup
+# --- KHAI BÁO BIẾN TOÀN CỤC ---
+# Khai báo ở đây để tránh lỗi "NameError"
+VECTOR_DB = None
+
 @app.on_event("startup")
 def startup_event():
-    # load YOLO (will raise if missing)
+    global VECTOR_DB
+    # Load YOLO
     try:
         load_yolo()
+        print("[startup] YOLO loaded successfully.")
     except Exception as e:
-        print("[startup] YOLO load warning/error:", e)
-    # init RAG vector DB (may take time)
-    try:
-        init_vector_db()
-    except Exception as e:
-        print("[startup] Vector DB init warning/error:", e)
+        print("[startup] YOLO load error:", e)
 
-# simple health
+    # Khởi tạo Vector DB và gán vào biến global
+    try:
+        VECTOR_DB = init_vector_db()
+        print("[startup] Vector DB initialized successfully.")
+    except Exception as e:
+        print("[startup] Vector DB init error:", e)
+        VECTOR_DB = None
+
 @app.get("/")
 def home():
     return {"status": "ok", "service": "agri-scan-ai"}
+
+# --- MODELS ---
 
 class PredictResp(BaseModel):
     success: bool
@@ -40,110 +48,106 @@ class PredictResp(BaseModel):
     answer: Optional[str] = None
     error: Optional[str] = None
 
+# Model mới cho endpoint chat
+class ChatRequest(BaseModel):
+    label: str    # Nhãn trả về từ predict_endpoint
+    prompt: str   # Câu hỏi của người dùng
+
+# --- ENDPOINTS ---
+
 @app.post("/predict", response_model=PredictResp)
-async def predict_endpoint(file: UploadFile = File(None), question: str = Form(None)):
+async def predict_endpoint(file: UploadFile = File(...)):
     """
-    If file provided -> run YOLO predict.
-    If question provided -> do RAG + LLM answering (uses vector DB)
-    Both can be used together: run inference and then question-contexted answer.
+    Chỉ nhận diện ảnh và trả về label + confidence.
     """
     try:
-        if file is None:
-            return JSONResponse(status_code=400, content={"success": False, "error": "No file provided"})
         contents = await file.read()
-        pil = Image.open(io.BytesIO(contents)).convert("RGB")
-        pred = predict_pil_image(pil, conf_threshold=0.0)
+        pil = Image.open(io.BytesIO(contents))
+        
+        # Xử lý xoay ảnh nếu có EXIF
+        try:
+            from PIL import ImageOps
+            pil = ImageOps.exif_transpose(pil)
+        except: pass
+        
+        pil = pil.convert("RGB")
+
+        # Dự đoán
+        pred = predict_pil_image(pil, conf_threshold=0.0, top_k=3)
         top = pred.get("top", {})
         yolo_label = top.get("label")
         confidence = float(top.get("confidence", 0.0))
 
-        # low confidence quick return
         if confidence < 0.5:
-            return {"success": False,
-                    "yolo_label": yolo_label,
-                    "confidence": confidence,
-                    "error": f"Hệ thống không chắc chắn (confidence={confidence:.2f}). Vui lòng chụp ảnh gần hơn."}
-
-        # get vectorstore and candidate contexts
-        vs = init_vector_db()
-        contexts = query_vectorstore(vs, f"{yolo_label}", k=3)
-
-        # build prompt using context and user question (if any)
-        question_text = question or ""
-        prompt = f"AI chẩn đoán: {yolo_label}\n\nContext (top hits):\n"
-        for i, c in enumerate(contexts):
-            prompt += f"\n---\n{c['content']}\n"
-        prompt += f"\n\nCâu hỏi của người dùng: {question_text}\n\nHãy trả lời bằng tiếng Việt, cấu trúc Markdown ngắn gọn."
-
-        # call LLM with fallback logic
-        try:
-            llm = get_llm()
-            # many LLM wrappers accept .generate or .predict or .invoke; we'll try common ones
-            answer = None
-            try:
-                # LangChain LLM interface (call)
-                answer = llm.generate([prompt]) if hasattr(llm, "generate") else None
-                if answer and hasattr(answer, "generations"):
-                    # attempt to extract text (LangChain format)
-                    gen = answer.generations[0][0]
-                    answer_text = getattr(gen, "text", str(gen))
-                else:
-                    # try a simple call / predict interface
-                    answer_text = llm(prompt) if callable(llm) else str(answer)
-            except Exception:
-                # fallback: try __call__
-                try:
-                    answer_text = llm(prompt)
-                except Exception as e2:
-                    print("[/predict] LLM error:", e2)
-                    traceback.print_exc()
-                    answer_text = f"LLM error: {e2}"
-        except Exception as e:
-            print("[/predict] No LLM available:", e)
-            answer_text = None
+            return {
+                "success": False,
+                "yolo_label": yolo_label,
+                "confidence": confidence,
+                "error": f"Độ tin cậy thấp ({confidence:.2f}). Vui lòng chụp rõ hơn."
+            }
 
         return {
             "success": True,
             "yolo_label": yolo_label,
-            "confidence": confidence,
-            "rag_context": contexts,
-            "answer": answer_text
+            "confidence": confidence
         }
-
     except Exception as e:
         traceback.print_exc()
         return {"success": False, "error": str(e)}
 
 @app.post("/chat")
-async def chat_endpoint(question: str):
+async def chat_endpoint(req: ChatRequest):
     """
-    Pure chat endpoint: uses vectorstore to fetch context then LLM to answer.
+    Nhận nhãn (label) và câu hỏi (prompt) để trả lời dựa trên RAG.
     """
+    global VECTOR_DB
     try:
-        vs = init_vector_db()
-        contexts = query_vectorstore(vs, question, k=4)
+        # 1. Kiểm tra Vector DB
+        vs = VECTOR_DB if VECTOR_DB is not None else init_vector_db()
+        
+        # 2. Lấy thông tin từ request
+        label = req.label
+        question = req.prompt
 
-        prompt = "Bạn là chuyên gia nông nghiệp. Dưới đây là những thông tin tham khảo:\n"
+        # 3. Truy vấn Vector Store (kết hợp nhãn và câu hỏi để tìm kiếm chính xác)
+        search_query = f"Bệnh {label}: {question}"
+        contexts = query_vectorstore(vs, search_query, k=4, filter_label=req.label)
+
+        # 4. Xây dựng Prompt cho LLM
+        prompt_llm = (
+            f"Bạn là chuyên gia nông nghiệp chuyên về bệnh cây trồng.\n"
+            f"Kết quả nhận diện: **{label}**\n\n"
+            f"Dưới đây là các tài liệu kỹ thuật liên quan:\n"
+        )
         for c in contexts:
-            prompt += f"\n---\n{c['content']}\n"
-        prompt += f"\nHỏi: {question}\nTrả lời ngắn gọn, tiếng Việt, Markdown."
+            prompt_llm += f"\n---\n{c['content']}\n"
+            
+        prompt_llm += (
+            f"\nCâu hỏi của người dùng: {question}\n"
+            f"\nHãy trả lời chi tiết bằng tiếng Việt, định dạng Markdown rõ ràng."
+        )
 
+        # 5. Gọi LLM
         llm = get_llm()
         try:
-            # try a simple call
-            if hasattr(llm, "generate"):
-                out = llm.generate([prompt])
-                if out and hasattr(out, "generations"):
-                    answer_text = out.generations[0][0].text
-                else:
-                    answer_text = str(out)
+            # Ưu tiên dùng .invoke (chuẩn mới) hoặc fallback về gọi trực tiếp
+            if hasattr(llm, "invoke"):
+                res = llm.invoke(prompt_llm)
+                answer_text = getattr(res, "content", str(res))
+            elif hasattr(llm, "generate"):
+                out = llm.generate([prompt_llm])
+                answer_text = out.generations[0][0].text
             else:
-                answer_text = llm(prompt)
+                answer_text = llm(prompt_llm)
         except Exception as e:
-            print("[/chat] LLM generate error:", e)
-            answer_text = f"LLM error: {e}"
+            print("[/chat] LLM error:", e)
+            answer_text = f"Xin lỗi, AI đang gặp vấn đề khi xử lý câu hỏi: {e}"
 
-        return {"question": question, "answer": answer_text, "contexts": contexts}
+        return {
+            "label": label,
+            "answer": answer_text,
+            "contexts": contexts
+        }
     except Exception as e:
         traceback.print_exc()
         return JSONResponse(status_code=500, content={"error": str(e)})
