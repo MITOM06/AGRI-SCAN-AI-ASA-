@@ -3,6 +3,27 @@
 │   └── README.md
 ├── README.md
 ├── apps
+│   ├── ai-service
+│   │   ├── ai
+│   │   │   ├── __init__.py
+│   │   │   ├── __pycache__
+│   │   │   │   ├── __init__.cpython-310.pyc
+│   │   │   │   ├── llm.cpython-310.pyc
+│   │   │   │   ├── main.cpython-310.pyc
+│   │   │   │   ├── model.cpython-310.pyc
+│   │   │   │   └── rag.cpython-310.pyc
+│   │   │   ├── llm.py
+│   │   │   ├── main.py
+│   │   │   ├── model.py
+│   │   │   └── rag.py
+│   │   ├── data
+│   │   │   └── plant_knowledge.json
+│   │   ├── models
+│   │   │   └── best.pt
+│   │   ├── packages
+│   │   │   ├── database
+│   │   │   └── shared
+│   │   └── requirement.txt
 │   ├── backend
 │   │   ├── Dockerfile
 │   │   ├── README.md
@@ -17,6 +38,9 @@
 │   │   │   ├── main.ts
 │   │   │   └── modules
 │   │   │       ├── ai-scan
+│   │   │       │   ├── ai-scan.controller.ts
+│   │   │       │   ├── ai-scan.module.ts
+│   │   │       │   └── ai-scan.service.ts
 │   │   │       ├── auth
 │   │   │       │   ├── auth.controller.spec.ts
 │   │   │       │   ├── auth.controller.ts
@@ -32,6 +56,9 @@
 │   │   │       │   └── strategies
 │   │   │       │       └── jwt.strategy.ts
 │   │   │       ├── plants
+│   │   │       │   ├── plants.controller.ts
+│   │   │       │   ├── plants.module.ts
+│   │   │       │   └── plants.service.ts
 │   │   │       └── users
 │   │   │           ├── users.module.ts
 │   │   │           ├── users.service.spec.ts
@@ -67,11 +94,11 @@
 │   │   ├── components
 │   │   │   └── ui
 │   │   │       ├── Button.tsx
+│   │   │       ├── Footer.tsx
 │   │   │       └── Input.tsx
 │   │   ├── expo-env.d.ts
 │   │   ├── expo-router.d.ts
 │   │   ├── index.ts
-│   │   ├── package-lock.json
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   └── web
@@ -99,8 +126,11 @@
 │       │   │   │   │   └── page.tsx
 │       │   │   │   └── register
 │       │   │   │       └── page.tsx
+│       │   │   ├── encyclopedia
+│       │   │   │   └── page.tsx
 │       │   │   ├── favicon.ico
 │       │   │   ├── globals.css
+│       │   │   ├── icon.png
 │       │   │   ├── layout.tsx
 │       │   │   ├── page.tsx
 │       │   │   ├── privacy
@@ -113,6 +143,7 @@
 │       │   ├── components
 │       │   │   ├── LandingPage.tsx
 │       │   │   ├── Scanner.tsx
+│       │   │   ├── TreeDictionary.tsx
 │       │   │   ├── UserProfile.tsx
 │       │   │   ├── auth
 │       │   │   │   ├── ForgotPasswordForm.tsx
@@ -137,6 +168,8 @@
 │       │   │       ├── Header.tsx
 │       │   │       ├── Navbar.tsx
 │       │   │       └── index.ts
+│       │   ├── data
+│       │   │   └── treeData.ts
 │       │   ├── hooks
 │       │   │   ├── index.ts
 │       │   │   ├── useAuth.tsx
@@ -154,7 +187,6 @@
 │   └── docker-compose
 │       └── docker-compose.yml
 ├── mobile_full.zip
-├── package-lock.json
 ├── package.json
 ├── packages
 │   ├── database
@@ -162,6 +194,7 @@
 │   │   ├── src
 │   │   │   ├── index.ts
 │   │   │   └── schemas
+│   │   │       ├── chat-history.schema.ts
 │   │   │       ├── disease.schema.ts
 │   │   │       ├── plant.schema.ts
 │   │   │       ├── scan-history.schema.ts
@@ -202,4 +235,4 @@
 ├── pnpm-workspace.yaml
 └── project_tree.txt
 
-54 directories, 149 files
+64 directories, 172 files

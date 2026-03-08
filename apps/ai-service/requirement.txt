@@ -1,5 +1,0 @@
-gradio
-ultralytics
-langchain-core
-langchain-ollama
-Pillow

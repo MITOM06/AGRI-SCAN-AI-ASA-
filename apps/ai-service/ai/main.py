@@ -113,9 +113,12 @@ async def predict_endpoint(file: UploadFile = File(None), question: str = Form(N
     except Exception as e:
         traceback.print_exc()
         return {"success": False, "error": str(e)}
-
+class ChatRequest(BaseModel):
+    question: str
+    
 @app.post("/chat")
-async def chat_endpoint(question: str):
+async def chat_endpoint(req: ChatRequest):
+    question = req.question # Lấy question từ body
     """
     Pure chat endpoint: uses vectorstore to fetch context then LLM to answer.
     """

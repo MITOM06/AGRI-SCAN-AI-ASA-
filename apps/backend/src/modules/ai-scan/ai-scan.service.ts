@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ScanHistory } from '@agri-scan/database';
@@ -7,7 +7,7 @@ import { ChatHistory } from '@agri-scan/database';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
-import  FormDataNode from 'form-data';
+import FormDataNode from 'form-data';
 import axios from 'axios';
 
 @Injectable()
@@ -31,52 +31,55 @@ export class AiScanService {
 
     let aiPredictionResult;
 
+    // 1. KIỂM TRA CACHE TRƯỚC
     if (cachedResult) {
-      // NẾU CÓ TRONG REDIS: Lấy luôn kết quả, tốc độ siêu tốc (0.01 giây)!
-      console.log('Lấy kết quả chẩn đoán từ Redis Cache 🚀');
+      console.log('Lấy kết quả từ Redis 🚀 (Bỏ qua gọi FastAPI)');
       aiPredictionResult = cachedResult;
     } else {
-      // NẾU CHƯA CÓ: Gửi sang server AI (FastAPI) phân tích
+      // 2. GỌI MẠNG (CHỈ TRY-CATCH LỖI KẾT NỐI)
       try {
-        console.log('Phân tích ảnh mới bằng FastAPI 🧠');
+        console.log('Đang gửi ảnh sang FastAPI phân tích... 🧠');
         const formData = new FormDataNode();
         formData.append('file', imageFile.buffer, imageFile.originalname);
 
-        const aiResponse = await axios.post('http://<host-ip>:8000/predict', formData, {
+        const aiResponse = await axios.post('http://localhost:8000/predict', formData, {
           headers: formData.getHeaders(),
         });
+
         aiPredictionResult = aiResponse.data;
-
-        // Lưu kết quả vào Redis để lần sau dùng lại (Cache trong 24 giờ = 86400 giây)
-        await this.cacheManager.set(cacheKey, aiPredictionResult, 86400);
-
       } catch (error) {
+        // Lỗi này là do server FastAPI sập hoặc chưa bật
+        console.error('Lỗi kết nối FastAPI:', error.message);
         throw new InternalServerErrorException('Không thể kết nối với hệ thống AI Bác sĩ');
       }
+
+      // 3. KIỂM TRA LỖI LOGIC TỪ AI (NẰM NGOÀI TRY-CATCH MẠNG)
+      if (!aiPredictionResult || aiPredictionResult.success === false) {
+        // Trả về lỗi 400 (Bad Request) nếu AI báo ảnh lỗi (mờ, không phải cây,...)
+        throw new BadRequestException(`AI Server báo lỗi: ${aiPredictionResult?.error || 'Không nhận diện được'}`);
+      }
+
+      // 4. LƯU VÀO REDIS (Chỉ lưu khi AI đã phân tích thành công)
+      await this.cacheManager.set(cacheKey, aiPredictionResult, 86400);
     }
 
-    // 3. Chạy ra "Tủ thuốc" (MongoDB) lấy phác đồ điều trị
-    const diseaseInfo = await this.plantsService.findDiseaseByName(aiPredictionResult.diseaseName);
+    // ---------------------------------------------------------
+    // 5. TIẾP TỤC CHẠY RA TỦ THUỐC (TRA CỨU DATABASE)
+    // Bước này nằm NGOÀI "else" vì dù lấy từ Cache hay FastAPI thì đều cần thông tin DB
+    // ---------------------------------------------------------
+    console.log(`Đang tra cứu thông tin bệnh: ${aiPredictionResult.yolo_label}`);
 
-    // 4. Lưu vào lịch sử quét (Bệnh án)
-    const newScan = new this.scanHistoryModel({
-      userId,
-      imageUrl: mockImageUrl,
-      aiPredictions: [{
-        diseaseId: diseaseInfo?._id || null,
-        confidence: aiPredictionResult.confidence,
-      }],
-      isAccurate: null, // Chờ user feedback sau
-      scannedAt: new Date(),
-    });
-    await newScan.save();
+    const diseaseInfo = await this.plantsService.findDiseaseByName(aiPredictionResult.yolo_label);
 
-    // 5. Trả kết quả trọn gói về cho Mobile/Web hiển thị
+    if (!diseaseInfo) {
+      // Phòng trường hợp AI đọc ra tên bệnh nhưng DB của bạn chưa cập nhật bệnh đó
+      throw new NotFoundException(`Không tìm thấy thông tin chi tiết cho bệnh: ${aiPredictionResult.yolo_label}`);
+    }
+
+    // 6. TRẢ KẾT QUẢ CUỐI CÙNG VỀ CHO APP MOBILE
     return {
-      scanId: newScan._id,
-      imageUrl: mockImageUrl,
-      prediction: aiPredictionResult,
-      treatmentDetails: diseaseInfo,
+      prediction: aiPredictionResult, // Chứa nhãn, độ tự tin...
+      details: diseaseInfo           // Chứa cách chữa, hình ảnh thuốc, mô tả...
     };
   }
 
@@ -98,12 +101,20 @@ export class AiScanService {
       });
 
       // 1.3 Bắn câu hỏi sang cổng 8000 của team AI
-      const aiResponse = await axios.post('http://<host-ip>:8000/chat', {
+      const aiResponse = await axios.post('http://localhost:8000/chat', {
         question: question
       });
 
-      // Lấy data text do AI trả về
-      const answerContent = aiResponse.data.answer || aiResponse.data;
+      // 🔥 THÊM DÒNG NÀY ĐỂ DEBUG: In ra xem AI thực sự nhả ra cái gì
+      console.log('Dữ liệu AI trả về:', aiResponse.data);
+
+      // Lấy data text do AI trả về (Đảm bảo nó luôn là String để Mongoose không bị crash)
+      const answerContent = aiResponse.data.answer ? String(aiResponse.data.answer) : JSON.stringify(aiResponse.data);
+
+      // Đảm bảo mảng messages luôn tồn tại để tránh lỗi "Cannot read properties of undefined"
+      if (!chatDoc.messages) {
+        chatDoc.messages = [];
+      }
 
       // 1.4 Push câu trả lời của AI vào mảng messages
       chatDoc.messages.push({

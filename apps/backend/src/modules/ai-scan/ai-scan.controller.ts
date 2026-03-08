@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, Body, Param, UseInterceptors, UploadedFile, Req, UseGuards, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator  } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, UseInterceptors, UploadedFile, Req, UseGuards, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, UnauthorizedException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AiScanService } from './ai-scan.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -23,26 +23,31 @@ export class AiScanController {
         ) file: Express.Multer.File,
         @Req() req: any,
     ) {
-        const userId = req.user.id;
+        const userId = req.user.userId || req.user._id || req.user.sub;
+        if (!userId) throw new UnauthorizedException('Không tìm thấy thông tin user trong token');
+
         return this.aiScanService.processImageAndDiagnose(userId, file);
     }
 
     @Post('chat')
     async chatWithAi(@Req() req: any, @Body('question') question: string) {
-        const userId = req.user.id;
+        console.log('Dữ liệu User từ Token:', req.user);
+        const userId = req.user.userId || req.user._id || req.user.sub;
+        if (!userId) throw new UnauthorizedException('Không tìm thấy thông tin user trong token');
+
         return this.aiScanService.askVirtualAssistant(userId, question);
     }
 
     // API 2: Lấy toàn bộ lịch sử quét của User đang đăng nhập
     @Get('history')
     async getHistory(@Req() req: any) {
-        const userId = req.user.id;
+        const userId = req.user.userId;
         return this.aiScanService.getUserScanHistory(userId);
     }
 
     @Get('chat/history')
     async getChatHistory(@Req() req: any) {
-        const userId = req.user.id;
+        const userId = req.user.userId;
         return this.aiScanService.getUserChatHistory(userId);
     }
 
