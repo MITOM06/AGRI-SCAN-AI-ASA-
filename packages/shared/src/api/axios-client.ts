@@ -24,7 +24,7 @@ declare module "axios" {
 // Nếu test bằng Android Emulator trên máy thật thì dùng: http://10.0.2.2:4000
 // Nếu deploy production thì đổi thành domain thật: https://api.agriscan.ai
 //
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.0.104:4000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.0.100:4000";
 
 export const axiosClient = axios.create({
   baseURL: BASE_URL,

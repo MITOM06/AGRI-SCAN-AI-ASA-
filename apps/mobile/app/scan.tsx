@@ -14,14 +14,11 @@ import {
   Animated,
   Dimensions,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { useRouter } from "expo-router"; // Import thêm useRouter
+import { useRouter } from "expo-router";
 import {
   Send,
   Camera as CameraIcon,
@@ -31,7 +28,7 @@ import {
   Plus,
   PanelLeft,
   MessageSquare,
-  ArrowLeft, // Import thêm ArrowLeft
+  ArrowLeft,
 } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
@@ -56,7 +53,9 @@ const MOCK_HISTORY = [
 
 export default function ScanChatScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter(); // Khởi tạo router
+  const router = useRouter();
+
+  // States cho Chat & Media
   const [permission, requestPermission] = useCameraPermissions();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
@@ -64,22 +63,32 @@ export default function ScanChatScreen() {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isBotTyping, setIsBotTyping] = useState(false);
 
-  // --- STATE VÀ HIỆU ỨNG MENU BÊN TRÁI ---
+  // States cho Sidebar Lịch sử
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // Bắt đầu từ -width (ẩn hoàn toàn bên trái màn hình)
   const slideAnim = useRef(new Animated.Value(-width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  const cameraRef = useRef<any>(null);
+
+  // Tự động cuộn xuống cuối khi có tin nhắn mới
+  useEffect(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, [messages, isBotTyping]);
+
+  // --- LOGIC MỞ/ĐÓNG SIDEBAR ---
   const openSidebar = () => {
     setIsSidebarOpen(true);
     Animated.parallel([
       Animated.timing(slideAnim, {
-        toValue: 0, // Kéo vào trong màn hình
+        toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }),
       Animated.timing(fadeAnim, {
-        toValue: 1, // Làm mờ nền
+        toValue: 1,
         duration: 300,
         useNativeDriver: true,
       }),
@@ -89,7 +98,7 @@ export default function ScanChatScreen() {
   const closeSidebar = () => {
     Animated.parallel([
       Animated.timing(slideAnim, {
-        toValue: -width, // Đẩy ngược ra ngoài bên trái
+        toValue: -width,
         duration: 300,
         useNativeDriver: true,
       }),
@@ -103,17 +112,7 @@ export default function ScanChatScreen() {
     });
   };
 
-  const scrollViewRef = useRef<ScrollView>(null);
-  const cameraRef = useRef<any>(null);
-
-  // Cuộn xuống cuối khi có tin nhắn mới
-  useEffect(() => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, [messages, isBotTyping]);
-
-  // Mở Camera
+  // --- LOGIC CAMERA VÀ THƯ VIỆN ---
   const handleOpenCamera = async () => {
     if (!permission?.granted) {
       const { granted } = await requestPermission();
@@ -136,20 +135,18 @@ export default function ScanChatScreen() {
     }
   };
 
-  // Mở Thư viện ảnh
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.7,
       base64: true,
     });
-
     if (!result.canceled && result.assets[0].base64) {
       setSelectedImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
     }
   };
 
-  // Gửi tin nhắn và gọi AI
+  // --- LOGIC GỬI TIN NHẮN CHO AI ---
   const handleSend = async () => {
     if (!inputText.trim() && !selectedImage) return;
 
@@ -171,13 +168,7 @@ export default function ScanChatScreen() {
 
     try {
       const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-      const prompt = `
-        Bạn là Agri-Scan AI, một chuyên gia nông nghiệp thân thiện. 
-        Câu hỏi: "${userText}".
-        ${userImage ? "Đính kèm: Bức ảnh cây trồng." : ""}
-        Hãy trả lời bằng tiếng Việt, phân tích bệnh (nếu có), đưa ra nguyên nhân và cách điều trị.
-      `;
+      const prompt = `Bạn là Agri-Scan AI, một chuyên gia nông nghiệp thân thiện. Câu hỏi: "${userText}". ${userImage ? "Đính kèm: Bức ảnh cây trồng." : ""} Hãy trả lời bằng tiếng Việt, phân tích bệnh (nếu có), đưa ra nguyên nhân và cách điều trị.`;
 
       let response;
       if (userImage) {
@@ -190,11 +181,9 @@ export default function ScanChatScreen() {
         response = await model.generateContent(prompt);
       }
 
-      const botText = response.response.text();
-
       const botResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: botText,
+        text: response.response.text(),
         sender: "bot",
         timestamp: new Date(),
       };
@@ -214,18 +203,12 @@ export default function ScanChatScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header Bar */}
-      {/* Header Bar */}
+      {/* ========================================== */}
+      {/* 1. HEADER BAR                              */}
+      {/* ========================================== */}
       <View
-        style={[
-          styles.header,
-          {
-            // Dùng insets.top chuẩn cho mọi dòng máy giống trang Home
-            paddingTop: Math.max(insets.top, 10) + 10,
-          },
-        ]}
+        style={[styles.header, { paddingTop: Math.max(insets.top, 10) + 10 }]}
       >
-        {/* Nút Quay lại và Nút Sidebar được nhóm chung */}
         <View style={styles.headerLeft}>
           <TouchableOpacity
             onPress={() => router.back()}
@@ -233,7 +216,6 @@ export default function ScanChatScreen() {
           >
             <ArrowLeft size={24} color="#374151" />
           </TouchableOpacity>
-
           <TouchableOpacity
             onPress={openSidebar}
             style={[styles.iconBtn, { marginLeft: 4 }]}
@@ -244,7 +226,6 @@ export default function ScanChatScreen() {
 
         <Text style={styles.headerTitle}>Agri-Scan AI</Text>
 
-        {/* Nút tạo cuộc trò chuyện mới */}
         <TouchableOpacity
           onPress={() => setMessages([])}
           style={styles.iconBtn}
@@ -253,10 +234,11 @@ export default function ScanChatScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* --- Sidebar Lịch sử trượt từ trái sang (Animated Drawer) --- */}
+      {/* ========================================== */}
+      {/* 2. SIDEBAR LỊCH SỬ (TRƯỢT TỪ TRÁI)         */}
+      {/* ========================================== */}
       <Modal visible={isSidebarOpen} transparent={true} animationType="none">
         <View style={styles.modalContainer}>
-          {/* Lớp nền mờ */}
           <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
             <TouchableOpacity
               style={{ flex: 1 }}
@@ -265,7 +247,6 @@ export default function ScanChatScreen() {
             />
           </Animated.View>
 
-          {/* Menu Trượt từ trái qua */}
           <Animated.View
             style={[
               styles.leftDrawer,
@@ -305,12 +286,41 @@ export default function ScanChatScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+
+              {/* NÚT NÂNG CẤP GÓI */}
+              <View
+                style={[
+                  styles.sidebarFooter,
+                  { paddingBottom: Math.max(insets.bottom, 20) },
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.upgradeBtn}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    closeSidebar();
+                    setTimeout(() => router.push("/upgrade"), 300);
+                  }}
+                >
+                  <View style={styles.upgradeIconWrapper}>
+                    <Leaf size={20} color="#ca8a04" />
+                  </View>
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={styles.upgradeTitle}>Nâng cấp gói</Text>
+                    <Text style={styles.upgradeSub}>
+                      Mở khóa tính năng cao cấp
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
             </View>
           </Animated.View>
         </View>
       </Modal>
 
-      {/* Vùng Tin nhắn */}
+      {/* ========================================== */}
+      {/* 3. VÙNG HIỂN THỊ TIN NHẮN (CHAT AREA)      */}
+      {/* ========================================== */}
       <KeyboardAvoidingView
         style={styles.chatArea}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -401,7 +411,9 @@ export default function ScanChatScreen() {
           )}
         </ScrollView>
 
-        {/* Thanh Nhập Liệu (Input Area) */}
+        {/* ========================================== */}
+        {/* 4. VÙNG NHẬP LIỆU (INPUT AREA)             */}
+        {/* ========================================== */}
         <View
           style={[
             styles.inputContainer,
@@ -466,7 +478,9 @@ export default function ScanChatScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* Modal Camera Fullscreen */}
+      {/* ========================================== */}
+      {/* 5. MODAL CAMERA                            */}
+      {/* ========================================== */}
       <Modal visible={isCameraOpen} transparent={true}>
         <View style={styles.cameraContainer}>
           <CameraView style={{ flex: 1 }} facing="back" ref={cameraRef}>
@@ -493,8 +507,13 @@ export default function ScanChatScreen() {
   );
 }
 
+// ==========================================
+// STYLES
+// ==========================================
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
+
+  // Header
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -505,19 +524,16 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f3f4f6",
     backgroundColor: "#fff",
   },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+  headerLeft: { flexDirection: "row", alignItems: "center" },
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#111827",
     marginRight: 24,
-  }, // Thêm marginRight để căn giữa title tốt hơn
+  },
   iconBtn: { padding: 8 },
 
-  // --- Styles Sidebar Trái (Lịch sử) ---
+  // Sidebar Drawer
   modalContainer: { flex: 1, flexDirection: "row" },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -525,13 +541,13 @@ const styles = StyleSheet.create({
   },
   leftDrawer: {
     position: "absolute",
-    left: 0, // Cố định ở mép trái
+    left: 0,
     top: 0,
     bottom: 0,
-    width: width * 0.75, // Chiếm 75% màn hình
-    backgroundColor: "#1B5E20", // Màu xanh lá đậm giống ảnh Web
+    width: width * 0.75,
+    backgroundColor: "#1B5E20",
     shadowColor: "#000",
-    shadowOffset: { width: 5, height: 0 }, // Đổ bóng sang phải
+    shadowOffset: { width: 5, height: 0 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 20,
@@ -559,7 +575,32 @@ const styles = StyleSheet.create({
   historyText: { color: "#fff", fontSize: 15, fontWeight: "500" },
   historyDate: { color: "#86efac", fontSize: 12, marginTop: 4 },
 
-  // --- Styles Chat ---
+  // Upgrade Button (Sidebar Footer)
+  sidebarFooter: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.1)",
+  },
+  upgradeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    padding: 12,
+    borderRadius: 16,
+  },
+  upgradeIconWrapper: {
+    width: 36,
+    height: 36,
+    backgroundColor: "#fef08a",
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  upgradeTitle: { fontSize: 15, fontWeight: "bold", color: "#fff" },
+  upgradeSub: { fontSize: 12, color: "#86efac", marginTop: 2 },
+
+  // Chat Area
   chatArea: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 20 },
   emptyState: {
@@ -644,7 +685,7 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
 
-  // --- Styles Input ---
+  // Input Area
   inputContainer: {
     backgroundColor: "#fff",
     borderTopWidth: 1,
@@ -711,6 +752,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
+  // Camera Modal
   cameraContainer: { flex: 1, backgroundColor: "#000" },
   cameraOverlay: { flex: 1, justifyContent: "space-between" },
   camCloseBtn: {
