@@ -20,6 +20,7 @@ export { forgotPasswordSchema, type ForgotPasswordFormData } from './schemas/aut
 // Legacy export (để không break code cũ)
 
 export * from './api/token-manager';
+export * from './api/scan.api';
 export * from './api/axios-client';
 export * from './api/auth.api';
 export const helloWorld = () => {
