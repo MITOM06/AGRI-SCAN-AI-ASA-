@@ -1,5 +1,3 @@
-name: agri-scan-ai
-
 services:
   # 1. CƠ SỞ DỮ LIỆU CHÍNH (MONGODB)
   mongodb:
@@ -7,7 +5,7 @@ services:
     container_name: asa-mongodb
     restart: always
     ports:
-      - "27018:27017"   # host:container — dev kết nối qua cổng 27018
+      - "27018:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: secretPassword
@@ -22,38 +20,65 @@ services:
     container_name: asa-redis
     restart: always
     ports:
-      - "6380:6379"     # host:container — dev kết nối qua cổng 6380
+      - "6380:6379"
     volumes:
       - asa-redis-data:/data
     networks:
       - agri-net
 
-  # 3. BACKEND API
-  # Khi dev bình thường thì comment service này lại để chạy `pnpm start:dev` cho nhanh
+  # 3. AI SERVICE (PYTHON)
+  ai-service:
+    build:
+      context: ../../apps/ai-service
+      dockerfile: Dockerfile
+    container_name: asa-ai
+    restart: always
+    ports:
+      - "8000:8000" # Giả sử bạn dùng FastAPI/Flask chạy port 8000
+    volumes:
+      # Mount model vào để không phải copy model nặng vào image (tuỳ chọn)
+      - ../../apps/ai-service/models:/app/models
+    networks:
+      - agri-net
+
+  # 4. BACKEND API (NESTJS)
   backend:
     build:
       context: ../../
       dockerfile: apps/backend/Dockerfile
     container_name: asa-backend
+    restart: always
     ports:
       - "4000:4000"
     depends_on:
       - mongodb
       - redis
+      - ai-service # Đảm bảo AI chạy trước khi Backend gọi tới
     environment:
-      # DB & Cache — dùng tên service làm host khi chạy trong Docker network
       - DB_URI=mongodb://admin:secretPassword@mongodb:27017/agriscan?authSource=admin
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=4000
-
-      # BUG FIX: 3 biến sau bị thiếu hoàn toàn → app crash khi start trong Docker
-      # vì auth.module.ts dùng configService.getOrThrow() cho các key này.
-      # QUAN TRỌNG: Thay các giá trị placeholder bên dưới bằng giá trị thật
-      # trước khi deploy. Không commit giá trị thật lên Git — dùng .env file hoặc secret manager.
+      - AI_SERVICE_URL=http://ai-service:8000 # Backend gọi AI qua network nội bộ
       - JWT_SECRET=CHANGE_ME_use_a_long_random_string_min_32_chars
       - SMTP_USER=your_gmail@gmail.com
       - SMTP_PASS=your_gmail_app_password
+    networks:
+      - agri-net
+
+  # 5. WEB FRONTEND (NEXT.JS)
+  web:
+    build:
+      context: ../../
+      dockerfile: apps/web/Dockerfile
+    container_name: asa-web
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:4000 # Giao diện web gọi tới backend
     networks:
       - agri-net
 

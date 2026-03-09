@@ -41,7 +41,7 @@ export class AiScanService {
       try {
         console.log('Đang gửi ảnh sang FastAPI phân tích... 🧠');
         const formData = new FormDataNode(); // Lưu ý: Đảm bảo bạn đang dùng đúng thư viện 'form-data'
-        
+
         // 🔥 FIX LỖI CONFIDENCE 0.00 Ở ĐÂY: Thêm đầy đủ thông tin contentType và size
         formData.append('file', imageFile.buffer, {
           filename: imageFile.originalname,
@@ -96,11 +96,65 @@ export class AiScanService {
       scanHistoryId: newScan._id, // Đã đổi tên biến để khớp với interface IScanResult của bạn
       imageUrl: mockImageUrl,
       predictions: [aiPredictionResult], // Trả về dạng mảng theo IScanResult
-      topDisease: diseaseInfo           
+      topDisease: diseaseInfo
     };
   }
 
-  async askVirtualAssistant(userId: string, question: string) {
+  // async askVirtualAssistant(userId: string, question: string) {
+  //   try {
+  //     // 1.1 Tìm xem user này đã có phiên chat nào trong Database chưa
+  //     let chatDoc = await this.chatHistoryModel.findOne({ userId });
+
+  //     // Nếu chưa có, tạo một phiên chat mới tinh
+  //     if (!chatDoc) {
+  //       chatDoc = new this.chatHistoryModel({ userId, messages: [] });
+  //     }
+
+  //     // 1.2 Push câu hỏi của User vào mảng messages
+  //     chatDoc.messages.push({
+  //       role: 'user',
+  //       content: question,
+  //       timestamp: new Date()
+  //     });
+
+  //     // 1.3 Bắn câu hỏi sang cổng 8000 của team AI
+  //     const aiResponse = await axios.post('http://localhost:8000/chat', {
+  //       question: question
+  //     });
+
+  //     // 🔥 THÊM DÒNG NÀY ĐỂ DEBUG: In ra xem AI thực sự nhả ra cái gì
+  //     console.log('Dữ liệu AI trả về:', aiResponse.data);
+
+  //     // Lấy data text do AI trả về (Đảm bảo nó luôn là String để Mongoose không bị crash)
+  //     const answerContent = aiResponse.data.answer ? String(aiResponse.data.answer) : JSON.stringify(aiResponse.data);
+
+  //     // Đảm bảo mảng messages luôn tồn tại để tránh lỗi "Cannot read properties of undefined"
+  //     if (!chatDoc.messages) {
+  //       chatDoc.messages = [];
+  //     }
+
+  //     // 1.4 Push câu trả lời của AI vào mảng messages
+  //     chatDoc.messages.push({
+  //       role: 'ai',
+  //       content: answerContent,
+  //       timestamp: new Date()
+  //     });
+
+  //     // 1.5 LƯU TOÀN BỘ XUỐNG MONGODB
+  //     await chatDoc.save();
+
+  //     // 1.6 Trả kết quả về cho App Mobile hiển thị ngay lập tức
+  //     return {
+  //       question: question,
+  //       answer: answerContent,
+  //     };
+  //   } catch (error) {
+  //     console.error('Lỗi khi gọi API Chatbot:', error.message);
+  //     throw new InternalServerErrorException('Trợ lý ảo đang bận, vui lòng thử lại sau!');
+  //   }
+  // }
+
+ async askVirtualAssistant(userId: string, question: string, diseaseLabel: string = 'Cây trồng') {
     try {
       // 1.1 Tìm xem user này đã có phiên chat nào trong Database chưa
       let chatDoc = await this.chatHistoryModel.findOne({ userId });
@@ -117,18 +171,17 @@ export class AiScanService {
         timestamp: new Date()
       });
 
-      // 1.3 Bắn câu hỏi sang cổng 8000 của team AI
+   // 1.3 Bắn câu hỏi sang cổng 8000 của team AI
       const aiResponse = await axios.post('http://localhost:8000/chat', {
-        question: question
+        label: "Cây trồng",  
+        prompt: question,
       });
 
-      // 🔥 THÊM DÒNG NÀY ĐỂ DEBUG: In ra xem AI thực sự nhả ra cái gì
       console.log('Dữ liệu AI trả về:', aiResponse.data);
 
-      // Lấy data text do AI trả về (Đảm bảo nó luôn là String để Mongoose không bị crash)
+      // Lấy data text do AI trả về
       const answerContent = aiResponse.data.answer ? String(aiResponse.data.answer) : JSON.stringify(aiResponse.data);
 
-      // Đảm bảo mảng messages luôn tồn tại để tránh lỗi "Cannot read properties of undefined"
       if (!chatDoc.messages) {
         chatDoc.messages = [];
       }
@@ -143,13 +196,14 @@ export class AiScanService {
       // 1.5 LƯU TOÀN BỘ XUỐNG MONGODB
       await chatDoc.save();
 
-      // 1.6 Trả kết quả về cho App Mobile hiển thị ngay lập tức
+      // 1.6 Trả kết quả về cho App Mobile
       return {
         question: question,
         answer: answerContent,
       };
-    } catch (error) {
-      console.error('Lỗi khi gọi API Chatbot:', error.message);
+ }catch (error) {
+      // Dòng này sẽ in ra chi tiết FastAPI đang đòi cái gì:
+      console.error('LỖI CHI TIẾT TỪ AI:', JSON.stringify(error.response?.data, null, 2));
       throw new InternalServerErrorException('Trợ lý ảo đang bận, vui lòng thử lại sau!');
     }
   }
