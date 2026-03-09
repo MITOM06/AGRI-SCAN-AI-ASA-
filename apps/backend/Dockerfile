@@ -1,18 +1,16 @@
 # 1. Giai đoạn Build
 FROM node:20-alpine AS builder
 
-# Cài pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
-
 WORKDIR /app
 
 # Copy toàn bộ source code Monorepo vào
 COPY . .
 
-# Cài đặt dependencies (chỉ cài những thứ cần thiết)
+# Cài đặt dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build thư viện shared trước
+# Build thư viện shared và database trước
 RUN pnpm --filter @agri-scan/shared build
 RUN pnpm --filter @agri-scan/database build
 
@@ -29,8 +27,7 @@ COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/package.json ./package.json
 
-# Expose port
-EXPOSE 3000
+# Đổi thành 4000 cho khớp với docker-compose
+EXPOSE 4000
 
-# Chạy lệnh start
 CMD ["node", "apps/backend/dist/main.js"]
