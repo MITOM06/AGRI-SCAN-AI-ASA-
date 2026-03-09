@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, Inject, BadRequestException  } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ScanHistory } from '@agri-scan/database';
@@ -99,15 +99,17 @@ export class AiScanService {
       topDisease: diseaseInfo
     };
   }
- async askVirtualAssistant(userId: string, question: string, diseaseLabel: string = 'Cây trồng') {
 
+
+ // 🔥 Thêm dấu ? để cho phép diseaseLabel có thể bị trống (undefined)
+  async askVirtualAssistant(userId: string, question: string, diseaseLabel?: string) {
     try {
-      // 1.1 Tìm session theo sessionId + userId
-      // Nếu không có sessionId hoặc không tìm thấy → tự động tạo session mới
-      let chatDoc = sessionId
-        ? await this.chatHistoryModel.findOne({ _id: sessionId, userId })
-        : null;
+      // Nếu App truyền tên bệnh xuống thì dùng, không thì mặc định là 'Cây trồng'
+      const finalLabel = diseaseLabel || 'Cây trồng'; 
 
+      // 1.1 Tìm xem user này đã có phiên chat nào trong Database chưa
+      let chatDoc = await this.chatHistoryModel.findOne({ userId });
+      
       if (!chatDoc) {
         // Lấy tối đa 50 ký tự đầu của câu hỏi làm title, tránh title quá dài
         const autoTitle = question.trim().length > 0
@@ -128,16 +130,14 @@ export class AiScanService {
         timestamp: new Date()
       });
 
-   // 1.3 Bắn câu hỏi sang cổng 8000 của team AI
+      // 1.3 Bắn câu hỏi sang cổng 8000 của team AI
       const aiResponse = await axios.post('http://localhost:8000/chat', {
-        label: "Cây trồng",  
+        label: finalLabel, // 🔥 Sử dụng nhãn thực tế
         prompt: question,
       });
 
       console.log('Dữ liệu AI trả về:', aiResponse.data);
 
-
-      // Lấy data text do AI trả về
       const answerContent = aiResponse.data.answer ? String(aiResponse.data.answer) : JSON.stringify(aiResponse.data);
 
       if (!chatDoc.messages) {
@@ -161,8 +161,7 @@ export class AiScanService {
         question,
         answer: answerContent,
       };
- }catch (error) {
-      // Dòng này sẽ in ra chi tiết FastAPI đang đòi cái gì:
+    } catch (error) {
       console.error('LỖI CHI TIẾT TỪ AI:', JSON.stringify(error.response?.data, null, 2));
       throw new InternalServerErrorException('Trợ lý ảo đang bận, vui lòng thử lại sau!');
     }
