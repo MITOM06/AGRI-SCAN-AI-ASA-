@@ -267,7 +267,10 @@ export default function UserHomeScreen() {
                   <Text style={styles.menuItemText}>Chẩn đoán AI</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/treeDic")}
+                >
                   <Text style={styles.menuItemText}>Từ điển cây</Text>
                 </TouchableOpacity>
 

@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 import { default as ReactWebcam } from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@agri-scan/shared";
+import { cn, scanApi } from "@agri-scan/shared";
+import type { IChatSession } from "@agri-scan/shared";
 
 interface Message {
   id: string;
@@ -30,24 +31,28 @@ interface Message {
   timestamp: Date;
 }
 
-interface ChatHistory {
-  id: string;
-  title: string;
-  date: string;
-}
-
-const MOCK_HISTORY: ChatHistory[] = [
-  { id: "1", title: "Bệnh đốm lá trên cây Cà phê", date: "Hôm nay" },
-  { id: "2", title: "Cách bón phân NPK", date: "Hôm qua" },
-  { id: "3", title: "Sâu bệnh hại lúa mùa mưa", date: "7 ngày trước" },
-  { id: "4", title: "Tưới nước cho Sầu riêng", date: "30 ngày trước" },
-];
+const getDateGroup = (date: string | Date): string => {
+  const d = new Date(date);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const diffDays = Math.floor(
+    (todayStart.getTime() -
+      new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) /
+      (1000 * 60 * 60 * 24),
+  );
+  if (diffDays <= 0) return "Hôm nay";
+  if (diffDays === 1) return "Hôm qua";
+  if (diffDays <= 7) return "7 ngày trước";
+  return "30 ngày trước";
+};
 
 export function Scanner() {
-  const [history, setHistory] = useState<ChatHistory[]>(MOCK_HISTORY);
-  const [messages, setMessages] = useState<Message[]>([]); // Start empty for "New Chat" state
+  const [history, setHistory] = useState<IChatSession[]>([]);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isBotTyping, setIsBotTyping] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -94,14 +99,24 @@ export function Scanner() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Load chat history from API on mount
+  useEffect(() => {
+    scanApi
+      .getChatHistory()
+      .then(setHistory)
+      .catch(() => {});
+  }, []);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedImage(reader.result as string);
       };
       reader.readAsDataURL(file);
+      e.target.value = "";
     }
   };
 
@@ -109,6 +124,7 @@ export function Scanner() {
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
       setSelectedImage(imageSrc);
+      setSelectedImageFile(null); // webcam gives base64; will convert to blob at send time
       setIsCameraOpen(false);
     }
   }, [webcamRef]);
@@ -116,33 +132,105 @@ export function Scanner() {
   const handleSend = async () => {
     if (!inputText.trim() && !selectedImage) return;
 
-    const newMessage: Message = {
+    const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText,
+      text: inputText.trim() || undefined,
       image: selectedImage || undefined,
       sender: "user",
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    setMessages((prev) => [...prev, userMessage]);
+
+    const questionText = inputText.trim();
+    const capturedImage = selectedImage;
+    const capturedFile = selectedImageFile;
+
     setInputText("");
     setSelectedImage(null);
+    setSelectedImageFile(null);
     setIsBotTyping(true);
 
-    // Reset height
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
-    // Simulate Bot Response
-    setTimeout(() => {
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "Cảm ơn bạn đã gửi thông tin. Hệ thống đang phân tích dữ liệu hình ảnh và triệu chứng bạn cung cấp... \n\nĐây là giao diện demo, chưa kết nối API thực tế.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botResponse]);
+    try {
+      if (capturedImage) {
+        // Image scan flow — requires login
+        let fileToUpload: File | Blob;
+        if (capturedFile) {
+          fileToUpload = capturedFile;
+        } else {
+          // webcam base64 → blob
+          const fetchRes = await fetch(capturedImage);
+          fileToUpload = await fetchRes.blob();
+        }
+
+        const result = await scanApi.scanImage(fileToUpload);
+        const topPrediction = result.predictions?.[0];
+        const diseaseName =
+          result.topDisease?.name ||
+          topPrediction?.diseaseName ||
+          "Không xác định";
+        const confidence = topPrediction
+          ? Math.round(topPrediction.confidence * 100)
+          : 0;
+        const symptomsText = result.topDisease?.symptoms?.length
+          ? `\n\nTriệu chứng:\n${result.topDisease.symptoms.map((s) => `• ${s}`).join("\n")}`
+          : "";
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            text: `Kết quả chẩn đoán\n\nBệnh phát hiện: ${diseaseName}\nĐộ tin cậy: ${confidence}%${symptomsText}`,
+            sender: "bot",
+            timestamp: new Date(),
+          },
+        ]);
+      } else {
+        // Text chat flow — works without login
+        const response = await scanApi.chatWithAi(
+          questionText,
+          currentSessionId || undefined,
+        );
+
+        if (response.sessionId && response.sessionId !== currentSessionId) {
+          setCurrentSessionId(response.sessionId);
+          scanApi
+            .getChatHistory()
+            .then(setHistory)
+            .catch(() => {});
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            text: response.answer,
+            sender: "bot",
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    } catch (error: unknown) {
+      const status = (error as { response?: { status?: number } })?.response
+        ?.status;
+      const errorText =
+        status === 401
+          ? "Bạn cần đăng nhập để sử dụng tính năng quét ảnh."
+          : "Có lỗi xảy ra. Vui lòng thử lại.";
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          text: errorText,
+          sender: "bot",
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
       setIsBotTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -152,10 +240,32 @@ export function Scanner() {
     }
   };
 
+  const loadSession = async (sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    setIsBotTyping(true);
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+    try {
+      const detail = await scanApi.getSessionMessages(sessionId);
+      const loadedMessages: Message[] = detail.messages.map((msg, i) => ({
+        id: `${sessionId}-${i}`,
+        text: msg.content,
+        sender: msg.role === "user" ? "user" : "bot",
+        timestamp: new Date(msg.timestamp),
+      }));
+      setMessages(loadedMessages);
+    } catch {
+      setMessages([]);
+    } finally {
+      setIsBotTyping(false);
+    }
+  };
+
   const startNewChat = () => {
     setMessages([]);
     setInputText("");
     setSelectedImage(null);
+    setSelectedImageFile(null);
+    setCurrentSessionId(null);
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
   };
 
@@ -179,35 +289,34 @@ export function Scanner() {
             <span>Cuộc trò chuyện mới</span>
           </button>
 
-          <div className="mb-2 px-3 text-xs font-medium text-green-200/70">
-            Hôm nay
-          </div>
-          {history
-            .filter((h) => h.date === "Hôm nay")
-            .map((h) => (
-              <button
-                key={h.id}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-green-800/50 transition-colors text-sm text-left group truncate text-green-50"
-              >
-                <MessageSquare size={16} className="text-green-300" />
-                <span className="truncate flex-1">{h.title}</span>
-              </button>
-            ))}
-
-          <div className="mt-6 mb-2 px-3 text-xs font-medium text-green-200/70">
-            7 ngày trước
-          </div>
-          {history
-            .filter((h) => h.date !== "Hôm nay")
-            .map((h) => (
-              <button
-                key={h.id}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-green-800/50 transition-colors text-sm text-left group truncate text-green-50"
-              >
-                <MessageSquare size={16} className="text-green-300" />
-                <span className="truncate flex-1">{h.title}</span>
-              </button>
-            ))}
+          {["Hôm nay", "Hôm qua", "7 ngày trước", "30 ngày trước"].map(
+            (group) => {
+              const groupSessions = history.filter(
+                (h) => getDateGroup(h.updatedAt) === group,
+              );
+              if (groupSessions.length === 0) return null;
+              return (
+                <div key={group}>
+                  <div className="mt-4 mb-2 px-3 text-xs font-medium text-green-200/70">
+                    {group}
+                  </div>
+                  {groupSessions.map((h) => (
+                    <button
+                      key={h.sessionId}
+                      onClick={() => loadSession(h.sessionId)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-green-800/50 transition-colors text-sm text-left group truncate text-green-50",
+                        currentSessionId === h.sessionId && "bg-green-800/50",
+                      )}
+                    >
+                      <MessageSquare size={16} className="text-green-300" />
+                      <span className="truncate flex-1">{h.title}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            },
+          )}
         </div>
       </motion.div>
 

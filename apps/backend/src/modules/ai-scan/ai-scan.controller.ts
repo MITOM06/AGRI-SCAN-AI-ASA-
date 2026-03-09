@@ -30,12 +30,16 @@ export class AiScanController {
     }
 
     @Post('chat')
-    async chatWithAi(@Req() req: any, @Body('question') question: string) {
+    async chatWithAi(
+        @Req() req: any,
+        @Body('sessionId') sessionId: string,
+        @Body('question') question: string,
+    ) {
         console.log('Dữ liệu User từ Token:', req.user);
         const userId = req.user.userId || req.user._id || req.user.sub;
         if (!userId) throw new UnauthorizedException('Không tìm thấy thông tin user trong token');
 
-        return this.aiScanService.askVirtualAssistant(userId, question);
+        return this.aiScanService.askVirtualAssistant(userId, sessionId, question);
     }
 
     // API 2: Lấy toàn bộ lịch sử quét của User đang đăng nhập
@@ -47,8 +51,15 @@ export class AiScanController {
 
     @Get('chat/history')
     async getChatHistory(@Req() req: any) {
-        const userId = req.user.userId;
+        const userId = req.user.userId || req.user._id || req.user.sub;
         return this.aiScanService.getUserChatHistory(userId);
+    }
+
+    // Lấy nội dung tin nhắn của một session cụ thể
+    @Get('chat/sessions/:sessionId')
+    async getSessionMessages(@Req() req: any, @Param('sessionId') sessionId: string) {
+        const userId = req.user.userId || req.user._id || req.user.sub;
+        return this.aiScanService.getSessionMessages(userId, sessionId);
     }
 
     // API 3: User xác nhận kết quả AI đúng hay sai (isAccurate)
