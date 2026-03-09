@@ -29,17 +29,19 @@ export class AiScanController {
         return this.aiScanService.processImageAndDiagnose(userId, file);
     }
 
-    @Post('chat')
+  @Post('chat')
     async chatWithAi(
-        @Req() req: any,
-        @Body('sessionId') sessionId: string,
-        @Body('question') question: string,
+      @Req() req: any, 
+      @Body('question') question: string,
+      @Body('label') label?: string // 🔥 Đón thêm nhãn bệnh từ App (có thể có hoặc không)
     ) {
         console.log('Dữ liệu User từ Token:', req.user);
         const userId = req.user.userId || req.user._id || req.user.sub;
         if (!userId) throw new UnauthorizedException('Không tìm thấy thông tin user trong token');
 
-        return this.aiScanService.askVirtualAssistant(userId, sessionId, question);
+
+        // Truyền cả label xuống cho Service
+        return this.aiScanService.askVirtualAssistant(userId, question, label);
     }
 
     // API 2: Lấy toàn bộ lịch sử quét của User đang đăng nhập
