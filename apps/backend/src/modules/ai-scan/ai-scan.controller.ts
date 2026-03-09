@@ -39,6 +39,7 @@ export class AiScanController {
         const userId = req.user.userId || req.user._id || req.user.sub;
         if (!userId) throw new UnauthorizedException('Không tìm thấy thông tin user trong token');
 
+
         // Truyền cả label xuống cho Service
         return this.aiScanService.askVirtualAssistant(userId, question, label);
     }
@@ -52,8 +53,15 @@ export class AiScanController {
 
     @Get('chat/history')
     async getChatHistory(@Req() req: any) {
-        const userId = req.user.userId;
+        const userId = req.user.userId || req.user._id || req.user.sub;
         return this.aiScanService.getUserChatHistory(userId);
+    }
+
+    // Lấy nội dung tin nhắn của một session cụ thể
+    @Get('chat/sessions/:sessionId')
+    async getSessionMessages(@Req() req: any, @Param('sessionId') sessionId: string) {
+        const userId = req.user.userId || req.user._id || req.user.sub;
+        return this.aiScanService.getSessionMessages(userId, sessionId);
     }
 
     // API 3: User xác nhận kết quả AI đúng hay sai (isAccurate)

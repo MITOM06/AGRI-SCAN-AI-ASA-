@@ -1,0 +1,331 @@
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { Check, ArrowLeft, Zap, Star, Crown } from "lucide-react-native";
+
+export default function UpgradeScreen() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+
+  const plans = [
+    {
+      name: "Free",
+      price: "0",
+      period: "tháng",
+      description: "Khám phá sức mạnh của AI",
+      features: [
+        "Mô hình cơ bản",
+        "Giới hạn tin nhắn và tải ảnh",
+        "Giới hạn tạo hình ảnh",
+        "Bộ nhớ ngắn hạn",
+      ],
+      buttonText: "Gói hiện tại",
+      current: true,
+      highlight: false,
+      icon: <Zap size={24} color="#4b5563" />,
+    },
+    {
+      name: "Plus",
+      price: "129.000",
+      period: "tháng",
+      description: "Mở khóa trải nghiệm đầy đủ",
+      features: [
+        "Mô hình AI nâng cao (nhanh & chính xác hơn)",
+        "Tăng giới hạn tin nhắn và tải ảnh",
+        "Tạo hình ảnh chất lượng cao",
+        "Bộ nhớ mở rộng giữa các đoạn chat",
+        "Chế độ phân tích sâu",
+        "Ưu tiên hỗ trợ",
+      ],
+      buttonText: "Nâng cấp lên Plus",
+      current: false,
+      highlight: true,
+      tag: "PHỔ BIẾN",
+      icon: <Star size={24} color="#059669" />,
+    },
+    {
+      name: "Pro",
+      price: "499.000",
+      period: "tháng",
+      description: "Tối đa hóa năng suất của bạn",
+      features: [
+        "Tất cả tính năng của Plus và:",
+        "Không giới hạn tin nhắn",
+        "Mô hình chuyên gia nông nghiệp cao cấp",
+        "Phân tích hình ảnh bệnh cây chuyên sâu",
+        "Tạo báo cáo chi tiết",
+        "API truy cập cho nhà phát triển",
+      ],
+      buttonText: "Nâng cấp lên Pro",
+      current: false,
+      highlight: false,
+      icon: <Crown size={24} color="#4b5563" />,
+    },
+  ];
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle}>Nâng cấp gói dịch vụ</Text>
+          <Text style={styles.headerSubtitle}>
+            Chọn gói phù hợp với nhu cầu canh tác của bạn
+          </Text>
+        </View>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: Math.max(insets.bottom, 40) },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {plans.map((plan, index) => (
+          <View
+            key={plan.name}
+            style={[
+              styles.card,
+              plan.highlight ? styles.cardHighlight : styles.cardNormal,
+            ]}
+          >
+            {/* Badge Phổ biến */}
+            {plan.tag && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{plan.tag}</Text>
+              </View>
+            )}
+
+            {/* Icon */}
+            <View
+              style={[
+                styles.iconBox,
+                plan.highlight ? styles.iconBoxHighlight : styles.iconBoxNormal,
+              ]}
+            >
+              {plan.icon}
+            </View>
+
+            {/* Thông tin gói */}
+            <Text style={styles.planName}>{plan.name}</Text>
+            <Text style={styles.planDesc}>{plan.description}</Text>
+
+            {/* Giá tiền */}
+            <View style={styles.priceRow}>
+              <Text style={styles.currency}>₫</Text>
+              <Text style={styles.price}>{plan.price}</Text>
+              <Text style={styles.period}>/ {plan.period}</Text>
+            </View>
+
+            {/* Nút bấm */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              disabled={plan.current}
+              style={[
+                styles.actionBtn,
+                plan.current
+                  ? styles.btnCurrent
+                  : plan.highlight
+                    ? styles.btnHighlight
+                    : styles.btnNormal,
+              ]}
+            >
+              <Text
+                style={[
+                  // Đã gỡ bỏ styles.actionBtnText ở đây
+                  plan.current
+                    ? styles.btnTextCurrent
+                    : plan.highlight
+                      ? styles.btnTextHighlight
+                      : styles.btnTextNormal,
+                ]}
+              >
+                {plan.buttonText}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Tính năng */}
+            <View style={styles.featuresContainer}>
+              {plan.name === "Pro" && (
+                <Text style={styles.proFeatureTitle}>
+                  Bao gồm mọi thứ của Plus và:
+                </Text>
+              )}
+              {plan.features.map((feature, i) => {
+                if (feature.startsWith("Tất cả tính năng")) return null;
+                return (
+                  <View key={i} style={styles.featureRow}>
+                    <View style={styles.checkIcon}>
+                      <Check
+                        size={18}
+                        strokeWidth={3}
+                        color={plan.highlight ? "#10b981" : "#9ca3af"}
+                      />
+                    </View>
+                    <Text style={styles.featureText}>{feature}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        ))}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            Bạn cần gói doanh nghiệp tùy chỉnh?{" "}
+          </Text>
+          <TouchableOpacity>
+            <Text style={styles.footerLink}>Liên hệ với chúng tôi</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#f9fafb" },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: "#f9fafb",
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f3f4f6",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  headerTextContainer: {},
+  headerTitle: { fontSize: 28, fontWeight: "bold", color: "#111827" },
+  headerSubtitle: { fontSize: 15, color: "#6b7280", marginTop: 4 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 10 },
+
+  // Card styles
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 24,
+    marginBottom: 24,
+    position: "relative",
+    overflow: "hidden",
+  },
+  cardNormal: { borderWidth: 1, borderColor: "#e5e7eb" },
+  cardHighlight: {
+    borderWidth: 2,
+    borderColor: "#10b981",
+    shadowColor: "#10b981",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  badge: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#10b981",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderBottomLeftRadius: 16,
+  },
+  badgeText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
+
+  iconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  iconBoxNormal: { backgroundColor: "#f3f4f6" },
+  iconBoxHighlight: { backgroundColor: "#d1fae5" },
+
+  planName: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#111827",
+    marginBottom: 8,
+  },
+  planDesc: { fontSize: 14, color: "#6b7280", marginBottom: 24, minHeight: 40 },
+
+  priceRow: { flexDirection: "row", alignItems: "baseline", marginBottom: 24 },
+  currency: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#6b7280",
+    marginRight: 4,
+  },
+  price: { fontSize: 40, fontWeight: "900", color: "#111827" },
+  period: { fontSize: 16, color: "#6b7280", marginLeft: 8 },
+
+  actionBtn: {
+    width: "100%",
+    paddingVertical: 16,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  btnCurrent: {
+    backgroundColor: "#f3f4f6",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  btnHighlight: { backgroundColor: "#059669" },
+  btnNormal: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#d1fae5",
+  },
+
+  btnTextCurrent: { color: "#9ca3af", fontWeight: "bold", fontSize: 16 },
+  btnTextHighlight: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  btnTextNormal: { color: "#059669", fontWeight: "bold", fontSize: 16 },
+
+  featuresContainer: {
+    borderTopWidth: 1,
+    borderTopColor: "#f3f4f6",
+    paddingTop: 24,
+  },
+  proFeatureTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#111827",
+    marginBottom: 16,
+  },
+  featureRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
+  checkIcon: { marginTop: 2, marginRight: 12 },
+  featureText: { flex: 1, fontSize: 15, color: "#4b5563", lineHeight: 22 },
+
+  footer: { alignItems: "center", marginTop: 10 },
+  footerText: { color: "#6b7280", fontSize: 14 },
+  footerLink: {
+    color: "#059669",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginTop: 4,
+  },
+});

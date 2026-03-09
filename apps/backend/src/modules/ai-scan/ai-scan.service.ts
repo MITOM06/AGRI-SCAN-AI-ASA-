@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, Inject, BadRequestException  } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ScanHistory } from '@agri-scan/database';
@@ -109,10 +109,19 @@ export class AiScanService {
       let chatDoc = await this.chatHistoryModel.findOne({ userId });
 
       if (!chatDoc) {
-        chatDoc = new this.chatHistoryModel({ userId, messages: [] });
+        // Lấy tối đa 50 ký tự đầu của câu hỏi làm title, tránh title quá dài
+        const autoTitle = question.trim().length > 0
+          ? question.trim().slice(0, 50) + (question.trim().length > 50 ? '...' : '')
+          : 'Cuộc hội thoại mới';
+
+        chatDoc = new this.chatHistoryModel({
+          userId,
+          title: autoTitle,
+          messages: [],
+        });
       }
 
-      // 1.2 Push câu hỏi của User vào mảng messages
+      // 1.2 Push câu hỏi của User vào mảng messages của session
       chatDoc.messages.push({
         role: 'user',
         content: question,
@@ -133,6 +142,7 @@ export class AiScanService {
         chatDoc.messages = [];
       }
 
+
       // 1.4 Push câu trả lời của AI vào mảng messages
       chatDoc.messages.push({
         role: 'ai',
@@ -145,7 +155,8 @@ export class AiScanService {
 
       // 1.6 Trả kết quả về cho App Mobile
       return {
-        question: question,
+        sessionId: chatDoc._id, // Trả về sessionId để client lưu lại dùng cho lần sau
+        question,
         answer: answerContent,
       };
     } catch (error) {
@@ -170,11 +181,39 @@ export class AiScanService {
       .exec();
   }
 
-  // 3. TÍNH NĂNG LẤY LỊCH SỬ CHAT (Cho màn hình mở lại App)
+  // 3. TÍNH NĂNG LẤY LỊCH SỬ CHAT (Trả về danh sách tất cả sessions của user)
   async getUserChatHistory(userId: string) {
-    const chatDoc = await this.chatHistoryModel.findOne({ userId }).exec();
-    // Nếu có data thì trả về mảng tin nhắn, nếu user chưa chat bao giờ thì trả về mảng rỗng []
-    return chatDoc ? chatDoc.messages : [];
+    // Lấy tất cả sessions, chỉ trả metadata (không lấy messages để response nhẹ)
+    const sessions = await this.chatHistoryModel
+      .find({ userId })
+      .select('_id title createdAt updatedAt')
+      .sort({ createdAt: -1 }) // Session mới nhất lên đầu
+      .exec();
+
+    // Map _id → sessionId để khớp với interface IChatSession của frontend
+    return sessions.map((s) => ({
+      sessionId: (s._id as any).toString(),
+      title: s.title,
+      createdAt: (s as any).createdAt,
+      updatedAt: (s as any).updatedAt,
+    }));
+  }
+
+  // 3b. LẤY NỘI DUNG TIN NHẮN CỦA MỘT SESSION CỤ THỂ (khi user bấm vào 1 session)
+  async getSessionMessages(userId: string, sessionId: string) {
+    const chatDoc = await this.chatHistoryModel
+      .findOne({ _id: sessionId, userId }) // Kiểm tra userId để tránh truy cập session của người khác
+      .exec();
+
+    if (!chatDoc) {
+      return { sessionId, title: null, messages: [] };
+    }
+
+    return {
+      sessionId: chatDoc._id,
+      title: chatDoc.title,
+      messages: chatDoc.messages,
+    };
   }
 
   // 4. TÍNH NĂNG UPDATE ĐỘ CHÍNH XÁC (Thu thập Feedback cho AI)
