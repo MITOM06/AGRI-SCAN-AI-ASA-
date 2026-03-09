@@ -2,8 +2,11 @@
 import os
 import uuid
 from pathlib import Path
-from typing import Tuple, Dict, Any, Optional
+from typing import Tuple, Dict, Any, Optional, List
 from PIL import Image
+from PIL import Image, ImageOps
+import numpy as np
+
 
 try:
     from ultralytics import YOLO
@@ -29,52 +32,78 @@ def load_yolo(model_path: Optional[str] = None):
     yolo_model = YOLO(mp)
     return yolo_model
 
-def predict_pil_image(pil_image: Image.Image, conf_threshold: float = 0.0) -> Dict[str, Any]:
+def predict_pil_image(
+    pil_image: Image.Image,
+    conf_threshold: float = 0.0,
+    top_k: int = 1
+) -> Dict[str, Any]:
     """
-    Accepts a PIL.Image, runs YOLO and returns:
-    {
-      "predictions": [{"label": str, "confidence": float}, ...],
-      "top": {"label": str, "confidence": float}  # top result
-    }
+    Predict classification from a PIL image using the loaded YOLO (classification) model.
+
+    Returns:
+      {
+        "predictions": [{"label": str, "confidence": float}, ...],  # sorted desc
+        "top": {"label": str, "confidence": float}
+      }
+    - conf_threshold: chỉ trả các kết quả có confidence >= conf_threshold
+    - top_k: số nhãn hàng đầu cần lấy từ output probs (mặc định 1)
     """
     model = load_yolo()
-    # save temp file (YOLO accepts path or numpy array; save for stability)
-    tmp_path = Path("temp")
-    tmp_path.mkdir(exist_ok=True)
-    fname = tmp_path / f"{uuid.uuid4().hex}.jpg"
-    pil_image.save(fname, format="JPEG")
-    results = model(str(fname))
-    # results may be list-like for batch
-    r = results[0]
-    preds = []
-    # try to read boxes, fallback to .probs if available
-    try:
-        boxes = getattr(r, "boxes", None)
-        if boxes is not None:
-            # boxes.cls, boxes.conf are tensors
-            for cls, conf in zip(boxes.cls, boxes.conf):
-                cls_id = int(cls.item()) if hasattr(cls, "item") else int(cls)
-                conf_f = float(conf.item()) if hasattr(conf, "item") else float(conf)
-                label = r.names.get(cls_id, str(cls_id))
-                if conf_f >= conf_threshold:
-                    preds.append({"label": label, "confidence": conf_f})
-    except Exception:
-        # fallback: check probs/top1 if present
-        if hasattr(r, "probs"):
-            try:
-                idx = int(r.probs.top1)
-                label = r.names[idx]
-                conf_f = float(r.probs.top1conf)
-                preds.append({"label": label, "confidence": conf_f})
-            except Exception:
-                pass
 
-    # sort by confidence descending
+    # ensure correct orientation and RGB
+    pil_image = ImageOps.exif_transpose(pil_image).convert("RGB")
+
+    # run inference (pass PIL directly)
+    results = model(pil_image)
+    r = results[0]
+
+    preds: List[Dict[str, Any]] = []
+
+    # 1) classification-style output (preferred)
+    if hasattr(r, "probs") and r.probs is not None:
+        probs = r.probs
+        try:
+            # case: object with top1 & top1conf attributes
+            if hasattr(probs, "top1") and hasattr(probs, "top1conf"):
+                idx = int(probs.top1)
+                conf = float(probs.top1conf)
+                label = model.names[idx] if hasattr(model, "names") else str(idx)
+                if conf >= conf_threshold:
+                    preds.append({"label": label, "confidence": conf})
+            else:
+                # try convert to numpy array of class probabilities
+                try:
+                    arr = probs.cpu().numpy() if hasattr(probs, "cpu") else np.array(probs)
+                except Exception:
+                    arr = np.array(probs)
+                # get top_k indices
+                idxs = arr.argsort()[-top_k:][::-1]
+                for i in idxs:
+                    conf = float(arr[i])
+                    label = model.names[int(i)] if hasattr(model, "names") else str(int(i))
+                    if conf >= conf_threshold:
+                        preds.append({"label": label, "confidence": conf})
+        except Exception as e:
+            print("predict_pil_image: error reading probs:", e)
+
+    # 2) fallback (if no classification probs found) — try detection boxes (rare for pure classifier)
+    if not preds:
+        try:
+            boxes = getattr(r, "boxes", None)
+            if boxes is not None and len(boxes) > 0:
+                # attempt to extract confs and class ids
+                confs = boxes.conf.cpu().numpy() if hasattr(boxes.conf, "cpu") else np.array(boxes.conf)
+                cls_ids = boxes.cls.cpu().numpy() if hasattr(boxes.cls, "cpu") else np.array(boxes.cls)
+                for c, cid in zip(confs, cls_ids):
+                    conf = float(c)
+                    label = model.names[int(cid)] if hasattr(model, "names") else str(int(cid))
+                    if conf >= conf_threshold:
+                        preds.append({"label": label, "confidence": conf})
+        except Exception as e:
+            print("predict_pil_image: boxes fallback error:", e)
+
+    # sort by confidence descending and return top
     preds = sorted(preds, key=lambda x: x["confidence"], reverse=True)
     top = preds[0] if preds else {"label": "unknown", "confidence": 0.0}
-    # cleanup temp
-    try:
-        fname.unlink(missing_ok=True)
-    except Exception:
-        pass
+
     return {"predictions": preds, "top": top}
