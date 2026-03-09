@@ -1,20 +1,37 @@
 import { axiosClient } from './axios-client';
-import type { 
-  IScanResult, 
-  IScanHistoryListItem, 
-  IScanHistoryDetail 
+import type {
+  IScanResult,
+  IScanHistoryListItem,
+  IScanHistoryDetail
 } from '../types/scan-history.types';
 
-// Định nghĩa thêm Type cho Chatbot để Frontend dễ gọi
+// Type cho 1 tin nhắn trong hội thoại
 export interface IChatMessage {
   role: 'user' | 'ai';
   content: string;
   timestamp: string | Date;
 }
 
+// Type cho response khi gửi tin nhắn
 export interface IChatResponse {
+  sessionId: string | null; // null nếu chưa đăng nhập
   question: string;
   answer: string;
+}
+
+// Type cho 1 session (metadata, không có messages)
+export interface IChatSession {
+  sessionId: string;
+  title: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+// Type cho nội dung 1 session (có messages)
+export interface IChatSessionDetail {
+  sessionId: string;
+  title: string | null;
+  messages: IChatMessage[];
 }
 
 export const scanApi = {
@@ -25,8 +42,8 @@ export const scanApi = {
   scanImage: async (file: File | Blob): Promise<IScanResult> => {
     const formData = new FormData();
     // Tên field 'image' phải khớp với @UseInterceptors(FileInterceptor('image')) bên NestJS
-    formData.append('image', file); 
-    
+    formData.append('image', file);
+
     // Sử dụng hàm upload bạn đã viết sẵn trong axiosClient
     const res = await axiosClient.upload<IScanResult>('/scan/analyze', formData);
     return res.data;
@@ -35,23 +52,35 @@ export const scanApi = {
   /**
    * 2. API Chat với Trợ lý ảo AI (RAG)
    * Gọi đến: POST /scan/chat
+   * - sessionId: truyền vào nếu muốn tiếp tục hội thoại cũ, bỏ trống để tạo session mới
+   * - Chưa đăng nhập vẫn chat được nhưng không lưu lịch sử
    */
-  chatWithAi: async (question: string): Promise<IChatResponse> => {
-    const res = await axiosClient.post<IChatResponse>('/scan/chat', { question });
+  chatWithAi: async (question: string, sessionId?: string): Promise<IChatResponse> => {
+    const res = await axiosClient.post<IChatResponse>('/scan/chat', { question, sessionId });
     return res.data;
   },
 
   /**
-   * 3. Lấy lịch sử đoạn chat của người dùng
+   * 3. Lấy danh sách tất cả sessions của user (chỉ metadata)
    * Gọi đến: GET /scan/chat/history
+   * - Trả về [] nếu chưa đăng nhập
    */
-  getChatHistory: async (): Promise<IChatMessage[]> => {
-    const res = await axiosClient.get<IChatMessage[]>('/scan/chat/history');
+  getChatHistory: async (): Promise<IChatSession[]> => {
+    const res = await axiosClient.get<IChatSession[]>('/scan/chat/history');
     return res.data;
   },
 
   /**
-   * 4. Lấy lịch sử các lần quét cây (Bệnh án)
+   * 4. Lấy nội dung tin nhắn của 1 session cụ thể
+   * Gọi đến: GET /scan/chat/sessions/:sessionId
+   */
+  getSessionMessages: async (sessionId: string): Promise<IChatSessionDetail> => {
+    const res = await axiosClient.get<IChatSessionDetail>(`/scan/chat/sessions/${sessionId}`);
+    return res.data;
+  },
+
+  /**
+   * 5. Lấy lịch sử các lần quét cây (Bệnh án)
    * Gọi đến: GET /scan/history
    */
   getScanHistory: async (): Promise<IScanHistoryListItem[]> => {
@@ -60,7 +89,7 @@ export const scanApi = {
   },
 
   /**
-   * 5. User đánh giá AI nhận diện đúng hay sai
+   * 6. User đánh giá AI nhận diện đúng hay sai
    * Gọi đến: PATCH /scan/history/:id/feedback
    */
   sendFeedback: async (scanId: string, isAccurate: boolean): Promise<void> => {
@@ -68,7 +97,7 @@ export const scanApi = {
   },
 
   /**
-   * 6. Lấy chi tiết 1 lần quét (tùy chọn nếu bạn có làm API Get by ID bên backend)
+   * 7. Lấy chi tiết 1 lần quét
    * Gọi đến: GET /scan/history/:id
    */
   getScanDetail: async (scanId: string): Promise<IScanHistoryDetail> => {
