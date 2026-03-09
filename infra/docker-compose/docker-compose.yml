@@ -1,3 +1,5 @@
+name: agri-scan-ai
+
 services:
   # 1. CƠ SỞ DỮ LIỆU CHÍNH (MONGODB)
   mongodb:
