@@ -52,22 +52,37 @@ def init_vector_db(emb_model_name: str = None, force: bool = False):
     _vectorstore = vs
     return vs
 
-def query_vectorstore(vectorstore, query: str, k: int = 3):
+def query_vectorstore(vectorstore, query: str, k: int = 3, filter_label: str = None):
     """
-    Return top-k documents (metadata + content) for the query.
+    Tìm kiếm k tài liệu liên quan, có hỗ trợ lọc theo nhãn bệnh để tránh nhầm lẫn.
     """
-    # for Chroma from langchain-community, use .similarity_search_with_score or .similarity_search
+    # Chuẩn bị tham số filter cho LangChain (Chroma/FAISS)
+    # Giả sử trong lúc index dữ liệu, bạn đã lưu metadata có key là 'class_name'
+    search_kwargs = {"k": k}
+    if filter_label:
+        search_kwargs["filter"] = {"class_name": filter_label}
+
     try:
-        results = vectorstore.similarity_search_with_score(query, k=k)
-    except Exception:
-        # try alternative API
+        # Sử dụng similarity_search_with_score để lấy cả điểm tin cậy
+        # Truyền filter vào để giới hạn không gian tìm kiếm
+        results = vectorstore.similarity_search_with_score(query, **search_kwargs)
+    except Exception as e:
+        print(f"[RAG] Search with filter failed: {e}. Falling back to basic search.")
         results = vectorstore.similarity_search(query, k=k)
-    # results: list of (Document, score) or Document
+
     out = []
     for item in results:
+        # Xử lý kết quả trả về (có thể là tuple (Doc, score) hoặc chỉ Doc)
         if isinstance(item, tuple) and len(item) == 2:
             doc, score = item
         else:
             doc, score = item, None
-        out.append({"content": doc.page_content, "metadata": dict(doc.metadata), "score": score})
+        
+        # Chỉ lấy những tài liệu có điểm số tốt (nếu cần - ví dụ score < 0.6)
+        out.append({
+            "content": doc.page_content, 
+            "metadata": dict(doc.metadata), 
+            "score": float(score) if score is not None else None
+        })
+        
     return out

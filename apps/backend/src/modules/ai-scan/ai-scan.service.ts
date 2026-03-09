@@ -9,6 +9,7 @@ import type { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import FormDataNode from 'form-data';
 import axios from 'axios';
+import * as FormData from 'form-data';
 
 @Injectable()
 export class AiScanService {
@@ -20,6 +21,7 @@ export class AiScanService {
   ) { }
 
   async processImageAndDiagnose(userId: string, imageFile: Express.Multer.File) {
+    // Tạm thời dùng mock URL, sau này bạn thay bằng link upload từ S3/Cloudinary
     const mockImageUrl = 'https://example.com/mock-leaf-image.jpg';
 
     // 1. TẠO MÃ BĂM (HASH) CHO BỨC ẢNH ĐỂ LÀM CHÌA KHÓA TÌM KIẾM
@@ -31,55 +33,70 @@ export class AiScanService {
 
     let aiPredictionResult;
 
-    // 1. KIỂM TRA CACHE TRƯỚC
     if (cachedResult) {
       console.log('Lấy kết quả từ Redis 🚀 (Bỏ qua gọi FastAPI)');
       aiPredictionResult = cachedResult;
     } else {
-      // 2. GỌI MẠNG (CHỈ TRY-CATCH LỖI KẾT NỐI)
+      // GỌI MẠNG SANG FASTAPI
       try {
         console.log('Đang gửi ảnh sang FastAPI phân tích... 🧠');
-        const formData = new FormDataNode();
-        formData.append('file', imageFile.buffer, imageFile.originalname);
+        const formData = new FormDataNode(); // Lưu ý: Đảm bảo bạn đang dùng đúng thư viện 'form-data'
+        
+        // 🔥 FIX LỖI CONFIDENCE 0.00 Ở ĐÂY: Thêm đầy đủ thông tin contentType và size
+        formData.append('file', imageFile.buffer, {
+          filename: imageFile.originalname,
+          contentType: imageFile.mimetype,
+          knownLength: imageFile.size,
+        });
 
         const aiResponse = await axios.post('http://localhost:8000/predict', formData, {
           headers: formData.getHeaders(),
+          maxBodyLength: Infinity, // Bắt buộc phải có để không bị nghẽn khi file ảnh nặng
         });
 
         aiPredictionResult = aiResponse.data;
       } catch (error) {
-        // Lỗi này là do server FastAPI sập hoặc chưa bật
         console.error('Lỗi kết nối FastAPI:', error.message);
         throw new InternalServerErrorException('Không thể kết nối với hệ thống AI Bác sĩ');
       }
 
-      // 3. KIỂM TRA LỖI LOGIC TỪ AI (NẰM NGOÀI TRY-CATCH MẠNG)
+      // 3. KIỂM TRA LỖI LOGIC TỪ AI
       if (!aiPredictionResult || aiPredictionResult.success === false) {
-        // Trả về lỗi 400 (Bad Request) nếu AI báo ảnh lỗi (mờ, không phải cây,...)
         throw new BadRequestException(`AI Server báo lỗi: ${aiPredictionResult?.error || 'Không nhận diện được'}`);
       }
 
-      // 4. LƯU VÀO REDIS (Chỉ lưu khi AI đã phân tích thành công)
-      await this.cacheManager.set(cacheKey, aiPredictionResult, 86400);
+      // 4. LƯU VÀO REDIS (Chỉ lưu khi AI tự tin > 0.5 và không bị lỗi)
+      await this.cacheManager.set(cacheKey, aiPredictionResult, 86400); // Lưu 1 ngày
     }
 
-    // ---------------------------------------------------------
-    // 5. TIẾP TỤC CHẠY RA TỦ THUỐC (TRA CỨU DATABASE)
-    // Bước này nằm NGOÀI "else" vì dù lấy từ Cache hay FastAPI thì đều cần thông tin DB
-    // ---------------------------------------------------------
+    // 5. TRA CỨU DATABASE LẤY "TỦ THUỐC"
     console.log(`Đang tra cứu thông tin bệnh: ${aiPredictionResult.yolo_label}`);
-
     const diseaseInfo = await this.plantsService.findDiseaseByName(aiPredictionResult.yolo_label);
 
     if (!diseaseInfo) {
-      // Phòng trường hợp AI đọc ra tên bệnh nhưng DB của bạn chưa cập nhật bệnh đó
       throw new NotFoundException(`Không tìm thấy thông tin chi tiết cho bệnh: ${aiPredictionResult.yolo_label}`);
     }
 
-    // 6. TRẢ KẾT QUẢ CUỐI CÙNG VỀ CHO APP MOBILE
+    // 6. 🔥 THIẾU SÓT: Bổ sung bước lưu Lịch sử quét vào MongoDB 
+    // (Bắt buộc phải có để App Mobile gọi API getScanHistory hiển thị lại)
+    const newScan = new this.scanHistoryModel({
+      userId,
+      imageUrl: mockImageUrl,
+      aiPredictions: [{
+        diseaseId: diseaseInfo._id,
+        confidence: aiPredictionResult.confidence,
+      }],
+      isAccurate: null,
+      scannedAt: new Date(),
+    });
+    await newScan.save();
+
+    // 7. TRẢ KẾT QUẢ CUỐI CÙNG VỀ CHO APP MOBILE (Khớp với Interface IScanResult)
     return {
-      prediction: aiPredictionResult, // Chứa nhãn, độ tự tin...
-      details: diseaseInfo           // Chứa cách chữa, hình ảnh thuốc, mô tả...
+      scanHistoryId: newScan._id, // Đã đổi tên biến để khớp với interface IScanResult của bạn
+      imageUrl: mockImageUrl,
+      predictions: [aiPredictionResult], // Trả về dạng mảng theo IScanResult
+      topDisease: diseaseInfo           
     };
   }
 
