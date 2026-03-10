@@ -57,7 +57,7 @@ export class AiScanService {
     if (type === 'IMAGE') {
       let maxImages = 3; // FREE
       if (user.plan === 'PREMIUM') maxImages = 10;
-      if (user.plan === 'VIP') maxImages = 20;
+      if (user.plan === 'VIP') maxImages = Infinity; // VIP: vô hạn ảnh
 
       if (user.dailyImageCount >= maxImages) {
         throw new BadRequestException(`Đã hết ${maxImages} lượt chụp ảnh/ngày của gói ${user.plan}. Vui lòng nâng cấp gói để sử dụng tiếp!`);
@@ -67,8 +67,8 @@ export class AiScanService {
 
     if (type === 'PROMPT') {
       let maxPrompts = 10; // FREE
-      if (user.plan === 'PREMIUM') maxPrompts = 20;
-      if (user.plan === 'VIP') maxPrompts = Infinity; // VIP Vô hạn
+      if (user.plan === 'PREMIUM') maxPrompts = 50;  // PREMIUM: 50 prompts/ngày
+      if (user.plan === 'VIP') maxPrompts = Infinity; // VIP: vô hạn
 
       if (user.dailyPromptCount >= maxPrompts) {
         throw new BadRequestException(`Đã hết ${maxPrompts} lượt hỏi trợ lý/ngày của gói ${user.plan}. Vui lòng nâng cấp gói để sử dụng tiếp!`);

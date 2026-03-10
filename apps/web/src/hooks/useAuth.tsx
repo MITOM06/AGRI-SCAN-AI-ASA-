@@ -23,6 +23,7 @@ interface AuthContextType {
     password: string,
   ) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,11 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ── ĐĂNG KÝ ─────────────────────────────────────────────────────────────────
   // BUG FIX (lần trước): thêm password - giờ gửi đủ thông tin lên BE
   const register = useCallback(
-    async (
-      email: string,
-      fullName: string,
-      password: string
-    ) => {
+    async (email: string, fullName: string, password: string) => {
       setIsLoading(true);
       try {
         await authApi.register({ email, fullName, password });
@@ -80,8 +77,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     },
-    []
+    [],
   );
+
+  // ── REFRESH USER ─────────────────────────────────────────────────────────────
+  // Gọi lại /auth/profile để đồng bộ user state sau khi nâng cấp gói
+  const refreshUser = useCallback(async () => {
+    try {
+      const profile = await authApi.getProfile();
+      localStorage.setItem("user", JSON.stringify(profile));
+      setUser(profile);
+    } catch {
+      // Nếu token hết hạn, bỏ qua — interceptor sẽ xử lý
+    }
+  }, []);
 
   // ── ĐĂNG XUẤT ────────────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
@@ -108,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        refreshUser,
       }}
     >
       {children}

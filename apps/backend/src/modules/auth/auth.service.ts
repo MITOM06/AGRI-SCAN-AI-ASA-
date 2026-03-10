@@ -20,7 +20,7 @@ export class AuthService {
     private jwtService: JwtService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache, // Gọi Redis
     private mailerService: MailerService,
-  ) {}
+  ) { }
 
   // 1. ĐĂNG KÝ
   // 1. ĐĂNG KÝ
@@ -36,11 +36,11 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    // Cập nhật dòng này:
     return this.generateTokens(
       newUser._id.toString(),
       newUser.email,
       newUser.fullName,
+      newUser.plan,
     );
   }
 
@@ -53,7 +53,7 @@ export class AuthService {
     if (!isMatch) throw new UnauthorizedException('Sai email hoặc mật khẩu!');
 
     // Cập nhật dòng này:
-    return this.generateTokens(user._id.toString(), user.email, user.fullName);
+    return this.generateTokens(user._id.toString(), user.email, user.fullName, user.plan);
   }
 
   // 3. ĐĂNG XUẤT
@@ -75,6 +75,7 @@ export class AuthService {
     userId: string,
     email: string,
     fullName?: string,
+    plan?: string,
   ) {
     const payload = { sub: userId, email };
 
@@ -88,9 +89,25 @@ export class AuthService {
     );
 
     return {
-      user: { id: userId, email, fullName }, // <--- QUAN TRỌNG: Trả về fullName cho Mobile
+      user: { id: userId, email, fullName, plan }, // plan được trả về cho Frontend
       accessToken,
       refreshToken,
+    };
+  }
+
+  // 4.5 LẤY PROFILE USER (trả về đầy đủ thông tin bao gồm plan)
+  async getProfile(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('Người dùng không tồn tại!');
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      plan: user.plan,
+      planExpiresAt: user.planExpiresAt,
+      dailyImageCount: user.dailyImageCount,
+      dailyPromptCount: user.dailyPromptCount,
     };
   }
   // 4. CẤP LẠI TOKEN MỚI (Refresh Token)
@@ -112,7 +129,7 @@ export class AuthService {
       const user = await this.usersService.findByEmail(payload.email);
 
       // Cập nhật dòng này:
-      return this.generateTokens(userId, payload.email, user?.fullName);
+      return this.generateTokens(userId, payload.email, user?.fullName, user?.plan);
     } catch (error) {
       throw new UnauthorizedException(
         'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!',

@@ -24,6 +24,7 @@ export * from './api/scan.api';
 export * from './api/axios-client';
 export * from './api/plant.api';
 export * from './api/auth.api';
+export * from './api/user.api';
 export const helloWorld = () => {
   return "Hello from Shared Logic!";
 };

@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { userApi } from "@agri-scan/shared";
+import { useAuth } from "@/hooks/useAuth";
 
 const DEFAULT_PLAN = {
   name: "Plus",
@@ -43,6 +45,7 @@ function formatExpiry(value: string) {
 export function Payment() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshUser } = useAuth();
 
   const name = searchParams.get("name") || DEFAULT_PLAN.name;
   const price = searchParams.get("price") || DEFAULT_PLAN.price;
@@ -61,10 +64,30 @@ export function Payment() {
   const [holderName, setHolderName] = useState("");
   const [address, setAddress] = useState("");
   const [paid, setPaid] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPaid(true);
+    setError(null);
+    setIsLoading(true);
+    try {
+      // Map tên plan từ URL param sang format backend ('PREMIUM' | 'VIP')
+      const planKey = plan.name.toUpperCase() as "PREMIUM" | "VIP";
+      await userApi.upgradePlan(planKey);
+
+      // Gọi lại /auth/profile để đồng bộ user state trong context
+      await refreshUser();
+
+      setPaid(true);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        "Thanh toán thất bại. Vui lòng thử lại.";
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -294,14 +317,22 @@ export function Payment() {
                 </div>
               </div>
 
+              {/* Error message */}
+              {error && (
+                <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                  {error}
+                </p>
+              )}
+
               {/* Submit (mobile only shows here) */}
               <motion.button
                 type="submit"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full lg:hidden bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 transition-all"
+                disabled={isLoading}
+                whileHover={!isLoading ? { scale: 1.02 } : {}}
+                whileTap={!isLoading ? { scale: 0.98 } : {}}
+                className="w-full lg:hidden bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Đăng ký ngay — ₫{plan.price}
+                {isLoading ? "Đang xử lý..." : `Đăng ký ngay — ₫${plan.price}`}
               </motion.button>
             </form>
           </motion.div>
@@ -363,11 +394,12 @@ export function Payment() {
               {/* CTA */}
               <motion.button
                 onClick={handleSubmit}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className="hidden lg:block w-full bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 transition-all"
+                disabled={isLoading}
+                whileHover={!isLoading ? { scale: 1.02 } : {}}
+                whileTap={!isLoading ? { scale: 0.97 } : {}}
+                className="hidden lg:block w-full bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Đăng ký ngay
+                {isLoading ? "Đang xử lý..." : "Đăng ký ngay"}
               </motion.button>
 
               <p className="text-xs text-gray-400 mt-5 text-center leading-relaxed">

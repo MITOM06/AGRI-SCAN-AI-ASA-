@@ -1,5 +1,7 @@
 import { IPlant } from '@agri-scan/shared';
 
+export type TreeStatus = 'APPROVED' | 'PENDING' | 'REJECTED';
+
 export interface Tree extends Pick<IPlant, 'id' | 'commonName' | 'scientificName' | 'family' | 'description' | 'images'> {
   uses: string;
   care: string;
@@ -12,6 +14,7 @@ export interface Tree extends Pick<IPlant, 'id' | 'commonName' | 'scientificName
   suitableLocation?: string;
   soil?: string;
   commonDiseases?: string;
+  status: TreeStatus;
 }
 
 // TODO: Thay thế dữ liệu giả này bằng API call thực tế từ MongoDB
@@ -36,6 +39,7 @@ export const treeData: Tree[] = [
     suitableLocation: 'Sân trường, công viên, vỉa hè rộng',
     soil: 'Đất cát, đất thịt nhẹ, chịu mặn tốt',
     commonDiseases: 'Sâu ăn lá, rệp sáp, bệnh đốm lá',
+    status: 'APPROVED',
   },
   {
     id: '2',
@@ -55,6 +59,7 @@ export const treeData: Tree[] = [
     suitableLocation: 'Trường học, đường phố, công viên',
     soil: 'Đất giàu dinh dưỡng, thoát nước tốt',
     commonDiseases: 'Sâu đục thân, mối, nấm rễ',
+    status: 'APPROVED',
   },
   {
     id: '3',
@@ -74,6 +79,7 @@ export const treeData: Tree[] = [
     suitableLocation: 'Đường phố rộng, công viên lớn',
     soil: 'Đất cát pha, đất thịt',
     commonDiseases: 'Sâu đục ngọn, bệnh u bướu vỏ cây',
+    status: 'APPROVED',
   },
   {
     id: '4',
@@ -93,6 +99,7 @@ export const treeData: Tree[] = [
     suitableLocation: 'Đô thị, sân vườn',
     soil: 'Đất mùn, tơi xốp',
     commonDiseases: 'Rệp muội, nấm phấn trắng',
+    status: 'APPROVED',
   },
   {
     id: '5',
@@ -112,6 +119,7 @@ export const treeData: Tree[] = [
     suitableLocation: 'Đình chùa, cổng làng, công viên lớn',
     soil: 'Thích nghi nhiều loại đất',
     commonDiseases: 'Sâu cuốn lá, bọ trĩ',
+    status: 'APPROVED',
   },
   {
     id: '6',
@@ -131,6 +139,7 @@ export const treeData: Tree[] = [
     suitableLocation: 'Hàng rào, sân vườn, ven hồ',
     soil: 'Đất ẩm, giàu mùn',
     commonDiseases: 'Bệnh gỉ sắt, sâu đục thân tre',
+    status: 'APPROVED',
   },
   {
     id: '7',
@@ -150,6 +159,7 @@ export const treeData: Tree[] = [
     suitableLocation: 'Ven hồ, sân vườn, chậu cảnh',
     soil: 'Đất tơi xốp, chịu ngập nước',
     commonDiseases: 'Sâu ăn lá non, rệp sáp',
+    status: 'PENDING',
   },
   {
     id: '8',
@@ -169,5 +179,6 @@ export const treeData: Tree[] = [
     suitableLocation: 'Sân vườn, vườn cây ăn quả',
     soil: 'Đất cát pha, thoát nước tốt',
     commonDiseases: 'Thán thư, rệp sáp, sâu đục quả',
+    status: 'APPROVED',
   },
 ];

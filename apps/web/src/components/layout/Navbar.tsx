@@ -130,7 +130,24 @@ export function Navbar() {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-2 pl-1.5 pr-2.5 py-1.5 rounded-full hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200 focus:outline-none"
                 >
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <div
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-primary border-2
+                    ${user.plan === 'VIP' ? 'border-amber-400 bg-amber-50' : user.plan === 'PREMIUM' ? 'border-purple-400 bg-purple-50' : 'bg-primary/10 border-transparent'}"
+                    style={{
+                      borderColor:
+                        user.plan === "VIP"
+                          ? "#fbbf24"
+                          : user.plan === "PREMIUM"
+                            ? "#a855f7"
+                            : "transparent",
+                      backgroundColor:
+                        user.plan === "VIP"
+                          ? "#fffbeb"
+                          : user.plan === "PREMIUM"
+                            ? "#faf5ff"
+                            : undefined,
+                    }}
+                  >
                     <User size={15} />
                   </div>
                   <span className="text-sm font-medium text-gray-700 max-w-30 truncate">

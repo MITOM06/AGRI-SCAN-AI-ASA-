@@ -3,7 +3,16 @@
 import React from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { User, LogOut, Settings, Leaf } from "lucide-react";
+import {
+  User,
+  LogOut,
+  Settings,
+  Leaf,
+  Zap,
+  Star,
+  Crown,
+  Calendar,
+} from "lucide-react";
 import { motion } from "framer-motion";
 
 export function UserProfile() {
@@ -55,6 +64,21 @@ export function UserProfile() {
                   <h1 className="text-3xl font-extrabold text-white drop-shadow-md">
                     {user.fullName}
                   </h1>
+                  {user.plan === "PREMIUM" && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold shadow-sm">
+                      <Star size={12} className="fill-current" /> Premium
+                    </span>
+                  )}
+                  {user.plan === "VIP" && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold shadow-sm">
+                      <Crown size={12} className="fill-current" /> VIP
+                    </span>
+                  )}
+                  {(!user.plan || user.plan === "FREE") && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-bold shadow-sm">
+                      <Zap size={12} className="fill-current" /> Free
+                    </span>
+                  )}
                 </div>
                 <p className="text-gray-500 font-medium">{user.email}</p>
               </div>
@@ -72,6 +96,54 @@ export function UserProfile() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Stats / Sidebar */}
               <div className="space-y-6">
+                {/* Plan Info Card */}
+                <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                  <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    {user.plan === "VIP" ? (
+                      <Crown size={18} className="text-amber-500" />
+                    ) : user.plan === "PREMIUM" ? (
+                      <Star size={18} className="text-purple-500" />
+                    ) : (
+                      <Zap size={18} className="text-gray-500" />
+                    )}
+                    Gói dịch vụ hiện tại
+                  </h3>
+
+                  <div className="mb-4">
+                    <span
+                      className={`text-2xl font-bold ${
+                        user.plan === "VIP"
+                          ? "text-amber-600"
+                          : user.plan === "PREMIUM"
+                            ? "text-purple-600"
+                            : "text-gray-700"
+                      }`}
+                    >
+                      {user.plan === "PREMIUM"
+                        ? "Premium"
+                        : user.plan === "VIP"
+                          ? "VIP"
+                          : "Free"}
+                    </span>
+                    {user.planExpiresAt && (
+                      <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
+                        <Calendar size={14} />
+                        Hết hạn:{" "}
+                        {new Date(user.planExpiresAt).toLocaleDateString(
+                          "vi-VN",
+                        )}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => router.push("/upgrade")}
+                    className="w-full py-2.5 bg-emerald-50 text-emerald-700 font-semibold rounded-lg hover:bg-emerald-100 transition-colors text-sm border border-emerald-200"
+                  >
+                    Nâng cấp gói
+                  </button>
+                </div>
+
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
                   <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Leaf size={18} className="text-primary" />
