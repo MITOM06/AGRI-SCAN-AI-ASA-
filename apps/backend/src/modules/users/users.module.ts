@@ -2,13 +2,12 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from '@agri-scan/database';
 import { UsersService } from './users.service';
+import { UsersController } from './users.controller';
 
 @Module({
-  imports: [
-    // Đăng ký Model ở đây để UsersService dùng được
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
+  controllers: [UsersController], // THÊM DÒNG NÀY
   providers: [UsersService],
-  exports: [UsersService], // RẤT QUAN TRỌNG: Mở cửa cho AuthModule gọi vào
+  exports: [UsersService],
 })
-export class UsersModule {}
+export class UsersModule { }

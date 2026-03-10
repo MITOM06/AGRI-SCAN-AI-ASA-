@@ -23,7 +23,7 @@ export class Disease {
   @Prop({ required: true })
   pathogen: string; // Tác nhân (Nấm, Vi khuẩn...)
 
-  @Prop({ enum: ['FUNGUS', 'BACTERIA', 'VIRUS', 'PEST', 'NUTRIENT'] })
+  @Prop({ enum: ['FUNGUS', 'BACTERIA', 'VIRUS', 'PEST', 'NUTRIENT', 'HEALTHY'] })
   type: string;
 
   @Prop([String])

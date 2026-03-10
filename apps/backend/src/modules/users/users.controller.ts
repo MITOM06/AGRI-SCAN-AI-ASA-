@@ -10,7 +10,7 @@ export class UsersController {
   @Post('upgrade')
   async upgradePlan(@Request() req, @Body('plan') plan: 'PREMIUM' | 'VIP') {
     // req.user được lấy từ JwtAuthGuard
-    const updatedUser = await this.usersService.upgradePlan(req.user.id, plan);
+ const updatedUser = await this.usersService.upgradePlan(req.user.userId, plan);
     
     return {
       message: `Nâng cấp gói ${plan} thành công!`,

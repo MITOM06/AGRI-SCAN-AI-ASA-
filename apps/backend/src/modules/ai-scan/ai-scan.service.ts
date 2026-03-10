@@ -15,6 +15,7 @@ import type { Cache } from 'cache-manager';
 import * as crypto from 'crypto';
 import FormDataNode from 'form-data';
 import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AiScanService {
@@ -24,9 +25,11 @@ export class AiScanService {
     @InjectModel(User.name) private userModel: Model<User>, // 🔥 Bơm Model User vào để check Quota
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly plantsService: PlantsService,
-
+    private readonly configService: ConfigService,
   ) { }
-
+  private get aiServiceUrl(): string {
+    return this.configService.get<string>('AI_SERVICE_URL', 'http://localhost:8000');
+  }
   // ==========================================
   // 🔥 HÀM KIỂM TRA & TRỪ LƯỢT GÓI CƯỚC (QUOTA)
   // ==========================================
@@ -106,7 +109,7 @@ export class AiScanService {
           knownLength: imageFile.size,
         });
 
-        const aiResponse = await axios.post('http://localhost:8000/predict', formData, {
+        const aiResponse = await axios.post(`${this.aiServiceUrl}/predict`, formData, {
           headers: formData.getHeaders(),
           maxBodyLength: Infinity,
         });
@@ -118,7 +121,7 @@ export class AiScanService {
       if (!aiPredictionResult || aiPredictionResult.success === false) {
         throw new BadRequestException(`AI Server báo lỗi: ${aiPredictionResult?.error || 'Không nhận diện được'}`);
       }
-      await this.cacheManager.set(cacheKey, aiPredictionResult, 86400);
+      await this.cacheManager.set(cacheKey, aiPredictionResult, 86400 * 1000);
     }
 
     const diseaseInfo = await this.plantsService.findDiseaseByName(aiPredictionResult.yolo_label);
@@ -152,7 +155,7 @@ export class AiScanService {
     // 🔥 XỬ LÝ KHÁCH VÃNG LAI (Không cần trừ DB, không lưu lịch sử)
     if (!userId) {
       try {
-        const aiResponse = await axios.post('http://localhost:8000/chat', { label: finalLabel, prompt: question });
+        const aiResponse = await axios.post(`${this.aiServiceUrl}/chat`, { label: finalLabel, prompt: question });
         return {
           sessionId: 'guest_session',
           question,
@@ -190,7 +193,7 @@ export class AiScanService {
 
 
       // 1.4 Bắn câu hỏi sang cổng 8000 của team AI
-      const aiResponse = await axios.post('http://localhost:8000/chat', {
+      const aiResponse = await axios.post(`${this.aiServiceUrl}/chat`, {
         label: finalLabel,
         prompt: question,
       });
@@ -201,13 +204,12 @@ export class AiScanService {
         ? String(aiResponse.data.answer)
         : JSON.stringify(aiResponse.data);
 
-
-      // 1.5 Push câu trả lời của AI vào mảng messages
       chatDoc.messages.push({
         role: 'ai',
         content: answerContent,
         timestamp: new Date(),
       });
+      await chatDoc.save();
 
       chatDoc.messages.push({ role: 'ai', content: answerContent, timestamp: new Date() });
       await chatDoc.save();

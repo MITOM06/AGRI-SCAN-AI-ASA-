@@ -42,16 +42,16 @@ export const API_ENDPOINTS = {
 
   // AI Scan (Chẩn đoán bằng AI)
   SCAN: {
-    UPLOAD: '/scan/upload',
     ANALYZE: '/scan/analyze',
-    RESULT: (id: string) => `/scan/result/${id}`,
-    FEEDBACK: (id: string) => `/scan/feedback/${id}`,
+    CHAT: '/scan/chat',
+    GUEST_CHAT: '/scan/guest-chat',
+    FEEDBACK: (id: string) => `/scan/history/${id}/feedback`, 
   },
 
   // Scan History (Lịch sử quét)
   HISTORY: {
-    BASE: '/history',
-    BY_ID: (id: string) => `/history/${id}`,
-    MY_HISTORY: '/history/me',
+    SCAN_BASE: '/scan/history',         
+    CHAT_BASE: '/scan/chat/history',     
+    SESSION: (id: string) => `/scan/chat/sessions/${id}`, 
   },
 } as const;
