@@ -1,12 +1,14 @@
-/**
- * User Types - Dùng chung cho Web và Mobile
- * Khớp với Collection: users trong MongoDB
- */
-
 export enum UserRole {
   FARMER = 'FARMER',
   EXPERT = 'EXPERT',
   ADMIN = 'ADMIN',
+}
+
+// 🔥 THÊM MỚI: Enum Gói cước
+export enum SubscriptionPlan {
+  FREE = 'FREE',
+  PREMIUM = 'PREMIUM',
+  VIP = 'VIP',
 }
 
 export interface IUser {
@@ -14,6 +16,10 @@ export interface IUser {
   email: string;
   fullName: string;
   role: UserRole;
+  plan: SubscriptionPlan; // 🔥 THÊM MỚI
+  planExpiresAt: Date | null; // 🔥 THÊM MỚI
+  dailyImageCount: number; // 🔥 THÊM MỚI
+  dailyPromptCount: number; // 🔥 THÊM MỚI
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +41,7 @@ export interface IUserResponse {
   email: string;
   fullName: string;
   role: UserRole;
+  plan: SubscriptionPlan; // Bắn gói cước về cho Frontend
 }
 
 export interface IAuthResponse {

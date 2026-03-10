@@ -4,7 +4,7 @@ import { AiScanController } from './ai-scan.controller';
 import { AiScanService } from './ai-scan.service';
 import { CacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-redis-store';
-import { ScanHistory, ScanHistorySchema } from '@agri-scan/database';
+import { ScanHistory, ScanHistorySchema, User, UserSchema } from '@agri-scan/database';
 import { ChatHistory, ChatHistorySchema } from '@agri-scan/database';
 import { PlantsModule } from '../plants/plants.module';
 
@@ -13,6 +13,7 @@ import { PlantsModule } from '../plants/plants.module';
     MongooseModule.forFeature([
       { name: ScanHistory.name, schema: ScanHistorySchema },
       { name: ChatHistory.name, schema: ChatHistorySchema },
+      { name: User.name, schema: UserSchema },
     ]),
     PlantsModule,
     CacheModule.register({
