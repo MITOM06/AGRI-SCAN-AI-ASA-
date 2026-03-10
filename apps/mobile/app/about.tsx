@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Linking,
-  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -25,7 +24,6 @@ export default function AboutScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  // Các mục liên kết hỗ trợ
   const supportLinks = [
     {
       id: "website",
@@ -41,7 +39,6 @@ export default function AboutScreen() {
     },
   ];
 
-  // Các mục điều khoản
   const legalLinks = [
     {
       id: "terms",
@@ -59,7 +56,6 @@ export default function AboutScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View
         style={[styles.header, { paddingTop: Math.max(insets.top, 10) + 10 }]}
       >
@@ -71,7 +67,7 @@ export default function AboutScreen() {
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Về chúng tôi</Text>
-        <View style={{ width: 40 }} /> {/* Spacer để cân bằng header */}
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -81,7 +77,6 @@ export default function AboutScreen() {
           { paddingBottom: Math.max(insets.bottom, 40) },
         ]}
       >
-        {/* Phần Logo và Tên App */}
         <View style={styles.brandingSection}>
           <View style={styles.logoContainer}>
             <Leaf size={48} color="#fff" />
@@ -90,23 +85,18 @@ export default function AboutScreen() {
           <Text style={styles.appVersion}>Phiên bản 1.0.0</Text>
         </View>
 
-        {/* Phần Giới thiệu */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Info size={20} color="#16a34a" />
             <Text style={styles.cardTitle}>Giới thiệu</Text>
           </View>
           <Text style={styles.description}>
-            Agri-Scan AI là trợ lý nông nghiệp thông minh, ứng dụng công nghệ
-            Trí Tuệ Nhân Tạo (AI) tiên tiến nhất để giúp nhà nông chẩn đoán bệnh
-            cây trồng qua hình ảnh nhanh chóng và chính xác.
-            {"\n\n"}
-            Sứ mệnh của chúng tôi là bảo vệ mùa màng, tối ưu hóa năng suất và
-            hướng tới một nền nông nghiệp xanh, bền vững.
+            {
+              "Agri-Scan AI là trợ lý nông nghiệp thông minh, ứng dụng công nghệ Trí Tuệ Nhân Tạo (AI) tiên tiến nhất để giúp nhà nông chẩn đoán bệnh cây trồng qua hình ảnh nhanh chóng và chính xác.\n\nSứ mệnh của chúng tôi là bảo vệ mùa màng, tối ưu hóa năng suất và hướng tới một nền nông nghiệp xanh, bền vững."
+            }
           </Text>
         </View>
 
-        {/* Phần Liên hệ */}
         <Text style={styles.sectionLabel}>Hỗ trợ & Liên hệ</Text>
         <View style={styles.linkGroup}>
           {supportLinks.map((item, index) => (
@@ -114,7 +104,9 @@ export default function AboutScreen() {
               key={item.id}
               style={[
                 styles.linkItem,
-                index < supportLinks.length - 1 && styles.borderBottom,
+                index < supportLinks.length - 1
+                  ? styles.borderBottom
+                  : undefined,
               ]}
               onPress={item.action}
               activeOpacity={0.7}
@@ -128,7 +120,6 @@ export default function AboutScreen() {
           ))}
         </View>
 
-        {/* Phần Pháp lý */}
         <Text style={styles.sectionLabel}>Pháp lý</Text>
         <View style={styles.linkGroup}>
           {legalLinks.map((item, index) => (
@@ -136,7 +127,7 @@ export default function AboutScreen() {
               key={item.id}
               style={[
                 styles.linkItem,
-                index < legalLinks.length - 1 && styles.borderBottom,
+                index < legalLinks.length - 1 ? styles.borderBottom : undefined,
               ]}
               onPress={item.action}
               activeOpacity={0.7}
@@ -150,7 +141,6 @@ export default function AboutScreen() {
           ))}
         </View>
 
-        {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
             Phát triển bởi đội ngũ Agri-Scan.

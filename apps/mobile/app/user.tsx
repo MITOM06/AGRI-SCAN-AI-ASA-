@@ -274,8 +274,19 @@ export default function UserHomeScreen() {
                   <Text style={styles.menuItemText}>Từ điển cây</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/community")}
+                >
                   <Text style={styles.menuItemText}>Cộng đồng</Text>
+                </TouchableOpacity>
+
+                {/* 🔥 ĐÃ THÊM NÚT VỀ CHÚNG TÔI VÀO ĐÂY */}
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/about")}
+                >
+                  <Text style={styles.menuItemText}>Về chúng tôi</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
@@ -349,7 +360,13 @@ export default function UserHomeScreen() {
               <Text style={styles.primaryBtnText}>Chẩn đoán ngay</Text>
               <ArrowRight size={18} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryBtn} activeOpacity={0.6}>
+
+            {/* 🔥 ĐÃ GẮN SỰ KIỆN CHO NÚT TÌM HIỂU THÊM Ở ĐÂY */}
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              activeOpacity={0.6}
+              onPress={() => router.push("/about")}
+            >
               <Text style={styles.secondaryBtnText}>Tìm hiểu thêm</Text>
             </TouchableOpacity>
           </View>

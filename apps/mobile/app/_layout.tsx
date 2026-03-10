@@ -50,6 +50,10 @@ export default function RootLayout() {
         <Stack.Screen name="scan" />
         <Stack.Screen name="treeDic" />
         <Stack.Screen name="upgrade" />
+        {/* 🔥 ĐÃ THÊM TRANG ABOUT VÀO ĐÂY */}
+        <Stack.Screen name="about" />
+        {/* 🔥 Thêm trang cộng đồng vào đây */}
+        <Stack.Screen name="community" />
       </Stack>
     </SafeAreaProvider>
   );

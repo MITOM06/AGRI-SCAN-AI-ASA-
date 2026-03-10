@@ -184,14 +184,21 @@ export default function HomeScreen() {
                   <Text style={styles.menuItemText}>Từ điển cây</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+                {/* Nút Cộng đồng cũ của bạn đang ở đây... */}
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/community")}
+                >
                   <Text style={styles.menuItemText}>Cộng đồng</Text>
                 </TouchableOpacity>
 
-                {/* 🔥 THÊM MỤC "VỀ CHÚNG TÔI" VÀO MENU TRANG CHỦ */}
+                {/* 👇 BẠN PASTE THÊM NÚT "VỀ CHÚNG TÔI" VÀO NGAY ĐÂY 👇 */}
                 <TouchableOpacity
                   style={styles.menuItem}
-                  onPress={() => handleNavigate("/about")}
+                  onPress={() => {
+                    // Thay handleNavigate hoặc setIsOpen(false) tuỳ vào code hiện tại của file này
+                    router.push("/about");
+                  }}
                 >
                   <Text style={styles.menuItemText}>Về chúng tôi</Text>
                 </TouchableOpacity>

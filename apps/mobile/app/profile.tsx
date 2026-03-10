@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -19,6 +20,9 @@ import {
   Settings,
 } from "lucide-react-native";
 
+// 🔥 IMPORT GỌI API LẤY LỊCH SỬ
+import { scanApi } from "@agri-scan/shared";
+
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -30,10 +34,20 @@ export default function ProfileScreen() {
     email?: string;
   } | null>(null);
 
-  // LẤY DỮ LIỆU TỪ BỘ NHỚ LÊN
+  // STATE LƯU THỐNG KÊ VÀ HOẠT ĐỘNG THẬT
+  const [stats, setStats] = useState({
+    totalScans: 0,
+    diseasesDetected: 0,
+    contributions: 0,
+  });
+  const [activities, setActivities] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+
+  // LẤY DỮ LIỆU TỪ BỘ NHỚ & LỊCH SỬ QUÉT
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUserDataAndHistory = async () => {
       try {
+        // 1. Lấy thông tin User
         let userStr = null;
         if (Platform.OS === "web") {
           userStr = localStorage.getItem("user");
@@ -44,11 +58,74 @@ export default function ProfileScreen() {
         if (userStr) {
           setUserData(JSON.parse(userStr));
         }
+
+        // 2. Lấy dữ liệu lịch sử quét thật từ API
+        const scanItems = await scanApi.getScanHistory();
+
+        if (scanItems && scanItems.length > 0) {
+          const uniqueDiseases = new Set();
+          let contributionsCount = 0;
+
+          // Tính toán thống kê từ toàn bộ lịch sử
+          scanItems.forEach((s: any) => {
+            const diseaseName =
+              s.aiPredictions?.[0]?.diseaseId?.name ||
+              s.topPrediction?.diseaseName;
+
+            if (diseaseName && diseaseName !== "Không xác định") {
+              uniqueDiseases.add(diseaseName);
+            }
+
+            // Nếu user đã feedback đúng sai (isAccurate khác null) thì cộng 1 đóng góp
+            if (s.isAccurate !== null && s.isAccurate !== undefined) {
+              contributionsCount++;
+            }
+          });
+
+          setStats({
+            totalScans: scanItems.length,
+            diseasesDetected: uniqueDiseases.size,
+            contributions: contributionsCount,
+          });
+
+          // Lấy 5 hoạt động gần nhất để hiển thị
+          const recentActivities = scanItems.slice(0, 5).map((s: any) => {
+            const diseaseName =
+              s.aiPredictions?.[0]?.diseaseId?.name ||
+              s.topPrediction?.diseaseName ||
+              "Chưa xác định rõ";
+
+            const confidence =
+              s.aiPredictions?.[0]?.confidence ||
+              s.topPrediction?.confidence ||
+              0;
+
+            const scannedAt = new Date(
+              s.scannedAt ?? s.createdAt ?? s.updatedAt ?? Date.now(),
+            );
+
+            // Format ngày giờ: DD/MM/YYYY HH:MM
+            const timeString = `${scannedAt.toLocaleDateString("vi-VN")} - ${scannedAt.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`;
+
+            return {
+              id: s._id || s.id || Math.random().toString(),
+              title: `Chẩn đoán: ${diseaseName}`,
+              desc: `Quét lúc ${timeString}`,
+              // Nếu độ tin cậy > 80% thì báo Nguy cơ cao, ngược lại là Cần theo dõi
+              status: confidence > 0.8 ? "Nguy cơ cao" : "Cần theo dõi",
+              isHighRisk: confidence > 0.8,
+            };
+          });
+
+          setActivities(recentActivities);
+        }
       } catch (error) {
         console.error("Lỗi khi load thông tin Profile:", error);
+      } finally {
+        setIsLoadingHistory(false);
       }
     };
-    fetchUserData();
+    fetchUserDataAndHistory();
   }, []);
 
   // HÀM TẠO CHỮ CÁI AVATAR
@@ -61,7 +138,7 @@ export default function ProfileScreen() {
     ).toUpperCase();
   };
 
-  // HOÀN THIỆN LOGIC ĐĂNG XUẤT (XÓA SẠCH TOKEN)
+  // ĐĂNG XUẤT
   const handleLogout = async () => {
     try {
       if (Platform.OS === "web") {
@@ -79,35 +156,18 @@ export default function ProfileScreen() {
     }
   };
 
-  // Dữ liệu giả lập (Mock Data) cho phần Thống kê & Hoạt động
-  const STATS = [
-    { id: 1, label: "Cây đã quét", value: "12" },
-    { id: 2, label: "Bệnh phát hiện", value: "5" },
-    { id: 3, label: "Đóng góp", value: "3" },
-  ];
-
-  const ACTIVITIES = [
-    {
-      id: 1,
-      title: "Chẩn đoán bệnh Đốm lá",
-      desc: "Cây Cà chua • 2 giờ trước",
-      status: "Nguy cơ cao",
-    },
+  // Dữ liệu mảng động cho Thống kê
+  const dynamicStats = [
+    { id: 1, label: "Cây đã quét", value: stats.totalScans.toString() },
     {
       id: 2,
-      title: "Chẩn đoán bệnh Đốm lá",
-      desc: "Cây Cà chua • 2 giờ trước",
-      status: "Nguy cơ cao",
+      label: "Bệnh phát hiện",
+      value: stats.diseasesDetected.toString(),
     },
-    {
-      id: 3,
-      title: "Chẩn đoán bệnh Đốm lá",
-      desc: "Cây Cà chua • 2 giờ trước",
-      status: "Nguy cơ cao",
-    },
+    { id: 3, label: "Đóng góp", value: stats.contributions.toString() },
   ];
 
-  // Lấy tên hiển thị (Đề phòng trường hợp Backend trả về 'name' thay vì 'fullName')
+  // Lấy tên hiển thị
   const displayName = userData?.fullName || userData?.name || "Người Dùng";
 
   return (
@@ -118,7 +178,7 @@ export default function ProfileScreen() {
         translucent
       />
 
-      {/* Nút Back nổi lên trên (Absolute) */}
+      {/* Nút Back nổi lên trên */}
       <View style={[styles.headerNav, { top: Math.max(insets.top, 20) }]}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -127,21 +187,19 @@ export default function ProfileScreen() {
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hồ sơ của tôi</Text>
-        <View style={{ width: 40 }} /> {/* Spacer để cân bằng layout */}
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Bìa màu xanh lá (Cover Background) */}
+        {/* Bìa màu xanh lá */}
         <View style={[styles.coverBg, { paddingTop: insets.top }]} />
 
-        {/* Khung nội dung bị đẩy lên chồng lên bìa (Negative Margin) */}
         <View style={styles.contentContainer}>
           {/* --- 1. Thẻ Thông Tin User & Đăng Xuất --- */}
           <View style={styles.card}>
             <View style={styles.profileHeader}>
               <View style={styles.avatarWrapper}>
                 <View style={styles.avatarCircle}>
-                  {/* Hiển thị chữ cái đầu động */}
                   <Text style={styles.avatarText}>
                     {getInitials(displayName)}
                   </Text>
@@ -152,7 +210,6 @@ export default function ProfileScreen() {
               </View>
 
               <View style={styles.userInfo}>
-                {/* Hiển thị Tên và Email động */}
                 <Text style={styles.userName} numberOfLines={1}>
                   {displayName}
                 </Text>
@@ -170,20 +227,28 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* --- 2. Bảng Thống Kê --- */}
+          {/* --- 2. Bảng Thống Kê (Dữ liệu thật) --- */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Activity size={18} color="#16a34a" />
-              <Text style={styles.cardTitle}>Thống kê</Text>
+              <Text style={styles.cardTitle}>Thống kê cá nhân</Text>
             </View>
 
             <View style={styles.statsRow}>
-              {STATS.map((stat, index) => (
+              {dynamicStats.map((stat, index) => (
                 <View key={stat.id} style={styles.statItem}>
-                  <Text style={styles.statValue}>{stat.value}</Text>
+                  {isLoadingHistory ? (
+                    <ActivityIndicator
+                      size="small"
+                      color="#16a34a"
+                      style={{ marginBottom: 4 }}
+                    />
+                  ) : (
+                    <Text style={styles.statValue}>{stat.value}</Text>
+                  )}
                   <Text style={styles.statLabel}>{stat.label}</Text>
                   {/* Đường kẻ dọc phân cách (trừ item cuối) */}
-                  {index < STATS.length - 1 && (
+                  {index < dynamicStats.length - 1 && (
                     <View style={styles.statDivider} />
                   )}
                 </View>
@@ -191,38 +256,72 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* --- 3. Hoạt Động Gần Đây --- */}
+          {/* --- 3. Hoạt Động Gần Đây (Dữ liệu thật) --- */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>Hoạt động gần đây</Text>
             </View>
 
             <View style={styles.activityList}>
-              {ACTIVITIES.map((activity, index) => (
-                <View
-                  key={activity.id}
-                  style={[
-                    styles.activityItem,
-                    index === ACTIVITIES.length - 1 && { borderBottomWidth: 0 }, // Bỏ viền cho dòng cuối
-                  ]}
-                >
-                  <View style={styles.activityIconBox}>
-                    <Leaf size={20} color="#16a34a" />
-                  </View>
-                  <View style={styles.activityInfo}>
-                    <Text style={styles.activityTitle}>{activity.title}</Text>
-                    <Text style={styles.activityDesc}>{activity.desc}</Text>
-                    <View style={styles.statusBadge}>
-                      <Text style={styles.statusText}>{activity.status}</Text>
+              {isLoadingHistory ? (
+                <ActivityIndicator
+                  size="small"
+                  color="#16a34a"
+                  style={{ marginVertical: 20 }}
+                />
+              ) : activities.length === 0 ? (
+                <Text style={styles.emptyText}>Chưa có lịch sử quét nào.</Text>
+              ) : (
+                activities.map((activity, index) => (
+                  <View
+                    key={activity.id}
+                    style={[
+                      styles.activityItem,
+                      index === activities.length - 1 && {
+                        borderBottomWidth: 0,
+                      },
+                    ]}
+                  >
+                    <View style={styles.activityIconBox}>
+                      <Leaf size={20} color="#16a34a" />
+                    </View>
+                    <View style={styles.activityInfo}>
+                      <Text style={styles.activityTitle}>{activity.title}</Text>
+                      <Text style={styles.activityDesc}>{activity.desc}</Text>
+
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          activity.isHighRisk
+                            ? styles.statusHighRiskBg
+                            : styles.statusNormalBg,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusText,
+                            activity.isHighRisk
+                              ? styles.statusHighRiskText
+                              : styles.statusNormalText,
+                          ]}
+                        >
+                          {activity.status}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              ))}
+                ))
+              )}
             </View>
 
-            <TouchableOpacity style={styles.viewAllBtn}>
-              <Text style={styles.viewAllText}>Xem tất cả hoạt động</Text>
-            </TouchableOpacity>
+            {activities.length > 0 && (
+              <TouchableOpacity
+                style={styles.viewAllBtn}
+                onPress={() => router.push("/scan")} // Chuyển về màn hình quét để xem toàn bộ ở Sidebar
+              >
+                <Text style={styles.viewAllText}>Xem tất cả trong lịch sử</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -390,19 +489,37 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   activityDesc: { fontSize: 13, color: "#6b7280", marginBottom: 8 },
+
   statusBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#fee2e2",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  statusText: { fontSize: 11, color: "#ef4444", fontWeight: "600" },
+  // 🔥 ĐÃ THÊM CLASS BỊ THIẾU VÀO ĐÂY:
+  statusText: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+
+  // Style cho Nguy cơ cao
+  statusHighRiskBg: { backgroundColor: "#fee2e2" },
+  statusHighRiskText: { color: "#ef4444" },
+  // Style cho Cần theo dõi (Bình thường)
+  statusNormalBg: { backgroundColor: "#fef9c3" },
+  statusNormalText: { color: "#ca8a04" },
+
+  emptyText: {
+    textAlign: "center",
+    color: "#9ca3af",
+    fontStyle: "italic",
+    paddingVertical: 10,
+  },
 
   viewAllBtn: {
     alignItems: "center",
     marginTop: 16,
     paddingVertical: 8,
   },
-  viewAllText: { color: "#4b5563", fontSize: 14, fontWeight: "500" },
+  viewAllText: { color: "#059669", fontSize: 14, fontWeight: "600" },
 });
