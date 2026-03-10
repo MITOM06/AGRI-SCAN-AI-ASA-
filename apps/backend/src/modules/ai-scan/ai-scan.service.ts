@@ -24,6 +24,7 @@ export class AiScanService {
     @InjectModel(User.name) private userModel: Model<User>, // 🔥 Bơm Model User vào để check Quota
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly plantsService: PlantsService,
+
   ) { }
 
   // ==========================================
@@ -85,6 +86,7 @@ export class AiScanService {
     // 🔥 FIX LỖI: Đặt biến mockImageUrl vào BÊN TRONG hàm
     const mockImageUrl = 'https://res.cloudinary.com/demo/image/upload/sample.jpg';
 
+
     const imageHash = crypto.createHash('md5').update(imageFile.buffer).digest('hex');
     const cacheKey = `ai_scan_result_${imageHash}`;
     const cachedResult = await this.cacheManager.get(cacheKey);
@@ -140,12 +142,12 @@ export class AiScanService {
       topDisease: diseaseInfo,
     };
   }
-
   // ==========================================
   // HÀM CHAT TRỢ LÝ ẢO
   // ==========================================
   async askVirtualAssistant(userId: string | null, question: string, diseaseLabel?: string, sessionId?: string) {
     const finalLabel = diseaseLabel || 'Cây trồng';
+
 
     // 🔥 XỬ LÝ KHÁCH VÃNG LAI (Không cần trừ DB, không lưu lịch sử)
     if (!userId) {
@@ -171,17 +173,41 @@ export class AiScanService {
       }
 
       if (!chatDoc) {
+        // Không có sessionId hoặc không tìm thấy → tạo session MỚI
         const autoTitle = question.trim().length > 0
           ? question.trim().slice(0, 50) + (question.trim().length > 50 ? '...' : '')
           : 'Cuộc hội thoại mới';
-        chatDoc = new this.chatHistoryModel({ userId, title: autoTitle, messages: [] });
+
+        chatDoc = new this.chatHistoryModel({
+          userId,
+          title: autoTitle,
+          messages: [],
+        });
       }
 
       chatDoc.messages.push({ role: 'user', content: question, timestamp: new Date() });
       await chatDoc.save();
 
-      const aiResponse = await axios.post('http://localhost:8000/chat', { label: finalLabel, prompt: question });
-      const answerContent = aiResponse.data.answer ? String(aiResponse.data.answer) : JSON.stringify(aiResponse.data);
+
+      // 1.4 Bắn câu hỏi sang cổng 8000 của team AI
+      const aiResponse = await axios.post('http://localhost:8000/chat', {
+        label: finalLabel,
+        prompt: question,
+      });
+
+      console.log('Dữ liệu AI trả về:', aiResponse.data);
+
+      const answerContent = aiResponse.data.answer
+        ? String(aiResponse.data.answer)
+        : JSON.stringify(aiResponse.data);
+
+
+      // 1.5 Push câu trả lời của AI vào mảng messages
+      chatDoc.messages.push({
+        role: 'ai',
+        content: answerContent,
+        timestamp: new Date(),
+      });
 
       chatDoc.messages.push({ role: 'ai', content: answerContent, timestamp: new Date() });
       await chatDoc.save();

@@ -72,6 +72,7 @@ export class AiScanController {
   }
 
   @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
+
   @Get('chat/history')
   async getChatHistory(@Req() req: any) {
     const userId = req.user.userId || req.user._id || req.user.sub;
@@ -90,4 +91,14 @@ export class AiScanController {
   async submitFeedback(@Param('id') scanId: string, @Body('isAccurate') isAccurate: boolean) {
     return this.aiScanService.updateAccuracyFeedback(scanId, isAccurate);
   }
+  // ========================================================
+  // 🔥 KHÔI PHỤC API BỊ BẠN WEB DEV XÓA NHẦM
+  // Lấy toàn bộ lịch sử quét của User đang đăng nhập
+  // ========================================================
+  @Get('history')
+  async getHistory(@Req() req: any) {
+    const userId = req.user.userId || req.user._id || req.user.sub;
+    return this.aiScanService.getUserScanHistory(userId);
+  }
 }
+

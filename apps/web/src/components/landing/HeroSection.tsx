@@ -55,9 +55,12 @@ export function HeroSection() {
                 Chẩn đoán ngay
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" />
               </Link>
-              <button className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-semibold text-base sm:text-lg hover:bg-gray-50 transition-all w-full sm:w-auto">
+              <Link
+                href="/about"
+                className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-semibold text-base sm:text-lg hover:bg-gray-50 transition-all w-full sm:w-auto text-center"
+              >
                 Tìm hiểu thêm
-              </button>
+              </Link>
             </div>
 
             <HeroStats stats={heroStats} />

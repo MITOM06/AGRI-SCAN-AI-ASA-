@@ -81,7 +81,7 @@ export default function ScanChatScreen() {
     updatedAt: Date;
     type: "chat" | "scan";
     scanHistoryId?: string;
-    rawData?: any; // LƯU DỮ LIỆU Ở ĐÂY ĐỂ KHÔNG CẦN GỌI API LẠI
+    rawData?: any;
   };
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(
@@ -114,15 +114,17 @@ export default function ScanChatScreen() {
 
       const merged: SessionItem[] = [];
 
+      // 1. Load Chat Sessions
       (chatSessionsApi || []).forEach((s) => {
         merged.push({
           id: s.sessionId,
-          title: s.title || "Chat",
+          title: s.title || "Trò chuyện",
           updatedAt: new Date(s.updatedAt),
           type: "chat",
         });
       });
 
+      // 2. Load Scan History
       (scanItems || []).forEach((s: any) => {
         const rawId = s.id ?? s.scanHistoryId ?? s._id;
         const topDiseaseInfo = s.aiPredictions?.[0]?.diseaseId;
@@ -137,7 +139,7 @@ export default function ScanChatScreen() {
           updatedAt: new Date(scannedAt),
           type: "scan",
           scanHistoryId: rawId,
-          rawData: s, // Gắn kèm data để tái sử dụng
+          rawData: s,
         });
       });
 
@@ -148,6 +150,7 @@ export default function ScanChatScreen() {
     }
   };
 
+  // 🔥 ĐÃ SỬA: Đọc tin nhắn thuần túy từ Backend của Web
   const loadChatSession = async (sessionId: string) => {
     try {
       const detail = await scanApi.getSessionMessages(sessionId);
@@ -212,7 +215,6 @@ export default function ScanChatScreen() {
     closeSidebar();
   };
 
-  // 🔥 ĐÃ SỬA: Hiển thị 2 tin nhắn (User và AI) để load Lịch sử Quét
   const loadScanSessionFromData = (detail: any) => {
     try {
       const rawId = detail.id ?? detail.scanHistoryId ?? detail._id;
@@ -231,19 +233,18 @@ export default function ScanChatScreen() {
         detail.scannedAt ?? detail.createdAt ?? Date.now(),
       );
 
-      // Tạo ra 2 bong bóng chat để UI giống y hệt lúc đang chat thật
       setMessages([
         {
           id: `scan-user-${rawId}`,
-          image: imageUrl, // Bóng xanh của người dùng (chứa ảnh)
+          image: imageUrl,
           sender: "user",
           timestamp: scanTime,
         },
         {
           id: `scan-bot-${rawId}`,
           text: "Kết quả chẩn đoán",
-          sender: "bot", // Bóng trắng của AI (chứa kết quả)
-          timestamp: new Date(scanTime.getTime() + 1000), // Lệch 1 giây cho đẹp
+          sender: "bot",
+          timestamp: new Date(scanTime.getTime() + 1000),
           scanResult: fakeResult,
         },
       ]);
@@ -261,7 +262,6 @@ export default function ScanChatScreen() {
       setCurrentSessionId(session.id);
       await loadChatSession(session.id);
     } else if (session.type === "scan" && session.rawData) {
-      // Dùng luôn data từ Sidebar, KHÔNG gọi API nữa để tránh 404
       loadScanSessionFromData(session.rawData);
     }
     closeSidebar();
@@ -361,6 +361,8 @@ export default function ScanChatScreen() {
     try {
       if (userImage) {
         const imageFileToUpload = await createFileFromUri(userImage);
+
+        // 🔥 ĐÃ SỬA: Web API không nhận sessionId khi quét ảnh nữa
         const result = await scanApi.scanImage(imageFileToUpload);
 
         setMessages((prev) => [
@@ -598,7 +600,8 @@ export default function ScanChatScreen() {
                                 <MessageSquare
                                   size={18}
                                   color={
-                                    currentSessionId === item.id
+                                    currentSessionId === item.id &&
+                                    item.type === "chat"
                                       ? "#fff"
                                       : "#86efac"
                                   }
@@ -987,7 +990,6 @@ export default function ScanChatScreen() {
   );
 }
 
-// STYLES
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   header: {
@@ -1052,7 +1054,7 @@ const styles = StyleSheet.create({
   tabBtnActive: { borderBottomColor: "#86efac" },
   tabText: { fontSize: 13, color: "#9ca3af", fontWeight: "600" },
   tabTextActive: { color: "#86efac" },
-  historyList: { flex: 1, paddingHorizontal: 16 },
+  historyList: { flex: 1, paddingHorizontal: 16, paddingTop: 10 },
   emptySidebarTxt: {
     color: "#86efac",
     textAlign: "center",

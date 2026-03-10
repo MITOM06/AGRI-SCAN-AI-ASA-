@@ -27,14 +27,15 @@ declare module "axios" {
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   process.env.EXPO_PUBLIC_API_URL ||
-  "http://192.168.0.101:4000";
+  "http://192.168.0.103:4000";
 
 export const axiosClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 125000, // 15s timeout - tránh treo app khi mạng yếu
+
+  timeout: 125000,
 });
 
 // Upload file ảnh (multipart/form-data)
