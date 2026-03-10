@@ -4,6 +4,7 @@
 ├── README.md
 ├── apps
 │   ├── ai-service
+│   │   ├── Dockerfile
 │   │   ├── ai
 │   │   │   ├── __init__.py
 │   │   │   ├── llm.py
@@ -73,8 +74,11 @@
 │   │   │   │   ├── register.tsx
 │   │   │   │   └── reset-password.tsx
 │   │   │   ├── index.tsx
+│   │   │   ├── payment.tsx
 │   │   │   ├── profile.tsx
 │   │   │   ├── scan.tsx
+│   │   │   ├── treeDic.tsx
+│   │   │   ├── upgrade.tsx
 │   │   │   └── user.tsx
 │   │   ├── app.json
 │   │   ├── assets
@@ -89,12 +93,15 @@
 │   │   │       ├── Button.tsx
 │   │   │       ├── Footer.tsx
 │   │   │       └── Input.tsx
+│   │   ├── data
+│   │   │   └── treeData.ts
 │   │   ├── expo-env.d.ts
 │   │   ├── expo-router.d.ts
 │   │   ├── index.ts
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   └── web
+│       ├── Dockerfile
 │       ├── README.md
 │       ├── eslint.config.mjs
 │       ├── next-env.d.ts
@@ -229,4 +236,4 @@
 ├── pnpm-workspace.yaml
 └── project_tree.txt
 
-61 directories, 169 files
+62 directories, 175 files

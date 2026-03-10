@@ -1,10 +1,6 @@
-/**
- * Plant Types - Dùng chung cho Web và Mobile
- * Khớp với Collection: plants trong MongoDB
- */
-
 import { IDiseaseListItem } from './disease.types';
 
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export interface IPlant {
   id: string;
   commonName: string;      // Tên thường gọi (VD: "Cà chua")
@@ -12,7 +8,8 @@ export interface IPlant {
   family: string;          // Họ thực vật (VD: "Solanaceae")
   description: string;     // Mô tả đặc điểm sinh trưởng
   images: string[];        // Danh sách URL ảnh minh họa cây khỏe mạnh
-  diseases: string[];      // Danh sách ID các bệnh thường gặp
+  diseases: string[]; 
+  status: ApprovalStatus;     // Danh sách ID các bệnh thường gặp
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +21,7 @@ export interface IPlantCreate {
   description?: string;
   images?: string[];
   diseases?: string[];
+  status?: ApprovalStatus;
 }
 
 export interface IPlantListItem {
@@ -32,6 +30,7 @@ export interface IPlantListItem {
   scientificName: string;
   family: string;
   images: string[];
+  status?: ApprovalStatus;
 }
 
 export interface IPlantDetail extends IPlant {

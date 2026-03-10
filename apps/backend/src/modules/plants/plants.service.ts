@@ -1,31 +1,35 @@
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Plant, Disease } from '@agri-scan/database'; // Gộp import cho gọn
+import { Plant, Disease } from '@agri-scan/database';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Injectable, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
 
 @Injectable()
-export class PlantsService {
+export class PlantsService implements OnApplicationBootstrap {
   constructor(
     @InjectModel(Plant.name) private plantModel: Model<Plant>,
     @InjectModel(Disease.name) private diseaseModel: Model<Disease>,
   ) { }
 
-  // 1. Lấy danh sách tất cả các loại cây (phục vụ Từ điển)
-  async findAllPlants() {
-    return this.plantModel.find().select('commonName scientificName images').exec();
-  }
   async onApplicationBootstrap() {
     console.log('🌱 Đang kiểm tra và đồng bộ dữ liệu Tủ thuốc từ team AI...');
     try {
       const result = await this.seedData();
       console.log(result.message);
     } catch (error) {
-      console.error('⚠️ Bỏ qua đồng bộ dữ liệu:', error.message);
+      console.error('⚠️ Bỏ qua đồng bộ dữ liệu:', (error as Error).message);
     }
   }
-  // 2. Lấy chi tiết 1 loại cây (kèm theo các bệnh thường gặp)
+
+  // 1. Lấy danh sách cây (Chỉ lấy APPROVED hoặc data cũ chưa có trường status)
+  async findAllPlants() {
+    return this.plantModel.find({
+      $or: [{ status: 'APPROVED' }, { status: { $exists: false } }]
+    }).select('commonName scientificName images status').exec();
+  }
+
+  // 2. Lấy chi tiết 1 loại cây
   async findPlantById(id: string) {
     const plant = await this.plantModel.findById(id).populate('diseases').exec();
     if (!plant) {
@@ -34,28 +38,32 @@ export class PlantsService {
     return plant;
   }
 
-  // 3. (Chuẩn bị cho AI Scan) - Tìm bệnh theo tên
+  // 3. Tìm bệnh theo tên
   async findDiseaseByName(diseaseName: string) {
     return this.diseaseModel.findOne({ name: diseaseName }).exec();
   }
 
-  // 🔥 HÀM BƠM DỮ LIỆU ĐÃ ĐƯỢC FIX LỖI TYPESCRIPT
+  // 🔥 4. THÊM MỚI: Xử lý người dùng đóng góp dữ liệu cây trồng
+  async contributePlant(plantData: any) {
+    const newPlant = new this.plantModel({
+      ...plantData,
+      status: 'PENDING' // Luôn ép về PENDING khi user gửi
+    });
+    return newPlant.save();
+  }
+
+  // 5. Bơm dữ liệu
   async seedData() {
     try {
-      // 1. Trỏ đường dẫn tới file JSON của team AI
       const jsonPath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plant_knowledge.json');
       const rawData = fs.readFileSync(jsonPath, 'utf-8');
-
-      // 🔥 FIX TẠI ĐÂY: Khai báo rõ kiểu Record<string, any> để TS ngừng bắt bẻ biến 'info'
       const plantKnowledge: Record<string, any> = JSON.parse(rawData);
 
       let count = 0;
 
-      // 2. Duyệt qua từng bệnh trong file JSON
       for (const [yoloLabel, info] of Object.entries(plantKnowledge)) {
         let mappedData: any = {};
 
-        // Xử lý case: Cây khỏe mạnh
         if (info['Status'] === 'Healthy' || info['Status'] === 'Normal') {
           mappedData = {
             name: yoloLabel,
@@ -63,10 +71,9 @@ export class PlantsService {
             description: info['Analysis'] || info['Detail'] || 'Cây phát triển bình thường.',
             type: 'HEALTHY',
             treatments: { biological: [], chemical: [] },
+            status: 'APPROVED' // 🔥 ÉP CHUẨN: Data từ AI mặc định được duyệt
           };
-        }
-        // Xử lý case: Cây bị bệnh
-        else {
+        } else {
           mappedData = {
             name: yoloLabel,
             commonName: info['LOAI_BENH'],
@@ -77,12 +84,12 @@ export class PlantsService {
               chemical: [
                 info['LIEU_TRINH_VA_THUOC']?.['Hoat_chat_dac_tri'],
                 info['LIEU_TRINH_VA_THUOC']?.['Lo_trinh_14_ngay'],
-              ].filter(Boolean), // Lọc bỏ giá trị undefined/null
+              ].filter(Boolean),
             },
+            status: 'APPROVED' // 🔥 ÉP CHUẨN: Data từ AI mặc định được duyệt
           };
         }
 
-        // 3. Lưu vào MongoDB (Dùng upsert)
         await this.diseaseModel.findOneAndUpdate(
           { name: yoloLabel },
           mappedData,

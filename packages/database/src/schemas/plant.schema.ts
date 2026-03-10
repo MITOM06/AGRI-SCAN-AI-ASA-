@@ -21,6 +21,10 @@ export class Plant {
   @Prop([String])
   images: string[]; // Ảnh minh họa cây khỏe
 
+  // 🔥 THÊM MỚI: Trạng thái phê duyệt
+  @Prop({ enum: ['APPROVED', 'PENDING', 'REJECTED'], default: 'PENDING' })
+  status: string;
+
   // Liên kết với bảng Disease
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Disease' }] })
   diseases: Disease[];
