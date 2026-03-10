@@ -7,25 +7,54 @@ export type PlantDocument = HydratedDocument<Plant>;
 @Schema({ timestamps: true })
 export class Plant {
   @Prop({ required: true })
-  commonName: string; // Tên thường gọi (Cà chua)
+  commonName: string;
 
   @Prop({ required: true })
-  scientificName: string; // Tên khoa học
+  scientificName: string;
 
   @Prop()
-  family: string; // Họ thực vật
+  family: string;
 
   @Prop()
   description: string;
 
   @Prop([String])
-  images: string[]; // Ảnh minh họa cây khỏe
+  images: string[];
 
-  // 🔥 THÊM MỚI: Trạng thái phê duyệt
+  // 🔥 THÊM CÁC TRƯỜNG TỪ FRONTEND
+  @Prop()
+  uses: string;
+
+  @Prop()
+  care: string;
+
+  @Prop([String])
+  category: string[];
+
+  @Prop({ enum: ['Nhanh', 'Trung bình', 'Chậm'] })
+  growthRate: string;
+
+  @Prop({ enum: ['Ưa sáng', 'Ưa bóng', 'Bán phần'] })
+  light: string;
+
+  @Prop({ enum: ['Ít', 'Trung bình', 'Nhiều'] })
+  water: string;
+
+  @Prop()
+  height: string;
+
+  @Prop()
+  floweringTime: string;
+
+  @Prop()
+  suitableLocation: string;
+
+  @Prop()
+  soil: string;
+
   @Prop({ enum: ['APPROVED', 'PENDING', 'REJECTED'], default: 'PENDING' })
   status: string;
 
-  // Liên kết với bảng Disease
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Disease' }] })
   diseases: Disease[];
 }
