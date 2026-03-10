@@ -4,7 +4,7 @@ import { Disease } from './disease.schema.js';
 
 export type PlantDocument = HydratedDocument<Plant>;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class Plant {
   @Prop({ required: true })
   commonName: string;
