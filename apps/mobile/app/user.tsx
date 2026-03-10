@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store"; // BẮT BUỘC IMPORT ĐỂ LẤY DATA
+import { authApi } from "@agri-scan/shared";
 import {
   ArrowRight,
   Leaf,
@@ -119,6 +120,7 @@ export default function UserHomeScreen() {
   // HOÀN THIỆN LOGIC ĐĂNG XUẤT
   const handleLogout = async () => {
     try {
+      await authApi.logout(); 
       // Xóa toàn bộ token và data user khỏi bộ nhớ
       if (Platform.OS === "web") {
         localStorage.removeItem("accessToken");

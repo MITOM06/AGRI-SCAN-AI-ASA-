@@ -11,6 +11,16 @@ export interface IAIPrediction {
   confidence: number;      // Độ tin cậy (0.0 - 1.0, VD: 0.95 = 95%)
 }
 
+/**
+ * Kết quả thô từ FastAPI YOLO model, trả về trong IScanResult.predictions
+ * Không giống IAIPrediction — đây là format của AI service, không phải DB
+ */
+export interface IYoloPrediction {
+  yolo_label: string;      // Nhãn bệnh từ YOLO model (ví dụ: "Bac_la_lua")
+  confidence: number;      // Độ tin cậy (0.0 - 1.0)
+  success: boolean;
+}
+
 export interface IScanHistory {
   id: string;
   userId: string;
@@ -48,6 +58,6 @@ export interface IScanUploadRequest {
 export interface IScanResult {
   scanHistoryId: string;
   imageUrl: string;
-  predictions: IAIPrediction[];
-  topDisease?: IDisease;   // Chi tiết bệnh có độ tin cậy cao nhất
+  predictions: IYoloPrediction[];  // Kết quả thô từ YOLO/FastAPI
+  topDisease?: IDisease;   // Chi tiết bệnh có độ tin cậy cao nhất (đã populate từ DB)
 }

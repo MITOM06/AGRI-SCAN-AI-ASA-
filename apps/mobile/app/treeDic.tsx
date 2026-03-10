@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   ScrollView,
   Platform,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -27,8 +28,9 @@ import {
   Leaf,
 } from "lucide-react-native";
 
-// Import Data
+// Import Data (dùng làm fallback nếu API lỗi)
 import { TREE_DATA } from "../data/treeData";
+import { plantApi, getTokenStorage } from "@agri-scan/shared";
 
 const CATEGORIES = [
   "Cây bóng mát",
@@ -46,8 +48,35 @@ export default function TreeDictionaryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
+  const [treeData, setTreeData] = useState<any[]>(TREE_DATA);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTree, setSelectedTree] = useState<any | null>(null);
+
+  useEffect(() => {
+    const fetchPlants = async () => {
+      try {
+        // Chỉ gọi API nếu người dùng đã đăng nhập (GET /plants yêu cầu auth)
+        const tokenStorage = getTokenStorage();
+        const token = tokenStorage ? await tokenStorage.getAccessToken() : null;
+        if (!token) {
+          setIsLoading(false);
+          return; // Dùng TREE_DATA offline cho khách
+        }
+
+        const plants = await plantApi.getAllPlants();
+        if (plants && plants.length > 0) {
+          setTreeData(plants);
+        }
+      } catch (error) {
+        console.log("Lỗi tải danh sách cây, dùng dữ liệu offline:", error);
+        // Giữ TREE_DATA làm fallback
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPlants();
+  }, []);
 
   // Filter states
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -58,7 +87,7 @@ export default function TreeDictionaryScreen() {
 
   // Lọc dữ liệu
   const filteredTrees = useMemo(() => {
-    return TREE_DATA.filter((tree) => {
+    return treeData.filter((tree) => {
       const matchesSearch =
         tree.commonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tree.scientificName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -83,6 +112,7 @@ export default function TreeDictionaryScreen() {
       );
     });
   }, [
+    treeData,
     searchTerm,
     selectedCategories,
     selectedGrowthRates,
@@ -221,20 +251,29 @@ export default function TreeDictionaryScreen() {
       </Text>
 
       {/* DANH SÁCH CÂY */}
-      <FlatList
-        data={filteredTrees}
-        keyExtractor={(item) => item.id}
-        renderItem={renderTreeCard}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              Không tìm thấy cây nào phù hợp.
-            </Text>
-          </View>
-        }
-      />
+      {isLoading ? (
+        <View style={styles.emptyContainer}>
+          <ActivityIndicator size="large" color="#16a34a" />
+          <Text style={[styles.emptyText, { marginTop: 8 }]}>
+            Đang tải dữ liệu...
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredTrees}
+          keyExtractor={(item) => item.id}
+          renderItem={renderTreeCard}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                Không tìm thấy cây nào phù hợp.
+              </Text>
+            </View>
+          }
+        />
+      )}
 
       {/* ========================================== */}
       {/* MODAL 1: BỘ LỌC (BOTTOM SHEET)               */}

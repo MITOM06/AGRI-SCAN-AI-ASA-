@@ -74,6 +74,9 @@ export default function ScanChatScreen() {
   const [activeSidebarTab, setActiveSidebarTab] = useState<"chat" | "scan">(
     "chat",
   );
+  const [currentScanLabel, setCurrentScanLabel] = useState<string | undefined>(
+    undefined,
+  );
 
   type SessionItem = {
     id: string;
@@ -212,6 +215,7 @@ export default function ScanChatScreen() {
     setSelectedImage(null);
     setCurrentSessionId(undefined);
     setLastSyncedSessionId(undefined);
+    setCurrentScanLabel(undefined);
     closeSidebar();
   };
 
@@ -365,6 +369,12 @@ export default function ScanChatScreen() {
         // 🔥 ĐÃ SỬA: Web API không nhận sessionId khi quét ảnh nữa
         const result = await scanApi.scanImage(imageFileToUpload);
 
+        // Lưu label bệnh hàng đầu để dùng trong các tin nhắn tiếp theo
+        const topLabel = result.topDisease?.name;
+        if (topLabel) {
+          setCurrentScanLabel(topLabel);
+        }
+
         setMessages((prev) => [
           ...prev,
           {
@@ -379,6 +389,7 @@ export default function ScanChatScreen() {
       } else if (userText) {
         const aiResponse = await scanApi.chatWithAi(
           userText,
+          currentScanLabel,
           currentSessionId || undefined,
         );
 

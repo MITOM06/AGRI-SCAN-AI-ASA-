@@ -50,6 +50,9 @@ export default function RootLayout() {
         <Stack.Screen name="scan" />
         <Stack.Screen name="treeDic" />
         <Stack.Screen name="upgrade" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="about" />
+        <Stack.Screen name="payment" />
       </Stack>
     </SafeAreaProvider>
   );
