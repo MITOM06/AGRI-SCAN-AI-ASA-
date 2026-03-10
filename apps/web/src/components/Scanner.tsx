@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { default as ReactWebcam } from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { cn, scanApi } from "@agri-scan/shared";
 import type { IChatSession } from "@agri-scan/shared";
 
@@ -232,6 +233,7 @@ function BotMessageContent({ text }: { text: string }) {
 }
 
 export function Scanner() {
+  const router = useRouter();
   const [history, setHistory] = useState<IChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -637,7 +639,10 @@ export function Scanner() {
         </div>
 
         <div className="p-3 border-t border-green-800/30 bg-green-900/20">
-          <button className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-green-800/50 transition-colors text-sm text-left text-green-100 group">
+          <button
+            onClick={() => router.push("/upgrade")}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-green-800/50 transition-colors text-sm text-left text-green-100 group"
+          >
             <div className="w-8 h-8 rounded-full bg-linear-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white shadow-sm shrink-0">
               <Zap size={16} className="fill-white" />
             </div>
@@ -793,11 +798,11 @@ export function Scanner() {
                         )}
                       >
                         {msg.image && (
-                          <div className="mb-3 rounded-lg overflow-hidden bg-black/5">
+                          <div className="mb-3 rounded-xl overflow-hidden border-2 border-white/30 shadow-md">
                             <img
                               src={msg.image}
                               alt="User upload"
-                              className="w-full h-auto max-h-60 object-cover"
+                              className="w-full h-auto max-h-64 object-cover block"
                             />
                           </div>
                         )}
@@ -853,9 +858,9 @@ export function Scanner() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="mb-3 inline-block"
+                  className="mb-3 inline-block relative"
                 >
-                  <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-white shadow-md">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-emerald-200 shadow-md">
                     <img
                       src={selectedImage}
                       alt="Preview"
@@ -864,9 +869,9 @@ export function Scanner() {
                   </div>
                   <button
                     onClick={() => setSelectedImage(null)}
-                    className="absolute -top-2 -right-2 bg-gray-900 text-white rounded-full p-1 hover:bg-gray-700 shadow-sm"
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-red-400 transition-colors shadow-sm"
                   >
-                    <X size={12} />
+                    <X size={11} strokeWidth={3} />
                   </button>
                 </motion.div>
               )}
