@@ -4,72 +4,38 @@ import type {
   IScanHistoryListItem,
   IScanHistoryDetail,
   IScanResult,
-  IPaginatedResponse,
-  IPaginationParams
 } from '@agri-scan/shared';
 
 export const scanService = {
-  /**
-   * Upload ảnh và chẩn đoán bệnh
-   */
-  async scanImage(imageFile: File): Promise<IScanResult> {
-    // Tạo FormData chuẩn của trình duyệt để chứa file
-    const formData = new FormData();
-    // 'image' ở đây là tên trường (field name) mà Backend NestJS dùng @UseInterceptors(FileInterceptor('image')) để bắt lấy
-    formData.append('image', imageFile); 
 
-    // Sử dụng hàm .post() mặc định thay vì .upload()
+  async scanImage(imageFile: File): Promise<IScanResult> {
+    const formData = new FormData();
+    formData.append('image', imageFile);
     const response = await axiosClient.post<IScanResult>(
-      API_ENDPOINTS.SCAN.UPLOAD,
+      API_ENDPOINTS.SCAN.ANALYZE, // Vẫn giữ ANALYZE (nếu TS không báo lỗi dòng này)
       formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data', // Ép kiểu header để gửi file
-        },
-      }
+      { headers: { 'Content-Type': 'multipart/form-data' } }
     );
     return response.data;
   },
 
-  /**
-   * Lấy kết quả chẩn đoán theo ID
-   */
   async getScanResult(scanId: string): Promise<IScanHistoryDetail> {
     const response = await axiosClient.get<IScanHistoryDetail>(
-      API_ENDPOINTS.SCAN.RESULT(scanId)
+      `${API_ENDPOINTS.HISTORY.SCAN_BASE}/${scanId}`
     );
     return response.data;
   },
 
-  /**
-   * Gửi feedback cho kết quả chẩn đoán (đúng/sai)
-   */
-  async sendFeedback(scanId: string, isAccurate: boolean): Promise<void> {
-    await axiosClient.post(
-      API_ENDPOINTS.SCAN.FEEDBACK(scanId),
-      { isAccurate }
-    );
-  },
-
-  /**
-   * Lấy lịch sử quét của user hiện tại
-   */
-  async getMyHistory(params?: IPaginationParams): Promise<IPaginatedResponse<IScanHistoryListItem>> {
-    const queryString = params
-      ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
-      : '';
-    const response = await axiosClient.get<IPaginatedResponse<IScanHistoryListItem>>(
-      `${API_ENDPOINTS.HISTORY.MY_HISTORY}${queryString}`
+  async getMyHistory(): Promise<IScanHistoryListItem[]> {
+    const response = await axiosClient.get<IScanHistoryListItem[]>(
+      API_ENDPOINTS.HISTORY.SCAN_BASE
     );
     return response.data;
   },
 
-  /**
-   * Lấy chi tiết một lịch sử quét
-   */
   async getHistoryById(historyId: string): Promise<IScanHistoryDetail> {
     const response = await axiosClient.get<IScanHistoryDetail>(
-      API_ENDPOINTS.HISTORY.BY_ID(historyId)
+      `${API_ENDPOINTS.HISTORY.SCAN_BASE}/${historyId}`
     );
     return response.data;
   },
@@ -78,6 +44,18 @@ export const scanService = {
    * Xóa lịch sử quét
    */
   async deleteHistory(historyId: string): Promise<void> {
-    await axiosClient.delete(API_ENDPOINTS.HISTORY.BY_ID(historyId));
+    await axiosClient.delete(`${API_ENDPOINTS.HISTORY.SCAN_BASE}/${historyId}`);
   },
+
+  /**
+   * Gửi feedback cho kết quả chẩn đoán (đúng/sai)
+   */
+  async sendFeedback(scanId: string, isAccurate: boolean): Promise<void> {
+    await axiosClient.patch(
+      API_ENDPOINTS.SCAN.FEEDBACK(scanId),
+      { isAccurate }
+    );
+  },
+
+
 };

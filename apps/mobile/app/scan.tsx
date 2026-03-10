@@ -13,9 +13,10 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  Alert,
+  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import {
@@ -63,16 +64,17 @@ export default function ScanChatScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const [permission, requestPermission] = useCameraPermissions();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isBotTyping, setIsBotTyping] = useState(false);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeSidebarTab, setActiveSidebarTab] = useState<"chat" | "scan">(
     "chat",
+  );
+  const [currentScanLabel, setCurrentScanLabel] = useState<string | undefined>(
+    undefined,
   );
 
   type SessionItem = {
@@ -94,7 +96,6 @@ export default function ScanChatScreen() {
   const slideAnim = useRef(new Animated.Value(-width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
-  const cameraRef = useRef<any>(null);
 
   useEffect(() => {
     fetchSidebarData();
@@ -114,7 +115,6 @@ export default function ScanChatScreen() {
 
       const merged: SessionItem[] = [];
 
-      // 1. Load Chat Sessions
       (chatSessionsApi || []).forEach((s) => {
         merged.push({
           id: s.sessionId,
@@ -124,7 +124,6 @@ export default function ScanChatScreen() {
         });
       });
 
-      // 2. Load Scan History
       (scanItems || []).forEach((s: any) => {
         const rawId = s.id ?? s.scanHistoryId ?? s._id;
         const topDiseaseInfo = s.aiPredictions?.[0]?.diseaseId;
@@ -150,7 +149,6 @@ export default function ScanChatScreen() {
     }
   };
 
-  // 🔥 ĐÃ SỬA: Đọc tin nhắn thuần túy từ Backend của Web
   const loadChatSession = async (sessionId: string) => {
     try {
       const detail = await scanApi.getSessionMessages(sessionId);
@@ -212,6 +210,7 @@ export default function ScanChatScreen() {
     setSelectedImage(null);
     setCurrentSessionId(undefined);
     setLastSyncedSessionId(undefined);
+    setCurrentScanLabel(undefined);
     closeSidebar();
   };
 
@@ -267,6 +266,10 @@ export default function ScanChatScreen() {
     closeSidebar();
   };
 
+  // =================================================================
+  // 🔥 XỬ LÝ QUYỀN MÁY ẢNH VÀ THƯ VIỆN ẢNH CHUẨN XÁC NHẤT
+  // =================================================================
+
   const handleOpenCamera = async () => {
     if (Platform.OS === "web") {
       alert(
@@ -274,29 +277,65 @@ export default function ScanChatScreen() {
       );
       return;
     }
-    if (!permission?.granted) {
-      const { granted } = await requestPermission();
-      if (!granted) {
-        alert("Cần cấp quyền camera để chụp ảnh.");
-        return;
-      }
-    }
-    setIsCameraOpen(true);
-  };
 
-  const takePicture = async () => {
-    if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync({
-        base64: false,
+    try {
+      const currentPerm = await ImagePicker.getCameraPermissionsAsync();
+
+      if (currentPerm?.status !== "granted") {
+        const newPerm = await ImagePicker.requestCameraPermissionsAsync();
+
+        if (newPerm?.status !== "granted") {
+          Alert.alert(
+            "Cấp quyền Máy ảnh",
+            "Agri-Scan cần quyền truy cập máy ảnh để bạn có thể chụp hình cây trồng. Vui lòng mở Cài đặt của điện thoại và cho phép.",
+            [
+              { text: "Đóng", style: "cancel" },
+              { text: "Mở Cài đặt", onPress: () => Linking.openSettings() },
+            ],
+          );
+          return;
+        }
+      }
+
+      // 🔥 FIX WARNING: Dùng ['images'] thay cho MediaTypeOptions
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
         quality: 1,
       });
-      setSelectedImage(photo.uri);
-      setIsCameraOpen(false);
+
+      if (!result.canceled && result.assets && result.assets[0].uri) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.log("Lỗi mở camera:", error);
+      Alert.alert(
+        "Lỗi",
+        "Không thể mở máy ảnh. Lưu ý: Máy ảo (Emulator) có thể không hỗ trợ camera.",
+      );
     }
   };
 
   const pickImage = async () => {
     try {
+      const currentPerm = await ImagePicker.getMediaLibraryPermissionsAsync();
+
+      if (currentPerm?.status !== "granted") {
+        const newPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        if (newPerm?.status !== "granted") {
+          Alert.alert(
+            "Cấp quyền Thư viện ảnh",
+            "Agri-Scan cần quyền truy cập bộ sưu tập để bạn tải ảnh lên chẩn đoán. Vui lòng mở Cài đặt của điện thoại và cho phép.",
+            [
+              { text: "Đóng", style: "cancel" },
+              { text: "Mở Cài đặt", onPress: () => Linking.openSettings() },
+            ],
+          );
+          return;
+        }
+      }
+
+      // 🔥 FIX WARNING: Dùng ['images'] thay cho MediaTypeOptions
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         quality: 1,
@@ -304,14 +343,15 @@ export default function ScanChatScreen() {
         aspect: [4, 3],
       });
 
-      if (!result.canceled && result.assets[0].uri) {
+      if (!result.canceled && result.assets && result.assets[0].uri) {
         setSelectedImage(result.assets[0].uri);
       }
     } catch (error) {
       console.log("Lỗi chọn ảnh:", error);
-      alert("Không thể truy cập thư viện ảnh. Vui lòng kiểm tra quyền.");
     }
   };
+
+  // =================================================================
 
   const createFileFromUri = async (uri: string) => {
     if (Platform.OS === "web") {
@@ -362,8 +402,13 @@ export default function ScanChatScreen() {
       if (userImage) {
         const imageFileToUpload = await createFileFromUri(userImage);
 
-        // 🔥 ĐÃ SỬA: Web API không nhận sessionId khi quét ảnh nữa
         const result = await scanApi.scanImage(imageFileToUpload);
+
+        // Lưu label bệnh hàng đầu để dùng trong các tin nhắn tiếp theo
+        const topLabel = result.topDisease?.name;
+        if (topLabel) {
+          setCurrentScanLabel(topLabel);
+        }
 
         setMessages((prev) => [
           ...prev,
@@ -379,6 +424,7 @@ export default function ScanChatScreen() {
       } else if (userText) {
         const aiResponse = await scanApi.chatWithAi(
           userText,
+          currentScanLabel,
           currentSessionId || undefined,
         );
 
@@ -963,29 +1009,6 @@ export default function ScanChatScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
-
-      <Modal visible={isCameraOpen} transparent={true}>
-        <View style={styles.cameraContainer}>
-          <CameraView style={{ flex: 1 }} facing="back" ref={cameraRef}>
-            <View style={styles.cameraOverlay}>
-              <TouchableOpacity
-                style={styles.camCloseBtn}
-                onPress={() => setIsCameraOpen(false)}
-              >
-                <X size={28} color="#fff" />
-              </TouchableOpacity>
-              <View style={styles.camBottomBar}>
-                <TouchableOpacity
-                  style={styles.captureBtn}
-                  onPress={takePicture}
-                >
-                  <View style={styles.captureBtnInner} />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </CameraView>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -1348,31 +1371,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#9ca3af",
     marginTop: 8,
-  },
-  cameraContainer: { flex: 1, backgroundColor: "#000" },
-  cameraOverlay: { flex: 1, justifyContent: "space-between" },
-  camCloseBtn: {
-    alignSelf: "flex-end",
-    marginTop: 50,
-    marginRight: 20,
-    padding: 10,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    borderRadius: 20,
-  },
-  camBottomBar: { paddingBottom: 50, alignItems: "center" },
-  captureBtn: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 4,
-    borderColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  captureBtnInner: {
-    width: 54,
-    height: 54,
-    backgroundColor: "#fff",
-    borderRadius: 27,
   },
 });

@@ -1,4 +1,5 @@
 import { axiosClient } from "./axios-client";
+import { getTokenStorage } from "./token-manager";
 import type {
   IScanResult,
   IScanHistoryListItem,
@@ -48,29 +49,40 @@ export const scanApi = {
       headers: {
         "Content-Type": "multipart/form-data",
       },
-      timeout: 6000000, // Ép chờ 60 giây, không được ngắt sớm!
+      timeout: 60000, // 60 giây
     });
     return res.data;
   },
 
   /**
    * 2. API Chat với Trợ lý ảo AI (RAG)
-   * Gọi đến: POST /scan/chat
-   * - sessionId: truyền vào nếu muốn tiếp tục hội thoại cũ, bỏ trống để tạo session mới
-   * - Chưa đăng nhập vẫn chat được nhưng không lưu lịch sử
+   * - Đã đăng nhập: Gọi POST /scan/chat (lưu lịch sử, hỗ trợ session)
+   * - Chưa đăng nhập: Gọi POST /scan/guest-chat (không lưu lịch sử)
    */
-chatWithAi: async (
-  question: string,
-  label?: string,      
-  sessionId?: string,
-): Promise<IChatResponse> => {
-  const res = await axiosClient.post<IChatResponse>('/scan/chat', {
-    question,
-    label,             
-    sessionId,
-  });
-  return res.data;
-},
+  chatWithAi: async (
+    question: string,
+    label?: string,
+    sessionId?: string,
+  ): Promise<IChatResponse> => {
+    const tokenStorage = getTokenStorage();
+    const token = tokenStorage ? await tokenStorage.getAccessToken() : null;
+
+    if (!token) {
+      // Guest user — use guest endpoint (no auth required, no history saved)
+      const res = await axiosClient.post<IChatResponse>('/scan/guest-chat', {
+        question,
+        label,
+      });
+      return res.data;
+    }
+
+    const res = await axiosClient.post<IChatResponse>('/scan/chat', {
+      question,
+      label,
+      sessionId,
+    });
+    return res.data;
+  },
 
   /**
    * 3. Lấy danh sách tất cả sessions của user (chỉ metadata)

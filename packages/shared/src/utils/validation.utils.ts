@@ -55,7 +55,9 @@ export const isValidImageFile = (file: File | Blob): { valid: boolean; error?: s
     return { valid: false, error: `Kích thước file vượt quá ${MAX_IMAGE_SIZE / 1024 / 1024}MB` };
   }
 
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+  // Bỏ qua kiểm tra MIME type trên React Native (type có thể rỗng hoặc không chuẩn)
+  const mimeType = file.type;
+  if (mimeType && !ALLOWED_IMAGE_TYPES.includes(mimeType)) {
     return { valid: false, error: 'Chỉ chấp nhận file ảnh JPG, PNG hoặc WebP' };
   }
 
