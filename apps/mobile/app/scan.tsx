@@ -379,6 +379,7 @@ export default function ScanChatScreen() {
       } else if (userText) {
         const aiResponse = await scanApi.chatWithAi(
           userText,
+          undefined,  
           currentSessionId || undefined,
         );
 

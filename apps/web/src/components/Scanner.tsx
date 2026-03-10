@@ -63,7 +63,7 @@ const getDateGroup = (date: string | Date): string => {
   const diffDays = Math.floor(
     (todayStart.getTime() -
       new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) /
-      (1000 * 60 * 60 * 24),
+    (1000 * 60 * 60 * 24),
   );
   if (diffDays <= 0) return "Hôm nay";
   if (diffDays === 1) return "Hôm qua";
@@ -320,7 +320,7 @@ export function Scanner() {
     scanApi
       .getChatHistory()
       .then(setHistory)
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleImageUpload = useCallback(
@@ -422,30 +422,30 @@ export function Scanner() {
 
           const bio = (
             disease?.treatments as
-              | {
-                  biological?: string[];
-                  chemical?: string[];
-                  preventive?: string[];
-                }
-              | undefined
+            | {
+              biological?: string[];
+              chemical?: string[];
+              preventive?: string[];
+            }
+            | undefined
           )?.biological;
           const chem = (
             disease?.treatments as
-              | {
-                  biological?: string[];
-                  chemical?: string[];
-                  preventive?: string[];
-                }
-              | undefined
+            | {
+              biological?: string[];
+              chemical?: string[];
+              preventive?: string[];
+            }
+            | undefined
           )?.chemical;
           const prev = (
             disease?.treatments as
-              | {
-                  biological?: string[];
-                  chemical?: string[];
-                  preventive?: string[];
-                }
-              | undefined
+            | {
+              biological?: string[];
+              chemical?: string[];
+              preventive?: string[];
+            }
+            | undefined
           )?.preventive;
 
           if (bio?.length || chem?.length || prev?.length) {
@@ -478,6 +478,7 @@ export function Scanner() {
           // Text chat flow — works without login
           const response = await scanApi.chatWithAi(
             questionText,
+            undefined,
             currentSessionId || undefined,
           );
 
@@ -512,7 +513,7 @@ export function Scanner() {
               scanApi
                 .getChatHistory()
                 .then(setHistory)
-                .catch(() => {});
+                .catch(() => { });
             },
             isNewSession ? 800 : 0,
           );

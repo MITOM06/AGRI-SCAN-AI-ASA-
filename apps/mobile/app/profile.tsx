@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { authApi } from "@agri-scan/shared";
 import {
   View,
   Text,
@@ -64,6 +65,7 @@ export default function ProfileScreen() {
   // HOÀN THIỆN LOGIC ĐĂNG XUẤT (XÓA SẠCH TOKEN)
   const handleLogout = async () => {
     try {
+      await authApi.logout(); 
       if (Platform.OS === "web") {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");

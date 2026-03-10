@@ -1,13 +1,8 @@
 'use client';
-
-/**
- * useScan Hook - Xử lý logic quét ảnh và chẩn đoán AI
- */
-
 import { useState, useCallback } from 'react';
-import { scanService } from '@/services/scan.service';
 import { isValidImageFile } from '@agri-scan/shared';
 import type { IScanResult, IScanHistoryDetail } from '@agri-scan/shared';
+import { scanApi } from '@agri-scan/shared';
 
 interface UseScanResult {
   isScanning: boolean;
@@ -36,7 +31,7 @@ export function useScan(): UseScanResult {
     setError(null);
 
     try {
-      const result = await scanService.scanImage(file);
+      const result = await scanApi.scanImage(file);
       setScanResult(result);
       return result;
     } catch (err) {
@@ -50,21 +45,21 @@ export function useScan(): UseScanResult {
 
   const getScanDetail = useCallback(async (scanId: string): Promise<IScanHistoryDetail | null> => {
     try {
-      return await scanService.getScanResult(scanId);
+      return await scanApi.getScanResult(scanId);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Không thể lấy chi tiết kết quả';
       setError(errorMessage);
       return null;
     }
   }, []);
+  const scan = useCallback(async (file: File) => {
+    const result = await scanApi.scanImage(file);
+    setScanResult(result);
+    return result;
+  }, []);
 
-  const sendFeedback = useCallback(async (scanId: string, isAccurate: boolean): Promise<void> => {
-    try {
-      await scanService.sendFeedback(scanId, isAccurate);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Không thể gửi feedback';
-      setError(errorMessage);
-    }
+  const sendFeedback = useCallback(async (scanId: string, isAccurate: boolean) => {
+    await scanApi.sendFeedback(scanId, isAccurate);
   }, []);
 
   const reset = useCallback(() => {
