@@ -18,11 +18,10 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache, // Gọi Redis
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private mailerService: MailerService,
   ) { }
 
-  // 1. ĐĂNG KÝ
   // 1. ĐĂNG KÝ
   async register(data: any) {
     const existingUser = await this.usersService.findByEmail(data.email);
@@ -36,6 +35,7 @@ export class AuthService {
       password: hashedPassword,
     });
 
+    // 🔥 TRUYỀN THÊM PLAN
     return this.generateTokens(
       newUser._id.toString(),
       newUser.email,
@@ -52,8 +52,13 @@ export class AuthService {
     const isMatch = await bcrypt.compare(data.password, user.password);
     if (!isMatch) throw new UnauthorizedException('Sai email hoặc mật khẩu!');
 
-    // Cập nhật dòng này:
-    return this.generateTokens(user._id.toString(), user.email, user.fullName, user.plan);
+    // 🔥 TRUYỀN THÊM PLAN
+    return this.generateTokens(
+      user._id.toString(),
+      user.email,
+      user.fullName,
+      user.plan,
+    );
   }
 
   // 3. ĐĂNG XUẤT
@@ -75,7 +80,7 @@ export class AuthService {
     userId: string,
     email: string,
     fullName?: string,
-    plan?: string,
+    plan?: string, // 🔥 NHẬN THÊM THAM SỐ PLAN
   ) {
     const payload = { sub: userId, email };
 
@@ -89,27 +94,13 @@ export class AuthService {
     );
 
     return {
-      user: { id: userId, email, fullName, plan }, // plan được trả về cho Frontend
+      // 🔥 TRẢ VỀ PLAN ĐỂ MOBILE CÓ THỂ LƯU VÀO STORAGE
+      user: { id: userId, email, fullName, plan },
       accessToken,
       refreshToken,
     };
   }
 
-  // 4.5 LẤY PROFILE USER (trả về đầy đủ thông tin bao gồm plan)
-  async getProfile(userId: string) {
-    const user = await this.usersService.findById(userId);
-    if (!user) throw new UnauthorizedException('Người dùng không tồn tại!');
-    return {
-      id: user._id.toString(),
-      email: user.email,
-      fullName: user.fullName,
-      role: user.role,
-      plan: user.plan,
-      planExpiresAt: user.planExpiresAt,
-      dailyImageCount: user.dailyImageCount,
-      dailyPromptCount: user.dailyPromptCount,
-    };
-  }
   // 4. CẤP LẠI TOKEN MỚI (Refresh Token)
   async refreshToken(refreshToken: string) {
     try {
@@ -125,20 +116,25 @@ export class AuthService {
         );
       }
 
-      // Lấy user từ DB để lấy fullName
+      // Lấy user từ DB để lấy fullName và plan mới nhất
       const user = await this.usersService.findByEmail(payload.email);
 
-      // Cập nhật dòng này:
-      return this.generateTokens(userId, payload.email, user?.fullName, user?.plan);
+      // 🔥 TRUYỀN THÊM PLAN
+      return this.generateTokens(
+        userId,
+        payload.email,
+        user?.fullName,
+        user?.plan,
+      );
     } catch (error) {
       throw new UnauthorizedException(
         'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại!',
       );
     }
   }
+
   // 5. QUÊN MẬT KHẨU - GỬI OTP
   async forgotPassword(email: string) {
-    // 5.1 Kiểm tra xem có đang bị khóa 30p không
     const isLocked = await this.cacheManager.get(`lockout:${email}`);
     if (isLocked)
       throw new BadRequestException(
@@ -149,13 +145,10 @@ export class AuthService {
     if (!user)
       throw new NotFoundException('Email không tồn tại trong hệ thống!');
 
-    // 5.2 Tạo mã OTP 6 số
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // 5.3 Lưu OTP vào Redis, tồn tại 60 giây
     await this.cacheManager.set(`otp:${email}`, otp, 60 * 1000);
 
-    // 5.4 Gửi Email với Form Template chuyên nghiệp
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="color: #2e7d32; text-align: center;">Agri-Scan AI</h2>
@@ -192,14 +185,12 @@ export class AuthService {
     if (!cachedOtp)
       throw new BadRequestException('Mã OTP đã hết hạn hoặc không tồn tại!');
 
-    // Nếu nhập SAI OTP
     if (cachedOtp !== otp) {
       let attempts =
         (await this.cacheManager.get<number>(`otp_attempts:${email}`)) || 0;
       attempts += 1;
 
       if (attempts >= 5) {
-        // Khóa 30 phút (30 * 60 * 1000 ms)
         await this.cacheManager.set(`lockout:${email}`, true, 30 * 60 * 1000);
         await this.cacheManager.del(`otp_attempts:${email}`);
         await this.cacheManager.del(`otp:${email}`);
@@ -212,13 +203,12 @@ export class AuthService {
         `otp_attempts:${email}`,
         attempts,
         10 * 60 * 1000,
-      ); // Lưu số lần sai trong 10p
+      );
       throw new BadRequestException(
         `Mã OTP không chính xác! Bạn còn ${5 - attempts} lần thử.`,
       );
     }
 
-    // Nếu đúng: Xóa OTP, xóa số lần sai, cấp Reset Token (sống 5 phút)
     await this.cacheManager.del(`otp:${email}`);
     await this.cacheManager.del(`otp_attempts:${email}`);
 
@@ -231,7 +221,7 @@ export class AuthService {
 
     return {
       message: 'Xác thực OTP thành công!',
-      resetToken, // Frontend cần giữ mã này để gửi kèm mật khẩu mới ở bước cuối
+      resetToken,
     };
   }
 
@@ -247,11 +237,8 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Tìm và cập nhật user (Cần thêm hàm updatePassword bên UsersService nếu dùng TypeORM, với Mongoose ta có thể gọi Model)
-    // Để gọn, ta gọi qua usersService (Bổ sung hàm updatePassword vào UsersService sau nhé)
     await this.usersService.updatePassword(email, hashedPassword);
 
-    // Xóa token đi để không dùng lại được
     await this.cacheManager.del(`reset_token:${email}`);
 
     return { message: 'Đổi mật khẩu thành công! Bạn có thể đăng nhập.' };

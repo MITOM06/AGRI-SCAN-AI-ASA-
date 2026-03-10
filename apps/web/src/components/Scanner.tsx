@@ -244,6 +244,9 @@ export function Scanner() {
   const [isBotTyping, setIsBotTyping] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [currentScanLabel, setCurrentScanLabel] = useState<string | undefined>(
+    undefined,
+  );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -402,8 +405,10 @@ export function Scanner() {
           const result = await scanApi.scanImage(fileToUpload);
           const topPrediction = result.predictions?.[0];
           const disease = result.topDisease;
-          const diseaseName =
-            disease?.name || topPrediction?.diseaseName || "Không xác định";
+          const diseaseName = disease?.name || "Không xác định";
+
+          // Lưu label để dùng trong các tin nhắn tiếp theo
+          setCurrentScanLabel(diseaseName);
           const confidence = topPrediction
             ? Math.round(topPrediction.confidence * 100)
             : 0;
@@ -478,6 +483,7 @@ export function Scanner() {
           // Text chat flow — works without login
           const response = await scanApi.chatWithAi(
             questionText,
+            currentScanLabel,
             currentSessionId || undefined,
           );
 
@@ -538,7 +544,13 @@ export function Scanner() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [inputText, selectedImage, selectedImageFile, currentSessionId],
+    [
+      inputText,
+      selectedImage,
+      selectedImageFile,
+      currentSessionId,
+      currentScanLabel,
+    ],
   );
 
   const handleKeyDown = useCallback(
@@ -577,6 +589,7 @@ export function Scanner() {
     setSelectedImage(null);
     setSelectedImageFile(null);
     setCurrentSessionId(null);
+    setCurrentScanLabel(undefined);
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
   }, []);
 

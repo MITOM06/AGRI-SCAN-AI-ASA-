@@ -3,8 +3,17 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Leaf, Mail, Lock, Loader2, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Leaf,
+  Mail,
+  Lock,
+  Loader2,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  CheckCircle,
+} from "lucide-react";
 import { loginSchema, type LoginFormData } from "@agri-scan/shared";
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -12,8 +21,12 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+
+  const isRegistrationSuccess =
+    searchParams.get("message") === "registration_success";
 
   const {
     register,
@@ -48,11 +61,20 @@ export default function LoginForm() {
           <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mx-auto mb-4">
             <Leaf size={28} />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Chào mừng trở lại</h2>
+          <h2 className="text-3xl font-bold text-gray-900">
+            Chào mừng trở lại
+          </h2>
           <p className="mt-2 text-gray-600">
             Đăng nhập để tiếp tục quản lý vườn cây của bạn
           </p>
         </div>
+
+        {isRegistrationSuccess && (
+          <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-200">
+            <CheckCircle size={18} className="shrink-0" />
+            <span>Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.</span>
+          </div>
+        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
@@ -73,7 +95,9 @@ export default function LoginForm() {
                 />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 

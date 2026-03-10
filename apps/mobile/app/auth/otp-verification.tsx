@@ -45,9 +45,8 @@ export default function OTPVerificationScreen() {
       // BE trả về resetToken sau khi OTP đúng
       router.push({
         pathname: "/auth/reset-password",
-        // params: { token: res.resetToken, email },
         params: {
-          token: res.resetToken || res.data?.resetToken,
+          token: res.resetToken,
           email,
         },
       });

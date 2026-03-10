@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
+  Alert,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
@@ -38,6 +39,18 @@ export default function PaymentScreen() {
       "Tạo hình ảnh chất lượng cao",
       "Bộ nhớ mở rộng",
     ],
+  };
+
+  const handleCheckout = async () => {
+    if (!cardNumber || !expiry || !cvc || !name) {
+      Alert.alert("Thiếu thông tin", "Vui lòng điền đầy đủ thông tin thẻ.");
+      return;
+    }
+    // Gọi API nâng cấp plan khi có endpoint
+    // await axiosClient.post('/users/upgrade', { plan: plan.name });
+    Alert.alert("Thành công", `Bạn đã đăng ký gói ${plan.name} thành công!`, [
+      { text: "OK", onPress: () => router.replace("/user") }
+    ]);
   };
 
   const plan = params.plan ? JSON.parse(params.plan as string) : defaultPlan;
@@ -197,7 +210,7 @@ export default function PaymentScreen() {
                     style={styles.input}
                     placeholder="Việt Nam"
                     placeholderTextColor="#9ca3af"
-                    // Để đơn giản trên mobile, dùng TextInput. Nếu cần chuẩn, bạn có thể cài library react-native-picker/picker
+                  // Để đơn giản trên mobile, dùng TextInput. Nếu cần chuẩn, bạn có thể cài library react-native-picker/picker
                   />
                 </View>
               </View>
@@ -262,7 +275,7 @@ export default function PaymentScreen() {
           { paddingBottom: Math.max(insets.bottom, 16) },
         ]}
       >
-        <TouchableOpacity style={styles.checkoutButton} activeOpacity={0.8}>
+        <TouchableOpacity onPress={handleCheckout} style={styles.checkoutButton}>
           <Text style={styles.checkoutButtonText}>Đăng ký ngay</Text>
         </TouchableOpacity>
         <View style={styles.securityWrapper}>
