@@ -15,6 +15,7 @@ export default function UpgradeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
+  // Bổ sung thêm subtotal và vat để truyền qua trang thanh toán
   const plans = [
     {
       name: "Free",
@@ -35,6 +36,8 @@ export default function UpgradeScreen() {
     {
       name: "Plus",
       price: "129.000",
+      subtotal: "117.273", // Thêm dòng này
+      vat: "11.727", // Thêm dòng này
       period: "tháng",
       description: "Mở khóa trải nghiệm đầy đủ",
       features: [
@@ -54,6 +57,8 @@ export default function UpgradeScreen() {
     {
       name: "Pro",
       price: "499.000",
+      subtotal: "453.636", // Thêm dòng này
+      vat: "45.364", // Thêm dòng này
       period: "tháng",
       description: "Tối đa hóa năng suất của bạn",
       features: [
@@ -95,7 +100,7 @@ export default function UpgradeScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {plans.map((plan, index) => (
+        {plans.map((plan) => (
           <View
             key={plan.name}
             style={[
@@ -131,10 +136,28 @@ export default function UpgradeScreen() {
               <Text style={styles.period}>/ {plan.period}</Text>
             </View>
 
-            {/* Nút bấm */}
+            {/* Nút bấm ĐÃ ĐƯỢC THÊM HÀM ONPRESS CHUYỂN TRANG PAYMENT */}
             <TouchableOpacity
               activeOpacity={0.8}
               disabled={plan.current}
+              onPress={() => {
+                if (!plan.current) {
+                  // Đóng gói data của plan hiện tại và truyền sang trang Payment
+                  const planDataToPass = {
+                    name: plan.name,
+                    price: plan.price,
+                    subtotal: plan.subtotal,
+                    vat: plan.vat,
+                    features: plan.features.filter(
+                      (f) => !f.startsWith("Tất cả tính năng"),
+                    ),
+                  };
+                  router.push({
+                    pathname: "/payment",
+                    params: { plan: JSON.stringify(planDataToPass) },
+                  });
+                }
+              }}
               style={[
                 styles.actionBtn,
                 plan.current
@@ -146,7 +169,6 @@ export default function UpgradeScreen() {
             >
               <Text
                 style={[
-                  // Đã gỡ bỏ styles.actionBtnText ở đây
                   plan.current
                     ? styles.btnTextCurrent
                     : plan.highlight

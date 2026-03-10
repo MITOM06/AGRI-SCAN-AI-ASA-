@@ -24,14 +24,18 @@ declare module "axios" {
 // Nếu test bằng Android Emulator trên máy thật thì dùng: http://10.0.2.2:4000
 // Nếu deploy production thì đổi thành domain thật: https://api.agriscan.ai
 //
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.EXPO_PUBLIC_API_URL ||
+  "http://192.168.0.101:4000";
 
 export const axiosClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 125000, // 125s timeout - tránh treo app khi mạng yếu
+
+  timeout: 125000, 
 });
 
 // Upload file ảnh (multipart/form-data)

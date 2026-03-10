@@ -1,4 +1,10 @@
-import { Injectable, InternalServerErrorException, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  Inject,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ScanHistory } from '@agri-scan/database';
@@ -17,17 +23,23 @@ export class AiScanService {
     @InjectModel(ChatHistory.name) private chatHistoryModel: Model<ChatHistory>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly plantsService: PlantsService,
-  ) { }
+  ) {}
+  async processImageAndDiagnose(
+    userId: string,
+    imageFile: Express.Multer.File,
+  ) {
+    // 1. 🔥 TỐI ƯU: CHUYỂN ẢNH SANG BASE64 ĐỂ LƯU THẲNG VÀO DATABASE
+    // Không dùng mock URL nữa, chúng ta lấy chính bức ảnh người dùng vừa chụp!
+    const base64Image = `data:${imageFile.mimetype};base64,${imageFile.buffer.toString('base64')}`;
 
-  async processImageAndDiagnose(userId: string, imageFile: Express.Multer.File) {
-    // Tạm thời dùng mock URL, sau này bạn thay bằng link upload từ S3/Cloudinary
-    const mockImageUrl = 'https://example.com/mock-leaf-image.jpg';
-
-    // 1. TẠO MÃ BĂM (HASH) CHO BỨC ẢNH ĐỂ LÀM CHÌA KHÓA TÌM KIẾM
-    const imageHash = crypto.createHash('md5').update(imageFile.buffer).digest('hex');
+    // 2. TẠO MÃ BĂM (HASH) CHO BỨC ẢNH ĐỂ LÀM CHÌA KHÓA TÌM KIẾM
+    const imageHash = crypto
+      .createHash('md5')
+      .update(imageFile.buffer)
+      .digest('hex');
     const cacheKey = `ai_scan_result_${imageHash}`;
 
-    // 2. KIỂM TRA REDIS: Bức ảnh này đã quét bao giờ chưa?
+    // 3. KIỂM TRA REDIS: Bức ảnh này đã quét bao giờ chưa?
     const cachedResult = await this.cacheManager.get(cacheKey);
 
     let aiPredictionResult;
@@ -39,67 +51,87 @@ export class AiScanService {
       // GỌI MẠNG SANG FASTAPI
       try {
         console.log('Đang gửi ảnh sang FastAPI phân tích... 🧠');
-        const formData = new FormDataNode(); // Lưu ý: Đảm bảo bạn đang dùng đúng thư viện 'form-data'
+        const formData = new FormDataNode();
 
-        // 🔥 FIX LỖI CONFIDENCE 0.00 Ở ĐÂY: Thêm đầy đủ thông tin contentType và size
         formData.append('file', imageFile.buffer, {
           filename: imageFile.originalname,
           contentType: imageFile.mimetype,
           knownLength: imageFile.size,
         });
 
-        const aiResponse = await axios.post('http://localhost:8000/predict', formData, {
-          headers: formData.getHeaders(),
-          maxBodyLength: Infinity, // Bắt buộc phải có để không bị nghẽn khi file ảnh nặng
-        });
+        const aiResponse = await axios.post(
+          'http://localhost:8000/predict',
+          formData,
+          {
+            headers: formData.getHeaders(),
+            maxBodyLength: Infinity,
+          },
+        );
 
         aiPredictionResult = aiResponse.data;
       } catch (error) {
         console.error('Lỗi kết nối FastAPI:', error.message);
-        throw new InternalServerErrorException('Không thể kết nối với hệ thống AI Bác sĩ');
+        throw new InternalServerErrorException(
+          'Không thể kết nối với hệ thống AI Bác sĩ',
+        );
       }
 
-      // 3. KIỂM TRA LỖI LOGIC TỪ AI
+      // KIỂM TRA LỖI LOGIC TỪ AI
       if (!aiPredictionResult || aiPredictionResult.success === false) {
-        throw new BadRequestException(`AI Server báo lỗi: ${aiPredictionResult?.error || 'Không nhận diện được'}`);
+        throw new BadRequestException(
+          `AI Server báo lỗi: ${aiPredictionResult?.error || 'Không nhận diện được'}`,
+        );
       }
 
-      // 4. LƯU VÀO REDIS (Chỉ lưu khi AI tự tin > 0.5 và không bị lỗi)
-      await this.cacheManager.set(cacheKey, aiPredictionResult, 86400); // Lưu 1 ngày
+      // LƯU VÀO REDIS
+      await this.cacheManager.set(cacheKey, aiPredictionResult, 86400);
     }
 
-    // 5. TRA CỨU DATABASE LẤY "TỦ THUỐC"
-    console.log(`Đang tra cứu thông tin bệnh: ${aiPredictionResult.yolo_label}`);
-    const diseaseInfo = await this.plantsService.findDiseaseByName(aiPredictionResult.yolo_label);
+    // 4. TRA CỨU DATABASE LẤY "TỦ THUỐC"
+    console.log(
+      `Đang tra cứu thông tin bệnh: ${aiPredictionResult.yolo_label}`,
+    );
+    const diseaseInfo = await this.plantsService.findDiseaseByName(
+      aiPredictionResult.yolo_label,
+    );
 
     if (!diseaseInfo) {
-      throw new NotFoundException(`Không tìm thấy thông tin chi tiết cho bệnh: ${aiPredictionResult.yolo_label}`);
+      throw new NotFoundException(
+        `Không tìm thấy thông tin chi tiết cho bệnh: ${aiPredictionResult.yolo_label}`,
+      );
     }
 
-    // 6. 🔥 THIẾU SÓT: Bổ sung bước lưu Lịch sử quét vào MongoDB 
-    // (Bắt buộc phải có để App Mobile gọi API getScanHistory hiển thị lại)
+    // 5. 🔥 LƯU LỊCH SỬ QUÉT VÀO MONGODB KÈM THEO ẢNH THẬT
     const newScan = new this.scanHistoryModel({
       userId,
-      imageUrl: mockImageUrl,
-      aiPredictions: [{
-        diseaseId: diseaseInfo._id,
-        confidence: aiPredictionResult.confidence,
-      }],
+      imageUrl: base64Image, // LƯU ẢNH THẬT
+      aiPredictions: [
+        {
+          diseaseId: diseaseInfo._id,
+          confidence: aiPredictionResult.confidence,
+        },
+      ],
       isAccurate: null,
       scannedAt: new Date(),
     });
     await newScan.save();
 
-    // 7. TRẢ KẾT QUẢ CUỐI CÙNG VỀ CHO APP MOBILE (Khớp với Interface IScanResult)
+    // 6. 🔥 TRẢ VỀ DỮ LIỆU CUỐI CÙNG CÓ KÈM ẢNH THẬT
     return {
-      scanHistoryId: newScan._id, // Đã đổi tên biến để khớp với interface IScanResult của bạn
-      imageUrl: mockImageUrl,
-      predictions: [aiPredictionResult], // Trả về dạng mảng theo IScanResult
-      topDisease: diseaseInfo
+      scanHistoryId: newScan._id,
+      imageUrl: base64Image, // TRẢ ẢNH THẬT CHO FRONTEND HIỂN THỊ
+      predictions: [aiPredictionResult],
+      topDisease: diseaseInfo,
     };
   }
 
-  async askVirtualAssistant(userId: string, question: string, diseaseLabel?: string, sessionId?: string) {
+
+  async askVirtualAssistant(
+    userId: string,
+    question: string,
+    diseaseLabel?: string,
+    sessionId?: string,
+  ) {
     try {
       const finalLabel = diseaseLabel || 'Cây trồng';
 
@@ -107,7 +139,10 @@ export class AiScanService {
 
       if (sessionId) {
         // Client truyền sessionId → tiếp tục session đó (kiểm tra userId để tránh truy cập chéo)
-        chatDoc = await this.chatHistoryModel.findOne({ _id: sessionId, userId });
+        chatDoc = await this.chatHistoryModel.findOne({
+          _id: sessionId,
+          userId,
+        });
       }
 
       if (!chatDoc) {
@@ -127,7 +162,7 @@ export class AiScanService {
       chatDoc.messages.push({
         role: 'user',
         content: question,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // 1.3 Lưu session ngay lập tức (trước khi gọi AI)
@@ -142,13 +177,16 @@ export class AiScanService {
 
       console.log('Dữ liệu AI trả về:', aiResponse.data);
 
-      const answerContent = aiResponse.data.answer ? String(aiResponse.data.answer) : JSON.stringify(aiResponse.data);
+      const answerContent = aiResponse.data.answer
+        ? String(aiResponse.data.answer)
+        : JSON.stringify(aiResponse.data);
+
 
       // 1.5 Push câu trả lời của AI vào mảng messages
       chatDoc.messages.push({
         role: 'ai',
         content: answerContent,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
 
       // 1.6 Lưu lần 2 — cập nhật thêm câu trả lời AI vào MongoDB
@@ -161,8 +199,13 @@ export class AiScanService {
         answer: answerContent,
       };
     } catch (error) {
-      console.error('LỖI CHI TIẾT TỪ AI:', JSON.stringify(error.response?.data, null, 2));
-      throw new InternalServerErrorException('Trợ lý ảo đang bận, vui lòng thử lại sau!');
+      console.error(
+        'LỖI CHI TIẾT TỪ AI:',
+        JSON.stringify(error.response?.data, null, 2),
+      );
+      throw new InternalServerErrorException(
+        'Trợ lý ảo đang bận, vui lòng thử lại sau!',
+      );
     }
   }
 
@@ -173,10 +216,10 @@ export class AiScanService {
       .find({ userId: userId })
       .populate({
         // Lệnh populate này cực kỳ mạnh mẽ!
-        // Nó tự động chạy sang collection diseases, tìm ID bệnh tương ứng và đắp toàn bộ 
+        // Nó tự động chạy sang collection diseases, tìm ID bệnh tương ứng và đắp toàn bộ
         // thông tin (triệu chứng, cách chữa) vào kết quả trả về.
         path: 'aiPredictions.diseaseId',
-        select: 'name pathogen type treatments'
+        select: 'name pathogen type treatments',
       })
       .sort({ scannedAt: -1 }) // Sắp xếp mới nhất lên đầu
       .exec();
@@ -222,7 +265,7 @@ export class AiScanService {
     const updatedScan = await this.scanHistoryModel.findByIdAndUpdate(
       scanId,
       { isAccurate: isAccurate },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedScan) {
@@ -230,6 +273,4 @@ export class AiScanService {
     }
     return updatedScan;
   }
-
-
 }

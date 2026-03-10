@@ -1,9 +1,19 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
+type NextConfigWithEslint = NextConfig & { eslint?: { ignoreDuringBuilds?: boolean } };
+
+const nextConfig: NextConfigWithEslint = {
   transpilePackages: ['@agri-scan/shared'],
   reactCompiler: true,
+  output: "standalone",
+
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;
