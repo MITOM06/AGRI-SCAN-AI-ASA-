@@ -19,19 +19,18 @@ import { AiScanService } from './ai-scan.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('scan')
-@UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập mới được quét ảnh
+// ĐÃ GỠ @UseGuards() Ở ĐÂY ĐỂ PHÂN QUYỀN XUỐNG TỪNG HÀM
 export class AiScanController {
   constructor(private readonly aiScanService: AiScanService) {}
 
+  @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
   @Post('analyze')
   @UseInterceptors(FileInterceptor('image'))
   async analyzePlantImage(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          // 1. Cho phép dung lượng lên tới 10MB (10 * 1024 * 1024 bytes)
           new MaxFileSizeValidator({ maxSize: 10485760 }),
-          // 2. Hỗ trợ đa dạng: JPG, PNG, WebP và đặc biệt là HEIC (định dạng ảnh gốc của Apple)
           new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|heic)$/i }),
         ],
       }),
@@ -40,35 +39,39 @@ export class AiScanController {
     @Req() req: any,
   ) {
     const userId = req.user.userId || req.user._id || req.user.sub;
-    if (!userId)
-      throw new UnauthorizedException(
-        'Không tìm thấy thông tin user trong token',
-      );
-
     return this.aiScanService.processImageAndDiagnose(userId, file);
   }
 
+  @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
   @Post('chat')
   async chatWithAi(
     @Req() req: any,
     @Body('question') question: string,
     @Body('label') label?: string,
-    @Body('sessionId') sessionId?: string, // Client truyền lên để tiếp tục session cũ
+    @Body('sessionId') sessionId?: string,
   ) {
-    console.log('Dữ liệu User từ Token:', req.user);
     const userId = req.user.userId || req.user._id || req.user.sub;
-    if (!userId)
-      throw new UnauthorizedException(
-        'Không tìm thấy thông tin user trong token',
-      );
-
-    return this.aiScanService.askVirtualAssistant(
-      userId,
-      question,
-      label,
-      sessionId,
-    );
+    return this.aiScanService.askVirtualAssistant(userId, question, label, sessionId);
   }
+
+  // 🔥 THÊM MỚI: API riêng cho Khách vãng lai (Không cần Auth)
+  @Post('guest-chat')
+  async guestChatWithAi(
+    @Body('question') question: string,
+    @Body('label') label?: string,
+  ) {
+    // Truyền null vào userId để Service hiểu đây là khách
+    return this.aiScanService.askVirtualAssistant(null, question, label);
+  }
+
+  @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
+  @Get('history')
+  async getHistory(@Req() req: any) {
+    const userId = req.user.userId;
+    return this.aiScanService.getUserScanHistory(userId);
+  }
+
+  @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
 
   @Get('chat/history')
   async getChatHistory(@Req() req: any) {
@@ -76,25 +79,18 @@ export class AiScanController {
     return this.aiScanService.getUserChatHistory(userId);
   }
 
-  // Lấy nội dung tin nhắn của một session cụ thể
+  @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
   @Get('chat/sessions/:sessionId')
-  async getSessionMessages(
-    @Req() req: any,
-    @Param('sessionId') sessionId: string,
-  ) {
+  async getSessionMessages(@Req() req: any, @Param('sessionId') sessionId: string) {
     const userId = req.user.userId || req.user._id || req.user.sub;
     return this.aiScanService.getSessionMessages(userId, sessionId);
   }
 
-  // API 3: User xác nhận kết quả AI đúng hay sai (isAccurate)
+  @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
   @Patch('history/:id/feedback')
-  async submitFeedback(
-    @Param('id') scanId: string,
-    @Body('isAccurate') isAccurate: boolean,
-  ) {
+  async submitFeedback(@Param('id') scanId: string, @Body('isAccurate') isAccurate: boolean) {
     return this.aiScanService.updateAccuracyFeedback(scanId, isAccurate);
   }
-
   // ========================================================
   // 🔥 KHÔI PHỤC API BỊ BẠN WEB DEV XÓA NHẦM
   // Lấy toàn bộ lịch sử quét của User đang đăng nhập
@@ -105,3 +101,4 @@ export class AiScanController {
     return this.aiScanService.getUserScanHistory(userId);
   }
 }
+
