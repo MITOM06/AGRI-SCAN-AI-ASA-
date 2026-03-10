@@ -48,34 +48,20 @@ export class AiScanController {
     return this.aiScanService.processImageAndDiagnose(userId, file);
   }
 
-  @Post('chat')
-  async chatWithAi(
-    @Req() req: any,
-    @Body('question') question: string,
-    @Body('label') label?: string,
-    @Body('sessionId') sessionId?: string, // Client truyền lên để tiếp tục session cũ
-  ) {
-    console.log('Dữ liệu User từ Token:', req.user);
-    const userId = req.user.userId || req.user._id || req.user.sub;
-    if (!userId)
-      throw new UnauthorizedException(
-        'Không tìm thấy thông tin user trong token',
-      );
+    @Post('chat')
+    async chatWithAi(
+        @Req() req: any,
+        @Body('question') question: string,
+        @Body('label') label?: string,
+        @Body('sessionId') sessionId?: string // Client truyền lên để tiếp tục session cũ
+    ) {
+        console.log('Dữ liệu User từ Token:', req.user);
+        const userId = req.user.userId || req.user._id || req.user.sub;
+        if (!userId) throw new UnauthorizedException('Không tìm thấy thông tin user trong token');
 
-    return this.aiScanService.askVirtualAssistant(
-      userId,
-      question,
-      label,
-      sessionId,
-    );
-  }
+        return this.aiScanService.askVirtualAssistant(userId, question, label, sessionId);
+    }
 
-  // API 2: Lấy toàn bộ lịch sử quét của User đang đăng nhập
-  @Get('history')
-  async getHistory(@Req() req: any) {
-    const userId = req.user.userId;
-    return this.aiScanService.getUserScanHistory(userId);
-  }
 
   @Get('chat/history')
   async getChatHistory(@Req() req: any) {
