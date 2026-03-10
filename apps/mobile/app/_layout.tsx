@@ -54,6 +54,16 @@ export default function RootLayout() {
         <Stack.Screen name="about" />
         <Stack.Screen name="payment" />
         <Stack.Screen name="community" />
+        <Stack.Screen name="settings" />
+        <Stack.Screen name="notifications" />
+        <Stack.Screen name="tips" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="weather" />
+        <Stack.Screen name="my-garden" />
+        <Stack.Screen name="shop" />
+        <Stack.Screen name="product-detail" />
+        <Stack.Screen name="my-cart" />
+        <Stack.Screen name="buy-detail" />
       </Stack>
     </SafeAreaProvider>
   );

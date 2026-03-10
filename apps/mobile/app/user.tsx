@@ -27,6 +27,10 @@ import {
   User as UserIcon,
   Settings,
   LogOut,
+  Bell,
+  CloudSun,
+  BookOpen,
+  ShoppingCart,
 } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
@@ -54,15 +58,11 @@ export default function UserHomeScreen() {
         } else {
           userStr = await SecureStore.getItemAsync("user");
         }
-
-        if (userStr) {
-          setUserData(JSON.parse(userStr));
-        }
+        if (userStr) setUserData(JSON.parse(userStr));
       } catch (error) {
         console.error("Lỗi khi load thông tin User:", error);
       }
     };
-
     fetchUserData();
   }, []);
 
@@ -133,16 +133,15 @@ export default function UserHomeScreen() {
     }
   };
 
-  // Logic Màu Viền Avatar Dựa Trên Gói
   const currentPlanStr = userData?.plan || "FREE";
   const planColor =
     currentPlanStr === "VIP" || currentPlanStr === "PRO"
       ? "#eab308"
       : currentPlanStr === "PLUS" || currentPlanStr === "PREMIUM"
         ? "#8b5cf6"
-        : "#d1d5db"; // Xám cho Free
+        : "#d1d5db";
 
-  // 🔥 GẮN THÊM ĐƯỜNG DẪN ROUTE VÀO MẢNG FEATURES
+  // 🔥 DANH SÁCH 6 TÍNH NĂNG CHÍNH
   const features = [
     {
       icon: <ShieldCheck size={28} color="#2563eb" />,
@@ -153,17 +152,41 @@ export default function UserHomeScreen() {
       route: "/scan",
     },
     {
-      icon: <Sprout size={28} color="#16a34a" />,
-      title: "Smart Treatment",
+      icon: <CloudSun size={28} color="#06b6d4" />,
+      title: "Agri-Weather",
       description:
-        "Đưa ra phác đồ điều trị chi tiết, ưu tiên giải pháp sinh học.",
-      colorBg: "#f0fdf4",
-      route: "/community", // Tạm trỏ về trang Coming Soon
+        "Dự báo thời tiết chuyên sâu và khuyến nghị chăm sóc theo ngày.",
+      colorBg: "#ecfeff",
+      route: "/weather",
+    },
+    {
+      icon: <Sprout size={28} color="#8b5cf6" />,
+      title: "My Garden",
+      description: "Quản lý danh sách cây trồng và theo dõi lịch chăm sóc.",
+      colorBg: "#f3e8ff",
+      route: "/my-garden",
+    },
+    {
+      icon: <ShoppingCart size={28} color="#f59e0b" />,
+      title: "Agri-Shop",
+      description:
+        "Chợ vật tư nông nghiệp, phân bón và thuốc sinh học chính hãng.",
+      colorBg: "#fef3c7",
+      route: "/shop",
+    },
+    {
+      icon: <BookOpen size={28} color="#10b981" />,
+      title: "Farming Tips",
+      description:
+        "Cẩm nang kiến thức, bí quyết bón phân và chăm sóc cây trồng.",
+      colorBg: "#ecfdf5",
+      route: "/tips",
     },
     {
       icon: <Users size={28} color="#ea580c" />,
-      title: "Community Knowledge",
-      description: "Thư viện mở về kỹ thuật canh tác và cộng đồng chuyên gia.",
+      title: "Community",
+      description:
+        "Tham gia diễn đàn chia sẻ kinh nghiệm cùng hàng ngàn nhà nông.",
       colorBg: "#fff7ed",
       route: "/community",
     },
@@ -177,7 +200,6 @@ export default function UserHomeScreen() {
         translucent={true}
       />
 
-      {/* --- 1. Navbar Đã Đăng Nhập --- */}
       <View
         style={[styles.navbar, { paddingTop: Math.max(insets.top, 10) + 10 }]}
       >
@@ -188,23 +210,31 @@ export default function UserHomeScreen() {
           <Text style={styles.logoTitle}>Agri-Scan</Text>
         </View>
 
-        <TouchableOpacity
-          onPress={openMenu}
-          style={styles.avatarBtnNavbar}
-          activeOpacity={0.8}
-        >
-          {/* Avatar Nhỏ Có Viền */}
-          <View style={[styles.avatarRingSmall, { borderColor: planColor }]}>
-            <View style={styles.avatarCircleSmall}>
-              <Text style={styles.avatarTextSmall}>
-                {getInitials(userData?.fullName)}
-              </Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            onPress={() => router.push("/notification")}
+            style={styles.bellBtn}
+          >
+            <Bell size={24} color="#374151" />
+            <View style={styles.bellDot} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={openMenu}
+            style={styles.avatarBtnNavbar}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.avatarRingSmall, { borderColor: planColor }]}>
+              <View style={styles.avatarCircleSmall}>
+                <Text style={styles.avatarTextSmall}>
+                  {getInitials(userData?.fullName)}
+                </Text>
+              </View>
             </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* --- 2. Menu Trượt Ngang --- */}
       <Modal visible={isMenuOpen} transparent={true} animationType="none">
         <View style={styles.modalContainer}>
           <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
@@ -237,7 +267,6 @@ export default function UserHomeScreen() {
               </View>
 
               <View style={styles.userInfoSection}>
-                {/* Avatar Lớn Có Viền */}
                 <View
                   style={[styles.avatarRingLarge, { borderColor: planColor }]}
                 >
@@ -270,23 +299,43 @@ export default function UserHomeScreen() {
                 >
                   <Text style={styles.menuItemText}>Chẩn đoán AI</Text>
                 </TouchableOpacity>
+
+                {/* 🔥 CÁC CHỨC NĂNG MỚI ĐƯỢC THÊM VÀO MENU DỌC */}
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/my-garden")}
+                >
+                  <Text style={styles.menuItemText}>Vườn của tôi</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/weather")}
+                >
+                  <Text style={styles.menuItemText}>Thời tiết nông nghiệp</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/shop")}
+                >
+                  <Text style={styles.menuItemText}>Cửa hàng vật tư</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/treeDic")}
                 >
-                  <Text style={styles.menuItemText}>Từ điển cây</Text>
+                  <Text style={styles.menuItemText}>Từ điển cây trồng</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/tips")}
+                >
+                  <Text style={styles.menuItemText}>Cẩm nang & Mẹo</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/community")}
                 >
                   <Text style={styles.menuItemText}>Cộng đồng</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/about")}
-                >
-                  <Text style={styles.menuItemText}>Về chúng tôi</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
@@ -300,7 +349,7 @@ export default function UserHomeScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItemWithIcon}
-                  onPress={closeMenu}
+                  onPress={() => handleNavigate("/setting")}
                 >
                   <Settings size={20} color="#4b5563" />
                   <Text style={styles.menuItemTextIcon}>Cài đặt</Text>
@@ -326,7 +375,6 @@ export default function UserHomeScreen() {
         </View>
       </Modal>
 
-      {/* --- 3. Nội dung chính --- */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -336,12 +384,10 @@ export default function UserHomeScreen() {
             <View style={styles.dot} />
             <Text style={styles.badgeText}>AI Innovation Contest 2026</Text>
           </View>
-
           <Text style={styles.mainTitle}>
             Bác Sĩ{"\n"}
             <Text style={styles.greenTitle}>Cây Trồng{"\n"}</Text>Thông Minh
           </Text>
-
           <Text style={styles.description}>
             Chẩn đoán bệnh cây trồng tức thì bằng AI. Nhận phác đồ điều trị khoa
             học và lộ trình chăm sóc bền vững.
@@ -379,54 +425,17 @@ export default function UserHomeScreen() {
               <Text style={styles.statLabel}>Loại bệnh</Text>
             </View>
           </View>
-
-          <View style={styles.imageWrapper}>
-            <ImageBackground
-              source={{
-                uri: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?q=80&w=600",
-              }}
-              style={styles.heroImage}
-              imageStyle={{ borderRadius: 24 }}
-            >
-              <View style={[styles.floatingCard, styles.floatTopRight]}>
-                <View
-                  style={[styles.floatIconBox, { backgroundColor: "#dcfce3" }]}
-                >
-                  <ShieldCheck size={16} color="#16a34a" />
-                </View>
-                <View>
-                  <Text style={styles.floatLabel}>Trạng thái</Text>
-                  <Text style={styles.floatTitle}>Đã bảo vệ</Text>
-                </View>
-              </View>
-              <View style={[styles.floatingCard, styles.floatBottomLeft]}>
-                <View
-                  style={[styles.floatIconBox, { backgroundColor: "#fef08a" }]}
-                >
-                  <Activity size={18} color="#ca8a04" />
-                </View>
-                <View>
-                  <Text style={styles.floatTitle}>Phân tích AI</Text>
-                  <Text style={styles.floatLabel}>Đang xử lý dữ liệu...</Text>
-                </View>
-              </View>
-            </ImageBackground>
-          </View>
         </View>
 
         <View style={styles.featuresSection}>
           <View style={styles.featuresHeader}>
-            <Text style={styles.featuresEyebrow}>GIẢI PHÁP TOÀN DIỆN</Text>
+            <Text style={styles.featuresEyebrow}>HỆ SINH THÁI TÍNH NĂNG</Text>
             <Text style={styles.featuresTitle}>
               Công nghệ tiên phong{"\n"}cho nông nghiệp bền vững
-            </Text>
-            <Text style={styles.featuresDesc}>
-              Hệ thống tích hợp đa tính năng giúp bạn quản lý vườn cây khoa học.
             </Text>
           </View>
 
           <View style={styles.featuresList}>
-            {/* 🔥 ĐÃ BIẾN CÁC KHỐI NÀY THÀNH NÚT BẤM CHUYỂN TRANG */}
             {features.map((item, index) => (
               <TouchableOpacity
                 key={index}
@@ -442,8 +451,11 @@ export default function UserHomeScreen() {
                 >
                   {item.icon}
                 </View>
-                <Text style={styles.featureItemTitle}>{item.title}</Text>
-                <Text style={styles.featureItemDesc}>{item.description}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.featureItemTitle}>{item.title}</Text>
+                  <Text style={styles.featureItemDesc}>{item.description}</Text>
+                </View>
+                <ArrowRight size={20} color="#d1d5db" />
               </TouchableOpacity>
             ))}
           </View>
@@ -473,7 +485,19 @@ const styles = StyleSheet.create({
   logoWrapper: { flexDirection: "row", alignItems: "center", gap: 8 },
   logoIconBox: { backgroundColor: "#2e7d32", padding: 6, borderRadius: 8 },
   logoTitle: { fontSize: 20, fontWeight: "800", color: "#111827" },
-
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 12 },
+  bellBtn: { position: "relative", padding: 4 },
+  bellDot: {
+    position: "absolute",
+    top: 4,
+    right: 6,
+    width: 10,
+    height: 10,
+    backgroundColor: "#ef4444",
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: "#fafaf9",
+  },
   avatarBtnNavbar: { padding: 4 },
   avatarRingSmall: {
     width: 44,
@@ -498,7 +522,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     letterSpacing: 1,
   },
-
   modalContainer: { flex: 1, flexDirection: "row" },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -529,7 +552,6 @@ const styles = StyleSheet.create({
   },
   menuTitle: { fontSize: 16, fontWeight: "600", color: "#111827" },
   closeBtn: { padding: 4 },
-
   userInfoSection: {
     flexDirection: "row",
     alignItems: "center",
@@ -571,10 +593,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   userEmail: { fontSize: 13, color: "#6b7280" },
-
   menuLinks: { flex: 1, paddingHorizontal: 24, paddingTop: 10 },
   menuItem: {
-    paddingVertical: 18,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#f9fafb",
   },
@@ -603,7 +624,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   menuLogoutText: { color: "#ef4444", fontSize: 15, fontWeight: "bold" },
-
   heroSection: {
     paddingHorizontal: 20,
     paddingTop: 10,
@@ -674,32 +694,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
     paddingRight: 20,
-    marginBottom: 35,
+    marginBottom: 20,
   },
   statBox: { alignItems: "flex-start" },
   statNum: { fontSize: 26, fontWeight: "900", color: "#111827" },
   statLabel: { fontSize: 12, color: "#6b7280", marginTop: 2 },
-  imageWrapper: { width: "100%", height: 260, marginBottom: 40 },
-  heroImage: { width: "100%", height: "100%" },
-  floatingCard: {
-    position: "absolute",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    padding: 10,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  floatTopRight: { top: -15, right: -10 },
-  floatBottomLeft: { bottom: -15, left: -10 },
-  floatIconBox: { padding: 6, borderRadius: 8 },
-  floatTitle: { fontSize: 13, fontWeight: "700", color: "#111827" },
-  floatLabel: { fontSize: 10, color: "#6b7280" },
   featuresSection: {
     paddingHorizontal: 20,
     paddingTop: 10,
@@ -722,17 +721,12 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     marginBottom: 12,
   },
-  featuresDesc: {
-    fontSize: 14,
-    color: "#6b7280",
-    textAlign: "center",
-    lineHeight: 22,
-    paddingHorizontal: 10,
-  },
   featuresList: { gap: 16 },
 
   featureCard: {
-    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
     backgroundColor: "#fff",
     borderRadius: 20,
     borderWidth: 1,
@@ -749,15 +743,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginRight: 16,
   },
   featureItemTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
     color: "#111827",
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  featureItemDesc: { fontSize: 14, color: "#4b5563", lineHeight: 22 },
+  featureItemDesc: { fontSize: 13, color: "#6b7280", lineHeight: 20 },
   footer: { paddingVertical: 20, alignItems: "center" },
   footerText: { fontSize: 12, color: "#9ca3af" },
 });
