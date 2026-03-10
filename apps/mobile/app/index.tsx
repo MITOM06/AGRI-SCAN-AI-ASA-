@@ -103,7 +103,6 @@ export default function HomeScreen() {
   ];
 
   return (
-    // BỎ paddingTop ở Container đi để nội dung tràn lên mép trên cùng
     <View style={styles.container}>
       <StatusBar
         barStyle="dark-content"
@@ -112,7 +111,6 @@ export default function HomeScreen() {
       />
 
       {/* --- 1. Navbar Thu Gọn --- */}
-      {/* Đưa paddingTop vào Navbar, lấy đúng chiều cao thanh trạng thái để đẩy nội dung xuống vừa đủ */}
       <View
         style={[
           styles.navbar,
@@ -189,6 +187,14 @@ export default function HomeScreen() {
                 <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
                   <Text style={styles.menuItemText}>Cộng đồng</Text>
                 </TouchableOpacity>
+
+                {/* 🔥 THÊM MỤC "VỀ CHÚNG TÔI" VÀO MENU TRANG CHỦ */}
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/about")}
+                >
+                  <Text style={styles.menuItemText}>Về chúng tôi</Text>
+                </TouchableOpacity>
               </ScrollView>
 
               <View
@@ -245,7 +251,13 @@ export default function HomeScreen() {
               <Text style={styles.primaryBtnText}>Chẩn đoán ngay</Text>
               <ArrowRight size={18} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryBtn} activeOpacity={0.6}>
+
+            {/* 🔥 GẮN LINK CHO NÚT "TÌM HIỂU THÊM" */}
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              activeOpacity={0.6}
+              onPress={() => router.push("/about")}
+            >
               <Text style={styles.secondaryBtnText}>Tìm hiểu thêm</Text>
             </TouchableOpacity>
           </View>
@@ -346,7 +358,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 10, // Thay paddingVertical bằng paddingBottom vì paddingTop đã động
+    paddingBottom: 10,
     backgroundColor: "#fafaf9",
   },
   logoWrapper: { flexDirection: "row", alignItems: "center", gap: 8 },
