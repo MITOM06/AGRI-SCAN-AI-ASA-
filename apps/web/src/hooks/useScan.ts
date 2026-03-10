@@ -45,17 +45,12 @@ export function useScan(): UseScanResult {
 
   const getScanDetail = useCallback(async (scanId: string): Promise<IScanHistoryDetail | null> => {
     try {
-      return await scanApi.getScanResult(scanId);
+      return await scanApi.getScanDetail(scanId);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Không thể lấy chi tiết kết quả';
       setError(errorMessage);
       return null;
     }
-  }, []);
-  const scan = useCallback(async (file: File) => {
-    const result = await scanApi.scanImage(file);
-    setScanResult(result);
-    return result;
   }, []);
 
   const sendFeedback = useCallback(async (scanId: string, isAccurate: boolean) => {

@@ -63,7 +63,7 @@ const getDateGroup = (date: string | Date): string => {
   const diffDays = Math.floor(
     (todayStart.getTime() -
       new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) /
-    (1000 * 60 * 60 * 24),
+      (1000 * 60 * 60 * 24),
   );
   if (diffDays <= 0) return "Hôm nay";
   if (diffDays === 1) return "Hôm qua";
@@ -244,6 +244,9 @@ export function Scanner() {
   const [isBotTyping, setIsBotTyping] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [currentScanLabel, setCurrentScanLabel] = useState<string | undefined>(
+    undefined,
+  );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -320,7 +323,7 @@ export function Scanner() {
     scanApi
       .getChatHistory()
       .then(setHistory)
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const handleImageUpload = useCallback(
@@ -402,8 +405,10 @@ export function Scanner() {
           const result = await scanApi.scanImage(fileToUpload);
           const topPrediction = result.predictions?.[0];
           const disease = result.topDisease;
-          const diseaseName =
-            disease?.name || topPrediction?.diseaseName || "Không xác định";
+          const diseaseName = disease?.name || "Không xác định";
+
+          // Lưu label để dùng trong các tin nhắn tiếp theo
+          setCurrentScanLabel(diseaseName);
           const confidence = topPrediction
             ? Math.round(topPrediction.confidence * 100)
             : 0;
@@ -422,30 +427,30 @@ export function Scanner() {
 
           const bio = (
             disease?.treatments as
-            | {
-              biological?: string[];
-              chemical?: string[];
-              preventive?: string[];
-            }
-            | undefined
+              | {
+                  biological?: string[];
+                  chemical?: string[];
+                  preventive?: string[];
+                }
+              | undefined
           )?.biological;
           const chem = (
             disease?.treatments as
-            | {
-              biological?: string[];
-              chemical?: string[];
-              preventive?: string[];
-            }
-            | undefined
+              | {
+                  biological?: string[];
+                  chemical?: string[];
+                  preventive?: string[];
+                }
+              | undefined
           )?.chemical;
           const prev = (
             disease?.treatments as
-            | {
-              biological?: string[];
-              chemical?: string[];
-              preventive?: string[];
-            }
-            | undefined
+              | {
+                  biological?: string[];
+                  chemical?: string[];
+                  preventive?: string[];
+                }
+              | undefined
           )?.preventive;
 
           if (bio?.length || chem?.length || prev?.length) {
@@ -478,7 +483,7 @@ export function Scanner() {
           // Text chat flow — works without login
           const response = await scanApi.chatWithAi(
             questionText,
-            undefined,
+            currentScanLabel,
             currentSessionId || undefined,
           );
 
@@ -513,7 +518,7 @@ export function Scanner() {
               scanApi
                 .getChatHistory()
                 .then(setHistory)
-                .catch(() => { });
+                .catch(() => {});
             },
             isNewSession ? 800 : 0,
           );
@@ -539,7 +544,13 @@ export function Scanner() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [inputText, selectedImage, selectedImageFile, currentSessionId],
+    [
+      inputText,
+      selectedImage,
+      selectedImageFile,
+      currentSessionId,
+      currentScanLabel,
+    ],
   );
 
   const handleKeyDown = useCallback(
@@ -578,6 +589,7 @@ export function Scanner() {
     setSelectedImage(null);
     setSelectedImageFile(null);
     setCurrentSessionId(null);
+    setCurrentScanLabel(undefined);
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
   }, []);
 

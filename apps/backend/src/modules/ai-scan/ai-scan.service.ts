@@ -211,9 +211,6 @@ export class AiScanService {
       });
       await chatDoc.save();
 
-      chatDoc.messages.push({ role: 'ai', content: answerContent, timestamp: new Date() });
-      await chatDoc.save();
-
       return {
         sessionId: chatDoc._id,
         question,

@@ -20,25 +20,22 @@ export const scanService = {
   },
 
   async getScanResult(scanId: string): Promise<IScanHistoryDetail> {
-    // Dùng BY_ID(id) có sẵn thay vì tự ghép chuỗi với SCAN_BASE
     const response = await axiosClient.get<IScanHistoryDetail>(
-      API_ENDPOINTS.HISTORY.BY_ID(scanId)
+      `${API_ENDPOINTS.HISTORY.SCAN_BASE}/${scanId}`
     );
     return response.data;
   },
 
   async getMyHistory(): Promise<IScanHistoryListItem[]> {
-    // TS báo MY_HISTORY thực sự có tồn tại, nên ta dùng nó luôn
     const response = await axiosClient.get<IScanHistoryListItem[]>(
-      API_ENDPOINTS.HISTORY.MY_HISTORY
+      API_ENDPOINTS.HISTORY.SCAN_BASE
     );
     return response.data;
   },
 
   async getHistoryById(historyId: string): Promise<IScanHistoryDetail> {
-    // Dùng BY_ID tương tự như getScanResult
     const response = await axiosClient.get<IScanHistoryDetail>(
-      API_ENDPOINTS.HISTORY.BY_ID(historyId)
+      `${API_ENDPOINTS.HISTORY.SCAN_BASE}/${historyId}`
     );
     return response.data;
   },
@@ -47,8 +44,7 @@ export const scanService = {
    * Xóa lịch sử quét
    */
   async deleteHistory(historyId: string): Promise<void> {
-    // Hàm này bạn đã viết đúng theo cấu trúc đang có
-    await axiosClient.delete(API_ENDPOINTS.HISTORY.BY_ID(historyId));
+    await axiosClient.delete(`${API_ENDPOINTS.HISTORY.SCAN_BASE}/${historyId}`);
   },
 
   /**

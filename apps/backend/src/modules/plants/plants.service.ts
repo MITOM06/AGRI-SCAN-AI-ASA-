@@ -107,14 +107,15 @@ export class PlantsService implements OnApplicationBootstrap {
           },
           status: 'APPROVED'
         };
-
+        
+          
         const savedDisease = await this.diseaseModel.findOneAndUpdate(
           { name: yoloLabel },
           mappedData,
           { upsert: true, new: true }
         );
         diseaseCount++;
-
+        
         // 3. THUẬT TOÁN NỐI BỆNH VÀO ĐÚNG CÂY
         const tenCayString = info['TEN_CAY'] || '';
         const match = tenCayString.match(/\((.*?)\)/); // Trích xuất tên khoa học trong ngoặc tròn

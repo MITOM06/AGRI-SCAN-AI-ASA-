@@ -14,7 +14,7 @@ export * from './schemas';
 // Explicit exports to ensure TS sees them (fixes missing-export errors)
 export { APP_DESCRIPTION } from './constants/app.constants';
 export { isValidImageFile } from './utils/validation.utils';
-export type { IScanResult, IScanHistoryDetail } from './types/scan-history.types';
+export type { IScanResult, IScanHistoryDetail, IYoloPrediction } from './types/scan-history.types';
 export { forgotPasswordSchema, type ForgotPasswordFormData } from './schemas/auth.schema';
 
 // Legacy export (để không break code cũ)

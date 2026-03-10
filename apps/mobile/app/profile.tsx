@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { authApi } from "@agri-scan/shared";
+import { authApi, scanApi } from "@agri-scan/shared";
 import {
   View,
   Text,
@@ -31,6 +31,18 @@ export default function ProfileScreen() {
     email?: string;
   } | null>(null);
 
+  // STATE THỐNG KÊ THẬT TỪ API
+  const [scanCount, setScanCount] = useState<number>(0);
+  const [diseaseCount, setDiseaseCount] = useState<number>(0);
+  const [recentActivities, setRecentActivities] = useState<
+    Array<{
+      id: string;
+      title: string;
+      desc: string;
+      status: string;
+    }>
+  >([]);
+
   // LẤY DỮ LIỆU TỪ BỘ NHỚ LÊN
   useEffect(() => {
     const fetchUserData = async () => {
@@ -52,6 +64,43 @@ export default function ProfileScreen() {
     fetchUserData();
   }, []);
 
+  // LẤY THỐNG KÊ THẬT TỪ API
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const history = await scanApi.getScanHistory();
+        setScanCount(history.length);
+
+        // Đếm số loại bệnh duy nhất
+        const uniqueDiseases = new Set(
+          history
+            .map(
+              (item) =>
+                item.topPrediction?.diseaseId ||
+                item.topPrediction?.diseaseName,
+            )
+            .filter(Boolean),
+        );
+        setDiseaseCount(uniqueDiseases.size);
+
+        // Lấy 3 hoạt động gần nhất
+        const activities = history.slice(0, 3).map((item) => ({
+          id: item.id,
+          title: `Chẩn đoán: ${item.topPrediction?.diseaseName || "Không xác định"}`,
+          desc: `${new Date(item.scannedAt).toLocaleDateString("vi-VN")}`,
+          status:
+            (item.topPrediction?.confidence || 0) >= 0.8
+              ? "Nguy cơ cao"
+              : "Nguy cơ thấp",
+        }));
+        setRecentActivities(activities);
+      } catch (error) {
+        console.error("Lỗi khi lấy thống kê:", error);
+      }
+    };
+    fetchStats();
+  }, []);
+
   // HÀM TẠO CHỮ CÁI AVATAR
   const getInitials = (name?: string) => {
     if (!name) return "U";
@@ -65,7 +114,7 @@ export default function ProfileScreen() {
   // HOÀN THIỆN LOGIC ĐĂNG XUẤT (XÓA SẠCH TOKEN)
   const handleLogout = async () => {
     try {
-      await authApi.logout(); 
+      await authApi.logout();
       if (Platform.OS === "web") {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
@@ -81,36 +130,14 @@ export default function ProfileScreen() {
     }
   };
 
-  // Dữ liệu giả lập (Mock Data) cho phần Thống kê & Hoạt động
-  const STATS = [
-    { id: 1, label: "Cây đã quét", value: "12" },
-    { id: 2, label: "Bệnh phát hiện", value: "5" },
-    { id: 3, label: "Đóng góp", value: "3" },
-  ];
-
-  const ACTIVITIES = [
-    {
-      id: 1,
-      title: "Chẩn đoán bệnh Đốm lá",
-      desc: "Cây Cà chua • 2 giờ trước",
-      status: "Nguy cơ cao",
-    },
-    {
-      id: 2,
-      title: "Chẩn đoán bệnh Đốm lá",
-      desc: "Cây Cà chua • 2 giờ trước",
-      status: "Nguy cơ cao",
-    },
-    {
-      id: 3,
-      title: "Chẩn đoán bệnh Đốm lá",
-      desc: "Cây Cà chua • 2 giờ trước",
-      status: "Nguy cơ cao",
-    },
-  ];
-
   // Lấy tên hiển thị (Đề phòng trường hợp Backend trả về 'name' thay vì 'fullName')
   const displayName = userData?.fullName || userData?.name || "Người Dùng";
+
+  const STATS = [
+    { id: 1, label: "Cây đã quét", value: String(scanCount) },
+    { id: 2, label: "Bệnh phát hiện", value: String(diseaseCount) },
+    { id: 3, label: "Đóng góp", value: "0" },
+  ];
 
   return (
     <View style={styles.container}>
@@ -200,26 +227,40 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.activityList}>
-              {ACTIVITIES.map((activity, index) => (
-                <View
-                  key={activity.id}
-                  style={[
-                    styles.activityItem,
-                    index === ACTIVITIES.length - 1 && { borderBottomWidth: 0 }, // Bỏ viền cho dòng cuối
-                  ]}
+              {recentActivities.length === 0 ? (
+                <Text
+                  style={{
+                    color: "#9ca3af",
+                    textAlign: "center",
+                    paddingVertical: 12,
+                  }}
                 >
-                  <View style={styles.activityIconBox}>
-                    <Leaf size={20} color="#16a34a" />
-                  </View>
-                  <View style={styles.activityInfo}>
-                    <Text style={styles.activityTitle}>{activity.title}</Text>
-                    <Text style={styles.activityDesc}>{activity.desc}</Text>
-                    <View style={styles.statusBadge}>
-                      <Text style={styles.statusText}>{activity.status}</Text>
+                  Chưa có hoạt động nào
+                </Text>
+              ) : (
+                recentActivities.map((activity, index) => (
+                  <View
+                    key={activity.id}
+                    style={[
+                      styles.activityItem,
+                      index === recentActivities.length - 1 && {
+                        borderBottomWidth: 0,
+                      },
+                    ]}
+                  >
+                    <View style={styles.activityIconBox}>
+                      <Leaf size={20} color="#16a34a" />
+                    </View>
+                    <View style={styles.activityInfo}>
+                      <Text style={styles.activityTitle}>{activity.title}</Text>
+                      <Text style={styles.activityDesc}>{activity.desc}</Text>
+                      <View style={styles.statusBadge}>
+                        <Text style={styles.statusText}>{activity.status}</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              ))}
+                ))
+              )}
             </View>
 
             <TouchableOpacity style={styles.viewAllBtn}>
