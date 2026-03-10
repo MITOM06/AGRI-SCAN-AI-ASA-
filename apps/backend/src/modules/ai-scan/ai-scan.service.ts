@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException, Inject, BadRequestException  } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ScanHistory } from '@agri-scan/database';
@@ -99,17 +99,19 @@ export class AiScanService {
     };
   }
 
- // 🔥 Thêm dấu ? để cho phép diseaseLabel có thể bị trống (undefined)
-  async askVirtualAssistant(userId: string, question: string, diseaseLabel?: string) {
+  async askVirtualAssistant(userId: string, question: string, diseaseLabel?: string, sessionId?: string) {
     try {
-      // Nếu App truyền tên bệnh xuống thì dùng, không thì mặc định là 'Cây trồng'
-      const finalLabel = diseaseLabel || 'Cây trồng'; 
+      const finalLabel = diseaseLabel || 'Cây trồng';
 
-      // 1.1 Tìm xem user này đã có phiên chat nào trong Database chưa
-      let chatDoc = await this.chatHistoryModel.findOne({ userId });
+      let chatDoc: any;
+
+      if (sessionId) {
+        // Client truyền sessionId → tiếp tục session đó (kiểm tra userId để tránh truy cập chéo)
+        chatDoc = await this.chatHistoryModel.findOne({ _id: sessionId, userId });
+      }
 
       if (!chatDoc) {
-        // Lấy tối đa 50 ký tự đầu của câu hỏi làm title, tránh title quá dài
+        // Không có sessionId hoặc không tìm thấy → tạo session MỚI
         const autoTitle = question.trim().length > 0
           ? question.trim().slice(0, 50) + (question.trim().length > 50 ? '...' : '')
           : 'Cuộc hội thoại mới';
@@ -128,9 +130,13 @@ export class AiScanService {
         timestamp: new Date()
       });
 
-      // 1.3 Bắn câu hỏi sang cổng 8000 của team AI
+      // 1.3 Lưu session ngay lập tức (trước khi gọi AI)
+      // → Đảm bảo session & câu hỏi không bị mất nếu FastAPI timeout/lỗi
+      await chatDoc.save();
+
+      // 1.4 Bắn câu hỏi sang cổng 8000 của team AI
       const aiResponse = await axios.post('http://localhost:8000/chat', {
-        label: finalLabel, // 🔥 Sử dụng nhãn thực tế
+        label: finalLabel,
         prompt: question,
       });
 
@@ -138,19 +144,14 @@ export class AiScanService {
 
       const answerContent = aiResponse.data.answer ? String(aiResponse.data.answer) : JSON.stringify(aiResponse.data);
 
-      if (!chatDoc.messages) {
-        chatDoc.messages = [];
-      }
-
-
-      // 1.4 Push câu trả lời của AI vào mảng messages
+      // 1.5 Push câu trả lời của AI vào mảng messages
       chatDoc.messages.push({
         role: 'ai',
         content: answerContent,
         timestamp: new Date()
       });
 
-      // 1.5 LƯU TOÀN BỘ XUỐNG MONGODB
+      // 1.6 Lưu lần 2 — cập nhật thêm câu trả lời AI vào MongoDB
       await chatDoc.save();
 
       // 1.6 Trả kết quả về cho App Mobile

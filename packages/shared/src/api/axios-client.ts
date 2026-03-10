@@ -31,7 +31,7 @@ export const axiosClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 15000, // 15s timeout - tránh treo app khi mạng yếu
+  timeout: 125000, // 125s timeout - tránh treo app khi mạng yếu
 });
 
 // Upload file ảnh (multipart/form-data)
