@@ -14,8 +14,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store"; // BẮT BUỘC IMPORT ĐỂ LẤY DATA
-import { authApi } from "@agri-scan/shared";
+import * as SecureStore from "expo-secure-store";
 import {
   ArrowRight,
   Leaf,
@@ -25,7 +24,7 @@ import {
   Users,
   Search,
   X,
-  User as UserIcon, // Đổi tên để tránh trùng với model User
+  User as UserIcon,
   Settings,
   LogOut,
 } from "lucide-react-native";
@@ -40,12 +39,12 @@ export default function UserHomeScreen() {
   const [userData, setUserData] = useState<{
     fullName?: string;
     email?: string;
+    plan?: string;
   } | null>(null);
 
   const slideAnim = useRef(new Animated.Value(width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // LẤY THÔNG TIN USER TỪ STORAGE KHI VÀO TRANG
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -67,9 +66,8 @@ export default function UserHomeScreen() {
     fetchUserData();
   }, []);
 
-  // HÀM TẠO CHỮ CÁI ĐẠI DIỆN CHO AVATAR (Ví dụ: "Châu Băng Sơn" -> "CS")
   const getInitials = (name?: string) => {
-    if (!name) return "U"; // U = User (Mặc định)
+    if (!name) return "U";
     const words = name.trim().split(" ");
     if (words.length === 1) return words[0].charAt(0).toUpperCase();
     return (
@@ -105,9 +103,7 @@ export default function UserHomeScreen() {
         duration: 300,
         useNativeDriver: true,
       }),
-    ]).start(() => {
-      setIsMenuOpen(false);
-    });
+    ]).start(() => setIsMenuOpen(false));
   };
 
   const handleNavigate = (path: string) => {
@@ -117,11 +113,8 @@ export default function UserHomeScreen() {
     }, 300);
   };
 
-  // HOÀN THIỆN LOGIC ĐĂNG XUẤT
   const handleLogout = async () => {
     try {
-      await authApi.logout(); 
-      // Xóa toàn bộ token và data user khỏi bộ nhớ
       if (Platform.OS === "web") {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
@@ -131,7 +124,6 @@ export default function UserHomeScreen() {
         await SecureStore.deleteItemAsync("refreshToken");
         await SecureStore.deleteItemAsync("user");
       }
-
       closeMenu();
       setTimeout(() => {
         router.replace("/auth/login");
@@ -141,27 +133,39 @@ export default function UserHomeScreen() {
     }
   };
 
+  // Logic Màu Viền Avatar Dựa Trên Gói
+  const currentPlanStr = userData?.plan || "FREE";
+  const planColor =
+    currentPlanStr === "VIP" || currentPlanStr === "PRO"
+      ? "#eab308"
+      : currentPlanStr === "PLUS" || currentPlanStr === "PREMIUM"
+        ? "#8b5cf6"
+        : "#d1d5db"; // Xám cho Free
+
+  // 🔥 GẮN THÊM ĐƯỜNG DẪN ROUTE VÀO MẢNG FEATURES
   const features = [
     {
       icon: <ShieldCheck size={28} color="#2563eb" />,
       title: "AI Diagnosis",
       description:
-        "Nhận diện bệnh cây qua ảnh chụp tức thời với độ chính xác cao nhờ mô hình Computer Vision tiên tiến.",
+        "Nhận diện bệnh cây qua ảnh chụp tức thời với độ chính xác cao.",
       colorBg: "#eff6ff",
+      route: "/scan",
     },
     {
       icon: <Sprout size={28} color="#16a34a" />,
       title: "Smart Treatment",
       description:
-        "Đưa ra phác đồ điều trị chi tiết, ưu tiên các giải pháp sinh học và thân thiện với môi trường.",
+        "Đưa ra phác đồ điều trị chi tiết, ưu tiên giải pháp sinh học.",
       colorBg: "#f0fdf4",
+      route: "/community", // Tạm trỏ về trang Coming Soon
     },
     {
       icon: <Users size={28} color="#ea580c" />,
       title: "Community Knowledge",
-      description:
-        "Thư viện mở về kỹ thuật canh tác và cộng đồng chuyên gia hỗ trợ giải đáp thắc mắc.",
+      description: "Thư viện mở về kỹ thuật canh tác và cộng đồng chuyên gia.",
       colorBg: "#fff7ed",
+      route: "/community",
     },
   ];
 
@@ -175,12 +179,7 @@ export default function UserHomeScreen() {
 
       {/* --- 1. Navbar Đã Đăng Nhập --- */}
       <View
-        style={[
-          styles.navbar,
-          {
-            paddingTop: Math.max(insets.top, 10) + 10,
-          },
-        ]}
+        style={[styles.navbar, { paddingTop: Math.max(insets.top, 10) + 10 }]}
       >
         <View style={styles.logoWrapper}>
           <View style={styles.logoIconBox}>
@@ -189,21 +188,23 @@ export default function UserHomeScreen() {
           <Text style={styles.logoTitle}>Agri-Scan</Text>
         </View>
 
-        {/* Nút Menu với Avatar User Động */}
         <TouchableOpacity
           onPress={openMenu}
           style={styles.avatarBtnNavbar}
           activeOpacity={0.8}
         >
-          <View style={styles.avatarCircleSmall}>
-            <Text style={styles.avatarTextSmall}>
-              {getInitials(userData?.fullName)}
-            </Text>
+          {/* Avatar Nhỏ Có Viền */}
+          <View style={[styles.avatarRingSmall, { borderColor: planColor }]}>
+            <View style={styles.avatarCircleSmall}>
+              <Text style={styles.avatarTextSmall}>
+                {getInitials(userData?.fullName)}
+              </Text>
+            </View>
           </View>
         </TouchableOpacity>
       </View>
 
-      {/* --- 2. Menu Trượt Ngang (User Profile Drawer) --- */}
+      {/* --- 2. Menu Trượt Ngang --- */}
       <Modal visible={isMenuOpen} transparent={true} animationType="none">
         <View style={styles.modalContainer}>
           <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
@@ -228,7 +229,6 @@ export default function UserHomeScreen() {
                 },
               ]}
             >
-              {/* Header Menu */}
               <View style={styles.menuHeader}>
                 <Text style={styles.menuTitle}>Tài khoản</Text>
                 <TouchableOpacity onPress={closeMenu} style={styles.closeBtn}>
@@ -236,12 +236,16 @@ export default function UserHomeScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Thông tin User Động */}
               <View style={styles.userInfoSection}>
-                <View style={styles.avatarCircleLarge}>
-                  <Text style={styles.avatarTextLarge}>
-                    {getInitials(userData?.fullName)}
-                  </Text>
+                {/* Avatar Lớn Có Viền */}
+                <View
+                  style={[styles.avatarRingLarge, { borderColor: planColor }]}
+                >
+                  <View style={styles.avatarCircleLarge}>
+                    <Text style={styles.avatarTextLarge}>
+                      {getInitials(userData?.fullName)}
+                    </Text>
+                  </View>
                 </View>
                 <View style={styles.userDetails}>
                   <Text style={styles.userName} numberOfLines={1}>
@@ -253,7 +257,6 @@ export default function UserHomeScreen() {
                 </View>
               </View>
 
-              {/* Danh sách Link */}
               <ScrollView
                 style={styles.menuLinks}
                 showsVerticalScrollIndicator={false}
@@ -261,28 +264,33 @@ export default function UserHomeScreen() {
                 <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
                   <Text style={styles.menuItemText}>Trang chủ</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/scan")}
                 >
                   <Text style={styles.menuItemText}>Chẩn đoán AI</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/treeDic")}
                 >
                   <Text style={styles.menuItemText}>Từ điển cây</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/community")}
+                >
                   <Text style={styles.menuItemText}>Cộng đồng</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/about")}
+                >
+                  <Text style={styles.menuItemText}>Về chúng tôi</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
 
-                {/* Các menu riêng của User */}
                 <TouchableOpacity
                   style={styles.menuItemWithIcon}
                   onPress={() => handleNavigate("/profile")}
@@ -290,7 +298,6 @@ export default function UserHomeScreen() {
                   <UserIcon size={20} color="#4b5563" />
                   <Text style={styles.menuItemTextIcon}>Hồ sơ của tôi</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={styles.menuItemWithIcon}
                   onPress={closeMenu}
@@ -300,7 +307,6 @@ export default function UserHomeScreen() {
                 </TouchableOpacity>
               </ScrollView>
 
-              {/* Footer: Đăng xuất */}
               <View
                 style={[
                   styles.menuFooter,
@@ -333,13 +339,12 @@ export default function UserHomeScreen() {
 
           <Text style={styles.mainTitle}>
             Bác Sĩ{"\n"}
-            <Text style={styles.greenTitle}>Cây Trồng{"\n"}</Text>
-            Thông Minh
+            <Text style={styles.greenTitle}>Cây Trồng{"\n"}</Text>Thông Minh
           </Text>
 
           <Text style={styles.description}>
             Chẩn đoán bệnh cây trồng tức thì bằng AI. Nhận phác đồ điều trị khoa
-            học và lộ trình chăm sóc bền vững chỉ với một lần quét.
+            học và lộ trình chăm sóc bền vững.
           </Text>
 
           <View style={styles.buttonGroup}>
@@ -351,7 +356,11 @@ export default function UserHomeScreen() {
               <Text style={styles.primaryBtnText}>Chẩn đoán ngay</Text>
               <ArrowRight size={18} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryBtn} activeOpacity={0.6}>
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              activeOpacity={0.6}
+              onPress={() => router.push("/about")}
+            >
               <Text style={styles.secondaryBtnText}>Tìm hiểu thêm</Text>
             </TouchableOpacity>
           </View>
@@ -390,7 +399,6 @@ export default function UserHomeScreen() {
                   <Text style={styles.floatTitle}>Đã bảo vệ</Text>
                 </View>
               </View>
-
               <View style={[styles.floatingCard, styles.floatBottomLeft]}>
                 <View
                   style={[styles.floatIconBox, { backgroundColor: "#fef08a" }]}
@@ -413,14 +421,19 @@ export default function UserHomeScreen() {
               Công nghệ tiên phong{"\n"}cho nông nghiệp bền vững
             </Text>
             <Text style={styles.featuresDesc}>
-              Hệ thống tích hợp đa tính năng giúp bạn quản lý vườn cây một cách
-              khoa học và hiệu quả nhất.
+              Hệ thống tích hợp đa tính năng giúp bạn quản lý vườn cây khoa học.
             </Text>
           </View>
 
           <View style={styles.featuresList}>
+            {/* 🔥 ĐÃ BIẾN CÁC KHỐI NÀY THÀNH NÚT BẤM CHUYỂN TRANG */}
             {features.map((item, index) => (
-              <View key={index} style={styles.featureCard}>
+              <TouchableOpacity
+                key={index}
+                style={styles.featureCard}
+                activeOpacity={0.7}
+                onPress={() => router.push(item.route as any)}
+              >
                 <View
                   style={[
                     styles.featureIconBox,
@@ -431,7 +444,7 @@ export default function UserHomeScreen() {
                 </View>
                 <Text style={styles.featureItemTitle}>{item.title}</Text>
                 <Text style={styles.featureItemDesc}>{item.description}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
@@ -449,8 +462,6 @@ export default function UserHomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fafaf9" },
   scrollContent: { paddingBottom: 100 },
-
-  // Navbar Styles
   navbar: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -463,17 +474,23 @@ const styles = StyleSheet.create({
   logoIconBox: { backgroundColor: "#2e7d32", padding: 6, borderRadius: 8 },
   logoTitle: { fontSize: 20, fontWeight: "800", color: "#111827" },
 
-  // Avatar trên Navbar
   avatarBtnNavbar: { padding: 4 },
+  avatarRingSmall: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
   avatarCircleSmall: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#dc2626", // Đỏ giống avatar web
+    backgroundColor: "#dc2626",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#fee2e2",
   },
   avatarTextSmall: {
     color: "#fff",
@@ -482,11 +499,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  // --- Styles Menu Trượt (Animated Drawer) ---
-  modalContainer: {
-    flex: 1,
-    flexDirection: "row",
-  },
+  modalContainer: { flex: 1, flexDirection: "row" },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -496,7 +509,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    width: width * 0.75, // Chiếm 75% màn hình từ bên phải
+    width: width * 0.75,
     backgroundColor: "#fff",
     shadowColor: "#000",
     shadowOffset: { width: -5, height: 0 },
@@ -504,9 +517,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 20,
   },
-  menuContent: {
-    flex: 1,
-  },
+  menuContent: { flex: 1 },
   menuHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -519,7 +530,6 @@ const styles = StyleSheet.create({
   menuTitle: { fontSize: 16, fontWeight: "600", color: "#111827" },
   closeBtn: { padding: 4 },
 
-  // Profile Section trong Drawer
   userInfoSection: {
     flexDirection: "row",
     alignItems: "center",
@@ -529,18 +539,27 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f3f4f6",
     backgroundColor: "#fafaf9",
   },
+  avatarRingLarge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 3,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    marginRight: 12,
+  },
   avatarCircleLarge: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: "#dc2626",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
   },
   avatarTextLarge: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
     letterSpacing: 1,
   },
@@ -560,9 +579,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#f9fafb",
   },
   menuItemText: { fontSize: 16, color: "#374151", fontWeight: "600" },
-
   divider: { height: 1, backgroundColor: "#f3f4f6", marginVertical: 10 },
-
   menuItemWithIcon: {
     flexDirection: "row",
     alignItems: "center",
@@ -570,7 +587,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   menuItemTextIcon: { fontSize: 16, color: "#4b5563", fontWeight: "500" },
-
   menuFooter: {
     paddingHorizontal: 20,
     borderTopWidth: 1,
@@ -579,7 +595,7 @@ const styles = StyleSheet.create({
   },
   menuLogoutBtn: {
     flexDirection: "row",
-    backgroundColor: "#fef2f2", // Nền đỏ siêu nhạt
+    backgroundColor: "#fef2f2",
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
@@ -588,7 +604,6 @@ const styles = StyleSheet.create({
   },
   menuLogoutText: { color: "#ef4444", fontSize: 15, fontWeight: "bold" },
 
-  // --- Hero Section Styles ---
   heroSection: {
     paddingHorizontal: 20,
     paddingTop: 10,
@@ -628,7 +643,6 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 25,
   },
-
   buttonGroup: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -655,7 +669,6 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
   },
   secondaryBtnText: { color: "#374151", fontWeight: "600", fontSize: 15 },
-
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -666,7 +679,6 @@ const styles = StyleSheet.create({
   statBox: { alignItems: "flex-start" },
   statNum: { fontSize: 26, fontWeight: "900", color: "#111827" },
   statLabel: { fontSize: 12, color: "#6b7280", marginTop: 2 },
-
   imageWrapper: { width: "100%", height: 260, marginBottom: 40 },
   heroImage: { width: "100%", height: "100%" },
   floatingCard: {
@@ -688,7 +700,6 @@ const styles = StyleSheet.create({
   floatIconBox: { padding: 6, borderRadius: 8 },
   floatTitle: { fontSize: 13, fontWeight: "700", color: "#111827" },
   floatLabel: { fontSize: 10, color: "#6b7280" },
-
   featuresSection: {
     paddingHorizontal: 20,
     paddingTop: 10,
@@ -719,6 +730,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   featuresList: { gap: 16 },
+
   featureCard: {
     padding: 20,
     backgroundColor: "#fff",
@@ -746,7 +758,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   featureItemDesc: { fontSize: 14, color: "#4b5563", lineHeight: 22 },
-
   footer: { paddingVertical: 20, alignItems: "center" },
   footerText: { fontSize: 12, color: "#9ca3af" },
 });

@@ -15,7 +15,7 @@ export default function UpgradeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  // Bổ sung thêm subtotal và vat để truyền qua trang thanh toán
+  // Thêm thuộc tính themeColor để tùy chỉnh màu độc lập
   const plans = [
     {
       name: "Free",
@@ -30,14 +30,15 @@ export default function UpgradeScreen() {
       ],
       buttonText: "Gói hiện tại",
       current: true,
-      highlight: false,
+      themeColor: "#6b7280", // Xám
+      bgColor: "#f3f4f6",
       icon: <Zap size={24} color="#4b5563" />,
     },
     {
       name: "Plus",
       price: "129.000",
-      subtotal: "117.273", // Thêm dòng này
-      vat: "11.727", // Thêm dòng này
+      subtotal: "117.273",
+      vat: "11.727",
       period: "tháng",
       description: "Mở khóa trải nghiệm đầy đủ",
       features: [
@@ -50,15 +51,16 @@ export default function UpgradeScreen() {
       ],
       buttonText: "Nâng cấp lên Plus",
       current: false,
-      highlight: true,
       tag: "PHỔ BIẾN",
-      icon: <Star size={24} color="#059669" />,
+      themeColor: "#8b5cf6", // Tím
+      bgColor: "#f3e8ff",
+      icon: <Star size={24} color="#8b5cf6" />,
     },
     {
       name: "Pro",
       price: "499.000",
-      subtotal: "453.636", // Thêm dòng này
-      vat: "45.364", // Thêm dòng này
+      subtotal: "453.636",
+      vat: "45.364",
       period: "tháng",
       description: "Tối đa hóa năng suất của bạn",
       features: [
@@ -71,8 +73,10 @@ export default function UpgradeScreen() {
       ],
       buttonText: "Nâng cấp lên Pro",
       current: false,
-      highlight: false,
-      icon: <Crown size={24} color="#4b5563" />,
+      tag: "CAO CẤP",
+      themeColor: "#eab308", // Vàng VIP
+      bgColor: "#fef08a",
+      icon: <Crown size={24} color="#ca8a04" />,
     },
   ];
 
@@ -105,23 +109,27 @@ export default function UpgradeScreen() {
             key={plan.name}
             style={[
               styles.card,
-              plan.highlight ? styles.cardHighlight : styles.cardNormal,
+              !plan.current && { borderColor: plan.themeColor, borderWidth: 2 },
+              !plan.current && {
+                shadowColor: plan.themeColor,
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.15,
+                shadowRadius: 12,
+                elevation: 8,
+              },
             ]}
           >
-            {/* Badge Phổ biến */}
+            {/* Badge */}
             {plan.tag && (
-              <View style={styles.badge}>
+              <View
+                style={[styles.badge, { backgroundColor: plan.themeColor }]}
+              >
                 <Text style={styles.badgeText}>{plan.tag}</Text>
               </View>
             )}
 
             {/* Icon */}
-            <View
-              style={[
-                styles.iconBox,
-                plan.highlight ? styles.iconBoxHighlight : styles.iconBoxNormal,
-              ]}
-            >
+            <View style={[styles.iconBox, { backgroundColor: plan.bgColor }]}>
               {plan.icon}
             </View>
 
@@ -136,13 +144,12 @@ export default function UpgradeScreen() {
               <Text style={styles.period}>/ {plan.period}</Text>
             </View>
 
-            {/* Nút bấm ĐÃ ĐƯỢC THÊM HÀM ONPRESS CHUYỂN TRANG PAYMENT */}
+            {/* Nút bấm */}
             <TouchableOpacity
               activeOpacity={0.8}
               disabled={plan.current}
               onPress={() => {
                 if (!plan.current) {
-                  // Đóng gói data của plan hiện tại và truyền sang trang Payment
                   const planDataToPass = {
                     name: plan.name,
                     price: plan.price,
@@ -162,19 +169,13 @@ export default function UpgradeScreen() {
                 styles.actionBtn,
                 plan.current
                   ? styles.btnCurrent
-                  : plan.highlight
-                    ? styles.btnHighlight
-                    : styles.btnNormal,
+                  : { backgroundColor: plan.themeColor },
               ]}
             >
               <Text
-                style={[
-                  plan.current
-                    ? styles.btnTextCurrent
-                    : plan.highlight
-                      ? styles.btnTextHighlight
-                      : styles.btnTextNormal,
-                ]}
+                style={
+                  plan.current ? styles.btnTextCurrent : styles.btnTextHighlight
+                }
               >
                 {plan.buttonText}
               </Text>
@@ -195,7 +196,7 @@ export default function UpgradeScreen() {
                       <Check
                         size={18}
                         strokeWidth={3}
-                        color={plan.highlight ? "#10b981" : "#9ca3af"}
+                        color={!plan.current ? plan.themeColor : "#9ca3af"}
                       />
                     </View>
                     <Text style={styles.featureText}>{feature}</Text>
@@ -239,8 +240,6 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 28, fontWeight: "bold", color: "#111827" },
   headerSubtitle: { fontSize: 15, color: "#6b7280", marginTop: 4 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 10 },
-
-  // Card styles
   card: {
     backgroundColor: "#fff",
     borderRadius: 24,
@@ -248,28 +247,18 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     position: "relative",
     overflow: "hidden",
-  },
-  cardNormal: { borderWidth: 1, borderColor: "#e5e7eb" },
-  cardHighlight: {
-    borderWidth: 2,
-    borderColor: "#10b981",
-    shadowColor: "#10b981",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   badge: {
     position: "absolute",
     top: 0,
     right: 0,
-    backgroundColor: "#10b981",
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderBottomLeftRadius: 16,
   },
   badgeText: { color: "#fff", fontSize: 12, fontWeight: "bold" },
-
   iconBox: {
     width: 52,
     height: 52,
@@ -278,9 +267,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-  iconBoxNormal: { backgroundColor: "#f3f4f6" },
-  iconBoxHighlight: { backgroundColor: "#d1fae5" },
-
   planName: {
     fontSize: 24,
     fontWeight: "bold",
@@ -288,7 +274,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   planDesc: { fontSize: 14, color: "#6b7280", marginBottom: 24, minHeight: 40 },
-
   priceRow: { flexDirection: "row", alignItems: "baseline", marginBottom: 24 },
   currency: {
     fontSize: 18,
@@ -298,7 +283,6 @@ const styles = StyleSheet.create({
   },
   price: { fontSize: 40, fontWeight: "900", color: "#111827" },
   period: { fontSize: 16, color: "#6b7280", marginLeft: 8 },
-
   actionBtn: {
     width: "100%",
     paddingVertical: 16,
@@ -312,17 +296,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e5e7eb",
   },
-  btnHighlight: { backgroundColor: "#059669" },
-  btnNormal: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#d1fae5",
-  },
-
   btnTextCurrent: { color: "#9ca3af", fontWeight: "bold", fontSize: 16 },
   btnTextHighlight: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  btnTextNormal: { color: "#059669", fontWeight: "bold", fontSize: 16 },
-
   featuresContainer: {
     borderTopWidth: 1,
     borderTopColor: "#f3f4f6",
@@ -341,7 +316,6 @@ const styles = StyleSheet.create({
   },
   checkIcon: { marginTop: 2, marginRight: 12 },
   featureText: { flex: 1, fontSize: 15, color: "#4b5563", lineHeight: 22 },
-
   footer: { alignItems: "center", marginTop: 10 },
   footerText: { color: "#6b7280", fontSize: 14 },
   footerLink: {

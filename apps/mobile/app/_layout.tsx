@@ -53,6 +53,7 @@ export default function RootLayout() {
         <Stack.Screen name="profile" />
         <Stack.Screen name="about" />
         <Stack.Screen name="payment" />
+        <Stack.Screen name="community" />
       </Stack>
     </SafeAreaProvider>
   );

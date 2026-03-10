@@ -9,14 +9,13 @@ import {
   Image,
   Modal,
   ScrollView,
-  Platform,
   StatusBar,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
-// Import TẤT CẢ icon cần thiết, bao gồm cả Leaf
 import {
   Search,
   Filter,
@@ -28,9 +27,8 @@ import {
   Leaf,
 } from "lucide-react-native";
 
-// Import Data (dùng làm fallback nếu API lỗi)
-import { TREE_DATA } from "../data/treeData";
-import { plantApi, getTokenStorage } from "@agri-scan/shared";
+// 🔥 IMPORT API THẬT
+import { plantApi } from "@agri-scan/shared";
 
 const CATEGORIES = [
   "Cây bóng mát",
@@ -48,29 +46,26 @@ export default function TreeDictionaryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const [treeData, setTreeData] = useState<any[]>(TREE_DATA);
+  // STATES QUẢN LÝ DỮ LIỆU TỪ API
+  const [plants, setPlants] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTree, setSelectedTree] = useState<any | null>(null);
 
+  // STATES CHO CHI TIẾT CÂY
+  const [selectedTree, setSelectedTree] = useState<any | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+
+  // GỌI API LẤY DANH SÁCH LẦN ĐẦU
   useEffect(() => {
     const fetchPlants = async () => {
       try {
-        // Chỉ gọi API nếu người dùng đã đăng nhập (GET /plants yêu cầu auth)
-        const tokenStorage = getTokenStorage();
-        const token = tokenStorage ? await tokenStorage.getAccessToken() : null;
-        if (!token) {
-          setIsLoading(false);
-          return; // Dùng TREE_DATA offline cho khách
-        }
-
-        const plants = await plantApi.getAllPlants();
-        if (plants && plants.length > 0) {
-          setTreeData(plants);
+        setIsLoading(true);
+        const data = await plantApi.getAllPlants();
+        if (data && data.length > 0) {
+          setPlants(data);
         }
       } catch (error) {
-        console.log("Lỗi tải danh sách cây, dùng dữ liệu offline:", error);
-        // Giữ TREE_DATA làm fallback
+        console.log("Lỗi tải danh sách cây:", error);
       } finally {
         setIsLoading(false);
       }
@@ -78,49 +73,24 @@ export default function TreeDictionaryScreen() {
     fetchPlants();
   }, []);
 
-  // Filter states
+  // STATES FILTER
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedGrowthRates, setSelectedGrowthRates] = useState<string[]>([]);
   const [selectedLights, setSelectedLights] = useState<string[]>([]);
   const [selectedWaters, setSelectedWaters] = useState<string[]>([]);
 
-  // Lọc dữ liệu
+  // LỌC DỮ LIỆU DỰA TRÊN API (Chỉ dùng được search do danh sách rút gọn ko có chi tiết)
   const filteredTrees = useMemo(() => {
-    return treeData.filter((tree) => {
+    return plants.filter((tree) => {
       const matchesSearch =
-        tree.commonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tree.scientificName.toLowerCase().includes(searchTerm.toLowerCase());
+        tree.commonName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tree.scientificName?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesCategory =
-        selectedCategories.length === 0 ||
-        tree.category.some((cat) => selectedCategories.includes(cat));
-      const matchesGrowthRate =
-        selectedGrowthRates.length === 0 ||
-        selectedGrowthRates.includes(tree.growthRate);
-      const matchesLight =
-        selectedLights.length === 0 || selectedLights.includes(tree.light);
-      const matchesWater =
-        selectedWaters.length === 0 || selectedWaters.includes(tree.water);
-
-      return (
-        matchesSearch &&
-        matchesCategory &&
-        matchesGrowthRate &&
-        matchesLight &&
-        matchesWater
-      );
+      return matchesSearch;
     });
-  }, [
-    treeData,
-    searchTerm,
-    selectedCategories,
-    selectedGrowthRates,
-    selectedLights,
-    selectedWaters,
-  ]);
+  }, [plants, searchTerm]);
 
-  // Hàm chọn/bỏ chọn filter
   const toggleFilter = (
     item: string,
     current: string[],
@@ -133,7 +103,6 @@ export default function TreeDictionaryScreen() {
     }
   };
 
-  // Nút Checkbox Custom
   const CustomCheckbox = ({
     label,
     isSelected,
@@ -162,18 +131,39 @@ export default function TreeDictionaryScreen() {
     </TouchableOpacity>
   );
 
-  // Render 1 Card Cây trồng
+  // HÀM GỌI API LẤY CHI TIẾT KHI BẤM VÀO CARD
+  const handleSelectPlant = async (id: string) => {
+    setIsLoadingDetail(true);
+    try {
+      const detail = await plantApi.getPlantById(id);
+      setSelectedTree(detail);
+    } catch (error) {
+      console.log("Lỗi khi tải chi tiết:", error);
+      Alert.alert("Lỗi", "Không thể tải chi tiết cây. Vui lòng thử lại!");
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  };
+
+  // CARD HIỂN THỊ ITEM
   const renderTreeCard = ({ item }: { item: any }) => (
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.8}
-      onPress={() => setSelectedTree(item)}
+      onPress={() => handleSelectPlant(item.id || item._id)}
     >
       <View style={styles.cardImageContainer}>
-        <Image source={{ uri: item.images[0] }} style={styles.cardImage} />
+        <Image
+          source={{
+            uri: item.images?.[0] || "https://via.placeholder.com/150",
+          }}
+          style={styles.cardImage}
+        />
         <View style={styles.cardBadgeContainer}>
           <View style={styles.cardBadge}>
-            <Text style={styles.cardBadgeText}>{item.category[0]}</Text>
+            <Text style={styles.cardBadgeText}>
+              {item.family || "Thực vật"}
+            </Text>
           </View>
         </View>
       </View>
@@ -184,16 +174,25 @@ export default function TreeDictionaryScreen() {
         <Text style={styles.cardSubTitle} numberOfLines={1}>
           {item.scientificName}
         </Text>
-        <Text style={styles.cardDesc} numberOfLines={2}>
-          {item.description}
-        </Text>
 
         <View style={styles.cardTags}>
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>{item.growthRate}</Text>
-          </View>
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>{item.light}</Text>
+          <View
+            style={[
+              styles.tag,
+              {
+                backgroundColor:
+                  item.status === "APPROVED" ? "#dcfce3" : "#fef08a",
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.tagText,
+                { color: item.status === "APPROVED" ? "#16a34a" : "#ca8a04" },
+              ]}
+            >
+              {item.status === "APPROVED" ? "Đã duyệt" : "Chờ duyệt"}
+            </Text>
           </View>
         </View>
       </View>
@@ -261,7 +260,9 @@ export default function TreeDictionaryScreen() {
       ) : (
         <FlatList
           data={filteredTrees}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) =>
+            item.id || item._id || Math.random().toString()
+          }
           renderItem={renderTreeCard}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
@@ -273,6 +274,14 @@ export default function TreeDictionaryScreen() {
             </View>
           }
         />
+      )}
+
+      {/* LOADING OVERLAY CHI TIẾT */}
+      {isLoadingDetail && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#16a34a" />
+          <Text style={styles.loadingText}>Đang lấy thông tin...</Text>
+        </View>
       )}
 
       {/* ========================================== */}
@@ -429,7 +438,7 @@ export default function TreeDictionaryScreen() {
       </Modal>
 
       {/* ========================================== */}
-      {/* MODAL 2: CHI TIẾT CÂY (FULL SCREEN)          */}
+      {/* MODAL 2: CHI TIẾT CÂY DÙNG DATA API         */}
       {/* ========================================== */}
       <Modal visible={!!selectedTree} animationType="slide" transparent={false}>
         <View
@@ -440,7 +449,11 @@ export default function TreeDictionaryScreen() {
               {/* Ảnh bìa */}
               <View style={styles.detailImageWrapper}>
                 <Image
-                  source={{ uri: selectedTree.images[0] }}
+                  source={{
+                    uri:
+                      selectedTree.images?.[0] ||
+                      "https://via.placeholder.com/600",
+                  }}
                   style={styles.detailImage}
                 />
                 <TouchableOpacity
@@ -453,7 +466,7 @@ export default function TreeDictionaryScreen() {
                   <X size={24} color="#fff" />
                 </TouchableOpacity>
                 <View style={styles.detailBadgeContainer}>
-                  {selectedTree.category.map((cat: string) => (
+                  {selectedTree.category?.map((cat: string) => (
                     <View key={cat} style={styles.detailBadge}>
                       <Text style={styles.detailBadgeText}>{cat}</Text>
                     </View>
@@ -477,7 +490,7 @@ export default function TreeDictionaryScreen() {
                     <View style={styles.propTexts}>
                       <Text style={styles.propLabel}>Sinh trưởng</Text>
                       <Text style={styles.propVal}>
-                        {selectedTree.growthRate}
+                        {selectedTree.growthRate || "Chưa rõ"}
                       </Text>
                     </View>
                   </View>
@@ -485,14 +498,18 @@ export default function TreeDictionaryScreen() {
                     <Sun size={18} color="#eab308" />
                     <View style={styles.propTexts}>
                       <Text style={styles.propLabel}>Ánh sáng</Text>
-                      <Text style={styles.propVal}>{selectedTree.light}</Text>
+                      <Text style={styles.propVal}>
+                        {selectedTree.light || "Chưa rõ"}
+                      </Text>
                     </View>
                   </View>
                   <View style={styles.propBox}>
                     <Droplet size={18} color="#3b82f6" />
                     <View style={styles.propTexts}>
                       <Text style={styles.propLabel}>Nước</Text>
-                      <Text style={styles.propVal}>{selectedTree.water}</Text>
+                      <Text style={styles.propVal}>
+                        {selectedTree.water || "Chưa rõ"}
+                      </Text>
                     </View>
                   </View>
                   <View style={styles.propBox}>
@@ -500,7 +517,7 @@ export default function TreeDictionaryScreen() {
                     <View style={styles.propTexts}>
                       <Text style={styles.propLabel}>Họ</Text>
                       <Text style={styles.propVal} numberOfLines={1}>
-                        {selectedTree.family.split(" ")[0]}
+                        {selectedTree.family?.split(" ")[0] || "Thực vật"}
                       </Text>
                     </View>
                   </View>
@@ -510,45 +527,55 @@ export default function TreeDictionaryScreen() {
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Mô tả</Text>
                   <Text style={styles.sectionText}>
-                    {selectedTree.description}
+                    {selectedTree.description || "Đang cập nhật..."}
                   </Text>
                 </View>
 
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>Công dụng</Text>
-                  <Text style={styles.sectionText}>{selectedTree.uses}</Text>
+                  <Text style={styles.sectionText}>
+                    {selectedTree.uses || "Đang cập nhật..."}
+                  </Text>
                 </View>
 
                 <View style={[styles.section, styles.careSection]}>
                   <Text style={styles.sectionTitle}>Cách chăm sóc</Text>
-                  <Text style={styles.careText}>{selectedTree.care}</Text>
+                  <Text style={styles.careText}>
+                    {selectedTree.care || "Đang cập nhật..."}
+                  </Text>
                 </View>
 
-                {/* Các thông tin phụ nếu có */}
+                {/* Các thông tin phụ & BỆNH THƯỜNG GẶP TỪ API */}
                 {(selectedTree.height ||
                   selectedTree.soil ||
-                  selectedTree.commonDiseases) && (
+                  (selectedTree.diseasesInfo &&
+                    selectedTree.diseasesInfo.length > 0)) && (
                   <View style={styles.extraInfoBox}>
                     {selectedTree.height && (
                       <Text style={styles.extraText}>
-                        <Text style={styles.extraBold}>Chiều cao:</Text>{" "}
+                        <Text style={styles.extraBold}>Chiều cao: </Text>
                         {selectedTree.height}
                       </Text>
                     )}
                     {selectedTree.soil && (
                       <Text style={styles.extraText}>
-                        <Text style={styles.extraBold}>Đất trồng:</Text>{" "}
+                        <Text style={styles.extraBold}>Đất trồng: </Text>
                         {selectedTree.soil}
                       </Text>
                     )}
-                    {selectedTree.commonDiseases && (
-                      <Text style={styles.extraText}>
-                        <Text style={styles.extraBold}>Bệnh thường gặp:</Text>{" "}
-                        <Text style={{ color: "#dc2626" }}>
-                          {selectedTree.commonDiseases}
+                    {selectedTree.diseasesInfo &&
+                      selectedTree.diseasesInfo.length > 0 && (
+                        <Text style={styles.extraText}>
+                          <Text style={styles.extraBold}>
+                            Bệnh thường gặp:{" "}
+                          </Text>
+                          <Text style={{ color: "#dc2626" }}>
+                            {selectedTree.diseasesInfo
+                              .map((d: any) => d.name)
+                              .join(", ")}
+                          </Text>
                         </Text>
-                      </Text>
-                    )}
+                      )}
                   </View>
                 )}
               </View>
@@ -565,6 +592,21 @@ export default function TreeDictionaryScreen() {
 // ==========================================
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb" },
+
+  // Loading Overlay khi gọi chi tiết
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    zIndex: 999,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#16a34a",
+    fontWeight: "bold",
+  },
 
   // Header
   header: {

@@ -15,7 +15,8 @@ import {
   Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CameraView, useCameraPermissions } from "expo-camera";
+// 🔥 ĐÃ BỎ IMPORT useCameraPermissions ĐỂ TRÁNH LỖI HOOK TRÊN WEB
+import { CameraView } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import {
@@ -63,7 +64,8 @@ export default function ScanChatScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const [permission, requestPermission] = useCameraPermissions();
+  // 🔥 ĐÃ XÓA HOOK useCameraPermissions Ở ĐÂY ĐỂ APP KHÔNG BỊ CRASH KHI LOAD
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -117,7 +119,6 @@ export default function ScanChatScreen() {
 
       const merged: SessionItem[] = [];
 
-      // 1. Load Chat Sessions
       (chatSessionsApi || []).forEach((s) => {
         merged.push({
           id: s.sessionId,
@@ -127,7 +128,6 @@ export default function ScanChatScreen() {
         });
       });
 
-      // 2. Load Scan History
       (scanItems || []).forEach((s: any) => {
         const rawId = s.id ?? s.scanHistoryId ?? s._id;
         const topDiseaseInfo = s.aiPredictions?.[0]?.diseaseId;
@@ -153,7 +153,6 @@ export default function ScanChatScreen() {
     }
   };
 
-  // 🔥 ĐÃ SỬA: Đọc tin nhắn thuần túy từ Backend của Web
   const loadChatSession = async (sessionId: string) => {
     try {
       const detail = await scanApi.getSessionMessages(sessionId);
@@ -271,6 +270,7 @@ export default function ScanChatScreen() {
     closeSidebar();
   };
 
+  // 🔥 ĐÃ FIX: Sử dụng API lấy quyền an toàn của ImagePicker thay vì Hook
   const handleOpenCamera = async () => {
     if (Platform.OS === "web") {
       alert(
@@ -278,14 +278,21 @@ export default function ScanChatScreen() {
       );
       return;
     }
-    if (!permission?.granted) {
-      const { granted } = await requestPermission();
-      if (!granted) {
-        alert("Cần cấp quyền camera để chụp ảnh.");
-        return;
+
+    try {
+      const currentPerm = await ImagePicker.getCameraPermissionsAsync();
+      if (currentPerm.status !== "granted") {
+        const newPerm = await ImagePicker.requestCameraPermissionsAsync();
+        if (newPerm.status !== "granted") {
+          alert("Cần cấp quyền camera để chụp ảnh.");
+          return;
+        }
       }
+      setIsCameraOpen(true);
+    } catch (error) {
+      console.log("Lỗi xin quyền camera:", error);
+      alert("Không thể truy cập máy ảnh.");
     }
-    setIsCameraOpen(true);
   };
 
   const takePicture = async () => {
@@ -366,7 +373,6 @@ export default function ScanChatScreen() {
       if (userImage) {
         const imageFileToUpload = await createFileFromUri(userImage);
 
-        // 🔥 ĐÃ SỬA: Web API không nhận sessionId khi quét ảnh nữa
         const result = await scanApi.scanImage(imageFileToUpload);
 
         // Lưu label bệnh hàng đầu để dùng trong các tin nhắn tiếp theo
