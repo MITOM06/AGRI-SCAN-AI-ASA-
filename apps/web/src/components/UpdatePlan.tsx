@@ -4,68 +4,110 @@ import React, { useState } from "react";
 import { Check, ArrowLeft, Zap, Star, Crown, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 export function UpdatePlan() {
   const router = useRouter();
+  const { user } = useAuth();
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
+
+  // Plan của user hiện tại (FREE / PREMIUM / VIP), mặc định FREE nếu chưa đăng nhập
+  const currentPlan = user?.plan?.toUpperCase() ?? "FREE";
 
   const plans = [
     {
       name: "Free",
+      planKey: "FREE",
       price: "0",
       period: "tháng",
       description: "Khám phá sức mạnh của AI",
       features: [
-        "Mô hình cơ bản",
-        "Giới hạn tin nhắn và tải ảnh",
-        "Giới hạn tạo hình ảnh",
-        "Bộ nhớ ngắn hạn",
+        "3 ảnh/ngày (tải lên hoặc chụp)",
+        "10 tin nhắn (prompts)/ngày",
+        "Mô hình AI chẩn đoán cơ bản",
+        "Hỗ trợ từ cộng đồng",
       ],
-      buttonText: "Gói hiện tại",
-      current: true,
+      buttonText: currentPlan === "FREE" ? "Gói hiện tại" : "Hạ xuống Free",
+      current: currentPlan === "FREE",
       highlight: false,
       tag: undefined as string | undefined,
+      theme: "gray" as const,
       icon: <Zap className="w-6 h-6" />,
     },
     {
-      name: "Plus",
+      name: "Premium",
+      planKey: "PREMIUM",
       price: "129,000",
       period: "tháng",
       description: "Mở khóa trải nghiệm đầy đủ",
       features: [
-        "Mô hình AI nâng cao (nhanh & chính xác hơn)",
-        "Tăng giới hạn tin nhắn và tải ảnh",
-        "Tạo hình ảnh chất lượng cao",
-        "Bộ nhớ mở rộng giữa các đoạn chat",
-        "Chế độ phân tích sâu",
-        "Ưu tiên hỗ trợ",
+        "10 ảnh/ngày (tải lên hoặc chụp)",
+        "50 tin nhắn (prompts)/ngày",
+        "Mô hình AI nông nghiệp nâng cao",
+        "Thời hạn sử dụng: 30 ngày",
       ],
-      buttonText: "Nâng cấp lên Plus",
-      current: false,
+      buttonText:
+        currentPlan === "PREMIUM" ? "Gói hiện tại" : "Nâng cấp lên Plus",
+      current: currentPlan === "PREMIUM",
       highlight: true,
       tag: "PHỔ BIẾN",
+      theme: "purple" as const,
       icon: <Star className="w-6 h-6" />,
     },
     {
-      name: "Pro",
+      name: "Vip",
+      planKey: "VIP",
       price: "499,000",
       period: "tháng",
       description: "Tối đa hóa năng suất của bạn",
       features: [
-        "Tất cả tính năng của Plus và:",
-        "Không giới hạn tin nhắn",
-        "Mô hình chuyên gia nông nghiệp cao cấp",
-        "Phân tích hình ảnh bệnh cây chuyên sâu",
-        "Tạo báo cáo chi tiết",
-        "API truy cập cho nhà phát triển",
+        "20 ảnh/ngày (tải lên hoặc chụp)",
+        "Vô hạn tin nhắn (prompts)/ngày",
+        "Mô hình AI chuyên gia",
+        "Thời hạn sử dụng: 30 ngày",
       ],
-      buttonText: "Nâng cấp lên Pro",
-      current: false,
+      buttonText: currentPlan === "VIP" ? "Gói hiện tại" : "Nâng cấp lên Pro",
+      current: currentPlan === "VIP",
       highlight: false,
       tag: undefined as string | undefined,
+      theme: "yellow" as const,
       icon: <Crown className="w-6 h-6" />,
     },
   ];
+
+  const getThemeStyles = (theme: string, isCurrent: boolean) => {
+    switch (theme) {
+      case "purple":
+        return {
+          card: "bg-white border-purple-500 shadow-xl ring-1 ring-purple-500 scale-105 z-10",
+          tag: "bg-purple-500 text-white",
+          iconBg: "bg-purple-100 text-purple-600",
+          button:
+            "bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-200",
+          check: "text-purple-500",
+        };
+      case "yellow":
+        return {
+          card: "bg-white border-amber-400 shadow-lg ring-1 ring-amber-400",
+          tag: "bg-amber-500 text-white",
+          iconBg: "bg-amber-100 text-amber-600",
+          button:
+            "bg-white text-amber-700 border border-amber-400 hover:bg-amber-50 hover:border-amber-500",
+          check: "text-amber-500",
+        };
+      case "gray":
+      default:
+        return {
+          card: "bg-white border-gray-200 shadow-sm hover:shadow-md",
+          tag: "bg-gray-500 text-white",
+          iconBg: "bg-gray-100 text-gray-600",
+          button: isCurrent
+            ? "bg-gray-100 text-gray-400 cursor-default border border-gray-200"
+            : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50",
+          check: "text-gray-400",
+        };
+    }
+  };
 
   const handleUpgrade = (plan: (typeof plans)[number]) => {
     const priceNumber = parseInt(plan.price.replace(/,/g, ""));
@@ -146,167 +188,150 @@ export function UpdatePlan() {
 
         {/* Plans Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                delay: index * 0.12,
-                duration: 0.5,
-                ease: "easeOut",
-              }}
-              whileHover={
-                !plan.highlight
-                  ? {
-                      y: -6,
-                      boxShadow: "0 20px 40px -12px rgba(16,185,129,0.15)",
-                    }
-                  : { y: -6 }
-              }
-              onHoverStart={() => setHoveredPlan(plan.name)}
-              onHoverEnd={() => setHoveredPlan(null)}
-              className={`flex flex-col p-8 rounded-3xl border transition-colors duration-300 ${
-                plan.highlight
-                  ? "bg-white border-emerald-400 shadow-2xl shadow-emerald-100 ring-2 ring-emerald-400 z-10"
-                  : "bg-white/80 backdrop-blur-sm border-gray-200 shadow-md"
-              } relative overflow-hidden cursor-default`}
-            >
-              {/* Shimmer overlay on highlighted card */}
-              {plan.highlight && (
-                <motion.div
-                  animate={{ x: ["-100%", "200%"] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    repeatDelay: 2,
-                  }}
-                  className="absolute inset-0 bg-linear-to-r from-transparent via-emerald-100/30 to-transparent skew-x-12 pointer-events-none z-0"
-                />
-              )}
-
-              {/* Tag badge */}
-              {plan.tag && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{
-                    delay: index * 0.12 + 0.3,
-                    type: "spring",
-                    stiffness: 200,
-                  }}
-                  className="absolute top-0 right-0 bg-linear-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl shadow-md"
-                >
-                  {plan.tag}
-                </motion.div>
-              )}
-
-              {/* Icon */}
+          {plans.map((plan, index) => {
+            const styles = getThemeStyles(plan.theme, plan.current);
+            return (
               <motion.div
-                animate={
-                  hoveredPlan === plan.name
-                    ? { rotate: [0, -8, 8, 0], scale: [1, 1.1, 1] }
-                    : {}
+                key={plan.name}
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  delay: index * 0.12,
+                  duration: 0.5,
+                  ease: "easeOut",
+                }}
+                whileHover={
+                  plan.theme !== "purple"
+                    ? {
+                        y: -6,
+                        boxShadow: "0 20px 40px -12px rgba(16,185,129,0.15)",
+                      }
+                    : { y: -6 }
                 }
-                transition={{ duration: 0.5 }}
-                className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 relative z-10 ${
-                  plan.highlight
-                    ? "bg-linear-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-200"
-                    : "bg-gray-100 text-gray-600"
-                }`}
+                onHoverStart={() => setHoveredPlan(plan.name)}
+                onHoverEnd={() => setHoveredPlan(null)}
+                className={`flex flex-col p-8 rounded-3xl border transition-all duration-300 ${styles.card} relative overflow-hidden cursor-default`}
               >
-                {plan.icon}
-              </motion.div>
-
-              <h3 className="text-2xl font-bold mb-2 relative z-10">
-                {plan.name}
-              </h3>
-              <p className="text-sm text-gray-500 mb-6 min-h-10 relative z-10">
-                {plan.description}
-              </p>
-
-              {/* Price */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: index * 0.12 + 0.2 }}
-                className="mb-6 flex items-baseline relative z-10"
-              >
-                <span className="text-sm align-top mr-1 font-medium text-gray-400">
-                  ₫
-                </span>
-                <span
-                  className={`text-4xl font-extrabold ${plan.highlight ? "text-emerald-600" : "text-gray-900"}`}
-                >
-                  {plan.price}
-                </span>
-                <span className="text-gray-400 ml-2 text-sm">
-                  / {plan.period}
-                </span>
-              </motion.div>
-
-              {/* CTA Button */}
-              <motion.button
-                onClick={() => !plan.current && handleUpgrade(plan)}
-                disabled={plan.current}
-                whileHover={!plan.current ? { scale: 1.03 } : {}}
-                whileTap={!plan.current ? { scale: 0.97 } : {}}
-                className={`w-full py-3.5 rounded-xl font-bold text-sm mb-8 transition-all relative z-10 ${
-                  plan.current
-                    ? "bg-gray-100 text-gray-400 cursor-default border border-gray-200"
-                    : plan.highlight
-                      ? "bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-200"
-                      : "bg-white text-emerald-700 border-2 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-400"
-                }`}
-              >
-                {plan.buttonText}
-              </motion.button>
-
-              {/* Features */}
-              <div className="flex-1 border-t border-gray-100 pt-6 relative z-10">
-                {plan.name === "Pro" && (
-                  <p className="text-sm font-bold mb-4 text-gray-900">
-                    Bao gồm mọi thứ của Plus và:
-                  </p>
+                {/* Shimmer overlay on highlighted card */}
+                {plan.theme === "purple" && (
+                  <motion.div
+                    animate={{ x: ["-100%", "200%"] }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      repeatDelay: 2,
+                    }}
+                    className="absolute inset-0 bg-linear-to-r from-transparent via-emerald-100/30 to-transparent skew-x-12 pointer-events-none z-0"
+                  />
                 )}
-                <ul className="space-y-3.5">
-                  {plan.features.map((feature, i) =>
-                    feature.startsWith("Tất cả tính năng") ? null : (
-                      <motion.li
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{
-                          delay: index * 0.12 + 0.2 + i * 0.06,
-                          duration: 0.35,
-                        }}
-                        className="flex items-start text-sm text-gray-600"
-                      >
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{
-                            delay: index * 0.12 + 0.2 + i * 0.06 + 0.1,
-                            type: "spring",
-                            stiffness: 300,
-                          }}
-                          className={`mr-3 mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
-                            plan.highlight
-                              ? "bg-emerald-100 text-emerald-600"
-                              : "bg-gray-100 text-gray-500"
-                          }`}
-                        >
-                          <Check size={12} strokeWidth={3} />
-                        </motion.div>
-                        <span className="leading-relaxed">{feature}</span>
-                      </motion.li>
-                    ),
+
+                {/* Tag badge */}
+                {plan.tag && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{
+                      delay: index * 0.12 + 0.3,
+                      type: "spring",
+                      stiffness: 200,
+                    }}
+                    className={`absolute top-0 right-0 text-xs font-bold px-4 py-1.5 rounded-bl-xl shadow-md ${styles.tag}`}
+                  >
+                    {plan.tag}
+                  </motion.div>
+                )}
+
+                {/* Icon */}
+                <motion.div
+                  animate={
+                    hoveredPlan === plan.name
+                      ? { rotate: [0, -8, 8, 0], scale: [1, 1.1, 1] }
+                      : {}
+                  }
+                  transition={{ duration: 0.5 }}
+                  className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 relative z-10 ${styles.iconBg}`}
+                >
+                  {plan.icon}
+                </motion.div>
+
+                <h3 className="text-2xl font-bold mb-2 relative z-10">
+                  {plan.name}
+                </h3>
+                <p className="text-sm text-gray-500 mb-6 min-h-10 relative z-10">
+                  {plan.description}
+                </p>
+
+                {/* Price */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: index * 0.12 + 0.2 }}
+                  className="mb-6 flex items-baseline relative z-10"
+                >
+                  <span className="text-sm align-top mr-1 font-medium text-gray-400">
+                    ₫
+                  </span>
+                  <span className="text-4xl font-extrabold text-gray-900">
+                    {plan.price}
+                  </span>
+                  <span className="text-gray-400 ml-2 text-sm">
+                    / {plan.period}
+                  </span>
+                </motion.div>
+
+                {/* CTA Button */}
+                <motion.button
+                  onClick={() => !plan.current && handleUpgrade(plan)}
+                  disabled={plan.current}
+                  whileHover={!plan.current ? { scale: 1.03 } : {}}
+                  whileTap={!plan.current ? { scale: 0.97 } : {}}
+                  className={`w-full py-3.5 rounded-xl font-bold text-sm mb-8 transition-all relative z-10 ${styles.button}`}
+                >
+                  {plan.buttonText}
+                </motion.button>
+
+                {/* Features */}
+                <div className="flex-1 border-t border-gray-100 pt-6 relative z-10">
+                  {plan.name === "Pro" && (
+                    <p className="text-sm font-bold mb-4 text-gray-900">
+                      Bao gồm mọi thứ của Plus và:
+                    </p>
                   )}
-                </ul>
-              </div>
-            </motion.div>
-          ))}
+                  <ul className="space-y-3.5">
+                    {plan.features.map((feature, i) =>
+                      feature.startsWith("Tất cả tính năng") ? null : (
+                        <motion.li
+                          key={i}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{
+                            delay: index * 0.12 + 0.2 + i * 0.06,
+                            duration: 0.35,
+                          }}
+                          className="flex items-start text-sm text-gray-600"
+                        >
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{
+                              delay: index * 0.12 + 0.2 + i * 0.06 + 0.1,
+                              type: "spring",
+                              stiffness: 300,
+                            }}
+                            className={`mr-3 mt-0.5 shrink-0 ${styles.check}`}
+                          >
+                            <Check size={18} strokeWidth={2.5} />
+                          </motion.div>
+                          <span className="leading-relaxed">{feature}</span>
+                        </motion.li>
+                      ),
+                    )}
+                  </ul>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Footer */}

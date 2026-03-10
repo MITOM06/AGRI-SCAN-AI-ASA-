@@ -8,16 +8,16 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register')
-  register(@Body() body: RegisterDto) { 
+  register(@Body() body: RegisterDto) {
     return this.authService.register(body);
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  login(@Body() body: LoginDto) { 
+  login(@Body() body: LoginDto) {
     return this.authService.login(body);
   }
 
@@ -29,14 +29,11 @@ export class AuthController {
     return this.authService.logout(req.user.userId);
   }
 
-  // Thêm một API test thử xem Token hoạt động không
+  // Trả về thông tin user đầy đủ (bao gồm plan) từ DB
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Req() req: any) {
-    return {
-      message: 'Bạn đã truy cập thành công API bảo mật!',
-      user: req.user,
-    };
+    return this.authService.getProfile(req.user.userId);
   }
 
   // API Cấp lại token
@@ -50,20 +47,23 @@ export class AuthController {
   }
   @Post('forgot-password')
   // Vì chỉ có 1 field nên xài LoginDto (lấy email) tạm cũng được, hoặc tạo ForgotPasswordDto riêng
-  forgotPassword(@Body() body: { email: string }) { 
+  forgotPassword(@Body() body: { email: string }) {
     return this.authService.forgotPassword(body.email);
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('verify-otp')
-  verifyOtp(@Body() body: VerifyOtpDto) { 
+  verifyOtp(@Body() body: VerifyOtpDto) {
     return this.authService.verifyOtp(body.email, body.otp);
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
-  resetPassword(@Body() body: any) { 
+  resetPassword(@Body() body: any) {
     // Bạn có thể tự viết thêm ResetPasswordDto để tái sử dụng luật @IsStrongPassword cho mật khẩu mới nhé!
     return this.authService.resetPassword(body.email, body.resetToken, body.newPassword);
   }
+
+  
+
 }

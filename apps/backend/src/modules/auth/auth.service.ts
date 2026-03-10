@@ -20,7 +20,7 @@ export class AuthService {
     private jwtService: JwtService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private mailerService: MailerService,
-  ) {}
+  ) { }
 
   // 1. ĐĂNG KÝ
   async register(data: any) {
@@ -35,7 +35,6 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    // 🔥 TRUYỀN THÊM PLAN
     return this.generateTokens(
       newUser._id.toString(),
       newUser.email,
@@ -242,5 +241,20 @@ export class AuthService {
     await this.cacheManager.del(`reset_token:${email}`);
 
     return { message: 'Đổi mật khẩu thành công! Bạn có thể đăng nhập.' };
+  }
+  // LẤY PROFILE USER
+  async getProfile(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('Người dùng không tồn tại!');
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      plan: user.plan,
+      planExpiresAt: user.planExpiresAt,
+      dailyImageCount: user.dailyImageCount,
+      dailyPromptCount: user.dailyPromptCount,
+    };
   }
 }
