@@ -31,6 +31,10 @@ export class Disease {
 
   @Prop({ type: Treatment })
   treatments: Treatment; // Phác đồ điều trị
+
+  // 🔥 THÊM MỚI: Trạng thái phê duyệt
+  @Prop({ enum: ['APPROVED', 'PENDING', 'REJECTED'], default: 'PENDING' })
+  status: string;
 }
 
 export const DiseaseSchema = SchemaFactory.createForClass(Disease);
