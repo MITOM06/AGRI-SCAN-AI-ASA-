@@ -1,13 +1,13 @@
-import { axiosClient } from './axios-client';
+import { axiosClient } from "./axios-client";
 import type {
   IScanResult,
   IScanHistoryListItem,
-  IScanHistoryDetail
-} from '../types/scan-history.types';
+  IScanHistoryDetail,
+} from "../types/scan-history.types";
 
 // Type cho 1 tin nhắn trong hội thoại
 export interface IChatMessage {
-  role: 'user' | 'ai';
+  role: "user" | "ai";
   content: string;
   timestamp: string | Date;
 }
@@ -39,13 +39,17 @@ export const scanApi = {
    * 1. API Quét ảnh chẩn đoán bệnh
    * Gọi đến: POST /scan/analyze
    */
-  scanImage: async (file: File | Blob): Promise<IScanResult> => {
+  scanImage: async (file: File | Blob | any): Promise<IScanResult> => {
     const formData = new FormData();
-    // Tên field 'image' phải khớp với @UseInterceptors(FileInterceptor('image')) bên NestJS
-    formData.append('image', file);
+    formData.append("image", file);
 
-    // Sử dụng hàm upload bạn đã viết sẵn trong axiosClient
-    const res = await axiosClient.upload<IScanResult>('/scan/analyze', formData);
+    // Dùng post và ép cứng headers + timeout 60 giây
+    const res = await axiosClient.post<IScanResult>("/scan/analyze", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      timeout: 6000000, // Ép chờ 60 giây, không được ngắt sớm!
+    });
     return res.data;
   },
 
@@ -55,8 +59,14 @@ export const scanApi = {
    * - sessionId: truyền vào nếu muốn tiếp tục hội thoại cũ, bỏ trống để tạo session mới
    * - Chưa đăng nhập vẫn chat được nhưng không lưu lịch sử
    */
-  chatWithAi: async (question: string, sessionId?: string): Promise<IChatResponse> => {
-    const res = await axiosClient.post<IChatResponse>('/scan/chat', { question, sessionId });
+  chatWithAi: async (
+    question: string,
+    sessionId?: string,
+  ): Promise<IChatResponse> => {
+    const res = await axiosClient.post<IChatResponse>("/scan/chat", {
+      question,
+      sessionId,
+    });
     return res.data;
   },
 
@@ -66,7 +76,7 @@ export const scanApi = {
    * - Trả về [] nếu chưa đăng nhập
    */
   getChatHistory: async (): Promise<IChatSession[]> => {
-    const res = await axiosClient.get<IChatSession[]>('/scan/chat/history');
+    const res = await axiosClient.get<IChatSession[]>("/scan/chat/history");
     return res.data;
   },
 
@@ -74,8 +84,12 @@ export const scanApi = {
    * 4. Lấy nội dung tin nhắn của 1 session cụ thể
    * Gọi đến: GET /scan/chat/sessions/:sessionId
    */
-  getSessionMessages: async (sessionId: string): Promise<IChatSessionDetail> => {
-    const res = await axiosClient.get<IChatSessionDetail>(`/scan/chat/sessions/${sessionId}`);
+  getSessionMessages: async (
+    sessionId: string,
+  ): Promise<IChatSessionDetail> => {
+    const res = await axiosClient.get<IChatSessionDetail>(
+      `/scan/chat/sessions/${sessionId}`,
+    );
     return res.data;
   },
 
@@ -84,7 +98,7 @@ export const scanApi = {
    * Gọi đến: GET /scan/history
    */
   getScanHistory: async (): Promise<IScanHistoryListItem[]> => {
-    const res = await axiosClient.get<IScanHistoryListItem[]>('/scan/history');
+    const res = await axiosClient.get<IScanHistoryListItem[]>("/scan/history");
     return res.data;
   },
 
@@ -101,7 +115,9 @@ export const scanApi = {
    * Gọi đến: GET /scan/history/:id
    */
   getScanDetail: async (scanId: string): Promise<IScanHistoryDetail> => {
-    const res = await axiosClient.get<IScanHistoryDetail>(`/scan/history/${scanId}`);
+    const res = await axiosClient.get<IScanHistoryDetail>(
+      `/scan/history/${scanId}`,
+    );
     return res.data;
-  }
+  },
 };
