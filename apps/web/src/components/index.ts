@@ -8,3 +8,4 @@ export * from './auth';
 export { UserProfile } from './UserProfile';
 export { UpdatePlan } from './UpdatePlan';
 export { Payment } from './Payment';
+export { AboutPage } from './AboutPage';
