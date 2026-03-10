@@ -242,4 +242,19 @@ export class AuthService {
 
     return { message: 'Đổi mật khẩu thành công! Bạn có thể đăng nhập.' };
   }
+  // LẤY PROFILE USER
+  async getProfile(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('Người dùng không tồn tại!');
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      plan: user.plan,
+      planExpiresAt: user.planExpiresAt,
+      dailyImageCount: user.dailyImageCount,
+      dailyPromptCount: user.dailyPromptCount,
+    };
+  }
 }

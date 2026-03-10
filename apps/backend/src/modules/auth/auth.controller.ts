@@ -63,4 +63,7 @@ export class AuthController {
     // Bạn có thể tự viết thêm ResetPasswordDto để tái sử dụng luật @IsStrongPassword cho mật khẩu mới nhé!
     return this.authService.resetPassword(body.email, body.resetToken, body.newPassword);
   }
+
+  
+
 }
