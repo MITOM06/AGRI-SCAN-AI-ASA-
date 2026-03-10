@@ -21,7 +21,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 @Controller('scan')
 // ĐÃ GỠ @UseGuards() Ở ĐÂY ĐỂ PHÂN QUYỀN XUỐNG TỪNG HÀM
 export class AiScanController {
-  constructor(private readonly aiScanService: AiScanService) {}
+  constructor(private readonly aiScanService: AiScanService) { }
 
   @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
   @Post('analyze')
@@ -64,10 +64,10 @@ export class AiScanController {
     return this.aiScanService.askVirtualAssistant(null, question, label);
   }
 
-  @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
+  @UseGuards(JwtAuthGuard)
   @Get('history')
   async getHistory(@Req() req: any) {
-    const userId = req.user.userId;
+    const userId = req.user.userId || req.user._id || req.user.sub;
     return this.aiScanService.getUserScanHistory(userId);
   }
 
@@ -90,15 +90,6 @@ export class AiScanController {
   @Patch('history/:id/feedback')
   async submitFeedback(@Param('id') scanId: string, @Body('isAccurate') isAccurate: boolean) {
     return this.aiScanService.updateAccuracyFeedback(scanId, isAccurate);
-  }
-  // ========================================================
-  // 🔥 KHÔI PHỤC API BỊ BẠN WEB DEV XÓA NHẦM
-  // Lấy toàn bộ lịch sử quét của User đang đăng nhập
-  // ========================================================
-  @Get('history')
-  async getHistory(@Req() req: any) {
-    const userId = req.user.userId || req.user._id || req.user.sub;
-    return this.aiScanService.getUserScanHistory(userId);
   }
 }
 

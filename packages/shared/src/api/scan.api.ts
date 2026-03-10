@@ -59,16 +59,18 @@ export const scanApi = {
    * - sessionId: truyền vào nếu muốn tiếp tục hội thoại cũ, bỏ trống để tạo session mới
    * - Chưa đăng nhập vẫn chat được nhưng không lưu lịch sử
    */
-  chatWithAi: async (
-    question: string,
-    sessionId?: string,
-  ): Promise<IChatResponse> => {
-    const res = await axiosClient.post<IChatResponse>("/scan/chat", {
-      question,
-      sessionId,
-    });
-    return res.data;
-  },
+chatWithAi: async (
+  question: string,
+  label?: string,      
+  sessionId?: string,
+): Promise<IChatResponse> => {
+  const res = await axiosClient.post<IChatResponse>('/scan/chat', {
+    question,
+    label,             
+    sessionId,
+  });
+  return res.data;
+},
 
   /**
    * 3. Lấy danh sách tất cả sessions của user (chỉ metadata)

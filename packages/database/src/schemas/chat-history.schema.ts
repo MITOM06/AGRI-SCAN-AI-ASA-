@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, HydratedDocument, Types } from 'mongoose';
 import { User } from './user.schema';
+
+export type ChatHistoryDocument = HydratedDocument<ChatHistory>;
 
 // Định nghĩa cấu trúc của 1 tin nhắn trong hội thoại
 export interface IChatMessage {
@@ -16,7 +18,8 @@ export interface IChatMessage {
   timestamps: true, // Tự động tạo createdAt và updatedAt
   collection: 'chat_histories' // Tên bảng trong MongoDB
 })
-export class ChatHistory extends Document {
+
+export class ChatHistory  {
   // Liên kết với bảng users (1 user có nhiều session)
   @Prop({ type: Types.ObjectId, ref: User.name, required: true, index: true })
   userId: Types.ObjectId | User;
