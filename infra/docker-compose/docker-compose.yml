@@ -95,12 +95,11 @@ services:
       - "11434:11434"
     networks:
       - agri-net
-
 volumes:
   asa-mongo-data:
   asa-redis-data:
   asa-ollama-data:
-
+  
 networks:
   agri-net:
     driver: bridge
