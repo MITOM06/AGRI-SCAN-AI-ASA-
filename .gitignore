@@ -1,24 +1,34 @@
-# Dependencies
+# --- Dependencies ---
 node_modules/
+.pnp
+.pnp.*
+
+# --- Environment Variables ---
+.env
+.env.*
+!.env.example
+
+# --- Logs & Debug ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+
+# --- IDEs ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+
+# --- Build & Temp ---
 dist/
 build/
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.thumbsdb
-.DS_Store
-
-# Environment
-.env
-.env.local
-
-# Logs
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-
-# OS files
-Thumbs.db
-ehthumbs.db
+.temp/
+.tmp/
+coverage/

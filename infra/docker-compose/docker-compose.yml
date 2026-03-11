@@ -57,7 +57,7 @@ services:
       - redis
       - ai-service # Đảm bảo AI chạy trước khi Backend gọi tới
     environment:
-      - DB_URI=mongodb://admin:secretPassword@mongodb:27017/agriscan?authSource=admin
+      - DB_URI=mongodb+srv://tranphuckhangvllvl_db_user:VnNnk6fB98E123ny@agriscancluster.15qnist.mongodb.net/?appName=AgriScanCluster
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - PORT=4000
