@@ -84,10 +84,27 @@ services:
     networks:
       - agri-net
 
+# 6. OLLAMA SERVICE (CHẠY QWEN2)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: asa-ollama
+    restart: always
+    volumes:
+      - asa-ollama-data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - agri-net
+
 volumes:
   asa-mongo-data:
   asa-redis-data:
+  asa-ollama-data:
 
 networks:
   agri-net:
     driver: bridge
+
+
+
+    
