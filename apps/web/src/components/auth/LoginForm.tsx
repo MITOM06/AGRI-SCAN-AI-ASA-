@@ -204,17 +204,18 @@ export default function LoginForm() {
             )}
           </button>
 
-          <div className="text-center text-sm">
-            <span className="text-gray-500">Chưa có tài khoản? </span>
-            <Link
-              href="/register"
-              className="font-medium text-primary hover:text-primary-dark"
-            >
-              Đăng ký ngay
-            </Link>
+                    <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">
+                Hoặc đăng ký bằng
+              </span>
+            </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
+                    <div className="mt-6 grid grid-cols-2 gap-3">
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
@@ -254,18 +255,16 @@ export default function LoginForm() {
             </motion.button>
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">
-                Hoặc đăng ký bằng
-              </span>
-            </div>
+          <div className="text-center text-sm">
+            <span className="text-gray-500">Chưa có tài khoản? </span>
+            <Link
+              href="/register"
+              className="font-medium text-primary hover:text-primary-dark"
+            >
+              Đăng ký ngay
+            </Link>
           </div>
 
-          
         </form>
       </motion.div>
     </div>
