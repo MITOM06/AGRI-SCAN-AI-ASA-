@@ -214,17 +214,6 @@ export default function LoginForm() {
             </Link>
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">
-                Hoặc đăng ký bằng
-              </span>
-            </div>
-          </div>
-
           <div className="mt-6 grid grid-cols-2 gap-3">
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
@@ -264,6 +253,19 @@ export default function LoginForm() {
               Facebook
             </motion.button>
           </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">
+                Hoặc đăng ký bằng
+              </span>
+            </div>
+          </div>
+
+          
         </form>
       </motion.div>
     </div>
