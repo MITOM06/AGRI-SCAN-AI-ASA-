@@ -9,8 +9,8 @@ export class User {
   email: string;
 
   // ✅ THAY ĐỔI: Không còn required vì OAuth user chưa có mật khẩu ban đầu
-  @Prop({ default: null })
-  password: string | null;
+  @Prop({ type: String, default: null, required: false }) 
+  password?: string | null;
 
   @Prop({ required: true })
   fullName: string;
@@ -21,12 +21,12 @@ export class User {
   // ── OAUTH FIELDS ─────────────────────────────────────────────────────────────
 
   // Google OAuth ID (sparse cho phép nhiều document có giá trị null)
-  @Prop({ default: null, sparse: true })
-  googleId: string | null;
+  @Prop({ type: String, default: null, sparse: true }) // THÊM type: String VÀO ĐÂY
+  googleId?: string | null;
 
   // Facebook OAuth ID
-  @Prop({ default: null, sparse: true })
-  facebookId: string | null;
+  @Prop({ type: String, default: null, sparse: true }) // THÊM type: String VÀO ĐÂY
+  facebookId?: string | null;
 
   // Các phương thức đăng nhập đã liên kết: ['local'], ['google'], ['local','google']
   @Prop({ type: [String], default: [], enum: ['local', 'google', 'facebook'] })

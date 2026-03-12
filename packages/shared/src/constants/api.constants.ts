@@ -15,6 +15,10 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: '/auth/forgot-password',
     VERIFY_OTP: '/auth/verify-otp',
     RESET_PASSWORD: '/auth/reset-password',
+    // OAuth endpoints
+    GOOGLE_LOGIN: '/auth/google',
+    FACEBOOK_LOGIN: '/auth/facebook',
+    SET_PASSWORD: '/auth/set-password',
   },
 
   // Users
