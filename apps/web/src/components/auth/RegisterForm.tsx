@@ -219,8 +219,8 @@ export default function RegisterForm() {
                   id="terms"
                   type="checkbox"
                   className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-2 focus:ring-primary/30 text-primary cursor-pointer  accent-primary "
-                  required
                   appearance-none="true"
+                  {...register("terms")}
                 />
               </div>
               
@@ -247,7 +247,11 @@ export default function RegisterForm() {
               </div>
             </div>
           </div>
-
+          
+          {errors.terms && (
+            <p className="mt-1 text-sm text-red-500">{errors.terms.message}</p>
+          )}
+          
           {/* Lỗi backend */}
           {errors.root && (
             <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center border border-red-100">
