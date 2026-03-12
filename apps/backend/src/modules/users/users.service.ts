@@ -2,20 +2,62 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import { User, UserDocument } from '@agri-scan/database';
-
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) { }
-
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).exec();
   }
 
-  async findById(id: string): Promise<UserDocument | null> {
-    return this.userModel.findById(id).exec();
-  }
+async createOAuthUser(data: {
+  email: string;
+  fullName: string;
+  provider: 'google' | 'facebook';
+  providerId: string;
+}): Promise<UserDocument> {
+  const providerIdField = data.provider === 'google' ? 'googleId' : 'facebookId';
+
+  const newUser = new this.userModel({
+    email: data.email,
+    fullName: data.fullName,
+    password: null,
+    isPasswordSet: false,
+    authProviders: [data.provider],
+    [providerIdField]: data.providerId,
+  });
+
+  return newUser.save();
+}
+
+// ── 2. Liên kết thêm OAuth provider vào user đã có ──────────
+async linkOAuthProvider(
+  userId: string,
+  data: { providerIdField: string; providerId: string; provider: string },
+): Promise<void> {
+  await this.userModel.findByIdAndUpdate(userId, {
+    $set: { [data.providerIdField]: data.providerId },
+    $addToSet: { authProviders: data.provider },
+  });
+}
+
+// ── 3. Thiết lập mật khẩu lần đầu cho OAuth user ────────────
+async setPassword(userId: string, hashedPassword: string): Promise<void> {
+  await this.userModel.findByIdAndUpdate(userId, {
+    $set: {
+      password: hashedPassword,
+      isPasswordSet: true,
+    },
+    $addToSet: { authProviders: 'local' },
+  });
+}
+
+// ── 4. Tìm user theo ID (nếu chưa có trong service) ─────────
+async findById(userId: string): Promise<UserDocument | null> {
+  return this.userModel.findById(userId).exec();
+}v
+
 
   async create(userData: Partial<User>): Promise<UserDocument> {
     const createdUser = new this.userModel(userData);

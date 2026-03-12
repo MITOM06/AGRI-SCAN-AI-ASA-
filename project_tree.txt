@@ -1,8 +1,8 @@
 .
 ├── DOC
-│   └── README.md
+│   ├── README.md
+│   └── asa_report.pdf
 ├── README.md
-├── ai-scan_check.zip
 ├── apps
 │   ├── ai-service
 │   │   ├── Dockerfile
@@ -13,7 +13,8 @@
 │   │   │   ├── model.py
 │   │   │   └── rag.py
 │   │   ├── data
-│   │   │   └── plant_knowledge.json
+│   │   │   ├── plant_knowledge.json
+│   │   │   └── plants_data.json
 │   │   ├── models
 │   │   │   └── best.pt
 │   │   ├── requirements.txt
@@ -75,13 +76,24 @@
 │   │   │   │   ├── otp-verification.tsx
 │   │   │   │   ├── register.tsx
 │   │   │   │   └── reset-password.tsx
+│   │   │   ├── buy-detail.tsx
+│   │   │   ├── community.tsx
 │   │   │   ├── index.tsx
+│   │   │   ├── my-cart.tsx
+│   │   │   ├── my-garden.tsx
+│   │   │   ├── notification.tsx
+│   │   │   ├── onboarding.tsx
 │   │   │   ├── payment.tsx
+│   │   │   ├── product-detail.tsx
 │   │   │   ├── profile.tsx
 │   │   │   ├── scan.tsx
+│   │   │   ├── setting.tsx
+│   │   │   ├── shop.tsx
+│   │   │   ├── tips.tsx
 │   │   │   ├── treeDic.tsx
 │   │   │   ├── upgrade.tsx
-│   │   │   └── user.tsx
+│   │   │   ├── user.tsx
+│   │   │   └── weather.tsx
 │   │   ├── app.json
 │   │   ├── assets
 │   │   │   ├── android-icon-background.png
@@ -179,8 +191,6 @@
 │       │   │       ├── Header.tsx
 │       │   │       ├── Navbar.tsx
 │       │   │       └── index.ts
-│       │   ├── data
-│       │   │   └── treeData.ts
 │       │   ├── hooks
 │       │   │   ├── index.ts
 │       │   │   ├── useAuth.tsx
@@ -196,7 +206,8 @@
 │       └── tsconfig.json
 ├── infra
 │   └── docker-compose
-│       └── docker-compose.yml
+│       ├── docker-compose.yml
+│       └── project_tree.txt
 ├── package.json
 ├── packages
 │   ├── database
@@ -218,7 +229,8 @@
 │   │   │   │   ├── axios-client.ts
 │   │   │   │   ├── plant.api.ts
 │   │   │   │   ├── scan.api.ts
-│   │   │   │   └── token-manager.ts
+│   │   │   │   ├── token-manager.ts
+│   │   │   │   └── user.api.ts
 │   │   │   ├── constants
 │   │   │   │   ├── api.constants.ts
 │   │   │   │   ├── app.constants.ts
@@ -247,4 +259,4 @@
 ├── pnpm-workspace.yaml
 └── project_tree.txt
 
-65 directories, 183 files
+64 directories, 196 files

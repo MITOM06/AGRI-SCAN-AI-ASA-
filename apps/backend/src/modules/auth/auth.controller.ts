@@ -1,14 +1,33 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Req, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Get,
+  UseGuards,
+  Req,
+  Res,
+  BadRequestException,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
-
+import { SetPasswordDto } from './dto/set-password.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  // ── EMAIL + PASSWORD ────────────────────────────────────────
 
   @Post('register')
   register(@Body() body: RegisterDto) {
@@ -21,22 +40,19 @@ export class AuthController {
     return this.authService.login(body);
   }
 
-  @UseGuards(JwtAuthGuard) // Bắt buộc phải có Bearer Token
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('logout')
   logout(@Req() req: any) {
-    // req.user được tạo ra từ hàm validate() trong JwtStrategy
     return this.authService.logout(req.user.userId);
   }
 
-  // Trả về thông tin user đầy đủ (bao gồm plan) từ DB
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Req() req: any) {
     return this.authService.getProfile(req.user.userId);
   }
 
-  // API Cấp lại token
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
   refreshToken(@Body() body: { refreshToken: string }) {
@@ -45,8 +61,10 @@ export class AuthController {
     }
     return this.authService.refreshToken(body.refreshToken);
   }
+
+  // ── QUÊN / ĐỔI MẬT KHẨU ────────────────────────────────────
+
   @Post('forgot-password')
-  // Vì chỉ có 1 field nên xài LoginDto (lấy email) tạm cũng được, hoặc tạo ForgotPasswordDto riêng
   forgotPassword(@Body() body: { email: string }) {
     return this.authService.forgotPassword(body.email);
   }
@@ -60,10 +78,86 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
   resetPassword(@Body() body: any) {
-    // Bạn có thể tự viết thêm ResetPasswordDto để tái sử dụng luật @IsStrongPassword cho mật khẩu mới nhé!
     return this.authService.resetPassword(body.email, body.resetToken, body.newPassword);
   }
 
-  
+  // ── THIẾT LẬP MẬT KHẨU LẦN ĐẦU (CHỈ DÀNH CHO OAUTH USER) ──
+  // Điều kiện: Đã đăng nhập (có JWT) nhưng isPasswordSet = false
 
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('set-password')
+  setPassword(@Req() req: any, @Body() body: SetPasswordDto) {
+    return this.authService.setPassword(req.user.userId, body.newPassword);
+  }
+
+  // ── GOOGLE OAUTH ────────────────────────────────────────────
+
+  /**
+   * Bước 1: Chuyển hướng người dùng sang trang đăng nhập Google.
+   * Frontend gọi: GET /auth/google
+   * (Với mobile: mở in-app browser hoặc WebView tới URL này)
+   */
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  googleLogin() {
+    // Passport tự redirect → không cần return gì
+  }
+
+  /**
+   * Bước 2: Google gọi lại URL này sau khi user chấp thuận.
+   * Sau đó redirect về frontend kèm token trong query string.
+   */
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleCallback(@Req() req: any, @Res() res: Response) {
+    const result = await this.authService.handleOAuthCallback(req.user);
+    this.redirectWithTokens(res, result);
+  }
+
+  // ── FACEBOOK OAUTH ──────────────────────────────────────────
+
+  /**
+   * Bước 1: Chuyển hướng người dùng sang trang đăng nhập Facebook.
+   * Frontend gọi: GET /auth/facebook
+   */
+  @Get('facebook')
+  @UseGuards(AuthGuard('facebook'))
+  facebookLogin() {
+    // Passport tự redirect → không cần return gì
+  }
+
+  /**
+   * Bước 2: Facebook gọi lại URL này sau khi user chấp thuận.
+   */
+  @Get('facebook/callback')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookCallback(@Req() req: any, @Res() res: Response) {
+    const result = await this.authService.handleOAuthCallback(req.user);
+    this.redirectWithTokens(res, result);
+  }
+
+  // ── PRIVATE HELPER ──────────────────────────────────────────
+
+  /**
+   * Redirect về frontend sau OAuth thành công.
+   *
+   * Frontend nhận:  /auth/callback?accessToken=...&refreshToken=...&isPasswordSet=true/false
+   *
+   * Nếu isPasswordSet = false → frontend điều hướng user tới màn hình
+   * "Thiết lập mật khẩu" và gọi POST /auth/set-password với Bearer token.
+   */
+  private redirectWithTokens(
+    res: Response,
+    result: { user: any; accessToken: string; refreshToken: string },
+  ) {
+    const baseUrl = this.configService.getOrThrow<string>('OAUTH_SUCCESS_REDIRECT');
+    const url = new URL(baseUrl);
+    url.searchParams.set('accessToken', result.accessToken);
+    url.searchParams.set('refreshToken', result.refreshToken);
+    url.searchParams.set('isPasswordSet', String(result.user.isPasswordSet));
+    url.searchParams.set('fullName', result.user.fullName ?? '');
+
+    res.redirect(url.toString());
+  }
 }

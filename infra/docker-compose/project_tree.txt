@@ -1,0 +1,5 @@
+.
+├── docker-compose.yml
+└── project_tree.txt
+
+1 directory, 2 files
