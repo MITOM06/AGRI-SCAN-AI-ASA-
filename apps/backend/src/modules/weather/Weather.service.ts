@@ -25,12 +25,20 @@ interface OWMWeatherItem {
 
 interface OWMCurrentWeather {
   dt: number;
+  sunrise: number;    // THÊM
+  sunset: number;     // THÊM
   temp: number;
   feels_like: number;
+  pressure: number;   // THÊM
   humidity: number;
+  dew_point: number;  // THÊM
   uvi: number;
+  visibility: number; // THÊM
   wind_speed: number;
+  wind_gust?: number; // THÊM
+  wind_deg: number;   // THÊM
   weather: OWMWeatherItem[];
+  
 }
 
 interface OWMHourlyWeather {
@@ -40,10 +48,16 @@ interface OWMHourlyWeather {
   pop: number; // Probability of precipitation (0.0 - 1.0)
   wind_speed: number;
   weather: OWMWeatherItem[];
+  uvi: number;
+  pressure: number;
 }
 
 interface OWMDailyWeather {
   dt: number;
+  sunrise: number;
+  sunset: number;
+  moon_phase: number; // THÊM
+  summary: string;    // THÊM
   temp: { day: number; min: number; max: number };
   humidity: number;
   pop: number;
@@ -66,7 +80,7 @@ interface OWMOneCallResponse {
 // =============================================
 
 export interface FormattedCurrentWeather {
-  timestamp: number;
+timestamp: number;
   temp: number;
   feelsLike: number;
   humidity: number;
@@ -75,6 +89,14 @@ export interface FormattedCurrentWeather {
   weatherMain: string;
   weatherDescription: string;
   weatherIcon: string;
+  sunrise: number;
+  sunset: number;
+  pressure: number;
+  windGust: number;
+  windDeg: number;
+  dewPoint: number;
+  visibility: number;
+  
 }
 
 export interface FormattedHourlyWeather {
@@ -84,6 +106,8 @@ export interface FormattedHourlyWeather {
   pop: number;
   windSpeed: number;
   weatherIcon: string;
+  uvi: number;      // THÊM DÒNG NÀY
+  pressure: number; // THÊM DÒNG NÀY
 }
 
 export interface FormattedDailyWeather {
@@ -97,6 +121,8 @@ export interface FormattedDailyWeather {
   uvi: number;
   weatherMain: string;
   weatherIcon: string;
+  summary: string;   // THÊM DÒNG NÀY
+  moonPhase: number; // THÊM DÒNG NÀY
 }
 
 export interface WeatherAdvice {
@@ -114,6 +140,7 @@ export interface WeatherAndAdviceResponse {
     daily: FormattedDailyWeather[]; // 8 ngày tới
   };
   advices: WeatherAdvice[];
+  rules: WeatherRule[]; // Trả về cả rule để frontend có thể hiển thị nguồn gốc lời khuyên
 }
 
 @Injectable()
@@ -159,6 +186,7 @@ export class WeatherService {
       },
       weatherData: formattedWeather,
       advices,
+      rules,
     };
   }
 
@@ -249,6 +277,13 @@ export class WeatherService {
       weatherMain: raw.current.weather[0]?.main ?? 'Unknown',
       weatherDescription: raw.current.weather[0]?.description ?? '',
       weatherIcon: raw.current.weather[0]?.icon ?? '',
+      sunrise: raw.current.sunrise,    // BẠN TỪNG THIẾU DÒNG NÀY
+      sunset: raw.current.sunset,
+      pressure: raw.current.pressure,
+      windGust: raw.current.wind_gust || 0,
+      windDeg: raw.current.wind_deg,
+      dewPoint: raw.current.dew_point,
+      visibility: raw.current.visibility,
     };
 
     // Lấy 24 phần tử đầu tiên từ mảng hourly (24 giờ tới)
@@ -261,6 +296,8 @@ export class WeatherService {
         pop: Math.round(h.pop * 100), // Đổi 0.0-1.0 → 0-100 (%) cho dễ hiển thị
         windSpeed: h.wind_speed,
         weatherIcon: h.weather[0]?.icon ?? '',
+        uvi: h.uvi,           // PHẢI CÓ DÒNG NÀY THÌ UV MỚI NHẢY
+        pressure: h.pressure, // PHẢI CÓ DÒNG NÀY THÌ ÁP SUẤT MỚI NHẢY
       }));
 
     // Lấy 8 ngày tới từ mảng daily
@@ -275,6 +312,8 @@ export class WeatherService {
       uvi: d.uvi,
       weatherMain: d.weather[0]?.main ?? 'Unknown',
       weatherIcon: d.weather[0]?.icon ?? '',
+      summary: d.summary || 'Không có tóm tắt', // GÁN DỮ LIỆU VÀO ĐÂY
+      moonPhase: d.moon_phase,                   // GÁN DỮ LIỆU VÀO ĐÂY
     }));
 
     return { current, hourly, daily };
