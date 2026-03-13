@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { PlantsModule } from './modules/plants/plants.module';
 import {AiScanModule} from './modules/ai-scan/ai-scan.module';
 import { WeatherModule } from './modules/weather/Weather.module';
+import { AdminModule } from './modules/admin/admin.module';
 @Module({
   imports: [
     // 1. Load .env toàn cục
@@ -46,6 +47,7 @@ import { WeatherModule } from './modules/weather/Weather.module';
     PlantsModule,
     AiScanModule,
     WeatherModule,
+    AdminModule, 
 
   ],
   controllers: [],
