@@ -3,3 +3,4 @@ export * from "./schemas/plant.schema";
 export * from "./schemas/scan-history.schema";
 export * from "./schemas/user.schema";
 export * from "./schemas/chat-history.schema";
+export * from "./schemas/Weather-rule.schema";
