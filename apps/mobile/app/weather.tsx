@@ -1,264 +1,851 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  StatusBar,
+  ActivityIndicator,
+  Image,
+  RefreshControl,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import * as Location from "expo-location";
 import {
   ArrowLeft,
-  CloudRain,
-  Sun,
+  MapPin,
   Wind,
   Droplets,
-  ThermometerSun,
-  AlertCircle,
-  MapPin,
+  Sun,
+  CloudRain,
+  AlertTriangle,
+  Info,
+  CheckCircle,
+  CalendarDays,
+  Clock,
+  ThumbsUp,
 } from "lucide-react-native";
+
+import { weatherApi } from "@agri-scan/shared";
+import type { WeatherAndAdviceResponse } from "@agri-scan/shared";
+
+const CATEGORIES = [
+  { id: "ALL", label: "Tất cả" },
+  { id: "VEGETABLE", label: "Rau màu" },
+  { id: "FRUIT", label: "Ăn quả" },
+  { id: "FLOWER", label: "Hoa kiểng" },
+];
+
+// 🔥 BỘ TỪ ĐIỂN DỊCH THỜI TIẾT
+const translateWeather = (engDesc: string) => {
+  if (!engDesc) return "";
+  const dict: Record<string, string> = {
+    "clear sky": "Trời quang đãng",
+    "few clouds": "Ít mây",
+    "scattered clouds": "Mây rải rác",
+    "broken clouds": "Nhiều mây",
+    "overcast clouds": "Mây u ám",
+    "light rain": "Mưa nhỏ",
+    "moderate rain": "Mưa vừa",
+    "heavy intensity rain": "Mưa to",
+    "very heavy rain": "Mưa rất to",
+    "extreme rain": "Mưa cực to",
+    "freezing rain": "Mưa lạnh buốt",
+    "light intensity shower rain": "Mưa rào nhẹ",
+    "shower rain": "Mưa rào",
+    "heavy intensity shower rain": "Mưa rào to",
+    thunderstorm: "Dông bão",
+    "thunderstorm with light rain": "Dông và mưa nhỏ",
+    "thunderstorm with rain": "Dông kèm mưa",
+    "thunderstorm with heavy rain": "Dông và mưa to",
+    snow: "Tuyết rơi",
+    mist: "Sương mù nhẹ",
+    fog: "Sương mù dày",
+    haze: "Sương mù",
+    dust: "Bụi mù",
+  };
+  return dict[engDesc.toLowerCase()] || engDesc;
+};
+
+// 🔥 MAPPER: BỘ ICON THỜI TIẾT HIỆN ĐẠI (THAY THẾ OWM)
+const getModernIconUrl = (code: string) => {
+  const map: Record<string, string> = {
+    "01d": "clear-day.png",
+    "01n": "clear-night.png",
+    "02d": "partly-cloudy-day.png",
+    "02n": "partly-cloudy-night.png",
+    "03d": "cloudy.png",
+    "03n": "cloudy.png",
+    "04d": "cloudy.png",
+    "04n": "cloudy.png",
+    "09d": "showers-day.png",
+    "09n": "showers-night.png",
+    "10d": "rain.png",
+    "10n": "rain.png",
+    "11d": "thunder-rain.png",
+    "11n": "thunder-rain.png",
+    "13d": "snow.png",
+    "13n": "snow.png",
+    "50d": "fog.png",
+    "50n": "fog.png",
+  };
+  const fileName = map[code] || "partly-cloudy-day.png";
+  return `https://raw.githubusercontent.com/visualcrossing/WeatherIcons/main/PNG/2nd%20Set%20-%20Color/${fileName}`;
+};
 
 export default function WeatherScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
 
-  const weeklyForecast = [
-    {
-      day: "Thứ 2",
-      icon: <CloudRain size={24} color="#3b82f6" />,
-      temp: "24°C - 28°C",
-      status: "Mưa dông",
-    },
-    {
-      day: "Thứ 3",
-      icon: <CloudRain size={24} color="#3b82f6" />,
-      temp: "23°C - 27°C",
-      status: "Mưa rào",
-    },
-    {
-      day: "Thứ 4",
-      icon: <Sun size={24} color="#f59e0b" />,
-      temp: "26°C - 32°C",
-      status: "Nắng đẹp",
-    },
-    {
-      day: "Thứ 5",
-      icon: <Sun size={24} color="#f59e0b" />,
-      temp: "27°C - 34°C",
-      status: "Nắng gắt",
-    },
-    {
-      day: "Thứ 6",
-      icon: <Wind size={24} color="#9ca3af" />,
-      temp: "25°C - 30°C",
-      status: "Nhiều mây",
-    },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [weatherData, setWeatherData] =
+    useState<WeatherAndAdviceResponse | null>(null);
+  const [activeCategory, setActiveCategory] = useState<
+    "ALL" | "FRUIT" | "FLOWER" | "VEGETABLE"
+  >("ALL");
+  const [cityName, setCityName] = useState("Đang định vị...");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+
+  const fetchWeather = async (category = activeCategory) => {
+    try {
+      setErrorMsg("");
+      let lat = 10.8231;
+      let lon = 106.6297;
+      let cName = "TP.Hồ Chí Minh";
+
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          let location = await Location.getCurrentPositionAsync({});
+          lat = location.coords.latitude;
+          lon = location.coords.longitude;
+          cName = "Vị trí của bạn";
+
+          if (Platform.OS !== "web") {
+            try {
+              const reverseGeocode = await Location.reverseGeocodeAsync({
+                latitude: lat,
+                longitude: lon,
+              });
+              if (reverseGeocode.length > 0) {
+                const place = reverseGeocode[0];
+                cName =
+                  place.subregion ||
+                  place.city ||
+                  place.region ||
+                  "Vị trí hiện tại";
+              }
+            } catch (geoErr) {}
+          } else {
+            try {
+              const res = await fetch(
+                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=vi`,
+              );
+              const data = await res.json();
+              cName =
+                data.city || data.principalSubdivision || "Vị trí hiện tại";
+            } catch (webGeoErr) {
+              cName = "Vị trí hiện tại (Web)";
+            }
+          }
+        }
+      } catch (locErr) {}
+
+      setCityName(cName);
+
+      const res = await weatherApi.getWeatherAndAdvice({ lat, lon, category });
+      setWeatherData(res);
+      setSelectedDayIndex(0);
+    } catch (error: any) {
+      setErrorMsg(
+        error.response?.data?.message || "Không thể tải dữ liệu thời tiết.",
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWeather();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchWeather();
+  };
+
+  const handleCategoryChange = (cat: any) => {
+    setActiveCategory(cat);
+    setLoading(true);
+    fetchWeather(cat);
+  };
+
+  const handleDaySelect = (index: number) => {
+    setSelectedDayIndex(index);
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  };
+
+  const generateFutureAdvices = (dayInfo: any) => {
+    const tips = [];
+    if (dayInfo.tempMax >= 34) {
+      tips.push({
+        adviceType: "WARNING",
+        title: "🔥 Nắng nóng gay gắt",
+        message: `Nhiệt độ lên tới ${Math.round(dayInfo.tempMax)}°C. Ưu tiên tưới đẫm vào sáng sớm hoặc chiều mát.`,
+      });
+    }
+    if (dayInfo.pop >= 60) {
+      tips.push({
+        adviceType: "WARNING",
+        title: "🌧️ Nguy cơ mưa lớn",
+        message: `Xác suất mưa ${dayInfo.pop}%. Tạm dừng phun xịt hóa chất, kiểm tra hệ thống thoát nước.`,
+      });
+    }
+    if (dayInfo.windSpeed >= 6) {
+      tips.push({
+        adviceType: "WARNING",
+        title: "💨 Cảnh báo gió mạnh",
+        message: `Gió thổi tốc độ ${dayInfo.windSpeed}m/s. Cần gia cố giàn leo, chằng chống cây cảnh.`,
+      });
+    }
+    if (tips.length === 0) {
+      tips.push({
+        adviceType: "RECOMMEND",
+        title: "🌱 Thời tiết thuận lợi",
+        message:
+          "Điều kiện sinh trưởng lý tưởng. Thích hợp cho mọi hoạt động: bón phân, phun thuốc, cắt tỉa.",
+      });
+    }
+    return tips;
+  };
+
+  // 🔥 TÌM KHUNG GIỜ VÀNG (Gió êm, Ít mưa, Nhiệt độ mát mẻ)
+  const findGoldenHour = (hourlyList: any[]) => {
+    // Chỉ tìm trong ban ngày (từ 5h sáng đến 17h chiều) của 15 giờ tới
+    const validHours = hourlyList.slice(0, 15).filter((h) => {
+      const hLocal = new Date(h.timestamp * 1000).getHours();
+      return hLocal >= 5 && hLocal <= 17;
+    });
+
+    if (validHours.length === 0) return null;
+
+    // Sắp xếp ưu tiên: Mưa thấp nhất -> Gió nhỏ nhất -> Nhiệt độ lý tưởng (gần 26 độ)
+    const sorted = validHours.sort((a, b) => {
+      if (a.pop !== b.pop) return a.pop - b.pop;
+      if (a.windSpeed !== b.windSpeed) return a.windSpeed - b.windSpeed;
+      return Math.abs(a.temp - 26) - Math.abs(b.temp - 26);
+    });
+
+    const best = sorted[0];
+    // Nếu khung giờ tốt nhất mà vẫn xấu (Mưa > 40% hoặc Gió to) thì báo Null
+    if (best.pop > 40 || best.windSpeed > 6 || best.temp > 35) return null;
+    return best;
+  };
+
+  const getDayName = (timestamp: number, index: number) => {
+    if (index === 0) return "Hôm nay";
+    if (index === 1) return "Ngày mai";
+    const d = new Date(timestamp * 1000);
+    return d.getDay() === 0 ? "Chủ nhật" : `Thứ ${d.getDay() + 1}`;
+  };
+
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp * 1000);
+    return `${date.getHours().toString().padStart(2, "0")}:00`;
+  };
+
+  const getHeroBgColor = (iconCode: string) => {
+    if (!iconCode) return "#1e3a8a"; // Xanh mặc định
+    if (iconCode.includes("n")) return "#0f172a"; // Đêm (Đen bóng đêm)
+    if (["09d", "10d", "11d", "13d", "50d"].includes(iconCode))
+      return "#475569"; // Mưa/Sương mù (Xám)
+    return "#0ea5e9"; // Nắng đẹp (Xanh da trời trong vắt)
+  };
+
+  if (loading && !weatherData) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#16a34a" />
+        <Text style={styles.loadingText}>
+          Đang lấy dữ liệu trạm khí tượng...
+        </Text>
+      </View>
+    );
+  }
+
+  const currentViewData =
+    weatherData && selectedDayIndex === 0
+      ? {
+          temp: Math.round(weatherData.weatherData.current.temp),
+          desc:
+            weatherData.weatherData.current.weatherDescription ||
+            weatherData.weatherData.current.weatherMain,
+          icon: weatherData.weatherData.current.weatherIcon,
+          humidity: weatherData.weatherData.current.humidity,
+          wind: weatherData.weatherData.current.windSpeed,
+          uvi: weatherData.weatherData.current.uvi,
+          pop: weatherData.weatherData.hourly[0]?.pop || 0,
+          advices: weatherData.advices,
+        }
+      : weatherData && selectedDayIndex > 0
+        ? {
+            temp: Math.round(
+              weatherData.weatherData.daily[selectedDayIndex].tempMax,
+            ),
+            desc: weatherData.weatherData.daily[selectedDayIndex].weatherMain,
+            icon: weatherData.weatherData.daily[selectedDayIndex].weatherIcon,
+            humidity: weatherData.weatherData.daily[selectedDayIndex].humidity,
+            wind: weatherData.weatherData.daily[selectedDayIndex].windSpeed,
+            uvi: weatherData.weatherData.daily[selectedDayIndex].uvi,
+            pop: weatherData.weatherData.daily[selectedDayIndex].pop,
+            advices: generateFutureAdvices(
+              weatherData.weatherData.daily[selectedDayIndex],
+            ),
+          }
+        : null;
+
+  const goldenHour =
+    selectedDayIndex === 0 && weatherData
+      ? findGoldenHour(weatherData.weatherData.hourly)
+      : null;
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
+    <View style={[styles.container, { paddingTop: Math.max(insets.top, 10) }]}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={24} color="#374151" />
+          <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <View style={styles.locationContainer}>
-          <MapPin size={16} color="#16a34a" />
-          <Text style={styles.headerTitle}>TP. Hồ Chí Minh</Text>
+        <View style={styles.locationWrapper}>
+          <MapPin size={18} color="#16a34a" />
+          <Text style={styles.locationText}>{cityName}</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>
 
+      <View style={styles.filterContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterScroll}
+        >
+          {CATEGORIES.map((cat) => (
+            <TouchableOpacity
+              key={cat.id}
+              style={[
+                styles.filterBtn,
+                activeCategory === cat.id && styles.filterBtnActive,
+              ]}
+              onPress={() => handleCategoryChange(cat.id)}
+            >
+              <Text
+                style={[
+                  styles.filterBtnText,
+                  activeCategory === cat.id && styles.filterBtnTextActive,
+                ]}
+              >
+                {cat.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
       <ScrollView
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#16a34a"]}
+          />
+        }
       >
-        {/* Khối Thời tiết hiện tại */}
-        <View style={styles.currentWeatherCard}>
-          <Text style={styles.dateText}>Hôm nay, 15 Tháng 10</Text>
-          <View style={styles.mainTempRow}>
-            <CloudRain size={64} color="#3b82f6" />
-            <Text style={styles.mainTemp}>26°</Text>
+        {errorMsg ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{errorMsg}</Text>
+            <TouchableOpacity
+              style={styles.retryBtn}
+              onPress={() => fetchWeather()}
+            >
+              <Text style={styles.retryText}>Thử lại</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.weatherStatus}>Mưa dông rải rác</Text>
-
-          <View style={styles.weatherDetails}>
-            <View style={styles.detailItem}>
-              <Droplets size={20} color="#3b82f6" />
-              <Text style={styles.detailValue}>85%</Text>
-              <Text style={styles.detailLabel}>Độ ẩm</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Wind size={20} color="#9ca3af" />
-              <Text style={styles.detailValue}>12 km/h</Text>
-              <Text style={styles.detailLabel}>Gió</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <ThermometerSun size={20} color="#f59e0b" />
-              <Text style={styles.detailValue}>UV: 4</Text>
-              <Text style={styles.detailLabel}>Chỉ số tia UV</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Lời khuyên AI */}
-        <View style={styles.aiAdviceCard}>
-          <View style={styles.aiAdviceHeader}>
-            <AlertCircle size={20} color="#ca8a04" />
-            <Text style={styles.aiAdviceTitle}>Lời khuyên từ Bác sĩ AI</Text>
-          </View>
-          <Text style={styles.aiAdviceText}>
-            Độ ẩm đang rất cao {`(>80%)`}, đây là môi trường lý tưởng cho nấm
-            bệnh phát triển. Khuyến nghị KHÔNG tưới nước vào chiều tối và nên
-            phun thuốc phòng nấm sinh học.
-          </Text>
-        </View>
-
-        {/* Dự báo 5 ngày tới */}
-        <Text style={styles.sectionTitle}>Dự báo 5 ngày tới</Text>
-        <View style={styles.forecastList}>
-          {weeklyForecast.map((item, index) => (
-            <View key={index} style={styles.forecastItem}>
-              <Text style={styles.forecastDay}>{item.day}</Text>
-              <View style={styles.forecastIconRow}>
-                {item.icon}
-                <Text style={styles.forecastStatus}>{item.status}</Text>
+        ) : weatherData && currentViewData ? (
+          <>
+            {/* HERO CARD (Layout cũ của bạn nhưng ICON mới và Đổi màu mượt mà) */}
+            <View
+              style={[
+                styles.heroCard,
+                { backgroundColor: getHeroBgColor(currentViewData.icon) },
+              ]}
+            >
+              <View style={styles.heroMain}>
+                <View style={styles.heroTextGroup}>
+                  <Text style={styles.tempHuge}>{currentViewData.temp}°</Text>
+                  <Text style={styles.weatherDesc}>
+                    {translateWeather(currentViewData.desc)}
+                  </Text>
+                </View>
+                {/* Dùng hàm getModernIconUrl để load icon sắc nét */}
+                <Image
+                  source={{ uri: getModernIconUrl(currentViewData.icon) }}
+                  style={styles.weatherIconHuge}
+                  resizeMode="contain"
+                />
               </View>
-              <Text style={styles.forecastTemp}>{item.temp}</Text>
+
+              <View style={styles.statsGridRow}>
+                <View style={styles.statItemRow}>
+                  <Droplets size={20} color="#93c5fd" />
+                  <Text style={styles.statValueRow}>
+                    {currentViewData.humidity}%
+                  </Text>
+                  <Text style={styles.statLabelRow}>Độ ẩm</Text>
+                </View>
+                <View style={styles.statItemRow}>
+                  <Wind size={20} color="#cbd5e1" />
+                  <Text style={styles.statValueRow}>
+                    {currentViewData.wind} m/s
+                  </Text>
+                  <Text style={styles.statLabelRow}>Gió</Text>
+                </View>
+                <View style={styles.statItemRow}>
+                  <Sun size={20} color="#fde047" />
+                  <Text style={styles.statValueRow}>{currentViewData.uvi}</Text>
+                  <Text style={styles.statLabelRow}>Tia UV</Text>
+                </View>
+                <View style={styles.statItemRow}>
+                  <CloudRain size={20} color="#67e8f9" />
+                  <Text style={styles.statValueRow}>
+                    {currentViewData.pop}%
+                  </Text>
+                  <Text style={styles.statLabelRow}>Mưa</Text>
+                </View>
+              </View>
             </View>
-          ))}
-        </View>
+
+            {/* TÍNH NĂNG MỚI: KHUNG GIỜ VÀNG (Chỉ hiện cho "Hôm nay") */}
+            {selectedDayIndex === 0 && (
+              <View style={styles.goldenHourCard}>
+                <View style={styles.goldenHourLeft}>
+                  <View style={styles.goldenIconBox}>
+                    <ThumbsUp size={24} color="#10b981" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.goldenTitle}>
+                      Thời điểm lý tưởng nhất
+                    </Text>
+                    {goldenHour ? (
+                      <Text style={styles.goldenDesc}>
+                        Gió êm, ráo nước. Rất tốt để phun thuốc, bón phân.
+                      </Text>
+                    ) : (
+                      <Text style={styles.goldenDesc}>
+                        Hôm nay thời tiết bất lợi, không nên phun xịt hóa chất.
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                {goldenHour && (
+                  <View style={styles.goldenTimeBadge}>
+                    <Clock size={16} color="#059669" />
+                    <Text style={styles.goldenTimeText}>
+                      {formatTime(goldenHour.timestamp)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* THANH CHỌN NGÀY NGANG */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <CalendarDays size={20} color="#111827" />
+                <Text style={styles.sectionTitle}>Chuyển ngày dự báo</Text>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.dateTabsScroll}
+              >
+                {weatherData.weatherData.daily.map((day, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.dateTab,
+                      selectedDayIndex === index && styles.dateTabActive,
+                    ]}
+                    onPress={() => handleDaySelect(index)}
+                  >
+                    <Text
+                      style={[
+                        styles.dateTabText,
+                        selectedDayIndex === index && styles.dateTabTextActive,
+                      ]}
+                    >
+                      {getDayName(day.timestamp, index)}
+                    </Text>
+                    {day.pop > 30 && (
+                      <CloudRain
+                        size={12}
+                        color={selectedDayIndex === index ? "#fff" : "#0284c7"}
+                        style={{ marginTop: 4 }}
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* AI ADVICE */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Image
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/512/2043/2043130.png",
+                  }}
+                  style={{ width: 22, height: 22 }}
+                />
+                <Text style={styles.sectionTitle}>
+                  Bác sĩ cây trồng phân tích
+                </Text>
+              </View>
+
+              {currentViewData.advices.length > 0 ? (
+                currentViewData.advices.map((advice: any, index: number) => {
+                  const isWarning = advice.adviceType === "WARNING";
+                  const isRec = advice.adviceType === "RECOMMEND";
+                  return (
+                    <View
+                      key={index}
+                      style={[
+                        styles.adviceCard,
+                        isWarning
+                          ? styles.cardWarning
+                          : isRec
+                            ? styles.cardRecommend
+                            : styles.cardInfo,
+                      ]}
+                    >
+                      <View style={styles.adviceHeader}>
+                        {isWarning ? (
+                          <AlertTriangle size={20} color="#ef4444" />
+                        ) : isRec ? (
+                          <CheckCircle size={20} color="#10b981" />
+                        ) : (
+                          <Info size={20} color="#3b82f6" />
+                        )}
+                        <Text
+                          style={[
+                            styles.adviceTitle,
+                            isWarning && { color: "#991b1b" },
+                          ]}
+                        >
+                          {advice.title}
+                        </Text>
+                      </View>
+                      <Text style={styles.adviceMessage}>{advice.message}</Text>
+                    </View>
+                  );
+                })
+              ) : (
+                <Text
+                  style={{
+                    color: "#6b7280",
+                    fontStyle: "italic",
+                    marginLeft: 4,
+                  }}
+                >
+                  Không có lời khuyên đặc biệt cho ngày này.
+                </Text>
+              )}
+            </View>
+
+            {/* DỰ BÁO 24 GIỜ TỚI */}
+            {selectedDayIndex === 0 && (
+              <View style={[styles.section, { marginBottom: 40 }]}>
+                <Text style={styles.sectionTitle}>🕒 Biến động 24 giờ tới</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.hourlyScroll}
+                >
+                  {weatherData.weatherData.hourly.map((hour, idx) => (
+                    <View key={idx} style={styles.hourlyItem}>
+                      <Text style={styles.hourlyTime}>
+                        {idx === 0 ? "Bây giờ" : formatTime(hour.timestamp)}
+                      </Text>
+                      {/* Dùng icon đẹp cho thanh cuộn giờ */}
+                      <Image
+                        source={{ uri: getModernIconUrl(hour.weatherIcon) }}
+                        style={styles.hourlyIcon}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.hourlyTemp}>
+                        {Math.round(hour.temp)}°
+                      </Text>
+                      {hour.pop > 0 && (
+                        <View style={styles.popBadge}>
+                          <CloudRain size={10} color="#0284c7" />
+                          <Text style={styles.popText}>{hour.pop}%</Text>
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </>
+        ) : null}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
+  container: { flex: 1, backgroundColor: "#f8fafc" },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8fafc",
+  },
+  loadingText: { marginTop: 12, color: "#64748b", fontSize: 15 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 12,
+  },
+  backBtn: { width: 40, height: 40, justifyContent: "center" },
+  locationWrapper: { flexDirection: "row", alignItems: "center", gap: 6 },
+  locationText: { fontSize: 18, fontWeight: "bold", color: "#1e293b" },
+
+  filterContainer: {
+    paddingVertical: 10,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
+    borderBottomColor: "#e2e8f0",
   },
-  backBtn: {
-    width: 40,
-    height: 40,
+  filterScroll: { paddingHorizontal: 16, gap: 10 },
+  filterBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#f3f4f6",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+    borderWidth: 1,
+    borderColor: "transparent",
   },
-  locationContainer: { flexDirection: "row", alignItems: "center", gap: 6 },
-  headerTitle: { fontSize: 16, fontWeight: "bold", color: "#111827" },
-  scrollContent: { padding: 16, paddingBottom: 40 },
+  filterBtnActive: { backgroundColor: "#dcfce3", borderColor: "#22c55e" },
+  filterBtnText: { color: "#64748b", fontWeight: "600", fontSize: 14 },
+  filterBtnTextActive: { color: "#15803d" },
 
-  currentWeatherCard: {
-    backgroundColor: "#fff",
+  scrollContent: {
+    padding: 16,
+    maxWidth: 600,
+    width: "100%",
+    alignSelf: "center",
+  },
+
+  // Giao diện Hero Card cũ của bạn nhưng fix bóng mờ và layout cho gọn gàng
+  heroCard: {
     borderRadius: 24,
     padding: 24,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
     marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  dateText: {
-    fontSize: 14,
-    color: "#6b7280",
-    fontWeight: "600",
-    marginBottom: 16,
-  },
-  mainTempRow: {
+  heroMain: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    marginBottom: 8,
-  },
-  mainTemp: { fontSize: 64, fontWeight: "900", color: "#111827" },
-  weatherStatus: {
-    fontSize: 18,
-    color: "#374151",
-    fontWeight: "600",
+    justifyContent: "space-around", // Kéo giãn đều ra 2 bên
     marginBottom: 24,
   },
-  weatherDetails: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-    paddingTop: 20,
+  heroTextGroup: { alignItems: "flex-start" },
+  weatherIconHuge: { width: 130, height: 130, marginRight: -10 },
+  tempHuge: { fontSize: 72, fontWeight: "900", color: "#fff", lineHeight: 76 },
+  weatherDesc: {
+    fontSize: 18,
+    color: "#e0f2fe",
+    fontWeight: "600",
+    textTransform: "capitalize",
+    marginTop: 4,
   },
-  detailItem: { alignItems: "center" },
-  detailValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#111827",
-    marginTop: 8,
-    marginBottom: 2,
-  },
-  detailLabel: { fontSize: 12, color: "#6b7280" },
 
-  aiAdviceCard: {
-    backgroundColor: "#fef08a",
+  statsGridRow: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.15)",
     borderRadius: 16,
     padding: 16,
+    justifyContent: "space-between",
+  },
+  statItemRow: { alignItems: "center", gap: 4 },
+  statValueRow: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginTop: 4,
+  },
+  statLabelRow: { color: "#e0f2fe", fontSize: 13 },
+
+  // Tính năng Khung giờ vàng
+  goldenHourCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#ecfdf5",
+    padding: 16,
+    borderRadius: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: "#fde047",
+    borderColor: "#a7f3d0",
   },
-  aiAdviceHeader: {
+  goldenHourLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
+    flex: 1,
+    paddingRight: 10,
   },
-  aiAdviceTitle: { fontSize: 15, fontWeight: "bold", color: "#854d0e" },
-  aiAdviceText: { fontSize: 14, color: "#713f12", lineHeight: 22 },
-
-  sectionTitle: {
-    fontSize: 18,
+  goldenIconBox: {
+    backgroundColor: "#d1fae5",
+    padding: 10,
+    borderRadius: 12,
+    marginRight: 12,
+  },
+  goldenTitle: {
+    fontSize: 14,
     fontWeight: "bold",
-    color: "#111827",
-    marginBottom: 12,
+    color: "#065f46",
+    marginBottom: 2,
   },
-  forecastList: {
+  goldenDesc: { fontSize: 13, color: "#047857", lineHeight: 18 },
+  goldenTimeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  forecastItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
-  },
-  forecastDay: { fontSize: 15, fontWeight: "600", color: "#374151", width: 60 },
-  forecastIconRow: {
+  goldenTimeText: { fontSize: 15, fontWeight: "bold", color: "#059669" },
+
+  section: { marginBottom: 24 },
+  sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    flex: 1,
-    paddingLeft: 10,
+    marginBottom: 12,
   },
-  forecastStatus: { fontSize: 14, color: "#6b7280" },
-  forecastTemp: { fontSize: 15, fontWeight: "bold", color: "#111827" },
+  sectionTitle: { fontSize: 18, fontWeight: "800", color: "#0f172a" },
+
+  dateTabsScroll: { gap: 10, paddingVertical: 4 },
+  dateTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    alignItems: "center",
+    minWidth: 80,
+  },
+  dateTabActive: { backgroundColor: "#2563eb", borderColor: "#2563eb" },
+  dateTabText: { fontSize: 14, fontWeight: "600", color: "#475569" },
+  dateTabTextActive: { color: "#fff" },
+
+  adviceCard: {
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+  cardWarning: { backgroundColor: "#fef2f2", borderColor: "#fecaca" },
+  cardRecommend: { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" },
+  cardInfo: { backgroundColor: "#eff6ff", borderColor: "#bfdbfe" },
+  adviceHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  adviceTitle: { fontSize: 16, fontWeight: "800", color: "#1e293b", flex: 1 },
+  adviceMessage: { fontSize: 14, color: "#334155", lineHeight: 22 },
+
+  hourlyScroll: { gap: 12 },
+  hourlyItem: {
+    backgroundColor: "#fff",
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    alignItems: "center",
+    width: 80,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  hourlyTime: {
+    fontSize: 13,
+    color: "#64748b",
+    marginBottom: 8,
+    fontWeight: "600",
+  },
+  hourlyIcon: { width: 48, height: 48 }, // Icon thanh ngang to và rõ hơn
+  hourlyTemp: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#1e293b",
+    marginTop: 4,
+  },
+  popBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    marginTop: 6,
+    backgroundColor: "#e0f2fe",
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  popText: { fontSize: 11, color: "#0284c7", fontWeight: "bold" },
+
+  errorBox: {
+    backgroundColor: "#fef2f2",
+    padding: 20,
+    borderRadius: 16,
+    alignItems: "center",
+    marginTop: 40,
+  },
+  errorText: {
+    color: "#dc2626",
+    textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 22,
+  },
+  retryBtn: {
+    backgroundColor: "#ef4444",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  retryText: { color: "#fff", fontWeight: "bold" },
 });
