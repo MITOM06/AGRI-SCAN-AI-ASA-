@@ -14,7 +14,7 @@ import { AdminModule } from './modules/admin/admin.module';
     // 1. Load .env toàn cục
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.example',
+      envFilePath: '.env',
     }),
 
     // 2. Kết nối MongoDB
