@@ -1,9 +1,9 @@
-/**
- * SEED DATA: Dữ liệu mẫu cho collection `weather_rules`
- *
- * Chạy script này một lần để khởi tạo bộ luật nông nghiệp cơ bản.
- */
-
+import mongoose from 'mongoose';
+import * as dotenv from 'dotenv';
+import { WeatherRuleSchema } from '../schemas/Weather-rule.schema';
+import * as path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '../../../../apps/backend/.env') });
+const URI = process.env.MONGODB_URI;
 const weatherRulesSeed = [
   // ==============================
   // CẢNH BÁO NHIỆT ĐỘ (WARNING)
@@ -303,6 +303,36 @@ const weatherRulesSeed = [
     isActive: true,
   }
 ];
+async function runSeed() {
+  const URI = process.env.MONGODB_URI || 'mongodb://admin:secretPassword@localhost:27018/agriscan?authSource=admin';
 
+  try {
+    console.log('--- Đang kết nối tới MongoDB... ---');
+    await mongoose.connect(URI);
+    console.log('✅ Kết nối thành công!');
+
+    // Tạo Model từ Schema
+    const WeatherRuleModel = mongoose.model('WeatherRule', WeatherRuleSchema);
+
+    // Xóa dữ liệu cũ (tùy chọn - tránh bị trùng lặp khi chạy lại nhiều lần)
+    console.log('--- Đang dọn dẹp dữ liệu cũ... ---');
+    await WeatherRuleModel.deleteMany({});
+
+    // Chèn dữ liệu mới
+    console.log('--- Đang nạp dữ liệu seed... ---');
+    await WeatherRuleModel.insertMany(weatherRulesSeed);
+
+    console.log(`🚀 Hoàn thành! Đã thêm thành công ${weatherRulesSeed.length} bộ luật thời tiết.`);
+  } catch (error) {
+    console.error('❌ Lỗi khi seed dữ liệu:', error);
+  } finally {
+    // Luôn đóng kết nối sau khi xong
+    await mongoose.disconnect();
+    process.exit();
+  }
+}
+
+// Gọi hàm thực thi
+runSeed();
 // Export để dùng trong NestJS Seeder Service
-module.exports = weatherRulesSeed;
+export default weatherRulesSeed;
