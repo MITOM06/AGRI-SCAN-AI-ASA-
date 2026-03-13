@@ -1,11 +1,11 @@
-'use client'; // <-- Thêm dòng này để fix lỗi
+"use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CloudRain, Sun, Cloud, Wind, Droplets, ThermometerSun, 
   Sprout, ShieldAlert, MapPin, Calendar, Sunrise, Sunset, 
   Leaf, Moon, Eye, Gauge, Compass, AlertTriangle, Umbrella,
-  CloudLightning, Thermometer
+  CloudLightning, Thermometer, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 // Mock Data based on OpenWeatherMap One Call API 3.0 structure
@@ -146,6 +146,7 @@ export function WeatherPage() {
   const [currentDate, setCurrentDate] = useState("");
   const [activeWeather, setActiveWeather] = useState(ONE_CALL_MOCK);
   const [selectedRegion, setSelectedRegion] = useState("Tất cả");
+  const [showMore, setShowMore] = useState(false);
   
   // Drag to scroll state
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -214,7 +215,7 @@ export function WeatherPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 space-y-6"
+        className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6"
       >
         
         {/* Header & Alerts */}
@@ -246,17 +247,15 @@ export function WeatherPage() {
           </motion.div>
         ))}
 
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {/* Main Content Area */}
+        <div className="space-y-6">
           
-          {/* Left Column: Current Weather, Bento Grid & Hourly */}
-          <div className="xl:col-span-8 space-y-6">
-            
-            {/* Hero & Advice Split */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Hero & Advice Split */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Main Weather Card */}
               <motion.div 
                 variants={itemVariants}
-                className="relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2rem] p-8 text-white shadow-xl"
+                className="relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[2rem] p-8 text-white shadow-lg shadow-emerald-500/20"
               >
                 <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl"></div>
                 
@@ -306,61 +305,10 @@ export function WeatherPage() {
               </motion.div>
             </div>
 
-            {/* One Call API Bento Grid */}
-            <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {/* Wind */}
-              <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 text-gray-500 mb-3">
-                  <Wind size={24} className="text-blue-500" />
-                  <span className="text-base font-semibold">Gió & Giật</span>
-                </div>
-                <div className="text-3xl font-bold text-gray-900">{activeWeather.current.wind_speed} <span className="text-base font-medium text-gray-500">m/s</span></div>
-                <div className="text-sm font-medium text-gray-500 mt-2 flex items-center gap-1.5">
-                  <Compass size={18} /> {getWindDirection(activeWeather.current.wind_deg)} • Giật {activeWeather.current.wind_gust}
-                </div>
-              </div>
-
-              {/* Moisture */}
-              <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 text-gray-500 mb-3">
-                  <Droplets size={24} className="text-teal-500" />
-                  <span className="text-base font-semibold">Độ ẩm & Sương</span>
-                </div>
-                <div className="text-3xl font-bold text-gray-900">{activeWeather.current.humidity}%</div>
-                <div className="text-sm font-medium text-gray-500 mt-2 flex items-center gap-1.5">
-                  <Thermometer size={18} /> Điểm sương: {activeWeather.current.dew_point}°C
-                </div>
-              </div>
-
-              {/* Atmosphere */}
-              <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 text-gray-500 mb-3">
-                  <Gauge size={24} className="text-purple-500" />
-                  <span className="text-base font-semibold">Áp suất & Mây</span>
-                </div>
-                <div className="text-3xl font-bold text-gray-900">{activeWeather.current.pressure} <span className="text-base font-medium text-gray-500">hPa</span></div>
-                <div className="text-sm font-medium text-gray-500 mt-2 flex items-center gap-1.5">
-                  <Cloud size={18} /> Mây che phủ: {activeWeather.current.clouds}%
-                </div>
-              </div>
-
-              {/* Sun & Visibility */}
-              <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 text-gray-500 mb-3">
-                  <ThermometerSun size={24} className="text-orange-500" />
-                  <span className="text-base font-semibold">UV & Tầm nhìn</span>
-                </div>
-                <div className="text-3xl font-bold text-gray-900">{activeWeather.current.uvi} <span className="text-base font-medium text-red-500">(Rất cao)</span></div>
-                <div className="text-sm font-medium text-gray-500 mt-2 flex items-center gap-1.5">
-                  <Eye size={18} /> Tầm nhìn: {activeWeather.current.visibility / 1000} km
-                </div>
-              </div>
-            </motion.div>
-
             {/* Hourly Forecast */}
             <motion.div 
               variants={itemVariants}
-              className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100"
+              className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100/80"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">Dự báo 24 giờ tới</h3>
@@ -380,8 +328,8 @@ export function WeatherPage() {
                     whileHover={{ y: -5, scale: 1.02 }}
                     className={`flex flex-col items-center justify-between min-w-[100px] p-5 rounded-2xl border transition-all ${
                       idx === 0 
-                        ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' 
-                        : 'bg-gray-50 border-gray-100 hover:border-primary/30 hover:shadow-md'
+                        ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-transparent shadow-lg shadow-emerald-500/20' 
+                        : 'bg-white border-gray-100 hover:border-emerald-100 hover:shadow-md'
                     }`}
                   >
                     <span className={`text-base font-semibold ${idx === 0 ? 'text-white/90' : 'text-gray-500'}`}>{hour.time}</span>
@@ -391,11 +339,11 @@ export function WeatherPage() {
                     <span className={`text-3xl font-bold ${idx === 0 ? 'text-white' : 'text-gray-900'}`}>{hour.temp}°</span>
                     
                     <div className="w-full mt-4 space-y-2">
-                      <div className={`flex items-center justify-center gap-1.5 text-sm font-medium ${idx === 0 ? 'text-blue-100' : 'text-blue-600'}`}>
+                      <div className={`flex items-center justify-center gap-1.5 text-sm font-medium ${idx === 0 ? 'text-emerald-100' : 'text-blue-500'}`}>
                         <Umbrella size={16} /> {hour.pop}%
                       </div>
-                      <div className={`flex items-center justify-center gap-1.5 text-sm font-medium ${idx === 0 ? 'text-white/80' : 'text-gray-500'}`}>
-                        <Wind size={16} /> {hour.wind} m/s
+                      <div className={`flex items-center justify-center gap-1.5 text-sm font-medium ${idx === 0 ? 'text-white/80' : 'text-gray-400'}`}>
+                        <Wind size={16} /> {hour.wind}
                       </div>
                     </div>
                   </motion.div>
@@ -403,98 +351,150 @@ export function WeatherPage() {
               </div>
             </motion.div>
 
-            {/* Other Locations */}
+            {/* One Call API Bento Grid */}
+            <motion.div variants={itemVariants} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Wind */}
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100/80 hover:shadow-md transition-all hover:-translate-y-1">
+                <div className="flex items-center gap-3 text-gray-500 mb-4">
+                  <Wind size={24} className="text-blue-500" />
+                  <span className="text-base font-semibold">Gió & Giật</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">{activeWeather.current.wind_speed} <span className="text-base font-medium text-gray-500">m/s</span></div>
+                <div className="text-sm font-medium text-gray-500 mt-3 flex items-center gap-1.5">
+                  <Compass size={18} /> {getWindDirection(activeWeather.current.wind_deg)} • Giật {activeWeather.current.wind_gust}
+                </div>
+              </div>
+
+              {/* Moisture */}
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100/80 hover:shadow-md transition-all hover:-translate-y-1">
+                <div className="flex items-center gap-3 text-gray-500 mb-4">
+                  <Droplets size={24} className="text-teal-500" />
+                  <span className="text-base font-semibold">Độ ẩm & Sương</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">{activeWeather.current.humidity}%</div>
+                <div className="text-sm font-medium text-gray-500 mt-3 flex items-center gap-1.5">
+                  <Thermometer size={18} /> Điểm sương: {activeWeather.current.dew_point}°C
+                </div>
+              </div>
+
+              {/* Atmosphere */}
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100/80 hover:shadow-md transition-all hover:-translate-y-1">
+                <div className="flex items-center gap-3 text-gray-500 mb-4">
+                  <Gauge size={24} className="text-purple-500" />
+                  <span className="text-base font-semibold">Áp suất & Mây</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">{activeWeather.current.pressure} <span className="text-base font-medium text-gray-500">hPa</span></div>
+                <div className="text-sm font-medium text-gray-500 mt-3 flex items-center gap-1.5">
+                  <Cloud size={18} /> Mây che phủ: {activeWeather.current.clouds}%
+                </div>
+              </div>
+
+              {/* Sun & Visibility */}
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100/80 hover:shadow-md transition-all hover:-translate-y-1">
+                <div className="flex items-center gap-3 text-gray-500 mb-4">
+                  <ThermometerSun size={24} className="text-orange-500" />
+                  <span className="text-base font-semibold">UV & Tầm nhìn</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">{activeWeather.current.uvi} <span className="text-base font-medium text-red-500">(Rất cao)</span></div>
+                <div className="text-sm font-medium text-gray-500 mt-3 flex items-center gap-1.5">
+                  <Eye size={18} /> Tầm nhìn: {activeWeather.current.visibility / 1000} km
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 8-Day Forecast */}
             <motion.div 
               variants={itemVariants}
-              className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100"
+              className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100/80"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Thời tiết khu vực khác</h3>
-                <select 
-                  value={selectedRegion}
-                  onChange={(e) => setSelectedRegion(e.target.value)}
-                  className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-primary focus:border-primary block p-2.5 font-medium outline-none cursor-pointer"
-                >
-                  {regions.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filteredLocations.map((loc, idx) => (
-                  <motion.div 
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Dự báo 8 ngày</h3>
+              <div className="flex flex-col">
+                {activeWeather.daily.map((day, idx) => (
+                  <div 
                     key={idx} 
-                    onClick={() => handleLocationSelect(loc)}
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    className="flex items-center justify-between p-5 rounded-2xl bg-gray-50 border border-gray-100 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
+                    className="group flex flex-col md:flex-row md:items-center justify-between py-5 border-b border-gray-100/60 last:border-0 gap-4 hover:bg-gray-50/50 transition-colors rounded-xl px-4 -mx-4"
                   >
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-lg">{loc.name}</h4>
-                      <p className="text-sm text-gray-500 font-medium mt-1">{loc.description}</p>
-                      <div className="flex items-center gap-1 mt-2 text-xs font-semibold text-teal-600">
-                        <Droplets size={14} /> Độ ẩm: {loc.humidity}%
-                      </div>
+                    <div className="flex items-center gap-4 w-full md:w-2/12">
+                      <span className={`font-semibold text-lg ${idx === 0 ? 'text-emerald-600' : 'text-gray-700'}`}>{day.day}</span>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      {getWeatherIcon(loc.type, "w-10 h-10")}
-                      <span className="text-2xl font-bold text-gray-900">{loc.temp}°</span>
+                    <div className="flex items-center gap-3 w-full md:w-2/12">
+                      {getWeatherIcon(day.type, "w-8 h-8")}
+                      {day.pop > 30 && <span className="text-sm font-bold text-blue-500">{day.pop}%</span>}
                     </div>
-                  </motion.div>
+                    <div className="flex-1 text-sm text-gray-600 font-medium leading-relaxed">
+                      {day.summary} <span className="text-gray-400 hidden lg:inline">• {day.tip}</span>
+                    </div>
+                    <div className="flex items-center md:justify-end gap-4 w-full md:w-2/12">
+                      <span className="font-bold text-gray-900 text-xl">{day.max}°</span>
+                      <span className="text-gray-400 font-medium text-lg">{day.min}°</span>
+                    </div>
+                  </div>
                 ))}
               </div>
             </motion.div>
 
-          </div>
-
-          {/* Right Column: Daily Forecast */}
-          <motion.div 
-            variants={itemVariants}
-            className="xl:col-span-4"
-          >
-            <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 h-full">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Dự báo 8 ngày (One Call)</h3>
-              <div className="space-y-4">
-                {activeWeather.daily.map((day, idx) => (
-                  <motion.div 
-                    key={idx} 
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    className="group p-4 hover:bg-gray-50 rounded-2xl transition-all border border-transparent hover:border-gray-100 hover:shadow-sm"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3 w-1/3">
-                        <span className={`font-bold text-lg ${idx === 0 ? 'text-primary' : 'text-gray-800'}`}>{day.day}</span>
-                      </div>
-                      <div className="flex items-center justify-center w-1/3 gap-3">
-                        {getWeatherIcon(day.type, "w-10 h-10")}
-                        {day.pop > 30 && <span className="text-sm font-bold text-blue-500">{day.pop}%</span>}
-                      </div>
-                      <div className="flex items-center justify-end gap-3 w-1/3">
-                        <span className="font-bold text-gray-900 text-2xl">{day.max}°</span>
-                        <span className="text-gray-400 font-medium text-lg">{day.min}°</span>
-                      </div>
-                    </div>
-                    
-                    <div className="text-base text-gray-600 font-medium mb-4">
-                      {day.summary}
-                    </div>
-
-                    <div className="flex items-center justify-between border-t border-gray-100 pt-4">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-green-50 rounded-lg text-primary mt-0.5 flex-shrink-0">
-                          <Sprout size={20} />
-                        </div>
-                        <p className="text-sm text-gray-600 leading-relaxed font-medium">{day.tip}</p>
-                      </div>
-                      
-                      {/* Moon Phase Indicator */}
-                      <div className="flex flex-col items-center justify-center ml-3 flex-shrink-0" title={getMoonPhaseName(day.moon_phase)}>
-                        <Moon size={24} className="text-indigo-400 mb-1" />
-                        <span className="text-xs text-gray-400 font-semibold">{day.moon_phase}</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+            {/* Xem thêm button */}
+            <div className="flex justify-center pt-4 pb-2">
+              <button
+                onClick={() => setShowMore(!showMore)}
+                className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-full text-gray-700 font-medium hover:bg-gray-50 hover:text-primary transition-colors shadow-sm"
+              >
+                {showMore ? (
+                  <>Thu gọn <ChevronUp size={20} /></>
+                ) : (
+                  <>Xem thêm <ChevronDown size={20} /></>
+                )}
+              </button>
             </div>
-          </motion.div>
+
+            <AnimatePresence>
+              {showMore && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-6 pt-2 pb-6">
+                    {/* Other Locations */}
+                    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100/80">
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-bold text-gray-900">Thời tiết khu vực khác</h3>
+                        <select 
+                          value={selectedRegion}
+                          onChange={(e) => setSelectedRegion(e.target.value)}
+                          className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl focus:ring-primary focus:border-primary block p-2.5 font-medium outline-none cursor-pointer"
+                        >
+                          {regions.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {filteredLocations.map((loc, idx) => (
+                          <motion.div 
+                            key={idx} 
+                            onClick={() => handleLocationSelect(loc)}
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            className="flex items-center justify-between p-5 rounded-2xl bg-gray-50 border border-gray-100 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
+                          >
+                            <div>
+                              <h4 className="font-bold text-gray-900 text-lg">{loc.name}</h4>
+                              <p className="text-sm text-gray-500 font-medium mt-1">{loc.description}</p>
+                              <div className="flex items-center gap-1 mt-2 text-xs font-semibold text-teal-600">
+                                <Droplets size={14} /> Độ ẩm: {loc.humidity}%
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              {getWeatherIcon(loc.type, "w-10 h-10")}
+                              <span className="text-2xl font-bold text-gray-900">{loc.temp}°</span>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
         </div>
       </motion.div>

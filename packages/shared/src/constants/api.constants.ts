@@ -1,7 +1,3 @@
-/**
- * API Endpoints - Dùng chung cho Web và Mobile
- */
-
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
@@ -9,13 +5,10 @@ export const API_ENDPOINTS = {
     REGISTER: '/auth/register',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
-    // BUG FIX: '/auth/me' không tồn tại trong controller → đổi thành '/auth/profile'
     PROFILE: '/auth/profile',
-    // BUG FIX: 3 endpoint forgot-password flow còn thiếu trong constants
     FORGOT_PASSWORD: '/auth/forgot-password',
     VERIFY_OTP: '/auth/verify-otp',
     RESET_PASSWORD: '/auth/reset-password',
-    // OAuth endpoints
     GOOGLE_LOGIN: '/auth/google',
     FACEBOOK_LOGIN: '/auth/facebook',
     SET_PASSWORD: '/auth/set-password',
@@ -26,6 +19,7 @@ export const API_ENDPOINTS = {
     BASE: '/users',
     BY_ID: (id: string) => `/users/${id}`,
     PROFILE: '/users/profile',
+    UPGRADE: '/users/upgrade',
   },
 
   // Plants (Từ điển thực vật học)
@@ -49,17 +43,47 @@ export const API_ENDPOINTS = {
     ANALYZE: '/scan/analyze',
     CHAT: '/scan/chat',
     GUEST_CHAT: '/scan/guest-chat',
-    FEEDBACK: (id: string) => `/scan/history/${id}/feedback`, 
+    FEEDBACK: (id: string) => `/scan/history/${id}/feedback`,
   },
 
   // Scan History (Lịch sử quét)
   HISTORY: {
-    SCAN_BASE: '/scan/history',         
-    CHAT_BASE: '/scan/chat/history',     
-    SESSION: (id: string) => `/scan/chat/sessions/${id}`, 
+    SCAN_BASE: '/scan/history',
+    CHAT_BASE: '/scan/chat/history',
+    SESSION: (id: string) => `/scan/chat/sessions/${id}`,
   },
 
+  // Weather
   WEATHER: {
-  GET_WEATHER: '/weather',
-},
+    GET_WEATHER: '/weather',
+  },
+
+  // ── ADMIN ────────────────────────────────────────────────────────────────────
+  ADMIN: {
+    DASHBOARD: '/admin/dashboard',
+
+    // Quản lý user
+    USERS: '/admin/users',
+    USER_PLAN: (userId: string) => `/admin/users/${userId}/plan`,
+
+    // Báo cáo
+    REPORTS: {
+      USERS: '/admin/reports/users',
+      REVENUE: '/admin/reports/revenue',
+      COMPARE: '/admin/reports/compare',
+    },
+
+    // Xuất file CSV
+    EXPORT: {
+      REVENUE: '/admin/export/revenue',
+      USERS: '/admin/export/users',
+    },
+
+    // Feedback
+    FEEDBACK: {
+      BASE: '/feedback',                                          // POST (user gửi)
+      LIST: '/admin/feedbacks',                                   // GET (admin xem)
+      REPLY: (feedbackId: string) => `/admin/feedbacks/${feedbackId}/reply`, // POST (admin reply)
+    },
+  },
 } as const;

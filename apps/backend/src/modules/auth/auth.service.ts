@@ -28,7 +28,7 @@ export class AuthService {
     private jwtService: JwtService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private mailerService: MailerService,
-  ) {}
+  ) { }
 
   // ════════════════════════════════════════════════════════════
   // 1. ĐĂNG KÝ BẰNG EMAIL + MẬT KHẨU
@@ -45,8 +45,8 @@ export class AuthService {
           .join(', ');
         throw new BadRequestException(
           `Email này đã được đăng ký qua ${providers || 'mạng xã hội'}. ` +
-            `Vui lòng đăng nhập bằng ${providers || 'tài khoản mạng xã hội'} ` +
-            `và thiết lập mật khẩu trong mục Cài đặt tài khoản.`,
+          `Vui lòng đăng nhập bằng ${providers || 'tài khoản mạng xã hội'} ` +
+          `và thiết lập mật khẩu trong mục Cài đặt tài khoản.`,
         );
       }
       throw new BadRequestException('Email này đã được sử dụng!');
@@ -66,6 +66,7 @@ export class AuthService {
       newUser.fullName,
       newUser.plan,
       true,
+      newUser.role,
     );
   }
 
@@ -85,8 +86,8 @@ export class AuthService {
 
       throw new UnauthorizedException(
         `Tài khoản này chưa có mật khẩu. ` +
-          `Vui lòng đăng nhập bằng ${providers || 'mạng xã hội'} ` +
-          `và thiết lập mật khẩu trong Cài đặt tài khoản.`,
+        `Vui lòng đăng nhập bằng ${providers || 'mạng xã hội'} ` +
+        `và thiết lập mật khẩu trong Cài đặt tài khoản.`,
       );
     }
 
@@ -99,6 +100,7 @@ export class AuthService {
       user.fullName,
       user.plan,
       user.isPasswordSet,
+      user.role,
     );
   }
 
@@ -148,6 +150,7 @@ export class AuthService {
       user.fullName,
       user.plan,
       user.isPasswordSet,
+      user.role,
     );
   }
 
@@ -213,6 +216,7 @@ export class AuthService {
         user?.fullName,
         user?.plan,
         user?.isPasswordSet,
+        user?.role,
       );
     } catch {
       throw new UnauthorizedException(
@@ -240,7 +244,7 @@ export class AuthService {
     if (!user.isPasswordSet) {
       throw new BadRequestException(
         'Tài khoản này chưa thiết lập mật khẩu. ' +
-          'Vui lòng đăng nhập bằng Google/Facebook và dùng chức năng Thiết lập mật khẩu.',
+        'Vui lòng đăng nhập bằng Google/Facebook và dùng chức năng Thiết lập mật khẩu.',
       );
     }
 
@@ -376,8 +380,9 @@ export class AuthService {
     fullName?: string,
     plan?: string,
     isPasswordSet?: boolean,
+    role?: string,             // ← THÊM
   ) {
-    const payload = { sub: userId, email };
+    const payload = { sub: userId, email, role };
 
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
@@ -389,7 +394,7 @@ export class AuthService {
     );
 
     return {
-      user: { id: userId, email, fullName, plan, isPasswordSet },
+      user: { id: userId, email, fullName, plan, isPasswordSet, role },
       accessToken,
       refreshToken,
     };

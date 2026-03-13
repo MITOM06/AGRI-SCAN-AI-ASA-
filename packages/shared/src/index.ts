@@ -33,6 +33,7 @@ export * from "./api/auth.api";
 export * from "./api/user.api";
 export * from "./api/weather.api";
 export * from "./types/weather.types";
+export * from './api/admin.api';
 export const helloWorld = () => {
   return "Hello from Shared Logic!";
 };
