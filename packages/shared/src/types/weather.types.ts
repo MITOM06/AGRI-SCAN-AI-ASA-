@@ -31,6 +31,13 @@ export interface CurrentWeather {
   weatherMain: string;
   weatherDescription: string;
   weatherIcon: string; // OWM icon code, dùng để render: https://openweathermap.org/img/wn/{icon}@2x.png
+  sunrise: number;    
+  sunset: number;     
+  pressure: number;   
+  windGust: number;   
+  windDeg: number;    
+  dewPoint: number;   
+  visibility: number;
 }
 
 export interface HourlyWeather {
@@ -53,6 +60,8 @@ export interface DailyWeather {
   uvi: number;
   weatherMain: string;
   weatherIcon: string;
+  summary: string;    
+  moonPhase: number;
 }
 
 export interface WeatherAdvice {
