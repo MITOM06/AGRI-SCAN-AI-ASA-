@@ -45,20 +45,31 @@
 │   │   │       │   ├── dto
 │   │   │       │   │   ├── login.dto.ts
 │   │   │       │   │   ├── register.dto.ts
+│   │   │       │   │   ├── set-password.dto.ts
 │   │   │       │   │   └── verify-otp.dto.ts
 │   │   │       │   ├── guards
+│   │   │       │   │   ├── facebook-auth.guard.ts
+│   │   │       │   │   ├── google-auth.guard.ts
 │   │   │       │   │   └── jwt-auth.guard.ts
 │   │   │       │   └── strategies
+│   │   │       │       ├── facebook.strategy.ts
+│   │   │       │       ├── google.strategy.ts
 │   │   │       │       └── jwt.strategy.ts
 │   │   │       ├── plants
 │   │   │       │   ├── plants.controller.ts
 │   │   │       │   ├── plants.module.ts
 │   │   │       │   └── plants.service.ts
-│   │   │       └── users
-│   │   │           ├── users.controller.ts
-│   │   │           ├── users.module.ts
-│   │   │           ├── users.service.spec.ts
-│   │   │           └── users.service.ts
+│   │   │       ├── users
+│   │   │       │   ├── users.controller.ts
+│   │   │       │   ├── users.module.ts
+│   │   │       │   ├── users.service.spec.ts
+│   │   │       │   └── users.service.ts
+│   │   │       └── weather
+│   │   │           ├── Weather.controller.ts
+│   │   │           ├── Weather.module.ts
+│   │   │           ├── Weather.service.ts
+│   │   │           └── dto
+│   │   │               └── Get weather.dto.ts
 │   │   ├── test
 │   │   │   ├── app.e2e-spec.ts
 │   │   │   └── jest-e2e.json
@@ -169,6 +180,7 @@
 │       │   │   ├── UpdatePlan.tsx
 │       │   │   ├── UserProfile.tsx
 │       │   │   ├── auth
+│       │   │   │   ├── Callback.tsx
 │       │   │   │   ├── ForgotPasswordForm.tsx
 │       │   │   │   ├── LoginForm.tsx
 │       │   │   │   ├── RegisterForm.tsx
@@ -214,17 +226,21 @@
 │   │   ├── package.json
 │   │   ├── src
 │   │   │   ├── index.ts
-│   │   │   └── schemas
-│   │   │       ├── chat-history.schema.ts
-│   │   │       ├── disease.schema.ts
-│   │   │       ├── plant.schema.ts
-│   │   │       ├── scan-history.schema.ts
-│   │   │       └── user.schema.ts
+│   │   │   ├── schemas
+│   │   │   │   ├── Weather-rule.schema.ts
+│   │   │   │   ├── chat-history.schema.ts
+│   │   │   │   ├── disease.schema.ts
+│   │   │   │   ├── plant.schema.ts
+│   │   │   │   ├── scan-history.schema.ts
+│   │   │   │   └── user.schema.ts
+│   │   │   └── seeds
+│   │   │       └── weather-rules.seed.ts
 │   │   └── tsconfig.json
 │   ├── shared
 │   │   ├── package.json
 │   │   ├── src
 │   │   │   ├── api
+│   │   │   │   ├──  weather.api.ts
 │   │   │   │   ├── auth.api.ts
 │   │   │   │   ├── axios-client.ts
 │   │   │   │   ├── plant.api.ts
@@ -245,7 +261,8 @@
 │   │   │   │   ├── index.ts
 │   │   │   │   ├── plant.types.ts
 │   │   │   │   ├── scan-history.types.ts
-│   │   │   │   └── user.types.ts
+│   │   │   │   ├── user.types.ts
+│   │   │   │   └── weather.types.ts
 │   │   │   └── utils
 │   │   │       ├── cn.utils.ts
 │   │   │       ├── format.utils.ts
@@ -259,4 +276,4 @@
 ├── pnpm-workspace.yaml
 └── project_tree.txt
 
-64 directories, 196 files
+67 directories, 210 files

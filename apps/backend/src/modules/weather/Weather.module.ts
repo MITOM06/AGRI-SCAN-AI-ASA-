@@ -12,8 +12,7 @@ import { WeatherService } from './Weather.service'
 
 @Module({
   imports: [
-    // HttpModule để dùng HttpService gọi OWM API
-    // timeout 10s để tránh treo request
+    
     HttpModule.register({
       timeout: 10000,
       maxRedirects: 3,
