@@ -58,4 +58,8 @@ export const API_ENDPOINTS = {
     CHAT_BASE: '/scan/chat/history',     
     SESSION: (id: string) => `/scan/chat/sessions/${id}`, 
   },
+
+  WEATHER: {
+  GET_WEATHER: '/weather',
+},
 } as const;
