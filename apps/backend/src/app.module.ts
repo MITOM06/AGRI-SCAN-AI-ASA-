@@ -13,7 +13,7 @@ import { WeatherModule } from './modules/weather/Weather.module';
     // 1. Load .env toàn cục
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: '.env.example',
     }),
 
     // 2. Kết nối MongoDB
@@ -40,7 +40,6 @@ import { WeatherModule } from './modules/weather/Weather.module';
       inject: [ConfigService],
     }),
 
-    
     UsersModule,
     AuthModule,
     PlantsModule,

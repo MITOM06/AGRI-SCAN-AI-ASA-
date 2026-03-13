@@ -78,7 +78,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
   resetPassword(@Body() body: any) {
-    return this.authService.resetPassword(body.email, body.resetToken, body.newPassword);
+    return this.authService.resetPassword(
+      body.email,
+      body.resetToken,
+      body.newPassword,
+    );
   }
 
   // ── THIẾT LẬP MẬT KHẨU LẦN ĐẦU (CHỈ DÀNH CHO OAUTH USER) ──
@@ -151,7 +155,9 @@ export class AuthController {
     res: Response,
     result: { user: any; accessToken: string; refreshToken: string },
   ) {
-    const baseUrl = this.configService.getOrThrow<string>('OAUTH_SUCCESS_REDIRECT');
+    const baseUrl = this.configService.getOrThrow<string>(
+      'OAUTH_SUCCESS_REDIRECT',
+    );
     const url = new URL(baseUrl);
     url.searchParams.set('accessToken', result.accessToken);
     url.searchParams.set('refreshToken', result.refreshToken);
@@ -159,5 +165,14 @@ export class AuthController {
     url.searchParams.set('fullName', result.user.fullName ?? '');
 
     res.redirect(url.toString());
+  }
+  // 🔥 THÊM MỚI: API dành riêng cho Mobile xác thực Google Token
+  @HttpCode(HttpStatus.OK)
+  @Post('google/verify-token')
+  verifyGoogleToken(@Body() body: { idToken: string }) {
+    if (!body.idToken) {
+      throw new BadRequestException('Không tìm thấy Google Token!');
+    }
+    return this.authService.verifyGoogleTokenForMobile(body.idToken);
   }
 }
