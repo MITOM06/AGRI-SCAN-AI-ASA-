@@ -42,7 +42,8 @@
         {
           "photosPermission": "Cho phép Agri-Scan truy cập thư viện để chọn ảnh cây trồng."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

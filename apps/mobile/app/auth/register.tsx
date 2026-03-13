@@ -10,65 +10,84 @@ import {
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { Link, useRouter } from "expo-router";
-import { Leaf, Eye, EyeOff } from "lucide-react-native";
+import { Leaf, ArrowLeft, Eye, EyeOff, Check } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { registerSchema, type RegisterFormData, authApi } from "@agri-scan/shared";
+// 🔥 Xóa schema bị lỗi, chỉ giữ type và api
+import { type RegisterFormData, authApi } from "@agri-scan/shared";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import { AuthHeader } from "./AuthHeader";
-
-const customZodResolver = async (values: any) => {
-  const result = registerSchema.safeParse(values);
-  if (result.success) return { values: result.data, errors: {} };
-
-  const formErrors: Record<string, any> = {};
-  const fieldErrors = result.error.flatten().fieldErrors;
-  for (const key in fieldErrors) {
-    formErrors[key] = {
-      type: "validation",
-      message: fieldErrors[key as keyof typeof fieldErrors]?.[0],
-    };
-  }
-  return { values: {}, errors: formErrors };
-};
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
 
-  const { control, handleSubmit, watch } = useForm<RegisterFormData>({
-    resolver: customZodResolver,
-    mode: "onChange",
-    defaultValues: { fullName: "", email: "", password: "", confirmPassword: "" },
+  // Lấy getValues ra để check thủ công
+  const { control, getValues } = useForm<RegisterFormData>({
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
-  const password = watch("password", "");
-  const isPasswordLengthValid = password.length >= 8;
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasLowerCase = /[a-z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
-  const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+  // 🔥 HÀM ĐĂNG KÝ THỦ CÔNG (CHỐNG LỖI BẤM KHÔNG PHẢN HỒI)
+  const onManualSubmit = async () => {
+    const data = getValues();
 
-  // BUG FIX: trước đây chỉ console.log và redirect, không gọi API thật
-  const onSubmit = async (data: RegisterFormData) => {
+    // 1. Kiểm tra rỗng
+    if (
+      !data.fullName ||
+      !data.email ||
+      !data.password ||
+      !data.confirmPassword
+    ) {
+      setApiError("Vui lòng nhập đầy đủ thông tin!");
+      return;
+    }
+
+    // 2. Kiểm tra định dạng Email cơ bản
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      setApiError("Email không hợp lệ!");
+      return;
+    }
+
+    // 3. Kiểm tra mật khẩu khớp nhau
+    if (data.password !== data.confirmPassword) {
+      setApiError("Mật khẩu xác nhận không khớp!");
+      return;
+    }
+
+    // 4. Kiểm tra điều khoản
+    if (!agreeTerms) {
+      setApiError("Vui lòng đồng ý với Điều khoản và Chính sách bảo mật!");
+      return;
+    }
+
     setIsSubmitting(true);
     setApiError("");
+
     try {
+      // Gọi API đăng ký
       await authApi.register({
         fullName: data.fullName,
         email: data.email,
         password: data.password,
       });
-      router.replace({
-        pathname: "/auth/login",
-        params: { registered: "true" },
-      });
+
+      // Đăng ký thành công -> Đẩy về trang Login kèm tham số báo thành công
+      router.replace("/auth/login?registered=true");
     } catch (error: any) {
       setApiError(
-        error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại."
+        error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!",
       );
     } finally {
       setIsSubmitting(false);
@@ -76,144 +95,276 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <AuthHeader showBack={true} />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: Math.max(insets.top, 20) + 20 },
+        ]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled" // 🔥 Sửa triệt để lỗi phải bấm 2 lần
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          activeOpacity={0.7}
         >
-          <View style={styles.card}>
-            <View style={styles.header}>
-              <View style={styles.iconContainer}>
-                <Leaf size={28} color="#16a34a" />
-              </View>
-              <Text style={styles.title}>Tạo tài khoản mới</Text>
-              <Text style={styles.subtitle}>
-                Bắt đầu hành trình quản lý vườn cây thông minh
-              </Text>
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+
+        <View style={styles.card}>
+          <View style={styles.header}>
+            <View style={styles.iconContainer}>
+              <Leaf size={32} color="#16a34a" />
             </View>
+            <Text style={styles.title}>Tạo tài khoản mới</Text>
+            <Text style={styles.subtitle}>
+              Bắt đầu hành trình chăm sóc cây trồng thông minh
+            </Text>
+          </View>
 
-            {apiError !== "" && (
-              <View style={styles.errorAlert}>
-                <Text style={styles.errorText}>{apiError}</Text>
-              </View>
-            )}
+          {apiError ? (
+            <View style={styles.errorAlert}>
+              <Text style={styles.errorText}>{apiError}</Text>
+            </View>
+          ) : null}
 
-            <View style={styles.form}>
+          <View style={styles.form}>
+            {/* HỌ VÀ TÊN */}
+            <View style={styles.inputGroup}>
               <Controller
                 control={control}
                 name="fullName"
-                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                  <View style={styles.inputGroup}>
-                    <Input label="Họ và tên" placeholder="Nguyễn Văn A"
-                      onBlur={onBlur} onChangeText={onChange} value={value} error={error?.message} />
-                  </View>
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    label="Họ và tên"
+                    placeholder="Nhập họ và tên của bạn"
+                    onBlur={onBlur}
+                    onChangeText={(text) => {
+                      onChange(text);
+                      if (apiError) setApiError("");
+                    }}
+                    value={value}
+                  />
                 )}
               />
+            </View>
 
+            {/* EMAIL */}
+            <View style={styles.inputGroup}>
               <Controller
                 control={control}
                 name="email"
-                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                  <View style={styles.inputGroup}>
-                    <Input label="Email" placeholder="name@example.com"
-                      keyboardType="email-address" autoCapitalize="none"
-                      onBlur={onBlur} onChangeText={onChange} value={value} error={error?.message} />
-                  </View>
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    label="Email"
+                    placeholder="Nhập địa chỉ email"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    onBlur={onBlur}
+                    onChangeText={(text) => {
+                      onChange(text);
+                      if (apiError) setApiError("");
+                    }}
+                    value={value}
+                  />
                 )}
               />
+            </View>
 
-              <Controller
-                control={control}
-                name="password"
-                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                  <View style={styles.inputGroup}>
-                    <View style={styles.passwordWrapper}>
-                      <Input label="Mật khẩu" placeholder="••••••••"
-                        secureTextEntry={!showPassword}
-                        onBlur={onBlur} onChangeText={onChange} value={value} error={error?.message} />
-                      <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-                        {showPassword ? <EyeOff size={20} color="#9ca3af" /> : <Eye size={20} color="#9ca3af" />}
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
-              />
-
-              <View style={styles.requirementsContainer}>
-                <Text style={styles.requirementsTitle}>Yêu cầu mật khẩu:</Text>
-                {[
-                  [isPasswordLengthValid, "Ít nhất 8 ký tự"],
-                  [hasUpperCase, "Ít nhất 1 chữ hoa"],
-                  [hasLowerCase, "Ít nhất 1 chữ thường"],
-                  [hasNumber, "Ít nhất 1 số"],
-                  [hasSpecialChar, "Ít nhất 1 ký tự đặc biệt"],
-                ].map(([valid, label]) => (
-                  <Text key={label as string} style={valid ? styles.reqValid : styles.reqInvalid}>
-                    • {label as string}
-                  </Text>
-                ))}
-              </View>
-
-              <Controller
-                control={control}
-                name="confirmPassword"
-                render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                  <View style={styles.inputGroup}>
-                    <View style={styles.passwordWrapper}>
-                      <Input label="Xác nhận mật khẩu" placeholder="••••••••"
-                        secureTextEntry={!showConfirmPassword}
-                        onBlur={onBlur} onChangeText={onChange} value={value} error={error?.message} />
-                      <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                        {showConfirmPassword ? <EyeOff size={20} color="#9ca3af" /> : <Eye size={20} color="#9ca3af" />}
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
-              />
-
-              <Button title="Tạo tài khoản" variant="primary" size="lg"
-                isLoading={isSubmitting} onPress={handleSubmit(onSubmit)} style={styles.submitButton} />
-
-              <View style={styles.footer}>
-                <Text style={styles.footerText}>Đã có tài khoản? </Text>
-                <Link href="/auth/login" style={styles.loginLink}>Đăng nhập</Link>
+            {/* MẬT KHẨU */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Mật khẩu</Text>
+              <View style={styles.passwordWrapper}>
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      placeholder="Tạo mật khẩu (ít nhất 6 ký tự)"
+                      secureTextEntry={!showPassword}
+                      onBlur={onBlur}
+                      onChangeText={(text) => {
+                        onChange(text);
+                        if (apiError) setApiError("");
+                      }}
+                      value={value}
+                    />
+                  )}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color="#9ca3af" />
+                  ) : (
+                    <Eye size={20} color="#9ca3af" />
+                  )}
+                </TouchableOpacity>
               </View>
             </View>
+
+            {/* XÁC NHẬN MẬT KHẨU */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Xác nhận mật khẩu</Text>
+              <View style={styles.passwordWrapper}>
+                <Controller
+                  control={control}
+                  name="confirmPassword"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      placeholder="Nhập lại mật khẩu"
+                      secureTextEntry={!showConfirmPassword}
+                      onBlur={onBlur}
+                      onChangeText={(text) => {
+                        onChange(text);
+                        if (apiError) setApiError("");
+                      }}
+                      value={value}
+                    />
+                  )}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} color="#9ca3af" />
+                  ) : (
+                    <Eye size={20} color="#9ca3af" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* CHECKBOX */}
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              activeOpacity={0.7}
+              onPress={() => {
+                setAgreeTerms(!agreeTerms);
+                if (apiError) setApiError("");
+              }}
+            >
+              <View
+                style={[styles.checkbox, agreeTerms && styles.checkboxActive]}
+              >
+                {agreeTerms && <Check size={14} color="#fff" strokeWidth={3} />}
+              </View>
+              <Text style={styles.checkboxText}>
+                Tôi đồng ý với <Text style={styles.linkText}>Điều khoản</Text>{" "}
+                và <Text style={styles.linkText}>CSBM</Text>
+              </Text>
+            </TouchableOpacity>
+
+            <Button
+              title="Đăng ký"
+              onPress={onManualSubmit} // 🔥 GỌI HÀM CHUẨN XÁC
+              isLoading={isSubmitting}
+              style={{ marginTop: 8 }}
+            />
+
+            <View style={styles.registerContainer}>
+              <Text style={styles.registerText}>Đã có tài khoản? </Text>
+              <Link href="/auth/login" asChild>
+                <TouchableOpacity>
+                  <Text style={styles.registerLink}>Đăng nhập</Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb" },
-  scrollContent: { flexGrow: 1, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 40 },
-  card: { backgroundColor: "#ffffff", padding: 24, borderRadius: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 },
+  scrollContent: { paddingHorizontal: 16, paddingBottom: 40 },
+  backBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    padding: 24,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
   header: { alignItems: "center", marginBottom: 24 },
-  iconContainer: { width: 52, height: 52, backgroundColor: "rgba(22, 163, 74, 0.1)", borderRadius: 14, alignItems: "center", justifyContent: "center", marginBottom: 16 },
-  title: { fontSize: 24, fontWeight: "bold", color: "#111827", marginBottom: 8 },
-  subtitle: { color: "#4b5563", textAlign: "center", fontSize: 14, lineHeight: 20 },
-  errorAlert: { backgroundColor: "#fef2f2", borderWidth: 1, borderColor: "#fecaca", borderRadius: 12, padding: 12, marginBottom: 16 },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    backgroundColor: "rgba(22, 163, 74, 0.1)",
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#111827",
+    marginBottom: 8,
+  },
+  subtitle: { color: "#4b5563", textAlign: "center", fontSize: 14 },
+  errorAlert: {
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
   errorText: { color: "#dc2626", fontSize: 14, textAlign: "center" },
   form: { width: "100%" },
-  inputGroup: { marginBottom: 14 },
+  inputGroup: { marginBottom: 16 },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 6,
+  },
   passwordWrapper: { position: "relative" },
-  eyeIcon: { position: "absolute", right: 12, top: 38, padding: 4 },
-  requirementsContainer: { marginTop: -4, marginBottom: 16, paddingHorizontal: 4 },
-  requirementsTitle: { fontSize: 13, fontWeight: "600", color: "#374151", marginBottom: 6 },
-  reqValid: { fontSize: 12, color: "#16a34a", marginBottom: 2 },
-  reqInvalid: { fontSize: 12, color: "#9ca3af", marginBottom: 2 },
-  submitButton: { marginTop: 8 },
-  footer: { flexDirection: "row", justifyContent: "center", marginTop: 24 },
-  footerText: { color: "#6b7280", fontSize: 14 },
-  loginLink: { color: "#16a34a", fontWeight: "700", fontSize: 14 },
+  eyeIcon: { position: "absolute", right: 12, top: 12, padding: 4 },
+
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    marginTop: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: "#d1d5db",
+    marginRight: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkboxActive: { backgroundColor: "#16a34a", borderColor: "#16a34a" },
+  checkboxText: { flex: 1, fontSize: 13, color: "#4b5563", lineHeight: 20 },
+  linkText: { color: "#16a34a", fontWeight: "bold" },
+
+  registerContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 24,
+  },
+  registerText: { color: "#6b7280", fontSize: 14 },
+  registerLink: { color: "#16a34a", fontWeight: "bold", fontSize: 14 },
 });

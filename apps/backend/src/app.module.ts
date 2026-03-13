@@ -6,13 +6,13 @@ import { redisStore } from 'cache-manager-redis-yet';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { PlantsModule } from './modules/plants/plants.module';
-import {AiScanModule} from './modules/ai-scan/ai-scan.module';
+import { AiScanModule } from './modules/ai-scan/ai-scan.module';
 @Module({
   imports: [
     // 1. Load .env toàn cục
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: '.env.example',
     }),
 
     // 2. Kết nối MongoDB
@@ -39,7 +39,6 @@ import {AiScanModule} from './modules/ai-scan/ai-scan.module';
       inject: [ConfigService],
     }),
 
-    
     UsersModule,
     AuthModule,
     PlantsModule,

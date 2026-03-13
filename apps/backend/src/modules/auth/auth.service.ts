@@ -12,7 +12,7 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
 import { MailerService } from '@nestjs-modules/mailer';
-
+import axios from 'axios'; // Nhớ import cái này ở đầu file
 // Kiểu dữ liệu nhận từ Google/Facebook Strategy
 interface OAuthUserProfile {
   email: string;
@@ -196,9 +196,13 @@ export class AuthService {
       const payload = this.jwtService.verify(refreshToken);
       const userId = payload.sub;
 
-      const cachedToken = await this.cacheManager.get(`refresh_token:${userId}`);
+      const cachedToken = await this.cacheManager.get(
+        `refresh_token:${userId}`,
+      );
       if (cachedToken !== refreshToken) {
-        throw new UnauthorizedException('Token không hợp lệ hoặc bạn đã đăng xuất!');
+        throw new UnauthorizedException(
+          'Token không hợp lệ hoặc bạn đã đăng xuất!',
+        );
       }
 
       const user = await this.usersService.findByEmail(payload.email);
@@ -229,7 +233,8 @@ export class AuthService {
     }
 
     const user = await this.usersService.findByEmail(email);
-    if (!user) throw new NotFoundException('Email không tồn tại trong hệ thống!');
+    if (!user)
+      throw new NotFoundException('Email không tồn tại trong hệ thống!');
 
     // OAuth user chưa có password → gợi ý dùng set-password thay vì reset
     if (!user.isPasswordSet) {
@@ -296,7 +301,11 @@ export class AuthService {
         );
       }
 
-      await this.cacheManager.set(`otp_attempts:${email}`, attempts, 10 * 60 * 1000);
+      await this.cacheManager.set(
+        `otp_attempts:${email}`,
+        attempts,
+        10 * 60 * 1000,
+      );
       throw new BadRequestException(
         `Mã OTP không chính xác! Bạn còn ${5 - attempts} lần thử.`,
       );
@@ -306,7 +315,11 @@ export class AuthService {
     await this.cacheManager.del(`otp_attempts:${email}`);
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-    await this.cacheManager.set(`reset_token:${email}`, resetToken, 5 * 60 * 1000);
+    await this.cacheManager.set(
+      `reset_token:${email}`,
+      resetToken,
+      5 * 60 * 1000,
+    );
 
     return { message: 'Xác thực OTP thành công!', resetToken };
   }
@@ -380,5 +393,66 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+  // 🔥 THÊM MỚI: Hàm xử lý Đăng nhập Google cho Mobile
+  async verifyGoogleTokenForMobile(idToken: string) {
+    try {
+      // 1. Gọi thẳng lên API của Google để xác minh idToken
+      const verifyRes = await axios.get(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`,
+      );
+      const payload = verifyRes.data;
+
+      if (!payload || !payload.email) {
+        throw new BadRequestException('Token Google không hợp lệ!');
+      }
+
+      const email = payload.email;
+      const fullName = payload.name || 'Người dùng Google';
+      const googleId = payload.sub; // ID duy nhất của user này trên Google
+
+      // 2. Tìm trong Database xem user có chưa
+      let user = await this.usersService.findByEmail(email);
+
+      if (!user) {
+        // Chưa có -> Tự động đăng ký tài khoản mới siêu tốc
+        user = await this.usersService.create({
+          email,
+          fullName,
+          password: null, // Google không cần password
+          googleId,
+          authProviders: ['google'],
+          isPasswordSet: false,
+          plan: 'FREE',
+        });
+      } else {
+        // Đã có tài khoản -> Liên kết thêm Google ID vào nếu chưa có
+        let isUpdated = false;
+        if (!user.authProviders.includes('google')) {
+          user.authProviders.push('google');
+          isUpdated = true;
+        }
+        if (!user.googleId) {
+          user.googleId = googleId;
+          isUpdated = true;
+        }
+        if (isUpdated) {
+          await user.save(); // Lưu lại vào Database
+        }
+      }
+
+      // 3. Trả về Token JWT cho Mobile (Dùng lại hàm cũ, không sợ lỗi)
+      return this.generateTokens(
+        user._id.toString(),
+        user.email,
+        user.fullName,
+        user.plan,
+      );
+    } catch (error) {
+      console.error('Lỗi Google Auth:', error?.response?.data || error.message);
+      throw new UnauthorizedException(
+        'Xác thực Google thất bại. Vui lòng thử lại!',
+      );
+    }
   }
 }
