@@ -11,9 +11,9 @@ export enum SubscriptionPlan {
 }
 
 export enum AuthProvider {
-  LOCAL = 'LOCAL',
-  GOOGLE = 'GOOGLE',
-  FACEBOOK = 'FACEBOOK',
+  LOCAL = 'local',
+  GOOGLE = 'google',
+  FACEBOOK = 'facebook',
 }
 
 export interface IUser {
