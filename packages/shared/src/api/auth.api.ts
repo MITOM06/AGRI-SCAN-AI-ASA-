@@ -52,6 +52,8 @@ export const authApi = {
     window.location.href = `${BASE_URL}${API_ENDPOINTS.AUTH.GOOGLE_LOGIN}`;
   },
 
+  
+
   loginWithFacebook: () => {
     window.location.href = `${BASE_URL}${API_ENDPOINTS.AUTH.FACEBOOK_LOGIN}`;
   },
@@ -63,7 +65,7 @@ export const authApi = {
     return response.data;
   },
   // Thêm hàm này vào dưới hàm login cũ
-  loginWithGoogleMobile: async (idToken: string) => {
+  verifyGoogleTokenForMobile: async (idToken: string) => {
     const response = await axiosClient.post("/auth/google/verify-token", {
       idToken,
     });

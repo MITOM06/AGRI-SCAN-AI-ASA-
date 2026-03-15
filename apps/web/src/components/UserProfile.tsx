@@ -14,11 +14,22 @@ import {
   Calendar,
 } from "lucide-react";
 import { motion } from "framer-motion";
-
+import { scanApi } from "@agri-scan/shared";
 export function UserProfile() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [stats, setStats] = useState({ scanCount: 0, chatCount: 0, diseaseCount: 0 });
 
+  useEffect(() => {
+    Promise.all([scanApi.getScanHistory(), scanApi.getChatHistory()])
+      .then(([scans, chats]) => {
+        const diseases = new Set(
+          scans.flatMap(s => s.aiPredictions?.map((p: any) => p.diseaseId?.name).filter(Boolean) ?? [])
+        );
+        setStats({ scanCount: scans.length, chatCount: chats.length, diseaseCount: diseases.size });
+      })
+      .catch(() => { });
+  }, []);
   const handleLogout = () => {
     logout();
     router.push("/");
@@ -111,13 +122,12 @@ export function UserProfile() {
 
                   <div className="mb-4">
                     <span
-                      className={`text-2xl font-bold ${
-                        user.plan === "VIP"
-                          ? "text-amber-600"
-                          : user.plan === "PREMIUM"
-                            ? "text-purple-600"
-                            : "text-gray-700"
-                      }`}
+                      className={`text-2xl font-bold ${user.plan === "VIP"
+                        ? "text-amber-600"
+                        : user.plan === "PREMIUM"
+                          ? "text-purple-600"
+                          : "text-gray-700"
+                        }`}
                     >
                       {user.plan === "PREMIUM"
                         ? "Premium"

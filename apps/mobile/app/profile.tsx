@@ -132,6 +132,7 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     try {
+      await authApi.logout(); 
       if (Platform.OS === "web") {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");

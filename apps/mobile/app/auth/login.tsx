@@ -86,7 +86,11 @@ export default function LoginScreen() {
         await SecureStore.setItemAsync("refreshToken", res.refreshToken);
         await SecureStore.setItemAsync("user", JSON.stringify(res.user));
       }
-      router.replace("/user");
+      if (res.user?.role === 'ADMIN') {
+        router.replace("/admin");
+      } else {
+        router.replace("/user");
+      }
     } catch (error: any) {
       setApiError(
         error.response?.data?.message || "Đăng nhập Google thất bại!",
@@ -153,12 +157,16 @@ export default function LoginScreen() {
         await SecureStore.setItemAsync("refreshToken", res.refreshToken);
         await SecureStore.setItemAsync("user", JSON.stringify(res.user));
       }
-      router.replace("/user");
+      if (res.user?.role === 'ADMIN') {
+        router.replace("/admin");
+      } else {
+        router.replace("/user");
+      }
     } catch (error: any) {
       // Bắt lỗi từ Backend trả về
       setApiError(
         error.response?.data?.message ||
-          "Đăng nhập thất bại. Vui lòng thử lại!",
+        "Đăng nhập thất bại. Vui lòng thử lại!",
       );
     } finally {
       setIsSubmitting(false);
