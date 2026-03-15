@@ -22,7 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login: loginApi,loginWithGoogle, loginWithFacebook } = useAuth();
+  const { login: loginApi, loginWithGoogle, loginWithFacebook } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
 
   const isRegistrationSuccess =
@@ -40,8 +40,12 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       // BUG FIX: trước chỉ gọi login(data.email) → mật khẩu không bao giờ được gửi lên BE
-      await loginApi(data.email, data.password);
-      router.push("/");
+      const res = await loginApi(data.email, data.password);
+      if (res?.role === 'ADMIN') {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
@@ -179,7 +183,7 @@ export default function LoginForm() {
           {errors.terms && (
             <p className="mt-1 text-sm text-red-500">{errors.terms.message}</p>
           )}
-          
+
           {/* Lỗi từ backend */}
           {errors.root && (
             <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center border border-red-100">
@@ -204,7 +208,7 @@ export default function LoginForm() {
             )}
           </button>
 
-                    <div className="relative">
+          <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300" />
             </div>
@@ -215,7 +219,7 @@ export default function LoginForm() {
             </div>
           </div>
 
-                    <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className="mt-6 grid grid-cols-2 gap-3">
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}

@@ -29,6 +29,10 @@ export interface IUser {
   dailyPromptCount: number;
   createdAt: Date;
   updatedAt: Date;
+  isPasswordSet: boolean;
+  authProviders: string[];
+  isGoogleLinked?: boolean;
+  isFacebookLinked?: boolean;
 }
 
 export interface IUserCreate {

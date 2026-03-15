@@ -21,7 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function RegisterForm() {
   const router = useRouter();
-  const { register: registerApi } = useAuth();
+  const { register: registerApi, loginWithGoogle, loginWithFacebook } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -168,9 +168,8 @@ export default function RegisterForm() {
                 ].map(([valid, label]) => (
                   <p
                     key={label as string}
-                    className={`text-xs flex items-center gap-1 ${
-                      valid ? "text-green-600" : "text-gray-400"
-                    }`}
+                    className={`text-xs flex items-center gap-1 ${valid ? "text-green-600" : "text-gray-400"
+                      }`}
                   >
                     <span className="w-1 h-1 bg-current rounded-full" />
                     {label as string}
@@ -223,7 +222,7 @@ export default function RegisterForm() {
                   {...register("terms")}
                 />
               </div>
-              
+
               <div className="ml-3 text-sm">
                 <label
                   htmlFor="terms"
@@ -247,11 +246,11 @@ export default function RegisterForm() {
               </div>
             </div>
           </div>
-          
+
           {errors.terms && (
             <p className="mt-1 text-sm text-red-500">{errors.terms.message}</p>
           )}
-          
+
           {/* Lỗi backend */}
           {errors.root && (
             <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center border border-red-100">
@@ -294,7 +293,7 @@ export default function RegisterForm() {
                 whileTap={{ scale: 0.98 }}
                 type="button"
                 className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all"
-              >
+                onClick={loginWithGoogle}>
                 <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -320,6 +319,7 @@ export default function RegisterForm() {
                 whileTap={{ scale: 0.98 }}
                 type="button"
                 className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all"
+                onClick={loginWithFacebook}
               >
                 <svg
                   className="h-5 w-5 mr-2"

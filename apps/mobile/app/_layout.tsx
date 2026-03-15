@@ -54,8 +54,8 @@ export default function RootLayout() {
         <Stack.Screen name="about" />
         <Stack.Screen name="payment" />
         <Stack.Screen name="community" />
-        <Stack.Screen name="settings" />
-        <Stack.Screen name="notifications" />
+        <Stack.Screen name="setting" />
+        <Stack.Screen name="notification" />
         <Stack.Screen name="tips" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="weather" />
