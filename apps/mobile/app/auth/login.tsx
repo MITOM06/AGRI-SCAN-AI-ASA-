@@ -45,10 +45,14 @@ export default function LoginScreen() {
   // ==========================================
   // 🔥 CẤU HÌNH GOOGLE AUTH SESSION TỪ BIẾN MÔI TRƯỜNG
   // ==========================================
+  const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID; // Trỏ đúng tên biến trong file .env
+
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    webClientId: googleClientId,
+    iosClientId: googleClientId,     // Đưa Web ID cho iOS để "lách luật" thư viện
+    androidClientId: googleClientId, // Đưa Web ID cho Android để "lách luật" thư viện
     redirectUri: makeRedirectUri({
-      scheme: 'mobile',      // khớp với scheme trong app.json
+      scheme: 'mobile',
       path: 'auth/callback',
     }),
   });
@@ -211,7 +215,7 @@ export default function LoginScreen() {
       // Bắt lỗi từ Backend trả về
       setApiError(
         error.response?.data?.message ||
-          "Đăng nhập thất bại. Vui lòng thử lại!",
+        "Đăng nhập thất bại. Vui lòng thử lại!",
       );
     } finally {
       setIsSubmitting(false);
