@@ -34,10 +34,9 @@ export class WeatherConditions {
   @Prop({ type: Number, required: false })
   maxWindSpeed?: number;
 
-  /**
-   * Loại thời tiết chính từ OWM (phải khớp chính xác)
-   * Ví dụ: 'Rain', 'Clear', 'Clouds', 'Thunderstorm', 'Snow', 'Drizzle'
-   */
+   @Prop({ type: Number, required: false })
+  minWindSpeed?: number;
+
   @Prop({ type: String, required: false })
   weatherMain?: string;
 

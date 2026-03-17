@@ -13,12 +13,17 @@ export class PlantsService implements OnApplicationBootstrap {
   ) { }
 
   async onApplicationBootstrap() {
-    console.log('🌱 Đang kiểm tra và đồng bộ dữ liệu Tủ thuốc từ team AI...');
+    const count = await this.plantModel.countDocuments();
+    if (count > 0) {
+      console.log(`🌱 Đã có ${count} cây trong DB, bỏ qua seed tự động.`);
+      return;
+    }
+    console.log('🌱 DB trống, đang seed dữ liệu...');
     try {
       const result = await this.seedData();
       console.log(result.message);
     } catch (error) {
-      console.error('⚠️ Bỏ qua đồng bộ dữ liệu:', (error as Error).message);
+      console.error('⚠️ Seed thất bại:', (error as Error).message);
     }
   }
 
@@ -53,24 +58,24 @@ export class PlantsService implements OnApplicationBootstrap {
   }
 
   // 5. Bơm dữ liệu
- // 5. Bơm dữ liệu (Cây Trồng + Từ điển Bệnh + Nối bệnh vào cây)
+  // 5. Bơm dữ liệu (Cây Trồng + Từ điển Bệnh + Nối bệnh vào cây)
   async seedData() {
     try {
-// 1. ĐỌC FILE CÂY TRỒNG
+      // 1. ĐỌC FILE CÂY TRỒNG
       const plantsPath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plants_data.json');
       const plantsRawData = fs.readFileSync(plantsPath, 'utf-8');
       const plantsList = JSON.parse(plantsRawData);
 
       // 🔥 FIX LỖI TYPE 'never': Khai báo rõ kiểu dữ liệu là mảng chứa bất kỳ object nào (any[])
-      const plantDocs: any[] = []; 
-      
+      const plantDocs: any[] = [];
+
       for (const plantData of plantsList) {
         const plant = await this.plantModel.findOneAndUpdate(
           { scientificName: plantData.scientificName },
           plantData,
           { upsert: true, new: true }
         );
-        
+
         // 🔥 Bổ sung kiểm tra plant tồn tại để tránh lỗi strict null check
         if (plant) {
           plant.diseases = []; // Reset mảng bệnh trước khi nối lại
@@ -88,7 +93,7 @@ export class PlantsService implements OnApplicationBootstrap {
 
       for (const [yoloLabel, info] of Object.entries(plantKnowledge)) {
         const isHealthy = info['Status'] === 'Healthy' || info['Status'] === 'Normal';
-        
+
         const mappedData = isHealthy ? {
           name: yoloLabel,
           commonName: 'Cây khỏe mạnh',
@@ -107,19 +112,19 @@ export class PlantsService implements OnApplicationBootstrap {
           },
           status: 'APPROVED'
         };
-        
-          
+
+
         const savedDisease = await this.diseaseModel.findOneAndUpdate(
           { name: yoloLabel },
           mappedData,
           { upsert: true, new: true }
         );
         diseaseCount++;
-        
+
         // 3. THUẬT TOÁN NỐI BỆNH VÀO ĐÚNG CÂY
         const tenCayString = info['TEN_CAY'] || '';
         const match = tenCayString.match(/\((.*?)\)/); // Trích xuất tên khoa học trong ngoặc tròn
-        
+
         if (match && match[1]) {
           const targetPlant = plantDocs.find(p => p.scientificName === match[1]);
           if (targetPlant && !isHealthy) { // Không nhét "Cây khỏe mạnh" vào danh sách bệnh

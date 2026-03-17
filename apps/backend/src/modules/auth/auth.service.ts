@@ -452,6 +452,8 @@ export class AuthService {
         user.email,
         user.fullName,
         user.plan,
+        user.isPasswordSet,
+        user.role,
       );
     } catch (error) {
       console.error('Lỗi Google Auth:', error?.response?.data || error.message);

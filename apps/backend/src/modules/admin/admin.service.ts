@@ -28,14 +28,15 @@ export class AdminService {
         @InjectModel(ScanHistory.name)
         private scanHistoryModel: Model<ScanHistoryDocument>,
     ) { }
-    
+
 
     // ════════════════════════════════════════════════════════════
     // 1. DASHBOARD OVERVIEW
     // ════════════════════════════════════════════════════════════
     async getDashboard() {
         const now = new Date();
-        const todayStart = new Date(now.setHours(0, 0, 0, 0));
+        const todayStart = new Date(now);
+        todayStart.setHours(0, 0, 0, 0);  // Mutate bản copy, không mutate now
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
         const [
@@ -105,7 +106,7 @@ export class AdminService {
         const filter: Record<string, any> = { role: { $ne: 'ADMIN' } };
 
         if (plan) filter.plan = plan;
-        if (role) filter.role = role;
+        if (role && role !== 'ADMIN') filter.role = role;
         if (search) {
             filter.$or = [
                 { email: { $regex: search, $options: 'i' } },

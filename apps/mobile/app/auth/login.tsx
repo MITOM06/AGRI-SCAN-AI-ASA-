@@ -1,3 +1,4 @@
+import * as WebBrowser from "expo-web-browser";
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -22,11 +23,8 @@ import {
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
-import * as AuthSession from "expo-auth-session";
-import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
-
-// 🔥 Đã xóa loginSchema để tránh lỗi vỡ form ngầm
+import { makeRedirectUri } from "expo-auth-session";
 import { type LoginFormData, authApi } from "@agri-scan/shared";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
@@ -48,19 +46,11 @@ export default function LoginScreen() {
   // 🔥 CẤU HÌNH GOOGLE AUTH SESSION TỪ BIẾN MÔI TRƯỜNG
   // ==========================================
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId:
-      process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ||
-      "702635334461-qq8hvp2rom1e4slf27ftavn502nprrj6.apps.googleusercontent.com",
-    iosClientId:
-      process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ||
-      "702635334461-qq8hvp2rom1e4slf27ftavn502nprrj6.apps.googleusercontent.com",
-    androidClientId:
-      process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ||
-      "702635334461-qq8hvp2rom1e4slf27ftavn502nprrj6.apps.googleusercontent.com",
-    redirectUri:
-      Platform.OS === "web"
-        ? "http://localhost:8081"
-        : "https://auth.expo.io/@tungpro123/mobile",
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    redirectUri: makeRedirectUri({
+      scheme: 'mobile',      // khớp với scheme trong app.json
+      path: 'auth/callback',
+    }),
   });
 
   useEffect(() => {
@@ -76,7 +66,7 @@ export default function LoginScreen() {
     setIsSubmitting(true);
     setApiError("");
     try {
-      const res = await authApi.loginWithGoogleMobile(idToken);
+      const res = await authApi.verifyGoogleTokenForMobile(idToken);
       if (Platform.OS === "web") {
         localStorage.setItem("accessToken", res.accessToken);
         localStorage.setItem("refreshToken", res.refreshToken);
@@ -110,12 +100,67 @@ export default function LoginScreen() {
     promptAsync();
   };
 
-  const handleFacebookLogin = () => {
+  const handleFacebookLogin = async () => {
     if (!agreeTerms) {
-      setApiError("Vui lòng đồng ý với Điều khoản trước!");
+      setApiError("Vui lòng đồng ý với Điều khoản và Chính sách bảo mật trước!");
       return;
     }
-    Alert.alert("Thông báo", "Facebook Login đang được tích hợp!");
+
+    setIsSubmitting(true);
+    setApiError("");
+
+    try {
+      const API_URL =
+        process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000";
+
+      // Mở trang đăng nhập Facebook của backend trong trình duyệt in-app
+      const result = await WebBrowser.openAuthSessionAsync(
+        `${API_URL}/api/auth/facebook`,
+        makeRedirectUri({ scheme: "mobile", path: "auth/callback" }),
+      );
+
+      if (result.type === "success" && result.url) {
+        // Lấy token từ query string trong redirect URL
+        const url = new URL(result.url);
+        const accessToken = url.searchParams.get("accessToken");
+        const refreshToken = url.searchParams.get("refreshToken");
+        const userParam = url.searchParams.get("user");
+
+        if (!accessToken || !refreshToken) {
+          setApiError("Đăng nhập Facebook thất bại. Vui lòng thử lại!");
+          return;
+        }
+
+        const user = userParam
+          ? JSON.parse(decodeURIComponent(userParam))
+          : null;
+
+        if (Platform.OS === "web") {
+          localStorage.setItem("accessToken", accessToken);
+          localStorage.setItem("refreshToken", refreshToken);
+          if (user) localStorage.setItem("user", JSON.stringify(user));
+        } else {
+          await SecureStore.setItemAsync("accessToken", accessToken);
+          await SecureStore.setItemAsync("refreshToken", refreshToken);
+          if (user)
+            await SecureStore.setItemAsync("user", JSON.stringify(user));
+        }
+
+        if (user?.role === "ADMIN") {
+          router.replace("/admin");
+        } else {
+          router.replace("/user");
+        }
+      } else if (result.type === "cancel" || result.type === "dismiss") {
+        setApiError("Bạn đã hủy đăng nhập Facebook.");
+      }
+    } catch (error: any) {
+      setApiError(
+        error.response?.data?.message || "Đăng nhập Facebook thất bại!",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ==========================================
