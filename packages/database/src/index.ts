@@ -6,3 +6,5 @@ export * from "./schemas/chat-history.schema";
 export * from "./schemas/Weather-rule.schema";
 export * from "./schemas/feedback.schema";
 export * from "./schemas/payment.schema";
+export * from "./schemas/product.schema";
+export * from "./schemas/order.schema";
