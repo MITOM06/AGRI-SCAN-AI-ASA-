@@ -68,7 +68,7 @@ export function TreeDictionary() {
       const detail = await plantApi.getPlantById(id);
       setSelectedPlant(detail);
     } catch {
-      // Lỗi fetch detail — đóng modal
+      setError("Không thể tải thông tin chi tiết. Vui lòng thử lại."); // ← thêm dòng này
     } finally {
       setIsLoadingDetail(false);
     }
@@ -92,7 +92,29 @@ export function TreeDictionary() {
       const matchesSearch =
         plant.commonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         plant.scientificName.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesSearch;
+
+      // Thêm 4 điều kiện này:
+      const matchesCategory =
+        selectedCategories.length === 0 ||
+        selectedCategories.some((c) => plant.category?.includes(c));
+
+      const matchesGrowthRate =
+        selectedGrowthRates.length === 0 ||
+        selectedGrowthRates.includes(plant.growthRate);
+
+      const matchesLight =
+        selectedLights.length === 0 || selectedLights.includes(plant.light);
+
+      const matchesWater =
+        selectedWaters.length === 0 || selectedWaters.includes(plant.water);
+
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesGrowthRate &&
+        matchesLight &&
+        matchesWater
+      );
     });
   }, [
     plants,
