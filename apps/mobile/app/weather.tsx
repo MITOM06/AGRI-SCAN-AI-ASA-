@@ -26,6 +26,12 @@ import {
   CalendarDays,
   Clock,
   ThumbsUp,
+  Gauge,
+  Eye,
+  Sunrise,
+  Sunset,
+  Moon,
+  Activity,
 } from "lucide-react-native";
 
 import { weatherApi } from "@agri-scan/shared";
@@ -38,7 +44,6 @@ const CATEGORIES = [
   { id: "FLOWER", label: "Hoa kiểng" },
 ];
 
-// 🔥 BỘ TỪ ĐIỂN DỊCH THỜI TIẾT
 const translateWeather = (engDesc: string) => {
   if (!engDesc) return "";
   const dict: Record<string, string> = {
@@ -69,7 +74,20 @@ const translateWeather = (engDesc: string) => {
   return dict[engDesc.toLowerCase()] || engDesc;
 };
 
-// 🔥 MAPPER: BỘ ICON THỜI TIẾT HIỆN ĐẠI (THAY THẾ OWM)
+// 🔥 Hàm dịch câu Tóm tắt (Summary) từ OWM sang Tiếng Việt
+const translateSummary = (summary: string) => {
+  if (!summary) return "";
+  let s = summary.toLowerCase();
+  if (s.includes("partly cloudy") && s.includes("clear spells"))
+    return "Dự báo một ngày nhiều mây xen lẫn trời nắng hanh.";
+  if (s.includes("partly cloudy") && s.includes("rain"))
+    return "Dự báo một ngày nhiều mây kèm theo mưa.";
+  if (s.includes("partly cloudy")) return "Dự báo một ngày nhiều mây.";
+  if (s.includes("clear")) return "Trời quang đãng, nắng đẹp rực rỡ.";
+  if (s.includes("rain")) return "Dự báo có mưa, thời tiết ẩm ướt.";
+  return summary; // Giữ nguyên nếu không khớp từ điển
+};
+
 const getModernIconUrl = (code: string) => {
   const map: Record<string, string> = {
     "01d": "clear-day.png",
@@ -157,10 +175,8 @@ export default function WeatherScreen() {
       } catch (locErr) {}
 
       setCityName(cName);
-
       const res = await weatherApi.getWeatherAndAdvice({ lat, lon, category });
       setWeatherData(res);
-      setSelectedDayIndex(0);
     } catch (error: any) {
       setErrorMsg(
         error.response?.data?.message || "Không thể tải dữ liệu thời tiết.",
@@ -225,25 +241,18 @@ export default function WeatherScreen() {
     return tips;
   };
 
-  // 🔥 TÌM KHUNG GIỜ VÀNG (Gió êm, Ít mưa, Nhiệt độ mát mẻ)
   const findGoldenHour = (hourlyList: any[]) => {
-    // Chỉ tìm trong ban ngày (từ 5h sáng đến 17h chiều) của 15 giờ tới
     const validHours = hourlyList.slice(0, 15).filter((h) => {
       const hLocal = new Date(h.timestamp * 1000).getHours();
       return hLocal >= 5 && hLocal <= 17;
     });
-
     if (validHours.length === 0) return null;
-
-    // Sắp xếp ưu tiên: Mưa thấp nhất -> Gió nhỏ nhất -> Nhiệt độ lý tưởng (gần 26 độ)
     const sorted = validHours.sort((a, b) => {
       if (a.pop !== b.pop) return a.pop - b.pop;
       if (a.windSpeed !== b.windSpeed) return a.windSpeed - b.windSpeed;
       return Math.abs(a.temp - 26) - Math.abs(b.temp - 26);
     });
-
     const best = sorted[0];
-    // Nếu khung giờ tốt nhất mà vẫn xấu (Mưa > 40% hoặc Gió to) thì báo Null
     if (best.pop > 40 || best.windSpeed > 6 || best.temp > 35) return null;
     return best;
   };
@@ -260,12 +269,29 @@ export default function WeatherScreen() {
     return `${date.getHours().toString().padStart(2, "0")}:00`;
   };
 
+  const formatTimeFromStamp = (timestamp: number) => {
+    if (!timestamp) return "--:--";
+    const d = new Date(timestamp * 1000);
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  };
+
+  const getMoonPhaseText = (phase: number) => {
+    if (phase === 0 || phase === 1) return "Trăng non";
+    if (phase > 0 && phase < 0.25) return "Trăng lưỡi liềm";
+    if (phase === 0.25) return "Bán nguyệt đầu tháng";
+    if (phase > 0.25 && phase < 0.5) return "Trăng khuyết";
+    if (phase === 0.5) return "Trăng tròn";
+    if (phase > 0.5 && phase < 0.75) return "Trăng khuyết cuối";
+    if (phase === 0.75) return "Bán nguyệt cuối tháng";
+    return "Trăng tàn";
+  };
+
   const getHeroBgColor = (iconCode: string) => {
-    if (!iconCode) return "#1e3a8a"; // Xanh mặc định
-    if (iconCode.includes("n")) return "#0f172a"; // Đêm (Đen bóng đêm)
+    if (!iconCode) return "#1e3a8a";
+    if (iconCode.includes("n")) return "#0f172a";
     if (["09d", "10d", "11d", "13d", "50d"].includes(iconCode))
-      return "#475569"; // Mưa/Sương mù (Xám)
-    return "#0ea5e9"; // Nắng đẹp (Xanh da trời trong vắt)
+      return "#475569";
+    return "#0ea5e9";
   };
 
   if (loading && !weatherData) {
@@ -279,6 +305,9 @@ export default function WeatherScreen() {
     );
   }
 
+  const safeData: any = weatherData;
+
+  // 🔥 ĐÃ FIX LỖI: Lấy cả Áp suất, Tầm nhìn, Bình minh, Hoàng hôn cho ngày tương lai
   const currentViewData =
     weatherData && selectedDayIndex === 0
       ? {
@@ -292,6 +321,12 @@ export default function WeatherScreen() {
           uvi: weatherData.weatherData.current.uvi,
           pop: weatherData.weatherData.hourly[0]?.pop || 0,
           advices: weatherData.advices,
+          pressure: safeData.weatherData.current.pressure,
+          visibility: safeData.weatherData.current.visibility,
+          sunrise: safeData.weatherData.current.sunrise,
+          sunset: safeData.weatherData.current.sunset,
+          summary: translateSummary(safeData.weatherData.daily[0]?.summary),
+          moonPhase: safeData.weatherData.daily[0]?.moonPhase,
         }
       : weatherData && selectedDayIndex > 0
         ? {
@@ -307,6 +342,16 @@ export default function WeatherScreen() {
             advices: generateFutureAdvices(
               weatherData.weatherData.daily[selectedDayIndex],
             ),
+            // 🔥 Đọc dữ liệu từ mảng daily thay vì gán null
+            pressure: safeData.weatherData.daily[selectedDayIndex]?.pressure,
+            visibility:
+              safeData.weatherData.daily[selectedDayIndex]?.visibility,
+            sunrise: safeData.weatherData.daily[selectedDayIndex]?.sunrise,
+            sunset: safeData.weatherData.daily[selectedDayIndex]?.sunset,
+            summary: translateSummary(
+              safeData.weatherData.daily[selectedDayIndex]?.summary,
+            ),
+            moonPhase: safeData.weatherData.daily[selectedDayIndex]?.moonPhase,
           }
         : null;
 
@@ -380,7 +425,7 @@ export default function WeatherScreen() {
           </View>
         ) : weatherData && currentViewData ? (
           <>
-            {/* HERO CARD (Layout cũ của bạn nhưng ICON mới và Đổi màu mượt mà) */}
+            {/* HERO CARD */}
             <View
               style={[
                 styles.heroCard,
@@ -394,7 +439,6 @@ export default function WeatherScreen() {
                     {translateWeather(currentViewData.desc)}
                   </Text>
                 </View>
-                {/* Dùng hàm getModernIconUrl để load icon sắc nét */}
                 <Image
                   source={{ uri: getModernIconUrl(currentViewData.icon) }}
                   style={styles.weatherIconHuge}
@@ -432,7 +476,7 @@ export default function WeatherScreen() {
               </View>
             </View>
 
-            {/* TÍNH NĂNG MỚI: KHUNG GIỜ VÀNG (Chỉ hiện cho "Hôm nay") */}
+            {/* KHUNG GIỜ VÀNG (Chỉ hiện hôm nay) */}
             {selectedDayIndex === 0 && (
               <View style={styles.goldenHourCard}>
                 <View style={styles.goldenHourLeft}>
@@ -469,7 +513,7 @@ export default function WeatherScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <CalendarDays size={20} color="#111827" />
-                <Text style={styles.sectionTitle}>Chuyển ngày dự báo</Text>
+                <Text style={styles.sectionTitle}>Dự báo 8 ngày tới</Text>
               </View>
               <ScrollView
                 horizontal
@@ -503,6 +547,88 @@ export default function WeatherScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+            </View>
+
+            {/* CHỈ SỐ MỞ RỘNG (Hiện cả hiện tại lẫn tương lai) */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Activity size={20} color="#111827" />
+                <Text style={styles.sectionTitle}>Chi tiết thời tiết</Text>
+              </View>
+
+              {/* Tóm tắt thời tiết nổi bật (Đã dịch sang Tiếng Việt) */}
+              {currentViewData.summary && (
+                <View style={styles.summaryBox}>
+                  <Text style={styles.summaryText}>
+                    {currentViewData.summary}
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.extendedGrid}>
+                {currentViewData.pressure !== null &&
+                  currentViewData.pressure !== undefined && (
+                    <View style={styles.extendedItem}>
+                      <Gauge size={22} color="#6366f1" />
+                      <View>
+                        <Text style={styles.extendedLabel}>Áp suất</Text>
+                        <Text style={styles.extendedValue}>
+                          {currentViewData.pressure} hPa
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                {currentViewData.visibility !== null &&
+                  currentViewData.visibility !== undefined && (
+                    <View style={styles.extendedItem}>
+                      <Eye size={22} color="#14b8a6" />
+                      <View>
+                        <Text style={styles.extendedLabel}>Tầm nhìn</Text>
+                        <Text style={styles.extendedValue}>
+                          {(currentViewData.visibility / 1000).toFixed(1)} km
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                {currentViewData.sunrise !== null &&
+                  currentViewData.sunrise !== undefined && (
+                    <View style={styles.extendedItem}>
+                      <Sunrise size={22} color="#f59e0b" />
+                      <View>
+                        <Text style={styles.extendedLabel}>Bình minh</Text>
+                        <Text style={styles.extendedValue}>
+                          {formatTimeFromStamp(currentViewData.sunrise)}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                {currentViewData.sunset !== null &&
+                  currentViewData.sunset !== undefined && (
+                    <View style={styles.extendedItem}>
+                      <Sunset size={22} color="#f43f5e" />
+                      <View>
+                        <Text style={styles.extendedLabel}>Hoàng hôn</Text>
+                        <Text style={styles.extendedValue}>
+                          {formatTimeFromStamp(currentViewData.sunset)}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                {currentViewData.moonPhase !== null &&
+                  currentViewData.moonPhase !== undefined && (
+                    <View style={[styles.extendedItem, { width: "100%" }]}>
+                      <Moon size={22} color="#8b5cf6" />
+                      <View>
+                        <Text style={styles.extendedLabel}>
+                          Mặt trăng đêm nay
+                        </Text>
+                        <Text style={styles.extendedValue}>
+                          {getMoonPhaseText(currentViewData.moonPhase)}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+              </View>
             </View>
 
             {/* AI ADVICE */}
@@ -569,7 +695,7 @@ export default function WeatherScreen() {
               )}
             </View>
 
-            {/* DỰ BÁO 24 GIỜ TỚI */}
+            {/* DỰ BÁO 24 GIỜ TỚI (Chỉ hiện hôm nay) */}
             {selectedDayIndex === 0 && (
               <View style={[styles.section, { marginBottom: 40 }]}>
                 <Text style={styles.sectionTitle}>🕒 Biến động 24 giờ tới</Text>
@@ -583,7 +709,6 @@ export default function WeatherScreen() {
                       <Text style={styles.hourlyTime}>
                         {idx === 0 ? "Bây giờ" : formatTime(hour.timestamp)}
                       </Text>
-                      {/* Dùng icon đẹp cho thanh cuộn giờ */}
                       <Image
                         source={{ uri: getModernIconUrl(hour.weatherIcon) }}
                         style={styles.hourlyIcon}
@@ -656,7 +781,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
 
-  // Giao diện Hero Card cũ của bạn nhưng fix bóng mờ và layout cho gọn gàng
   heroCard: {
     borderRadius: 24,
     padding: 24,
@@ -670,7 +794,7 @@ const styles = StyleSheet.create({
   heroMain: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-around", // Kéo giãn đều ra 2 bên
+    justifyContent: "space-around",
     marginBottom: 24,
   },
   heroTextGroup: { alignItems: "flex-start" },
@@ -700,7 +824,6 @@ const styles = StyleSheet.create({
   },
   statLabelRow: { color: "#e0f2fe", fontSize: 13 },
 
-  // Tính năng Khung giờ vàng
   goldenHourCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -756,6 +879,49 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 18, fontWeight: "800", color: "#0f172a" },
 
+  // Styles cho Cụm Chỉ Số Mở Rộng
+  summaryBox: {
+    backgroundColor: "#f0fdfa",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#ccfbf1",
+  },
+  summaryText: {
+    color: "#0f766e",
+    fontSize: 15,
+    fontWeight: "500",
+    lineHeight: 22,
+  },
+  extendedGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  extendedItem: {
+    width: "48%",
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  extendedLabel: {
+    fontSize: 13,
+    color: "#64748b",
+    fontWeight: "500",
+    marginBottom: 2,
+  },
+  extendedValue: { fontSize: 15, fontWeight: "800", color: "#1e293b" },
+
   dateTabsScroll: { gap: 10, paddingVertical: 4 },
   dateTab: {
     paddingHorizontal: 16,
@@ -809,7 +975,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: "600",
   },
-  hourlyIcon: { width: 48, height: 48 }, // Icon thanh ngang to và rõ hơn
+  hourlyIcon: { width: 48, height: 48 },
   hourlyTemp: {
     fontSize: 17,
     fontWeight: "800",
