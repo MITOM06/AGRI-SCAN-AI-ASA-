@@ -17,7 +17,7 @@ export interface IDashboard {
   };
   revenue: {
     total: number;     // tổng doanh thu từ trước đến nay (VND)
-    thisMonth: number; // doanh thu tháng hiện tại (VND)
+    thisMonth: number; // doanh thu tháng Ahiện tại (VND)
   };
   pendingFeedbacks: number;
   totalScans: number;
