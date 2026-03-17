@@ -1,8 +1,10 @@
 import { API_ENDPOINTS } from "../constants";
 import { axiosClient } from "./axios-client";
 
-// Kiểm tra lại cổng Backend của bạn là 3000 hay 4000 nhé!
-const BASE_URL = "http://localhost:4000";
+const BASE_URL =
+  (typeof process !== 'undefined' &&
+    (process.env.EXPO_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL)) ||
+  'http://localhost:4000';
 
 export const authApi = {
   login: async (data: any) => {
@@ -48,11 +50,8 @@ export const authApi = {
   },
 
   loginWithGoogle: () => {
-    // Sử dụng hằng số từ API_ENDPOINTS
     window.location.href = `${BASE_URL}${API_ENDPOINTS.AUTH.GOOGLE_LOGIN}`;
   },
-
-  
 
   loginWithFacebook: () => {
     window.location.href = `${BASE_URL}${API_ENDPOINTS.AUTH.FACEBOOK_LOGIN}`;

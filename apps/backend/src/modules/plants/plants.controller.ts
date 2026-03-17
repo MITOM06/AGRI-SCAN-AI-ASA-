@@ -1,9 +1,11 @@
 import { Controller, Get, Param, UseGuards, Post, Body, UnauthorizedException, Req } from '@nestjs/common';
 import { PlantsService } from './plants.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 @Controller('plants')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 export class PlantsController {
   constructor(private readonly plantsService: PlantsService) { }
 
@@ -18,10 +20,7 @@ export class PlantsController {
   }
 
   @Post('seed')
-  async seedPlantData(@Req() req: any) {
-    if (req.user.role !== 'ADMIN') {
-      throw new UnauthorizedException('Chỉ Admin mới được phép thực hiện thao tác này!');
-    }
+  async seedPlantData() {
     return this.plantsService.seedData();
   }
 

@@ -18,7 +18,7 @@ export class Payment {
   @Prop({ default: 'SUCCESS', enum: ['SUCCESS', 'FAILED', 'PENDING'] })
   status: string;
 
-  @Prop({ default: 'MOCK', enum: ['MOCK', 'VNPAY', 'MOMO', 'STRIPE'] })
+  @Prop({ default: 'MOCK', enum: ['MOCK', 'VNPAY', 'MOMO', 'STRIPE', 'ADMIN_GRANT'] })
   method: string;
 
   @Prop({ default: 30 })

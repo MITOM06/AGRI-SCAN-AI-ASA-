@@ -136,7 +136,7 @@ const weatherRulesSeed = [
     title: '💨 Gió mạnh - Nguy cơ gãy cành',
     message: 'Tốc độ gió trên 10 m/s (36 km/h). Cắm cọc và buộc dây cho cây cao, leo. Di chuyển chậu nhỏ vào nơi khuất gió. Kiểm tra và gia cố giàn lưới.',
     dataSource: 'current',
-    conditions: { maxWindSpeed: 10 },
+    conditions: { minWindSpeed: 10 },
     priority: 75,
     isActive: true,
   },
@@ -303,7 +303,7 @@ const weatherRulesSeed = [
     isActive: true,
   }
 ];
-async function runSeed() {
+async function runSeed()  {
   const URI = process.env.MONGODB_URI || 'mongodb://admin:secretPassword@localhost:27018/agriscan?authSource=admin';
 
   try {

@@ -11,23 +11,10 @@ declare module "axios" {
   }
 }
 
-// ─── BUG FIX: 'localhost' trỏ vào chính điện thoại, không phải máy tính ───────
-//
-// Cách lấy IP máy tính của bạn:
-//   Windows: ipconfig → tìm "IPv4 Address" (VD: 192.168.1.5)
-//   macOS/Linux: ifconfig | grep "inet " (VD: 192.168.1.5)
-//
-// Sau đó tạo file apps/mobile/.env với nội dung:
-//   EXPO_PUBLIC_API_URL=http://192.168.1.5:4000
-//
-// Lưu ý: Điện thoại và máy tính phải cùng wifi.
-// Nếu test bằng Android Emulator trên máy thật thì dùng: http://10.0.2.2:4000
-// Nếu deploy production thì đổi thành domain thật: https://api.agriscan.ai
-//
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.EXPO_PUBLIC_API_URL ||
-  "http://10.1.130.6:4000";
+  (typeof process !== 'undefined' &&
+    (process.env.EXPO_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL)) ||
+  'http://localhost:4000';
 
 export const axiosClient = axios.create({
   baseURL: BASE_URL,

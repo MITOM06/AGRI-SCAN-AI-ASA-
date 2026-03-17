@@ -150,7 +150,7 @@ export class WeatherService {
     private readonly configService: ConfigService,
     @InjectModel(WeatherRule.name)
     private readonly weatherRuleModel: Model<WeatherRuleDocument>,
-  ) {}
+  ) { }
 
   /**
    * Hàm chính: Lấy dữ liệu thời tiết từ OWM và tạo lời khuyên nông nghiệp
@@ -380,13 +380,13 @@ export class WeatherService {
     const todayDailyData = owmData.daily[0];
     const dailyDataPoint = todayDailyData
       ? {
-          temp: todayDailyData.temp.day,
-          humidity: todayDailyData.humidity,
-          windSpeed: todayDailyData.wind_speed,
-          uvi: todayDailyData.uvi,
-          pop: todayDailyData.pop,
-          weatherMain: todayDailyData.weather[0]?.main ?? '',
-        }
+        temp: todayDailyData.temp.day,
+        humidity: todayDailyData.humidity,
+        windSpeed: todayDailyData.wind_speed,
+        uvi: todayDailyData.uvi,
+        pop: todayDailyData.pop,
+        weatherMain: todayDailyData.weather[0]?.main ?? '',
+      }
       : null;
 
     // --- Duyệt qua từng Rule và kiểm tra điều kiện ---
@@ -465,6 +465,7 @@ export class WeatherService {
     if (c.maxWindSpeed !== undefined && dataPoint.windSpeed > c.maxWindSpeed)
       return false;
 
+    if (c.minWindSpeed !== undefined && dataPoint.windSpeed < c.minWindSpeed) return false;
     // Loại thời tiết chính (so sánh case-insensitive)
     if (
       c.weatherMain !== undefined &&
