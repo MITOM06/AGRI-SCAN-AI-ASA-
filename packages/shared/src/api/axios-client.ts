@@ -18,7 +18,7 @@ const BASE_URL =
 
 export const axiosClient = axios.create({
   baseURL: BASE_URL,
-  headers: {
+ headers: {
     "Content-Type": "application/json",
   },
 

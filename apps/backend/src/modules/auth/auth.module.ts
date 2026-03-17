@@ -33,7 +33,7 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
         transport: {
           host: 'smtp.gmail.com',
           port: 587,
-          secure: false,
+          secure: process.env.MAIL_SECURE === 'true',
           auth: {
             user: configService.getOrThrow('SMTP_USER'),
             pass: configService.getOrThrow('SMTP_PASS'),
