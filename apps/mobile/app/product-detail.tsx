@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,280 +7,318 @@ import {
   TouchableOpacity,
   Image,
   StatusBar,
-  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import {
-  ArrowLeft,
-  ShoppingCart,
-  Star,
-  Minus,
-  Plus,
-  ShieldCheck,
-  Truck,
-} from "lucide-react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { ArrowLeft, Star, Store, ShieldCheck, Info } from "lucide-react-native";
+
+import { productApi } from "@agri-scan/shared";
 
 export default function ProductDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // Lấy ID sản phẩm từ trang Shop truyền sang
   const { id } = useLocalSearchParams();
-  const [quantity, setQuantity] = useState(1);
 
-  // Mock data giả lập sản phẩm
-  const product = {
-    id: id || "1",
-    name: "Nấm đối kháng Trichoderma chuyên trị nấm rễ",
-    price: "45.000đ",
-    originalPrice: "60.000đ",
-    sold: "1.2k",
-    rating: 4.9,
-    reviews: 320,
-    image:
-      "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?q=80&w=600",
-    desc: "Chế phẩm sinh học chứa bào tử nấm Trichoderma spp. giúp tiêu diệt các loại nấm gây hại rễ (Fusarium, Phytophthora,...). Cải tạo đất, giúp rễ phát triển mạnh, an toàn cho môi trường và con người.",
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) fetchProductDetail();
+  }, [id]);
+
+  const fetchProductDetail = async () => {
+    try {
+      const res = await productApi.getProductById(id as string);
+      setProduct(res);
+    } catch (error) {
+      console.error("Lỗi tải chi tiết sản phẩm:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddToCart = () => {
-    Alert.alert("Thành công", "Đã thêm sản phẩm vào giỏ hàng!", [
-      { text: "Ở lại", style: "cancel" },
-      { text: "Đến giỏ hàng", onPress: () => router.push("/my-cart") },
-    ]);
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount || 0);
   };
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#16a34a" />
+        <Text style={styles.loadingText}>Đang tải thông tin sản phẩm...</Text>
+      </View>
+    );
+  }
+
+  if (!product) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.loadingText}>Không tìm thấy sản phẩm!</Text>
+        <TouchableOpacity
+          style={styles.backBtnError}
+          onPress={() => router.back()}
+        >
+          <Text style={{ color: "#fff", fontWeight: "bold" }}>Quay lại</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
+      <StatusBar barStyle="dark-content" />
 
-      {/* Header Nổi (Tuyệt đẹp) */}
-      <View style={[styles.headerFloating, { top: Math.max(insets.top, 10) }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-          <ArrowLeft size={24} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.push("/my-cart")}
-          style={styles.iconBtn}
-        >
-          <ShoppingCart size={24} color="#fff" />
-          <View style={styles.cartBadge}>
-            <Text style={styles.cartBadgeText}>2</Text>
-          </View>
+      {/* Nút Back nổi trên ảnh */}
+      <View style={[styles.floatingHeader, { top: Math.max(insets.top, 20) }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
-        <Image source={{ uri: product.image }} style={styles.productImg} />
+        {/* Ảnh sản phẩm */}
+        <Image
+          source={{
+            uri: product.images?.[0] || "https://placehold.co/600x400",
+          }}
+          style={styles.productImage}
+        />
 
-        <View style={styles.content}>
-          <View style={styles.priceRow}>
-            <Text style={styles.price}>{product.price}</Text>
-            <Text style={styles.originalPrice}>{product.originalPrice}</Text>
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountText}>-25%</Text>
-            </View>
-          </View>
-
+        {/* Khối thông tin cơ bản */}
+        <View style={styles.infoSection}>
+          <Text style={styles.price}>{formatCurrency(product.price)}</Text>
           <Text style={styles.productName}>{product.name}</Text>
 
-          <View style={styles.ratingRow}>
-            <Star size={16} color="#f59e0b" fill="#f59e0b" />
-            <Text style={styles.ratingText}>
-              {product.rating} ({product.reviews} đánh giá)
+          <View style={styles.statsRow}>
+            <View style={styles.ratingBox}>
+              <Star size={16} color="#f59e0b" fill="#f59e0b" />
+              <Text style={styles.ratingText}>
+                {product.rating.toFixed(1)}/5
+              </Text>
+            </View>
+            <Text style={styles.soldText}>Đã bán {product.sold}</Text>
+            <Text style={styles.stockText}>Kho: {product.stock}</Text>
+          </View>
+        </View>
+
+        {/* Khối thông tin Gian hàng */}
+        <View style={styles.sellerSection}>
+          <View style={styles.sellerIconBox}>
+            <Store size={24} color="#16a34a" />
+          </View>
+          <View style={styles.sellerInfo}>
+            <Text style={styles.sellerName}>
+              {product.sellerId?.fullName || "Gian hàng Nông Dân"}
             </Text>
-            <Text style={styles.soldText}>• Đã bán {product.sold}</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          {/* Chính sách */}
-          <View style={styles.policyRow}>
-            <View style={styles.policyItem}>
-              <ShieldCheck size={20} color="#16a34a" />
-              <Text style={styles.policyText}>100% Chính hãng</Text>
-            </View>
-            <View style={styles.policyItem}>
-              <Truck size={20} color="#3b82f6" />
-              <Text style={styles.policyText}>Giao hàng toàn quốc</Text>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+            >
+              <ShieldCheck size={14} color="#2563eb" />
+              <Text style={styles.sellerBadge}>Người bán uy tín</Text>
             </View>
           </View>
+        </View>
 
-          <View style={styles.divider} />
+        {/* Khối Mô tả chi tiết */}
+        <View style={styles.descSection}>
+          <Text style={styles.sectionTitle}>Chi tiết sản phẩm</Text>
+          <View style={styles.descRow}>
+            <Text style={styles.descLabel}>Danh mục:</Text>
+            <Text style={styles.descValue}>{product.category}</Text>
+          </View>
+          <View style={styles.descRow}>
+            <Text style={styles.descLabel}>Thương hiệu:</Text>
+            <Text style={styles.descValue}>
+              {product.brand || "Đang cập nhật"}
+            </Text>
+          </View>
 
-          <Text style={styles.sectionTitle}>Mô tả sản phẩm</Text>
-          <Text style={styles.descText}>{product.desc}</Text>
+          <Text style={styles.descTitle}>Mô tả:</Text>
+          <Text style={styles.descContent}>{product.description}</Text>
+
+          {product.usageInstructions && (
+            <View style={styles.usageBox}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 8,
+                }}
+              >
+                <Info size={18} color="#0284c7" />
+                <Text style={styles.usageTitle}>Hướng dẫn sử dụng</Text>
+              </View>
+              <Text style={styles.usageContent}>
+                {product.usageInstructions}
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
 
-      {/* Thanh mua hàng dưới cùng */}
+      {/* Thanh Bottom Bar chứa nút Mua Ngay */}
       <View
         style={[
           styles.bottomBar,
           { paddingBottom: Math.max(insets.bottom, 16) },
         ]}
       >
-        <View style={styles.quantitySelector}>
-          <TouchableOpacity
-            onPress={() => setQuantity(Math.max(1, quantity - 1))}
-            style={styles.qtyBtn}
-          >
-            <Minus size={16} color="#111827" />
-          </TouchableOpacity>
-          <Text style={styles.qtyText}>{quantity}</Text>
-          <TouchableOpacity
-            onPress={() => setQuantity(quantity + 1)}
-            style={styles.qtyBtn}
-          >
-            <Plus size={16} color="#111827" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.addToCartBtn}
-            onPress={handleAddToCart}
-          >
-            <ShoppingCart size={20} color="#16a34a" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.buyNowBtn}
-            onPress={() => router.push("/buy-detail")}
-          >
-            <Text style={styles.buyNowText}>Mua ngay</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.buyButton}
+          onPress={() => {
+            // Chuyển sang trang thanh toán và mang theo các thông tin cần thiết
+            router.push({
+              pathname: "/checkout",
+              params: {
+                productId: product._id,
+                sellerId: product.sellerId?._id || product.sellerId,
+                name: product.name,
+                price: product.price,
+                image: product.images?.[0],
+              },
+            } as any);
+          }}
+        >
+          <Text style={styles.buyButtonText}>Mua Ngay</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
-  headerFloating: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    zIndex: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  cartBadge: {
-    position: "absolute",
-    top: -4,
-    right: -4,
+  container: { flex: 1, backgroundColor: "#f3f4f6" },
+  centerContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingText: { marginTop: 12, color: "#64748b" },
+  backBtnError: {
+    marginTop: 16,
     backgroundColor: "#ef4444",
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+
+  floatingHeader: { position: "absolute", left: 16, zIndex: 10 },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.9)",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  cartBadgeText: { color: "#fff", fontSize: 10, fontWeight: "bold" },
-  scrollContent: { paddingBottom: 100 },
-  productImg: { width: "100%", height: 350, resizeMode: "cover" },
-  content: {
-    padding: 20,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -20,
+
+  productImage: {
+    width: "100%",
+    height: 350,
+    backgroundColor: "#e2e8f0",
+    resizeMode: "cover",
   },
-  priceRow: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
-  price: { fontSize: 24, fontWeight: "800", color: "#ef4444", marginRight: 10 },
-  originalPrice: {
-    fontSize: 16,
-    color: "#9ca3af",
-    textDecorationLine: "line-through",
-    marginRight: 10,
-  },
-  discountBadge: {
-    backgroundColor: "#fef2f2",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  discountText: { color: "#ef4444", fontSize: 12, fontWeight: "bold" },
+
+  infoSection: { backgroundColor: "#fff", padding: 16, marginBottom: 10 },
+  price: { fontSize: 24, fontWeight: "900", color: "#ef4444", marginBottom: 8 },
   productName: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#111827",
-    lineHeight: 28,
-    marginBottom: 12,
-  },
-  ratingRow: { flexDirection: "row", alignItems: "center" },
-  ratingText: {
-    fontSize: 14,
-    color: "#4b5563",
-    marginLeft: 6,
-    fontWeight: "500",
-  },
-  soldText: { fontSize: 14, color: "#6b7280", marginLeft: 8 },
-  divider: { height: 1, backgroundColor: "#f3f4f6", marginVertical: 20 },
-  policyRow: { flexDirection: "row", justifyContent: "space-around" },
-  policyItem: { alignItems: "center", gap: 6 },
-  policyText: { fontSize: 13, color: "#4b5563", fontWeight: "500" },
-  sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111827",
+    color: "#1f2937",
+    lineHeight: 26,
     marginBottom: 12,
   },
-  descText: { fontSize: 15, color: "#4b5563", lineHeight: 24 },
+  statsRow: { flexDirection: "row", alignItems: "center", gap: 16 },
+  ratingBox: { flexDirection: "row", alignItems: "center", gap: 4 },
+  ratingText: { fontSize: 14, fontWeight: "bold", color: "#f59e0b" },
+  soldText: { fontSize: 14, color: "#64748b" },
+  stockText: { fontSize: 14, color: "#16a34a", fontWeight: "600" },
+
+  sellerSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 16,
+    marginBottom: 10,
+  },
+  sellerIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#dcfce3",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  sellerInfo: { flex: 1 },
+  sellerName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#0f172a",
+    marginBottom: 4,
+  },
+  sellerBadge: { fontSize: 12, color: "#2563eb", fontWeight: "600" },
+
+  descSection: { backgroundColor: "#fff", padding: 16, flex: 1 },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#0f172a",
+    marginBottom: 16,
+  },
+  descRow: { flexDirection: "row", marginBottom: 12 },
+  descLabel: { width: 100, fontSize: 14, color: "#64748b" },
+  descValue: { flex: 1, fontSize: 14, fontWeight: "600", color: "#334155" },
+  descTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#0f172a",
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  descContent: {
+    fontSize: 14,
+    color: "#475569",
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+
+  usageBox: {
+    backgroundColor: "#e0f2fe",
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  usageTitle: { fontSize: 14, fontWeight: "bold", color: "#0284c7" },
+  usageContent: { fontSize: 14, color: "#0369a1", lineHeight: 22 },
+
   bottomBar: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: "#fff",
-    flexDirection: "row",
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: "#f3f4f6",
-    elevation: 10,
+    borderTopColor: "#e2e8f0",
   },
-  quantitySelector: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f3f4f6",
+  buyButton: {
+    backgroundColor: "#ef4444",
+    paddingVertical: 14,
     borderRadius: 12,
-    paddingHorizontal: 4,
-    marginRight: 16,
-  },
-  qtyBtn: { padding: 10 },
-  qtyText: { fontSize: 16, fontWeight: "bold", width: 24, textAlign: "center" },
-  actionButtons: { flex: 1, flexDirection: "row", gap: 12 },
-  addToCartBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: "#dcfce3",
-    justifyContent: "center",
     alignItems: "center",
   },
-  buyNowBtn: {
-    flex: 1,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: "#16a34a",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  buyNowText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  buyButtonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 });
