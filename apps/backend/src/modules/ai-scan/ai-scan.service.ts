@@ -40,67 +40,63 @@ export class AiScanService {
     const today = new Date();
     const lastReset = new Date(user.lastResetDate);
 
-    // 1. Reset ngày mới
+    // Reset nếu qua ngày - phải làm riêng vì cần check điều kiện trước
     if (lastReset.toDateString() !== today.toDateString()) {
+      await this.userModel.findByIdAndUpdate(userId, {
+        $set: { dailyImageCount: 0, dailyPromptCount: 0, lastResetDate: today }
+      });
       user.dailyImageCount = 0;
       user.dailyPromptCount = 0;
-      user.lastResetDate = today;
     }
 
-    // 2. Hạ cấp nếu gói hết hạn
+    // Downgrade nếu hết hạn
     if (user.plan !== 'FREE' && user.planExpiresAt && user.planExpiresAt < today) {
+      await this.userModel.findByIdAndUpdate(userId, { $set: { plan: 'FREE', planExpiresAt: null } });
       user.plan = 'FREE';
-      user.planExpiresAt = null;
     }
 
-    // 3. Kiểm tra logic các gói
-    if (type === 'IMAGE') {
-      let maxImages = 3; // FREE
-      if (user.plan === 'PREMIUM') maxImages = 10;
-      if (user.plan === 'VIP') maxImages = Infinity; // VIP: vô hạn ảnh
+    const limits = {
+      IMAGE: { FREE: 3, PREMIUM: 10, VIP: Infinity },
+      PROMPT: { FREE: 10, PREMIUM: 50, VIP: Infinity },
+    };
+    const maxCount = limits[type][user.plan] ?? 3;
+    const countField = type === 'IMAGE' ? 'dailyImageCount' : 'dailyPromptCount';
+    const currentCount = user[countField];
 
-      if (user.dailyImageCount >= maxImages) {
-        throw new BadRequestException(`Đã hết ${maxImages} lượt chụp ảnh/ngày của gói ${user.plan}. Vui lòng nâng cấp gói để sử dụng tiếp!`);
-      }
-      user.dailyImageCount += 1;
+    if (currentCount >= maxCount) {
+      throw new BadRequestException(
+        `Đã hết ${maxCount === Infinity ? 'không giới hạn' : maxCount} lượt ${type === 'IMAGE' ? 'chụp ảnh' : 'hỏi trợ lý'}/ngày của gói ${user.plan}.`
+      );
     }
 
-    if (type === 'PROMPT') {
-      let maxPrompts = 10; // FREE
-      if (user.plan === 'PREMIUM') maxPrompts = 50;  // PREMIUM: 50 prompts/ngày
-      if (user.plan === 'VIP') maxPrompts = Infinity; // VIP: vô hạn
-
-      if (user.dailyPromptCount >= maxPrompts) {
-        throw new BadRequestException(`Đã hết ${maxPrompts} lượt hỏi trợ lý/ngày của gói ${user.plan}. Vui lòng nâng cấp gói để sử dụng tiếp!`);
-      }
-      user.dailyPromptCount += 1;
-    }
-
-    await user.save();
+    // Atomic increment - đảm bảo không race condition
+    await this.userModel.findByIdAndUpdate(userId, { $inc: { [countField]: 1 } });
   }
 
   // ==========================================
   // HÀM XỬ LÝ ẢNH
   // ==========================================
   async processImageAndDiagnose(userId: string, imageFile: Express.Multer.File) {
-    // 1. CHỐT CHẶN: Kiểm tra xem User còn lượt chụp ảnh không
+    // 1. CHỐT CHẶN: Kiểm tra và tăng quota trước
+    // Giả sử hàm này ném ra lỗi nếu hết lượt, lỗi đó sẽ không bị catch ở dưới rollback 
+    // vì nó nằm ngoài block try (hợp lý vì chưa trừ thì không cần hoàn).
     await this.checkAndIncrementQuota(userId, 'IMAGE');
 
-    // 🔥 FIX LỖI: Đặt biến mockImageUrl vào BÊN TRONG hàm
-    const mockImageUrl = 'https://res.cloudinary.com/demo/image/upload/sample.jpg';
+    try {
+      const mockImageUrl = 'https://res.cloudinary.com/demo/image/upload/sample.jpg';
 
+      // 2. Xử lý Cache với Redis
+      const imageHash = crypto.createHash('md5').update(imageFile.buffer).digest('hex');
+      const cacheKey = `ai_scan_result_${imageHash}`;
+      const cachedResult = await this.cacheManager.get(cacheKey);
 
-    const imageHash = crypto.createHash('md5').update(imageFile.buffer).digest('hex');
-    const cacheKey = `ai_scan_result_${imageHash}`;
-    const cachedResult = await this.cacheManager.get(cacheKey);
+      let aiPredictionResult;
 
-    let aiPredictionResult;
-
-    if (cachedResult) {
-      console.log('Lấy kết quả từ Redis 🚀');
-      aiPredictionResult = cachedResult;
-    } else {
-      try {
+      if (cachedResult) {
+        console.log('Lấy kết quả từ Redis 🚀');
+        aiPredictionResult = cachedResult;
+      } else {
+        // 3. Gửi sang FastAPI nếu chưa có cache
         console.log('Đang gửi ảnh sang FastAPI... 🧠');
         const formData = new FormDataNode();
         formData.append('file', imageFile.buffer, {
@@ -109,41 +105,59 @@ export class AiScanService {
           knownLength: imageFile.size,
         });
 
-        const aiResponse = await axios.post(`${this.aiServiceUrl}/predict`, formData, {
-          headers: formData.getHeaders(),
-          maxBodyLength: Infinity,
-        });
-        aiPredictionResult = aiResponse.data;
-      } catch (error) {
-        throw new InternalServerErrorException('Không thể kết nối với hệ thống AI Bác sĩ');
+        try {
+          const aiResponse = await axios.post(`${this.aiServiceUrl}/predict`, formData, {
+            headers: formData.getHeaders(),
+            maxBodyLength: Infinity,
+          });
+          aiPredictionResult = aiResponse.data;
+        } catch (error) {
+          // Lỗi kết nối AI sẽ nhảy xuống block catch lớn bên ngoài để rollback
+          throw new InternalServerErrorException('Hệ thống AI đang bận, vui lòng thử lại sau');
+        }
+
+        if (!aiPredictionResult || aiPredictionResult.success === false) {
+          // Lỗi logic từ AI server (ví dụ: ảnh không có cây)
+          throw new BadRequestException(`AI Server: ${aiPredictionResult?.error || 'Không nhận diện được'}`);
+        }
+
+        // Lưu cache 24h
+        await this.cacheManager.set(cacheKey, aiPredictionResult, 86400 * 1000);
       }
 
-      if (!aiPredictionResult || aiPredictionResult.success === false) {
-        throw new BadRequestException(`AI Server báo lỗi: ${aiPredictionResult?.error || 'Không nhận diện được'}`);
+      // 4. Lấy thông tin bệnh từ database
+      const diseaseInfo = await this.plantsService.findDiseaseByName(aiPredictionResult.yolo_label);
+      if (!diseaseInfo) {
+        throw new NotFoundException(`Không tìm thấy dữ liệu cho bệnh: ${aiPredictionResult.yolo_label}`);
       }
-      await this.cacheManager.set(cacheKey, aiPredictionResult, 86400 * 1000);
+
+      // 5. Lưu lịch sử chẩn đoán
+      const newScan = new this.scanHistoryModel({
+        userId,
+        imageUrl: mockImageUrl,
+        aiPredictions: [{ diseaseId: diseaseInfo._id, confidence: aiPredictionResult.confidence }],
+        scannedAt: new Date(),
+      });
+      await newScan.save();
+
+      return {
+        scanHistoryId: newScan._id,
+        imageUrl: mockImageUrl,
+        predictions: [aiPredictionResult],
+        topDisease: diseaseInfo,
+      };
+
+    } catch (error) {
+      // 6. ROLLBACK QUOTA: Nếu lỗi không phải do người dùng (400, 401)
+      // Các lỗi như: 500 (Server die), lỗi Database, lỗi kết nối AI... sẽ được hoàn lượt
+      if (!(error instanceof BadRequestException) && !(error instanceof UnauthorizedException)) {
+        console.log(`Đang hoàn lại lượt dùng cho user ${userId} do lỗi hệ thống...`);
+        await this.userModel.findByIdAndUpdate(userId, { $inc: { dailyImageCount: -1 } });
+      }
+
+      // Cuối cùng vẫn phải throw lỗi để Frontend nhận diện được
+      throw error;
     }
-
-    const diseaseInfo = await this.plantsService.findDiseaseByName(aiPredictionResult.yolo_label);
-    if (!diseaseInfo) {
-      throw new NotFoundException(`Không tìm thấy bệnh: ${aiPredictionResult.yolo_label}`);
-    }
-
-    const newScan = new this.scanHistoryModel({
-      userId,
-      imageUrl: mockImageUrl, // Dùng biến nội bộ của hàm
-      aiPredictions: [{ diseaseId: diseaseInfo._id, confidence: aiPredictionResult.confidence }],
-      isAccurate: null,
-      scannedAt: new Date(),
-    });
-    await newScan.save();
-
-    return {
-      scanHistoryId: newScan._id,
-      imageUrl: mockImageUrl, // Trả về link ảo cho Frontend hiển thị tạm
-      predictions: [aiPredictionResult],
-      topDisease: diseaseInfo,
-    };
   }
   // ==========================================
   // HÀM CHAT TRỢ LÝ ẢO

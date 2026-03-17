@@ -1,89 +1,89 @@
 export const API_ENDPOINTS = {
   // Auth
   AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    LOGOUT: '/auth/logout',
-    REFRESH: '/auth/refresh',
-    PROFILE: '/auth/profile',
-    FORGOT_PASSWORD: '/auth/forgot-password',
-    VERIFY_OTP: '/auth/verify-otp',
-    RESET_PASSWORD: '/auth/reset-password',
-    GOOGLE_LOGIN: '/auth/google',
-    FACEBOOK_LOGIN: '/auth/facebook',
-    SET_PASSWORD: '/auth/set-password',
+    LOGIN: '/api/auth/login',
+    REGISTER: '/api/auth/register',
+    LOGOUT: '/api/auth/logout',
+    REFRESH: '/api/auth/refresh',
+    PROFILE: '/api/auth/profile',
+    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    VERIFY_OTP: '/api/auth/verify-otp',
+    RESET_PASSWORD: '/api/auth/reset-password',
+    GOOGLE_LOGIN: '/api/auth/google',
+    FACEBOOK_LOGIN: '/api/auth/facebook',
+    SET_PASSWORD: '/api/auth/set-password',
   },
 
   // Users
   USERS: {
-    BASE: '/users',
-    BY_ID: (id: string) => `/users/${id}`,
-    PROFILE: '/users/profile',
-    UPGRADE: '/users/upgrade',
+    BASE: '/api/users',
+    BY_ID: (id: string) => `/api/users/${id}`,
+    PROFILE: '/api/users/profile',
+    UPGRADE: '/api/users/upgrade',
   },
 
   // Plants (Từ điển thực vật học)
   PLANTS: {
-    BASE: '/plants',
-    BY_ID: (id: string) => `/plants/${id}`,
-    SEARCH: '/plants/search',
-    BY_DISEASE: (diseaseId: string) => `/plants/by-disease/${diseaseId}`,
+    BASE: '/api/plants',
+    BY_ID: (id: string) => `/api/plants/${id}`,
+    SEARCH: '/api/plants/search',
+    BY_DISEASE: (diseaseId: string) => `/api/plants/by-disease/${diseaseId}`,
   },
 
   // Diseases (Từ điển bệnh lý)
   DISEASES: {
-    BASE: '/diseases',
-    BY_ID: (id: string) => `/diseases/${id}`,
-    SEARCH: '/diseases/search',
-    BY_TYPE: (type: string) => `/diseases/by-type/${type}`,
+    BASE: '/api/diseases',
+    BY_ID: (id: string) => `/api/diseases/${id}`,
+    SEARCH: '/api/diseases/search',
+    BY_TYPE: (type: string) => `/api/diseases/by-type/${type}`,
   },
 
   // AI Scan (Chẩn đoán bằng AI)
   SCAN: {
-    ANALYZE: '/scan/analyze',
-    CHAT: '/scan/chat',
-    GUEST_CHAT: '/scan/guest-chat',
-    FEEDBACK: (id: string) => `/scan/history/${id}/feedback`,
+    ANALYZE: '/api/scan/analyze',
+    CHAT: '/api/scan/chat',
+    GUEST_CHAT: '/api/scan/guest-chat',
+    FEEDBACK: (id: string) => `/api/scan/history/${id}/feedback`,
   },
 
   // Scan History (Lịch sử quét)
   HISTORY: {
-    SCAN_BASE: '/scan/history',
-    CHAT_BASE: '/scan/chat/history',
-    SESSION: (id: string) => `/scan/chat/sessions/${id}`,
+    SCAN_BASE: '/api/scan/history',
+    CHAT_BASE: '/api/scan/chat/history',
+    SESSION: (id: string) => `/api/scan/chat/sessions/${id}`,
   },
 
   // Weather
   WEATHER: {
-    GET_WEATHER: '/weather',
+    GET_WEATHER: '/api/weather',
   },
 
   // ── ADMIN ────────────────────────────────────────────────────────────────────
   ADMIN: {
-    DASHBOARD: '/admin/dashboard',
+    DASHBOARD: '/api/admin/dashboard',
 
     // Quản lý user
-    USERS: '/admin/users',
-    USER_PLAN: (userId: string) => `/admin/users/${userId}/plan`,
+    USERS: '/api/admin/users',
+    USER_PLAN: (userId: string) => `/api/admin/users/${userId}/plan`,
 
     // Báo cáo
     REPORTS: {
-      USERS: '/admin/reports/users',
-      REVENUE: '/admin/reports/revenue',
-      COMPARE: '/admin/reports/compare',
+      USERS: '/api/admin/reports/users',
+      REVENUE: '/api/admin/reports/revenue',
+      COMPARE: '/api/admin/reports/compare',
     },
 
     // Xuất file CSV
     EXPORT: {
-      REVENUE: '/admin/export/revenue',
-      USERS: '/admin/export/users',
+      REVENUE: '/api/admin/export/revenue',
+      USERS: '/api/admin/export/users',
     },
 
     // Feedback
     FEEDBACK: {
-      BASE: '/feedback',                                          // POST (user gửi)
-      LIST: '/admin/feedbacks',                                   // GET (admin xem)
-      REPLY: (feedbackId: string) => `/admin/feedbacks/${feedbackId}/reply`, // POST (admin reply)
+      BASE: '/api/feedback',                                          // POST (user gửi)
+      LIST: '/api/admin/feedbacks',                                   // GET (admin xem)
+      REPLY: (feedbackId: string) => `/api/admin/feedbacks/${feedbackId}/reply`, // POST (admin reply)
     },
   },
 } as const;

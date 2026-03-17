@@ -19,13 +19,14 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { SetPasswordDto } from './dto/set-password.dto';
+import { ForgotPasswordDto, ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   // ── EMAIL + PASSWORD ────────────────────────────────────────
 
@@ -65,7 +66,7 @@ export class AuthController {
   // ── QUÊN / ĐỔI MẬT KHẨU ────────────────────────────────────
 
   @Post('forgot-password')
-  forgotPassword(@Body() body: { email: string }) {
+  forgotPassword(@Body() body: ForgotPasswordDto) {
     return this.authService.forgotPassword(body.email);
   }
 
@@ -77,12 +78,8 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('reset-password')
-  resetPassword(@Body() body: any) {
-    return this.authService.resetPassword(
-      body.email,
-      body.resetToken,
-      body.newPassword,
-    );
+  resetPassword(@Body() body: ResetPasswordDto) {
+    return this.authService.resetPassword(body.email, body.resetToken, body.newPassword);
   }
 
   // ── THIẾT LẬP MẬT KHẨU LẦN ĐẦU (CHỈ DÀNH CHO OAUTH USER) ──
@@ -140,32 +137,17 @@ export class AuthController {
     const result = await this.authService.handleOAuthCallback(req.user);
     this.redirectWithTokens(res, result);
   }
-
-  // ── PRIVATE HELPER ──────────────────────────────────────────
-
-  /**
-   * Redirect về frontend sau OAuth thành công.
-   *
-   * Frontend nhận:  /auth/callback?accessToken=...&refreshToken=...&isPasswordSet=true/false
-   *
-   * Nếu isPasswordSet = false → frontend điều hướng user tới màn hình
-   * "Thiết lập mật khẩu" và gọi POST /auth/set-password với Bearer token.
-   */
-  private redirectWithTokens(
-    res: Response,
-    result: { user: any; accessToken: string; refreshToken: string },
-  ) {
-    const baseUrl = this.configService.getOrThrow<string>(
-      'OAUTH_SUCCESS_REDIRECT',
-    );
-    const url = new URL(baseUrl);
-    url.searchParams.set('accessToken', result.accessToken);
-    url.searchParams.set('refreshToken', result.refreshToken);
-    url.searchParams.set('isPasswordSet', String(result.user.isPasswordSet));
-    url.searchParams.set('fullName', result.user.fullName ?? '');
-
-    res.redirect(url.toString());
-  }
+private redirectWithTokens(
+  res: Response,
+  result: { user: any; accessToken: string; refreshToken: string },
+) {
+  const baseUrl = this.configService.getOrThrow<string>('OAUTH_SUCCESS_REDIRECT');
+  const url = new URL(baseUrl);
+  url.searchParams.set('accessToken', result.accessToken);
+  url.searchParams.set('refreshToken', result.refreshToken);
+  url.searchParams.set('user', encodeURIComponent(JSON.stringify(result.user)));
+  res.redirect(url.toString());
+}
   // 🔥 THÊM MỚI: API dành riêng cho Mobile xác thực Google Token
   @HttpCode(HttpStatus.OK)
   @Post('google/verify-token')
