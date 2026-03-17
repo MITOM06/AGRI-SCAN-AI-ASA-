@@ -48,12 +48,14 @@ export default function LoginScreen() {
   const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID; // Trỏ đúng tên biến trong file .env
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: googleClientId,
-    iosClientId: googleClientId,     // Đưa Web ID cho iOS để "lách luật" thư viện
+    webClientId:
+      process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+      "123456-tam-thoi.apps.googleusercontent.com",
+    iosClientId: googleClientId, // Đưa Web ID cho iOS để "lách luật" thư viện
     androidClientId: googleClientId, // Đưa Web ID cho Android để "lách luật" thư viện
     redirectUri: makeRedirectUri({
-      scheme: 'mobile',
-      path: 'auth/callback',
+      scheme: "mobile",
+      path: "auth/callback",
     }),
   });
 
@@ -106,7 +108,9 @@ export default function LoginScreen() {
 
   const handleFacebookLogin = async () => {
     if (!agreeTerms) {
-      setApiError("Vui lòng đồng ý với Điều khoản và Chính sách bảo mật trước!");
+      setApiError(
+        "Vui lòng đồng ý với Điều khoản và Chính sách bảo mật trước!",
+      );
       return;
     }
 
@@ -215,7 +219,7 @@ export default function LoginScreen() {
       // Bắt lỗi từ Backend trả về
       setApiError(
         error.response?.data?.message ||
-        "Đăng nhập thất bại. Vui lòng thử lại!",
+          "Đăng nhập thất bại. Vui lòng thử lại!",
       );
     } finally {
       setIsSubmitting(false);
