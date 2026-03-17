@@ -4,28 +4,32 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 @Controller('plants')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN')
+// @UseGuards(JwtAuthGuard, RolesGuard)
+// @Roles('ADMIN')
 export class PlantsController {
   constructor(private readonly plantsService: PlantsService) { }
 
   @Get()
+  @Roles('USER', 'ADMIN')
   async getAllPlants() {
     return this.plantsService.findAllPlants();
   }
 
   @Get(':id')
+  @Roles('USER', 'ADMIN')
   async getPlantDetail(@Param('id') id: string) {
     return this.plantsService.findPlantById(id);
   }
 
   @Post('seed')
+  @Roles('ADMIN')  
   async seedPlantData() {
     return this.plantsService.seedData();
   }
 
   // 🔥 THÊM MỚI: Endpoint gửi đóng góp cây trồng (Tự động vào hàng đợi)
   @Post('contribute')
+  @Roles('USER', 'ADMIN')
   async contributePlant(@Body() plantData: any) { // Có thể tạo DTO sau để validate chặt chẽ hơn
     return this.plantsService.contributePlant(plantData);
   }

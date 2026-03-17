@@ -31,7 +31,7 @@ export class PlantsService implements OnApplicationBootstrap {
   async findAllPlants() {
     return this.plantModel.find({
       $or: [{ status: 'APPROVED' }, { status: { $exists: false } }]
-    }).select('commonName scientificName images status').exec();
+    }).select('commonName scientificName family images status category growthRate light water').exec();
   }
 
   // 2. Lấy chi tiết 1 loại cây
