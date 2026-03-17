@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { APP_NAME, APP_DESCRIPTION } from "@agri-scan/shared";
-import { Navbar } from "@/components/layout/Navbar";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -34,12 +33,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>
-          <div className="min-h-screen bg-gray-50 font-sans">
-            <Navbar />
-            <main>{children}</main>
-          </div>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
