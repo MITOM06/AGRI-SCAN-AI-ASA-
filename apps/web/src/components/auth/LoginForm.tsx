@@ -41,8 +41,9 @@ export default function LoginForm() {
     try {
       // BUG FIX: trước chỉ gọi login(data.email) → mật khẩu không bao giờ được gửi lên BE
       const res = await loginApi(data.email, data.password);
-      if (res?.role === 'ADMIN') {
-        router.push("/admin");
+      if (res.role === 'ADMIN') {
+        router.push("/admin/dashboard");
+        console.log("Đăng nhập thành công với vai trò ADMIN");
       } else {
         router.push("/");
       }
