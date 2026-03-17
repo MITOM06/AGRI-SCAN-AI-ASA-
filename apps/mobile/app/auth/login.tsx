@@ -76,7 +76,7 @@ export default function LoginScreen() {
     setIsSubmitting(true);
     setApiError("");
     try {
-      const res = await authApi.loginWithGoogleMobile(idToken);
+      const res = await authApi.verifyGoogleTokenForMobile(idToken);
       if (Platform.OS === "web") {
         localStorage.setItem("accessToken", res.accessToken);
         localStorage.setItem("refreshToken", res.refreshToken);
@@ -86,7 +86,7 @@ export default function LoginScreen() {
         await SecureStore.setItemAsync("refreshToken", res.refreshToken);
         await SecureStore.setItemAsync("user", JSON.stringify(res.user));
       }
-      if (res.user?.role === 'ADMIN') {
+      if (res.user?.role === "ADMIN") {
         router.replace("/admin");
       } else {
         router.replace("/user");
@@ -157,7 +157,7 @@ export default function LoginScreen() {
         await SecureStore.setItemAsync("refreshToken", res.refreshToken);
         await SecureStore.setItemAsync("user", JSON.stringify(res.user));
       }
-      if (res.user?.role === 'ADMIN') {
+      if (res.user?.role === "ADMIN") {
         router.replace("/admin");
       } else {
         router.replace("/user");
@@ -166,7 +166,7 @@ export default function LoginScreen() {
       // Bắt lỗi từ Backend trả về
       setApiError(
         error.response?.data?.message ||
-        "Đăng nhập thất bại. Vui lòng thử lại!",
+          "Đăng nhập thất bại. Vui lòng thử lại!",
       );
     } finally {
       setIsSubmitting(false);

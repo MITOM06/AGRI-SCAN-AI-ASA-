@@ -9,10 +9,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { firstValueFrom } from 'rxjs';
 
-import {
-  WeatherRule,
-  WeatherRuleDocument,
-} from '@agri-scan/database';
+import { WeatherRule, WeatherRuleDocument } from '@agri-scan/database';
 // =============================================
 // INTERFACES: Định nghĩa shape của dữ liệu OWM
 // =============================================
@@ -25,20 +22,19 @@ interface OWMWeatherItem {
 
 interface OWMCurrentWeather {
   dt: number;
-  sunrise: number;    // THÊM
-  sunset: number;     // THÊM
+  sunrise: number; // THÊM
+  sunset: number; // THÊM
   temp: number;
   feels_like: number;
-  pressure: number;   // THÊM
+  pressure: number; // THÊM
   humidity: number;
-  dew_point: number;  // THÊM
+  dew_point: number; // THÊM
   uvi: number;
   visibility: number; // THÊM
   wind_speed: number;
   wind_gust?: number; // THÊM
-  wind_deg: number;   // THÊM
+  wind_deg: number; // THÊM
   weather: OWMWeatherItem[];
-  
 }
 
 interface OWMHourlyWeather {
@@ -57,7 +53,7 @@ interface OWMDailyWeather {
   sunrise: number;
   sunset: number;
   moon_phase: number; // THÊM
-  summary: string;    // THÊM
+  summary: string; // THÊM
   temp: { day: number; min: number; max: number };
   humidity: number;
   pop: number;
@@ -80,7 +76,7 @@ interface OWMOneCallResponse {
 // =============================================
 
 export interface FormattedCurrentWeather {
-timestamp: number;
+  timestamp: number;
   temp: number;
   feelsLike: number;
   humidity: number;
@@ -96,7 +92,6 @@ timestamp: number;
   windDeg: number;
   dewPoint: number;
   visibility: number;
-  
 }
 
 export interface FormattedHourlyWeather {
@@ -106,7 +101,7 @@ export interface FormattedHourlyWeather {
   pop: number;
   windSpeed: number;
   weatherIcon: string;
-  uvi: number;      // THÊM DÒNG NÀY
+  uvi: number; // THÊM DÒNG NÀY
   pressure: number; // THÊM DÒNG NÀY
 }
 
@@ -121,8 +116,10 @@ export interface FormattedDailyWeather {
   uvi: number;
   weatherMain: string;
   weatherIcon: string;
-  summary: string;   // THÊM DÒNG NÀY
+  summary: string; // THÊM DÒNG NÀY
   moonPhase: number; // THÊM DÒNG NÀY
+  sunrise: number; // 🔥 THÊM DÒNG NÀY
+  sunset: number;
 }
 
 export interface WeatherAdvice {
@@ -242,8 +239,7 @@ export class WeatherService {
   private async fetchActiveRules(category: string): Promise<WeatherRule[]> {
     try {
       // Lấy luật áp dụng cho tất cả ('ALL') VÀ luật riêng cho category được chọn
-      const targetCategories =
-        category === 'ALL' ? ['ALL'] : ['ALL', category];
+      const targetCategories = category === 'ALL' ? ['ALL'] : ['ALL', category];
 
       return this.weatherRuleModel
         .find({
@@ -277,7 +273,7 @@ export class WeatherService {
       weatherMain: raw.current.weather[0]?.main ?? 'Unknown',
       weatherDescription: raw.current.weather[0]?.description ?? '',
       weatherIcon: raw.current.weather[0]?.icon ?? '',
-      sunrise: raw.current.sunrise,    // BẠN TỪNG THIẾU DÒNG NÀY
+      sunrise: raw.current.sunrise, // BẠN TỪNG THIẾU DÒNG NÀY
       sunset: raw.current.sunset,
       pressure: raw.current.pressure,
       windGust: raw.current.wind_gust || 0,
@@ -296,7 +292,7 @@ export class WeatherService {
         pop: Math.round(h.pop * 100), // Đổi 0.0-1.0 → 0-100 (%) cho dễ hiển thị
         windSpeed: h.wind_speed,
         weatherIcon: h.weather[0]?.icon ?? '',
-        uvi: h.uvi,           // PHẢI CÓ DÒNG NÀY THÌ UV MỚI NHẢY
+        uvi: h.uvi, // PHẢI CÓ DÒNG NÀY THÌ UV MỚI NHẢY
         pressure: h.pressure, // PHẢI CÓ DÒNG NÀY THÌ ÁP SUẤT MỚI NHẢY
       }));
 
@@ -313,7 +309,9 @@ export class WeatherService {
       weatherMain: d.weather[0]?.main ?? 'Unknown',
       weatherIcon: d.weather[0]?.icon ?? '',
       summary: d.summary || 'Không có tóm tắt', // GÁN DỮ LIỆU VÀO ĐÂY
-      moonPhase: d.moon_phase,                   // GÁN DỮ LIỆU VÀO ĐÂY
+      moonPhase: d.moon_phase, // GÁN DỮ LIỆU VÀO ĐÂY
+      sunrise: d.sunrise, // 🔥 THÊM DÒNG NÀY (Để lấy giờ mặt trời mọc)
+      sunset: d.sunset,
     }));
 
     return { current, hourly, daily };
@@ -365,9 +363,17 @@ export class WeatherService {
         windSpeed: Math.max(worst.windSpeed, h.wind_speed), // Gió mạnh nhất
         uvi: worst.uvi, // UVI không có trong hourly của OWM free
         pop: Math.max(worst.pop, h.pop), // Xác suất mưa cao nhất
-        weatherMain: h.pop > worst.pop ? (h.weather[0]?.main ?? '') : worst.weatherMain,
+        weatherMain:
+          h.pop > worst.pop ? (h.weather[0]?.main ?? '') : worst.weatherMain,
       }),
-      { temp: -Infinity, humidity: 0, windSpeed: 0, uvi: 0, pop: 0, weatherMain: '' },
+      {
+        temp: -Infinity,
+        humidity: 0,
+        windSpeed: 0,
+        uvi: 0,
+        pop: 0,
+        weatherMain: '',
+      },
     );
 
     // daily: Chỉ lấy ngày hôm nay (index 0) cho daily rules
@@ -417,7 +423,8 @@ export class WeatherService {
     // Sắp xếp lời khuyên: WARNING trước, sau đó theo priority giảm dần
     const adviceTypeOrder = { WARNING: 0, RECOMMEND: 1, INFO: 2 };
     return triggeredAdvices.sort((a, b) => {
-      const typeOrder = adviceTypeOrder[a.adviceType] - adviceTypeOrder[b.adviceType];
+      const typeOrder =
+        adviceTypeOrder[a.adviceType] - adviceTypeOrder[b.adviceType];
       if (typeOrder !== 0) return typeOrder;
       return b.priority - a.priority;
     });
@@ -446,14 +453,17 @@ export class WeatherService {
     if (c.maxTemp !== undefined && dataPoint.temp > c.maxTemp) return false;
 
     // Độ ẩm
-    if (c.minHumidity !== undefined && dataPoint.humidity < c.minHumidity) return false;
-    if (c.maxHumidity !== undefined && dataPoint.humidity > c.maxHumidity) return false;
+    if (c.minHumidity !== undefined && dataPoint.humidity < c.minHumidity)
+      return false;
+    if (c.maxHumidity !== undefined && dataPoint.humidity > c.maxHumidity)
+      return false;
 
     // Xác suất mưa (pop từ OWM là 0.0 - 1.0)
     if (c.minPop !== undefined && dataPoint.pop < c.minPop) return false;
 
     // Tốc độ gió
-    if (c.maxWindSpeed !== undefined && dataPoint.windSpeed > c.maxWindSpeed) return false;
+    if (c.maxWindSpeed !== undefined && dataPoint.windSpeed > c.maxWindSpeed)
+      return false;
 
     // Loại thời tiết chính (so sánh case-insensitive)
     if (

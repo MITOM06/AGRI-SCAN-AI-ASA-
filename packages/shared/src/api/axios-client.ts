@@ -27,7 +27,7 @@ declare module "axios" {
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   process.env.EXPO_PUBLIC_API_URL ||
-  "http://192.168.3.20:4000";
+  "http://10.1.130.6:4000";
 
 export const axiosClient = axios.create({
   baseURL: BASE_URL,
