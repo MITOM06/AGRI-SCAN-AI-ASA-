@@ -5,6 +5,7 @@ import type {
   IScanHistoryListItem,
   IScanHistoryDetail,
 } from "../types/scan-history.types";
+import { API_ENDPOINTS } from "../constants";
 
 // Type cho 1 tin nhắn trong hội thoại
 export interface IChatMessage {
@@ -45,7 +46,7 @@ export const scanApi = {
     formData.append("image", file);
 
     // Dùng post và ép cứng headers + timeout 60 giây
-    const res = await axiosClient.post<IScanResult>("/scan/analyze", formData, {
+    const res = await axiosClient.post<IScanResult>(API_ENDPOINTS.SCAN.ANALYZE, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -69,14 +70,14 @@ export const scanApi = {
 
     if (!token) {
       // Guest user — use guest endpoint (no auth required, no history saved)
-      const res = await axiosClient.post<IChatResponse>('/scan/guest-chat', {
+      const res = await axiosClient.post<IChatResponse>(API_ENDPOINTS.SCAN.GUEST_CHAT, {
         question,
         label,
       });
       return res.data;
     }
 
-    const res = await axiosClient.post<IChatResponse>('/scan/chat', {
+    const res = await axiosClient.post<IChatResponse>(API_ENDPOINTS.SCAN.CHAT, {
       question,
       label,
       sessionId,
@@ -90,7 +91,7 @@ export const scanApi = {
    * - Trả về [] nếu chưa đăng nhập
    */
   getChatHistory: async (): Promise<IChatSession[]> => {
-    const res = await axiosClient.get<IChatSession[]>("/scan/chat/history");
+    const res = await axiosClient.get<IChatSession[]>(API_ENDPOINTS.HISTORY.CHAT_BASE);
     return res.data;
   },
 
@@ -102,7 +103,7 @@ export const scanApi = {
     sessionId: string,
   ): Promise<IChatSessionDetail> => {
     const res = await axiosClient.get<IChatSessionDetail>(
-      `/scan/chat/sessions/${sessionId}`,
+      `${API_ENDPOINTS.HISTORY.SESSION(sessionId)}`,
     );
     return res.data;
   },
@@ -112,7 +113,7 @@ export const scanApi = {
    * Gọi đến: GET /scan/history
    */
   getScanHistory: async (): Promise<IScanHistoryListItem[]> => {
-    const res = await axiosClient.get<IScanHistoryListItem[]>("/scan/history");
+    const res = await axiosClient.get<IScanHistoryListItem[]>(API_ENDPOINTS.HISTORY.SCAN_BASE);
     return res.data;
   },
 
@@ -121,7 +122,7 @@ export const scanApi = {
    * Gọi đến: PATCH /scan/history/:id/feedback
    */
   sendFeedback: async (scanId: string, isAccurate: boolean): Promise<void> => {
-    await axiosClient.patch(`/scan/history/${scanId}/feedback`, { isAccurate });
+    await axiosClient.patch(API_ENDPOINTS.SCAN.FEEDBACK(scanId), { isAccurate });
   },
 
   /**
