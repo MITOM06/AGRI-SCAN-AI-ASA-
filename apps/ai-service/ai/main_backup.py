@@ -48,7 +48,10 @@ class PredictResp(BaseModel):
     answer: Optional[str] = None
     error: Optional[str] = None
 
-
+# Model mới cho endpoint chat
+class ChatRequest(BaseModel):
+    label: str    # Nhãn trả về từ predict_endpoint
+    prompt: str   # Câu hỏi của người dùng
 
 # --- ENDPOINTS ---
 
@@ -91,28 +94,24 @@ async def predict_endpoint(file: UploadFile = File(...)):
     except Exception as e:
         traceback.print_exc()
         return {"success": False, "error": str(e)}
-# Model mới cho endpoint chat
-class ChatRequest(BaseModel):
-    label: str    # Nhãn trả về từ predict_endpoint
-    prompt: str   # Câu hỏi của người dùng
 
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest):
     """
-    Pure chat endpoint: uses vectorstore to fetch context then LLM to answer.
+    Nhận nhãn (label) và câu hỏi (prompt) để trả lời dựa trên RAG.
     """
     global VECTOR_DB
     try:
         # 1. Kiểm tra Vector DB
         vs = VECTOR_DB if VECTOR_DB is not None else init_vector_db()
         
-        # 2. Lấy thông tin từ request (SỬA LẠI CHUẨN)
+        # 2. Lấy thông tin từ request
         label = req.label
         question = req.prompt
 
         # 3. Truy vấn Vector Store (kết hợp nhãn và câu hỏi để tìm kiếm chính xác)
         search_query = f"Bệnh {label}: {question}"
-        contexts = query_vectorstore(vs, search_query, k=4, filter_label=req.label)
+        contexts = query_vectorstore(vs, search_query, k=4)
 
         # 4. Xây dựng Prompt cho LLM
         prompt_llm = (
@@ -150,8 +149,5 @@ async def chat_endpoint(req: ChatRequest):
             "contexts": contexts
         }
     except Exception as e:
-        import traceback
         traceback.print_exc()
-        # Trả về lỗi 500 nhưng kèm thông báo rõ ràng để Backend dễ đọc
-        from fastapi.responses import JSONResponse
         return JSONResponse(status_code=500, content={"error": str(e)})
