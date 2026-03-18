@@ -65,10 +65,10 @@ export class AiScanController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('history')
-  async getHistory(@Req() req: any) {
+  @Get('history/:id')
+  async getScanDetail(@Req() req: any, @Param('id') scanId: string) {
     const userId = req.user.userId || req.user._id || req.user.sub;
-    return this.aiScanService.getUserScanHistory(userId);
+    return this.aiScanService.getScanDetail(userId, scanId);
   }
 
   @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập

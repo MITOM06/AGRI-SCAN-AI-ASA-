@@ -14,8 +14,13 @@ import axios from 'axios';
 
 @Injectable()
 export class MyGardenService {
-  getUserGarden(userId: any) {
-      throw new Error('Method not implemented.');
+  async getUserGarden(userId: string) {
+    return this.myGardenModel
+      .find({ userId: new Types.ObjectId(userId), status: { $ne: 'FAILED' } })
+      .populate('plantId', 'commonName scientificName images category')
+      .sort({ lastInteractionDate: -1 })
+      .lean()
+      .exec();
   }
   private readonly PLAN_LIMITS = { FREE: 0, PREMIUM: 10, VIP: 20 };
 
@@ -25,12 +30,20 @@ export class MyGardenService {
     @InjectModel(Plant.name) private plantModel: Model<Plant>,
     private readonly weatherService: WeatherService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   private get aiServiceUrl(): string {
     return this.configService.get<string>('AI_SERVICE_URL', 'http://localhost:8000');
   }
-
+  private mapPlantCategoryToWeatherTarget(
+    categories: string[]
+  ): 'ALL' | 'FRUIT' | 'FLOWER' | 'VEGETABLE' {
+    const lower = categories.map(c => c.toLowerCase());
+    if (lower.some(c => c.includes('quả') || c.includes('fruit'))) return 'FRUIT';
+    if (lower.some(c => c.includes('hoa') || c.includes('flower'))) return 'FLOWER';
+    if (lower.some(c => c.includes('rau') || c.includes('vegetable') || c.includes('củ'))) return 'VEGETABLE';
+    return 'ALL';
+  }
   // ==========================================
   // 1. KIỂM TRA QUYỀN VÀ GIỚI HẠN GÓI CƯỚC
   // ==========================================
@@ -84,8 +97,10 @@ export class MyGardenService {
 
     // 2.2. Lấy thời tiết 7 ngày tới
     let weatherForecastStr = '';
+
     try {
-      const weatherData = await this.weatherService.getWeatherAndAdvice(dto.lat, dto.lon, plant.category[0] || 'ALL');
+      const weatherCategory = this.mapPlantCategoryToWeatherTarget(plant.category);
+      const weatherData = await this.weatherService.getWeatherAndAdvice(dto.lat, dto.lon, weatherCategory);
       const dailySummaries = weatherData.weatherData.daily.slice(0, 7).map(
         (day, idx) => `Ngày ${idx + 1}: ${day.summary}, ${day.tempMin}-${day.tempMax}°C`
       );
@@ -95,8 +110,8 @@ export class MyGardenService {
     }
 
     // 2.3. Gọi LLM tạo lộ trình & Thanh tiến trình
-    const conditionStr = dto.diseaseName && dto.diseaseName !== 'Khỏe mạnh' 
-      ? `Đang mắc bệnh: ${dto.diseaseName}. Ưu tiên chữa bệnh.` 
+    const conditionStr = dto.diseaseName && dto.diseaseName !== 'Khỏe mạnh'
+      ? `Đang mắc bệnh: ${dto.diseaseName}. Ưu tiên chữa bệnh.`
       : `Đang khỏe mạnh.`;
 
     const systemPrompt = `
@@ -158,7 +173,7 @@ export class MyGardenService {
 
     const today = new Date();
     const lastInteraction = new Date(gardenPlant.lastInteractionDate);
-    
+
     // Tính số ngày bỏ bê (khoảng cách giữa hôm nay và lần tương tác cuối)
     const diffTime = Math.abs(today.getTime() - lastInteraction.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

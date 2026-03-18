@@ -16,7 +16,7 @@ import ordersData from './orders.seed';
 dotenv.config({ path: path.resolve(__dirname, '../../../../apps/backend/.env') });
 
 async function runMasterSeed() {
-  const URI = process.env.MONGODB_URI || 'mongodb://admin:secretPassword@localhost:27018/agriscan?authSource=admin';
+  const URI = process.env.DB_URI || 'mongodb://admin:secretPassword@localhost:27018/agriscan?authSource=admin';
 
   try {
     console.log('🚀 --- BẮT ĐẦU QUÁ TRÌNH MASTER SEED ---');

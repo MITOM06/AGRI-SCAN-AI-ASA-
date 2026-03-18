@@ -30,6 +30,19 @@ export class AiScanService {
   private get aiServiceUrl(): string {
     return this.configService.get<string>('AI_SERVICE_URL', 'http://localhost:8000');
   }
+
+  async getScanDetail(userId: string, scanId: string) {
+    const scan = await this.scanHistoryModel
+      .findOne({ _id: scanId, userId })
+      .populate({
+        path: 'aiPredictions.diseaseId',
+        select: 'name pathogen type symptoms treatments description'
+      })
+      .exec();
+
+    if (!scan) throw new NotFoundException('Không tìm thấy lịch sử quét này!');
+    return scan;
+  }
   // ==========================================
   // 🔥 HÀM KIỂM TRA & TRỪ LƯỢT GÓI CƯỚC (QUOTA)
   // ==========================================
@@ -180,6 +193,8 @@ export class AiScanService {
       }
     }
 
+
+
     // 🔥 CHỐT CHẶN: Kiểm tra lượt Prompt của User đã đăng nhập
     await this.checkAndIncrementQuota(userId, 'PROMPT');
 
@@ -190,47 +205,41 @@ export class AiScanService {
       }
 
       if (!chatDoc) {
-        // Không có sessionId hoặc không tìm thấy → tạo session MỚI
         const autoTitle = question.trim().length > 0
           ? question.trim().slice(0, 50) + (question.trim().length > 50 ? '...' : '')
           : 'Cuộc hội thoại mới';
 
-        chatDoc = new this.chatHistoryModel({
-          userId,
-          title: autoTitle,
-          messages: [],
-        });
+        chatDoc = new this.chatHistoryModel({ userId, title: autoTitle, messages: [] });
       }
 
       chatDoc.messages.push({ role: 'user', content: question, timestamp: new Date() });
       await chatDoc.save();
 
-
-      // 1.4 Bắn câu hỏi sang cổng 8000 của team AI
       const aiResponse = await axios.post(`${this.aiServiceUrl}/chat`, {
         label: finalLabel,
         prompt: question,
       });
 
-      console.log('Dữ liệu AI trả về:', aiResponse.data);
-
       const answerContent = aiResponse.data.answer
         ? String(aiResponse.data.answer)
         : JSON.stringify(aiResponse.data);
 
-      chatDoc.messages.push({
-        role: 'ai',
-        content: answerContent,
-        timestamp: new Date(),
-      });
+      chatDoc.messages.push({ role: 'ai', content: answerContent, timestamp: new Date() });
       await chatDoc.save();
 
-      return {
-        sessionId: chatDoc._id,
-        question,
-        answer: answerContent,
-      };
+      return { sessionId: chatDoc._id, question, answer: answerContent };
+
     } catch (error) {
+      // ✅ FIX: ROLLBACK PROMPT QUOTA khi lỗi hệ thống (không phải lỗi user)
+      if (
+        !(error instanceof BadRequestException) &&
+        !(error instanceof UnauthorizedException)
+      ) {
+        console.log(`Đang hoàn lại lượt prompt cho user ${userId} do lỗi hệ thống...`);
+        await this.userModel.findByIdAndUpdate(userId, {
+          $inc: { dailyPromptCount: -1 },
+        });
+      }
       throw new InternalServerErrorException('Trợ lý ảo đang bận, vui lòng thử lại sau!');
     }
   }

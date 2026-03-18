@@ -23,7 +23,9 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
 1. **AI Diagnosis:** Nhận diện bệnh cây qua ảnh chụp tức thời với độ chính xác cao.
 2. **Smart Treatment:** Đưa ra phác đồ điều trị chi tiết (nguyên nhân, cách xử lý, loại phân bón/thuốc khuyến nghị).
 3. **Care Roadmap:** Xây dựng lộ trình chăm sóc định kỳ cho từng giai đoạn phát triển của cây.
-4. **Community Knowledge:** Thư viện mở về các kỹ thuật canh tác nông nghiệp bền vững.
+4. **Community & Shop:** Kết nối cộng đồng và cung cấp vật tư nông nghiệp an toàn.
+
+---
 
 ### 1.4. Giá trị cốt lõi (Core Values)
 * **Chính xác:** Tận dụng sức mạnh của các mô hình Computer Vision tiên tiến.
@@ -36,23 +38,18 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
 
 Để đảm bảo tiến độ cuộc thi và tập trung vào tính năng cốt lõi có ứng dụng AI (tiêu chí ăn điểm nhất), phiên bản MVP (Minimum Viable Product) của Agri-Scan AI sẽ được giới hạn nghiêm ngặt như sau:
 
-### 2.1. Tính năng cốt lõi (In Scope) BẮT BUỘC HOÀN THIỆN:
-1. **Chẩn đoán bằng AI (AI Diagnosis):**
-   * Người dùng tải lên hoặc chụp trực tiếp ảnh lá cây/thân cây bị bệnh.
-   * Hệ thống xử lý ảnh và trả về kết quả: Tên bệnh, Độ tin cậy (%).
-2. **Phác đồ điều trị & Lộ trình (Treatment Roadmap):**
-   * Hiển thị thông tin chi tiết về loại bệnh hệ thống vừa nhận diện.
-   * Đề xuất hướng xử lý tức thời (cắt tỉa, cách ly, loại thuốc sinh học khuyên dùng).
-   * Gợi ý lộ trình chăm sóc phục hồi.
-3. **Từ điển thực vật học (Plant Encyclopedia):**
-   * Tra cứu danh sách các loại cây và các bệnh lý đặc trưng của chúng.
-4. **Lịch sử & Quản lý (History):**
-   * Lưu lại các phiên chẩn đoán và lịch sử chat với AI để người dùng theo dõi tiến triển của cây.
+### 2.1. Tính năng người dùng (Mobile & Web)
+* **Chẩn đoán bằng AI (AI Diagnosis):** Người dùng chụp ảnh lá/thân cây, hệ thống xử lý (bằng model Python) và trả về tên bệnh cùng độ tin cậy[cite: 1, 2].
+* **Phác đồ & Lộ trình (Treatment Roadmap):** Đề xuất hướng xử lý tức thời và lộ trình chăm sóc phục hồi[cite: 1].
+* **My Garden (Khu vườn của tôi):** Quản lý cây trồng đang theo dõi. *Lưu ý: Tính năng này yêu cầu các gói nâng cấp. Gói Free sẽ không sử dụng được, gói Premium cho phép thêm tối đa 10 cây (mỗi cây được quản lý như một đối tượng độc lập).*
+* **Từ điển thực vật học (Plant Encyclopedia):** Tra cứu thông tin các loại cây và bệnh lý đặc trưng[cite: 1].
+* **Cửa hàng (Shop) & Đơn hàng:** Tích hợp sàn thương mại điện tử mua bán sản phẩm nông nghiệp sinh học[cite: 2].
+* **Thời tiết (Weather):** Cập nhật tình hình thời tiết để có cảnh báo chăm sóc phù hợp[cite: 2].
 
-### 2.2. Các tính năng KHÔNG LÀM trong giai đoạn này (Out of Scope):
-* *Sàn thương mại điện tử:* Không tích hợp chức năng mua bán vật tư nông nghiệp/thuốc trừ sâu.
-* *Cộng đồng/Mạng xã hội:* Chưa làm tính năng đăng bài, bình luận, chia sẻ phức tạp.
-*(Lý do: Tập trung toàn lực vào độ mượt mà của hệ thống AI và trải nghiệm UI/UX).*
+### 2.2. Tính năng quản trị (Admin Dashboard)
+* Quản lý người dùng, phân quyền hệ thống[cite: 2].
+* Quản lý sản phẩm, đơn hàng và phản hồi (Feedback)[cite: 2].
+* Báo cáo và thống kê (Reports)[cite: 2].
 
 ---
 
@@ -83,7 +80,7 @@ Sử dụng mô hình Git Flow cơ bản để tránh xung đột (conflict) cod
 
 ## IV. KIẾN TRÚC HỆ THỐNG & CÔNG NGHỆ (TECH STACK & ARCHITECTURE)
 
-Dự án áp dụng kiến trúc **Monolithic (Nguyên khối)** để tối ưu thời gian phát triển, dễ dàng đóng gói, nhưng vẫn giữ cấu trúc code phân mô-đun (Modular) rõ ràng để dễ bảo trì. Toàn bộ hệ thống sử dụng ngôn ngữ **TypeScript** nhằm đảm bảo tính đồng nhất.
+Dự án áp dụng kiến trúc **Monorepo** (quản lý bằng pnpm workspaces) để tối ưu hóa việc chia sẻ mã nguồn, đồng thời sử dụng mô hình Microservices phân tách rành mạch AI và Backend[cite: 2].
 
 ### 4.1. Hệ thống Backend (Core API & AI Gateway)
 * **Framework:** **NestJS (Node.js).** * *Lý do:* Cấu trúc chặt chẽ, dễ dàng phân chia các module trong cùng một khối Monolithic. Xử lý tốt việc nhận file ảnh từ client, gọi AI APIs bên thứ ba, phân tích kết quả và trả về.
@@ -102,8 +99,7 @@ Dự án áp dụng kiến trúc **Monolithic (Nguyên khối)** để tối ưu
 * **Đóng gói (Containerization):** **Docker & Docker Compose.**
   * Toàn bộ backend, MongoDB và Redis được đóng gói. Dựng môi trường nhanh chóng chỉ với `docker-compose up -d`.
 * **Triển khai Cloud (Hosting):**
-  * Backend & Database: Deploy lên Google Cloud Platform (GCP).
-  * Web Frontend: Deploy qua Vercel hoặc Firebase Hosting.
+  * Backend & Database & Web Frontend: Deploy lên Google Cloud Platform (GCP).
 
 ---
 

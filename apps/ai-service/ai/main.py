@@ -155,3 +155,4 @@ async def chat_endpoint(req: ChatRequest):
         # Trả về lỗi 500 nhưng kèm thông báo rõ ràng để Backend dễ đọc
         from fastapi.responses import JSONResponse
         return JSONResponse(status_code=500, content={"error": str(e)})
+    

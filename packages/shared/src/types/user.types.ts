@@ -20,19 +20,18 @@ export interface IUser {
   id: string;
   email: string;
   fullName: string;
-  avatar: string | null;
   role: UserRole;
   plan: SubscriptionPlan;
-  provider: AuthProvider;
   planExpiresAt: Date | null;
   dailyImageCount: number;
   dailyPromptCount: number;
   createdAt: Date;
   updatedAt: Date;
   isPasswordSet: boolean;
-  authProviders: string[];
-  isGoogleLinked?: boolean;
-  isFacebookLinked?: boolean;
+  isGoogleLinked?: boolean;      
+  isFacebookLinked?: boolean; 
+   lastResetDate: Date; 
+    authProviders: AuthProvider[];  
 }
 
 export interface IUserCreate {

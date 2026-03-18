@@ -14,13 +14,24 @@ export class PlantsService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     const count = await this.plantModel.countDocuments();
-    if (count > 0) {
-      console.log('🌱 Đang kiểm tra và đồng bộ dữ liệu từ team AI...');
+
+    if (count === 0) {
+      // Lần đầu tiên: DB trống → seed toàn bộ
+      console.log('🌱 DB trống, đang seed dữ liệu lần đầu...');
       try {
         const result = await this.seedData();
         console.log(result.message);
       } catch (error) {
         console.error('⚠️ Seed thất bại:', (error as Error).message);
+      }
+    } else {
+      // DB đã có data → chỉ sync (upsert) không xóa, im lặng để không spam log
+      console.log(`🌱 DB đã có ${count} cây. Đang đồng bộ dữ liệu AI...`);
+      try {
+        const result = await this.seedData();
+        console.log(result.message);
+      } catch (error) {
+        console.error('⚠️ Sync thất bại:', (error as Error).message);
       }
     }
   }

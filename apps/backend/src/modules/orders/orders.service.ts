@@ -19,69 +19,63 @@ export class OrdersService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>, // Inject Product để check kho
-  ) {}
+  ) { }
 
-  // 1. NGƯỜI MUA: ĐẶT HÀNG
   async createOrder(buyerId: string, dto: CreateOrderDto) {
-    let totalAmount = 0;
-    const orderItems: {
-      productId: Types.ObjectId;
-      quantity: number;
-      priceAtPurchase: number;
-    }[] = [];
-    // Duyệt qua từng món hàng khách muốn mua
-    for (const item of dto.items) {
-      const product = await this.productModel.findById(item.productId);
+    // Khởi tạo MongoDB session để dùng transaction
+    const session = await this.orderModel.db.startSession();
+    session.startTransaction();
 
-      // Kiểm tra sản phẩm có tồn tại, có đang bán và đúng của Seller không
-      if (!product || !product.isActive || product.status !== 'APPROVED') {
-        throw new BadRequestException(
-          `Sản phẩm ${item.productId} không tồn tại hoặc đã ngừng bán!`,
+    try {
+      let totalAmount = 0;
+      const orderItems: { productId: Types.ObjectId; quantity: number; priceAtPurchase: number }[] = [];
+
+      for (const item of dto.items) {
+        const product = await this.productModel.findById(item.productId).session(session);
+
+        if (!product || !product.isActive || product.status !== 'APPROVED') {
+          throw new BadRequestException(`Sản phẩm ${item.productId} không tồn tại hoặc đã ngừng bán!`);
+        }
+        if (product.sellerId.toString() !== dto.sellerId) {
+          throw new BadRequestException(`Sản phẩm ${product.name} không thuộc về gian hàng này!`);
+        }
+        if (product.stock < item.quantity) {
+          throw new BadRequestException(`Sản phẩm ${product.name} chỉ còn ${product.stock} sản phẩm!`);
+        }
+
+        totalAmount += product.price * item.quantity;
+        orderItems.push({ productId: product._id, quantity: item.quantity, priceAtPurchase: product.price });
+
+        // Trừ stock trong cùng transaction
+        await this.productModel.findByIdAndUpdate(
+          product._id,
+          { $inc: { stock: -item.quantity, sold: item.quantity } },
+          { session }
         );
       }
-      if (product.sellerId.toString() !== dto.sellerId) {
-        throw new BadRequestException(
-          `Sản phẩm ${product.name} không thuộc về gian hàng này!`,
-        );
-      }
 
-      // Kiểm tra tồn kho
-      if (product.stock < item.quantity) {
-        throw new BadRequestException(
-          `Sản phẩm ${product.name} chỉ còn ${product.stock} sản phẩm!`,
-        );
-      }
+      const [newOrder] = await this.orderModel.create([{
+        buyerId: new Types.ObjectId(buyerId),
+        sellerId: new Types.ObjectId(dto.sellerId),
+        items: orderItems,
+        totalAmount,
+        shippingAddress: dto.shippingAddress,
+        phoneNumber: dto.phoneNumber,
+        paymentMethod: dto.paymentMethod,
+        orderStatus: 'PENDING',
+        paymentStatus: 'UNPAID',
+      }], { session });
 
-      // Tính tiền (Lấy giá hiện tại của Database, không lấy từ Frontend gửi lên)
-      const price = product.price;
-      totalAmount += price * item.quantity;
+      // Commit: stock trừ + order tạo đều thành công hoặc cùng rollback
+      await session.commitTransaction();
+      return newOrder;
 
-      orderItems.push({
-        productId: product._id,
-        quantity: item.quantity,
-        priceAtPurchase: price,
-      });
-
-      // Trừ tồn kho và cộng lượt bán ngay lập tức bằng lệnh $inc (Atomic Update)
-      await this.productModel.findByIdAndUpdate(product._id, {
-        $inc: { stock: -item.quantity, sold: item.quantity },
-      });
+    } catch (error) {
+      await session.abortTransaction(); // Hoàn lại stock nếu có lỗi
+      throw error;
+    } finally {
+      session.endSession();
     }
-
-    // Tạo hóa đơn
-    const newOrder = new this.orderModel({
-      buyerId: new Types.ObjectId(buyerId),
-      sellerId: new Types.ObjectId(dto.sellerId),
-      items: orderItems,
-      totalAmount,
-      shippingAddress: dto.shippingAddress,
-      phoneNumber: dto.phoneNumber,
-      paymentMethod: dto.paymentMethod,
-      orderStatus: 'PENDING',
-      paymentStatus: 'UNPAID',
-    });
-
-    return newOrder.save();
   }
 
   // 2. NGƯỜI MUA: Xem lịch sử đơn hàng của mình
