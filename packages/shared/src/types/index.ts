@@ -6,3 +6,4 @@ export * from "./api.types";
 export * from "./weather.types";
 export * from "./product.types";
 export * from "./order.types";
+export * from "./my-garden.types";

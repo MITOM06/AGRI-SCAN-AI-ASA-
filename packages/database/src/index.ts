@@ -8,3 +8,4 @@ export * from "./schemas/feedback.schema";
 export * from "./schemas/payment.schema";
 export * from "./schemas/product.schema";
 export * from "./schemas/order.schema";
+export * from "./schemas/my-garden.schema";
