@@ -162,8 +162,9 @@ export class MyGardenService {
       })),
     });
 
-    await newGardenPlant.save();
-    return { message: 'Thêm cây thành công!', data: newGardenPlant };
+    const populatedPlant = await newGardenPlant.populate('plantId', 'commonName scientificName images category');
+
+    return { message: 'Thêm cây thành công!', data: populatedPlant };
   }
 
   // ==========================================

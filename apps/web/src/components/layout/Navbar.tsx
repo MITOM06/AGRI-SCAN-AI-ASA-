@@ -39,6 +39,7 @@ export function Navbar() {
     { name: "Trang chủ", path: "/" },
     { name: "Giới thiệu", path: "/about" },
     { name: "Cộng đồng", path: "/community" },
+    { name: "Khu vườn", path: "/my-garden" },
   ];
 
   const toolItems = [

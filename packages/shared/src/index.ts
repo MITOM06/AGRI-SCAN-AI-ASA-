@@ -13,6 +13,7 @@ export * from "./schemas";
 // Explicit exports to ensure TS sees them (fixes missing-export errors)
 export { APP_DESCRIPTION } from "./constants/app.constants";
 export { isValidImageFile } from "./utils/validation.utils";
+export type { AddPlantPayload } from './types/my-garden.types';
 export type {
   IScanResult,
   IScanHistoryDetail,

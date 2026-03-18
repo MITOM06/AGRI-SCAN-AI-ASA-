@@ -14,13 +14,13 @@ export interface AddPlantPayload {
 export const myGardenApi = {
   // 1. Lấy danh sách cây đang trồng
   getUserGarden: async (): Promise<IMyGardenPlant[]> => {
-    const response = await axiosClient.get('/my-garden');
+    const response = await axiosClient.get('/api/my-garden');
     return response.data;
   },
 
   // 2. Thêm cây vào vườn (Gọi LLM tạo lộ trình)
   addPlantToGarden: async (payload: AddPlantPayload): Promise<{ message: string; data: IMyGardenPlant }> => {
-    const response = await axiosClient.post('/my-garden', payload);
+    const response = await axiosClient.post('/api/my-garden', payload);
     return response.data;
   },
 
@@ -31,13 +31,13 @@ export const myGardenApi = {
     progressPercentage?: number;
     status?: string;
   }> => {
-    const response = await axiosClient.post(`/my-garden/${gardenId}/check-in`, { currentDay });
+    const response = await axiosClient.post(`/api/my-garden/${gardenId}/check-in`, { currentDay });
     return response.data;
   },
 
   // 4. Xóa cây (Bỏ cuộc / Hủy lộ trình)
   removePlant: async (gardenId: string): Promise<{ message: string }> => {
-    const response = await axiosClient.delete(`/my-garden/${gardenId}`);
+    const response = await axiosClient.delete(`/api/my-garden/${gardenId}`);
     return response.data;
   }
 };

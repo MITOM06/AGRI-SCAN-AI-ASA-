@@ -27,3 +27,13 @@ export interface IMyGardenPlant {
   careRoadmap: IDailyTask[];
   status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
 }
+
+// ── Thêm: DTO dùng chung cho cả web và mobile ──
+export interface AddPlantPayload {
+  plantId: string;
+  customName?: string;
+  userGoal: 'HEAL_DISEASE' | 'GET_FRUIT' | 'GET_FLOWER' | 'MAINTAIN';
+  diseaseName?: string;
+  lat: number;
+  lon: number;
+}
