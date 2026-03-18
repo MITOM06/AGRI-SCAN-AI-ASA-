@@ -2,9 +2,20 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Leaf, Menu, X, User, LogOut, ChevronDown, Zap, 
-  ScanSearch, BookOpen, CloudSun, Settings 
+import {
+  Leaf,
+  Menu,
+  X,
+  User,
+  LogOut,
+  ChevronDown,
+  Zap,
+  ScanSearch,
+  BookOpen,
+  CloudSun,
+  Settings,
+  Store,
+  Package,
 } from "lucide-react";
 import { cn } from "@agri-scan/shared";
 import { useAuth } from "../../hooks/useAuth";
@@ -16,11 +27,11 @@ export function Navbar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  
+
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const userMenuRef = useRef<HTMLDivElement>(null);
   const toolsMenuRef = useRef<HTMLDivElement>(null);
 
@@ -31,23 +42,47 @@ export function Navbar() {
   ];
 
   const toolItems = [
-    { name: 'Chẩn đoán AI', path: '/scan', icon: ScanSearch, desc: 'Nhận diện bệnh cây trồng' },
-    { name: 'Từ điển cây', path: '/encyclopedia', icon: BookOpen, desc: 'Tra cứu thông tin cây' },
-    { name: 'Thời tiết', path: '/weather', icon: CloudSun, desc: 'Dự báo nông nghiệp' },
+    {
+      name: "Chẩn đoán AI",
+      path: "/scan",
+      icon: ScanSearch,
+      desc: "Nhận diện bệnh cây trồng",
+    },
+    {
+      name: "Từ điển cây",
+      path: "/encyclopedia",
+      icon: BookOpen,
+      desc: "Tra cứu thông tin cây",
+    },
+    {
+      name: "Thời tiết",
+      path: "/weather",
+      icon: CloudSun,
+      desc: "Dự báo nông nghiệp",
+    },
+    { name: "Cửa hàng", path: "/shop", icon: Store, desc: "Mua sắm sản phẩm" },
   ];
 
-  const isToolActive = toolItems.some(item => pathname.startsWith(item.path));
+  const isToolActive = toolItems.some((item) => pathname.startsWith(item.path));
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll, { passive: true });
-    
+
     function handleClickOutside(event: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) setIsUserMenuOpen(false);
-      if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target as Node)) setIsToolsOpen(false);
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      )
+        setIsUserMenuOpen(false);
+      if (
+        toolsMenuRef.current &&
+        !toolsMenuRef.current.contains(event.target as Node)
+      )
+        setIsToolsOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
-    
+
     return () => {
       window.removeEventListener("scroll", onScroll);
       document.removeEventListener("mousedown", handleClickOutside);
@@ -65,10 +100,12 @@ export function Navbar() {
     router.push("/");
   };
 
-  const isActive = (path: string) => path === "/" ? pathname === "/" : pathname.startsWith(path);
+  const isActive = (path: string) =>
+    path === "/" ? pathname === "/" : pathname.startsWith(path);
 
   return (
-    <nav className={cn(
+    <nav
+      className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         isScrolled
           ? "bg-white/95 backdrop-blur-md shadow-md shadow-gray-200/60 border-b border-gray-100"
@@ -77,15 +114,18 @@ export function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center gap-6">
-          
           {/* Logo Section */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white shadow-md shadow-primary/30">
               <Leaf size={20} />
             </div>
             <div>
-              <h1 className="text-base font-bold text-gray-900 leading-none tracking-tight">Agri-Scan AI</h1>
-              <span className="text-[10px] text-primary font-semibold tracking-widest uppercase">Bác sĩ cây trồng</span>
+              <h1 className="text-base font-bold text-gray-900 leading-none tracking-tight">
+                Agri-Scan AI
+              </h1>
+              <span className="text-[10px] text-primary font-semibold tracking-widest uppercase">
+                Bác sĩ cây trồng
+              </span>
             </div>
           </Link>
 
@@ -115,13 +155,19 @@ export function Navbar() {
                 onClick={() => setIsToolsOpen(!isToolsOpen)}
                 className={cn(
                   "relative flex items-center h-10 px-4 rounded-xl text-sm font-bold transition-all duration-200 gap-1.5",
-                  isToolActive || isToolsOpen 
-                    ? "text-primary bg-primary/10" 
+                  isToolActive || isToolsOpen
+                    ? "text-primary bg-primary/10"
                     : "text-gray-600 hover:text-primary hover:bg-gray-50",
                 )}
               >
                 Tiện ích
-                <ChevronDown size={14} className={cn("transition-transform duration-300", isToolsOpen && "rotate-180")} />
+                <ChevronDown
+                  size={14}
+                  className={cn(
+                    "transition-transform duration-300",
+                    isToolsOpen && "rotate-180",
+                  )}
+                />
                 {isToolActive && !isToolsOpen && (
                   <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary" />
                 )}
@@ -142,20 +188,35 @@ export function Navbar() {
                           href={item.path}
                           className={cn(
                             "flex items-center gap-3.5 p-3 rounded-xl transition-all",
-                            pathname === item.path ? "bg-primary/5" : "hover:bg-gray-50"
+                            pathname === item.path
+                              ? "bg-primary/5"
+                              : "hover:bg-gray-50",
                           )}
                         >
-                          <div className={cn(
-                            "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
-                            pathname === item.path ? "bg-primary text-white" : "bg-gray-100 text-gray-500"
-                          )}>
+                          <div
+                            className={cn(
+                              "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
+                              pathname === item.path
+                                ? "bg-primary text-white"
+                                : "bg-gray-100 text-gray-500",
+                            )}
+                          >
                             <item.icon size={20} />
                           </div>
                           <div className="text-left">
-                            <div className={cn("text-sm font-bold", pathname === item.path ? "text-primary" : "text-gray-900")}>
+                            <div
+                              className={cn(
+                                "text-sm font-bold",
+                                pathname === item.path
+                                  ? "text-primary"
+                                  : "text-gray-900",
+                              )}
+                            >
                               {item.name}
                             </div>
-                            <p className="text-[11px] text-gray-500 font-medium leading-tight mt-1">{item.desc}</p>
+                            <p className="text-[11px] text-gray-500 font-medium leading-tight mt-1">
+                              {item.desc}
+                            </p>
                           </div>
                         </Link>
                       ))}
@@ -192,14 +253,32 @@ export function Navbar() {
                   <div
                     className="w-7 h-7 rounded-full flex items-center justify-center text-primary border-2 shadow-sm"
                     style={{
-                      borderColor: user.plan === "VIP" ? "#fbbf24" : user.plan === "PREMIUM" ? "#a855f7" : "transparent",
-                      backgroundColor: user.plan === "VIP" ? "#fffbeb" : user.plan === "PREMIUM" ? "#faf5ff" : "rgba(16, 185, 129, 0.1)",
+                      borderColor:
+                        user.plan === "VIP"
+                          ? "#fbbf24"
+                          : user.plan === "PREMIUM"
+                            ? "#a855f7"
+                            : "transparent",
+                      backgroundColor:
+                        user.plan === "VIP"
+                          ? "#fffbeb"
+                          : user.plan === "PREMIUM"
+                            ? "#faf5ff"
+                            : "rgba(16, 185, 129, 0.1)",
                     }}
                   >
                     <User size={15} />
                   </div>
-                  <span className="text-sm font-bold text-gray-700 max-w-30 truncate">{user.fullName}</span>
-                  <ChevronDown size={13} className={cn("text-gray-400 transition-transform duration-200", isUserMenuOpen && "rotate-180")} />
+                  <span className="text-sm font-bold text-gray-700 max-w-30 truncate">
+                    {user.fullName}
+                  </span>
+                  <ChevronDown
+                    size={13}
+                    className={cn(
+                      "text-gray-400 transition-transform duration-200",
+                      isUserMenuOpen && "rotate-180",
+                    )}
+                  />
                 </button>
 
                 {/* Dropdown Người Dùng Desktop */}
@@ -212,17 +291,36 @@ export function Navbar() {
                       className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-1.5 z-50"
                     >
                       <div className="px-4 py-2.5 border-b border-gray-50 mb-1">
-                        <p className="text-sm font-bold text-gray-900 truncate">{user.fullName}</p>
-                        <p className="text-[11px] text-gray-400 truncate font-medium">{user.email}</p>
+                        <p className="text-sm font-bold text-gray-900 truncate">
+                          {user.fullName}
+                        </p>
+                        <p className="text-[11px] text-gray-400 truncate font-medium">
+                          {user.email}
+                        </p>
                       </div>
-                      <Link href="/profile" className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                      <Link
+                        href="/profile"
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
+                      >
                         <User size={16} /> Hồ sơ của tôi
                       </Link>
-                      <Link href="/settings" className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors">
+                      <Link
+                        href="/shop/orders"
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
+                      >
+                        <Package size={16} /> Đơn hàng của tôi
+                      </Link>
+                      <Link
+                        href="/settings"
+                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
+                      >
                         <Settings size={16} /> Cài đặt
                       </Link>
                       <div className="border-t border-gray-50 mt-1.5 pt-1.5">
-                        <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
+                        >
                           <LogOut size={16} /> Đăng xuất
                         </button>
                       </div>
@@ -242,7 +340,10 @@ export function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-2">
-            <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
+            >
               {isOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
@@ -252,29 +353,43 @@ export function Navbar() {
       {/* Mobile Menu - ĐÃ KHÔI PHỤC PHẦN NGƯỜI DÙNG */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
+            animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="lg:hidden bg-white border-t border-gray-100 shadow-lg overflow-hidden"
           >
             <div className="px-4 pt-3 pb-6 flex flex-col gap-1">
               {navItems.map((item) => (
-                <Link key={item.name} href={item.path} className={cn(
-                  "px-4 py-3 rounded-xl text-sm font-bold transition-all",
-                  isActive(item.path) ? "text-primary bg-primary/10" : "text-gray-700"
-                )}>
+                <Link
+                  key={item.name}
+                  href={item.path}
+                  className={cn(
+                    "px-4 py-3 rounded-xl text-sm font-bold transition-all",
+                    isActive(item.path)
+                      ? "text-primary bg-primary/10"
+                      : "text-gray-700",
+                  )}
+                >
                   {item.name}
                 </Link>
               ))}
-              
+
               <div className="my-2 border-t border-gray-50 pt-3">
-                <p className="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tiện ích</p>
+                <p className="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                  Tiện ích
+                </p>
                 {toolItems.map((item) => (
-                  <Link key={item.name} href={item.path} className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium",
-                    pathname === item.path ? "text-primary bg-primary/5 font-bold" : "text-gray-600"
-                  )}>
+                  <Link
+                    key={item.name}
+                    href={item.path}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium",
+                      pathname === item.path
+                        ? "text-primary bg-primary/5 font-bold"
+                        : "text-gray-600",
+                    )}
+                  >
                     <item.icon size={20} />
                     {item.name}
                   </Link>
@@ -290,19 +405,32 @@ export function Navbar() {
                         <User size={20} />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-gray-900 truncate">{user.fullName}</p>
-                        <p className="text-[11px] text-gray-400 truncate font-medium">{user.email}</p>
+                        <p className="text-sm font-bold text-gray-900 truncate">
+                          {user.fullName}
+                        </p>
+                        <p className="text-[11px] text-gray-400 truncate font-medium">
+                          {user.email}
+                        </p>
                       </div>
                     </div>
-                    <Link href="/profile" className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 rounded-xl hover:bg-gray-50">
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 rounded-xl hover:bg-gray-50"
+                    >
                       <User size={18} /> Hồ sơ của tôi
                     </Link>
-                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 rounded-xl hover:bg-red-50">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 rounded-xl hover:bg-red-50"
+                    >
                       <LogOut size={18} /> Đăng xuất
                     </button>
                   </div>
                 ) : (
-                  <Link href="/login" className="block w-full px-4 py-3 bg-primary text-white rounded-xl font-bold text-center text-sm shadow-md">
+                  <Link
+                    href="/login"
+                    className="block w-full px-4 py-3 bg-primary text-white rounded-xl font-bold text-center text-sm shadow-md"
+                  >
                     Đăng nhập
                   </Link>
                 )}

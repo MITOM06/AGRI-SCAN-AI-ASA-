@@ -25,7 +25,7 @@ export const MOCK_DASHBOARD = {
   totalScans: 15432,
 };
 
-export const MOCK_USERS: IUser[] = await adminApi.getUsers
+// export const MOCK_USERS: IUser[] = await adminApi.getUsers
 
 export const MOCK_REVENUE_DATA = [
   { date: "2026-03-01", totalRevenue: 1500000, PREMIUM: 500000, VIP: 1000000 },
