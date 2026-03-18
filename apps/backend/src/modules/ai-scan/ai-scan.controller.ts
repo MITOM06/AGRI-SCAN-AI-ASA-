@@ -63,7 +63,14 @@ export class AiScanController {
     // Truyền null vào userId để Service hiểu đây là khách
     return this.aiScanService.askVirtualAssistant(null, question, label);
   }
-
+  @UseGuards(JwtAuthGuard)
+  @Get('history')
+  @Get('chat/history')
+  async getChatHistory(@Req() req: any) {
+    const userId = req.user.userId || req.user._id || req.user.sub;
+    return this.aiScanService.getUserChatHistory(userId);
+  }
+  
   @UseGuards(JwtAuthGuard)
   @Get('history/:id')
   async getScanDetail(@Req() req: any, @Param('id') scanId: string) {
@@ -71,22 +78,16 @@ export class AiScanController {
     return this.aiScanService.getScanDetail(userId, scanId);
   }
 
-  @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
 
-  @Get('chat/history')
-  async getChatHistory(@Req() req: any) {
-    const userId = req.user.userId || req.user._id || req.user.sub;
-    return this.aiScanService.getUserChatHistory(userId);
-  }
 
-  @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
+  @UseGuards(JwtAuthGuard)
   @Get('chat/sessions/:sessionId')
   async getSessionMessages(@Req() req: any, @Param('sessionId') sessionId: string) {
     const userId = req.user.userId || req.user._id || req.user.sub;
     return this.aiScanService.getSessionMessages(userId, sessionId);
   }
 
-  @UseGuards(JwtAuthGuard) // Bắt buộc đăng nhập
+  @UseGuards(JwtAuthGuard)
   @Patch('history/:id/feedback')
   async submitFeedback(@Param('id') scanId: string, @Body('isAccurate') isAccurate: boolean) {
     return this.aiScanService.updateAccuracyFeedback(scanId, isAccurate);

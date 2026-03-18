@@ -22,6 +22,7 @@ export class PlantsController {
   }
 
   @Post('seed')
+  @UseGuards(JwtAuthGuard, RolesGuard) 
   @Roles('ADMIN')  
   async seedPlantData() {
     return this.plantsService.seedData();
@@ -29,6 +30,7 @@ export class PlantsController {
 
   // 🔥 THÊM MỚI: Endpoint gửi đóng góp cây trồng (Tự động vào hàng đợi)
   @Post('contribute')
+  @UseGuards(JwtAuthGuard)
   @Roles('USER', 'ADMIN')
   async contributePlant(@Body() plantData: any) { // Có thể tạo DTO sau để validate chặt chẽ hơn
     return this.plantsService.contributePlant(plantData);

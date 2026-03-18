@@ -65,9 +65,9 @@ export class MyGardenService {
       throw new ForbiddenException('Tính năng My Garden chỉ dành cho Premium/VIP. Vui lòng nâng cấp!');
     }
 
-    // Đếm số cây đang tồn tại trong vườn (Trừ những cây đã xóa)
+
     const currentPlantCount = await this.myGardenModel.countDocuments({
-      userId,
+      userId: new Types.ObjectId(userId),
       status: { $in: ['IN_PROGRESS', 'COMPLETED'] },
     });
 
@@ -143,7 +143,12 @@ export class MyGardenService {
       userId: new Types.ObjectId(dto.userId),
       plantId: new Types.ObjectId(dto.plantId),
       customName: dto.customName || plant.commonName,
-      plantGroup: plant.category.includes('Cây ăn quả') ? 'FRUIT' : (plant.category.includes('Cây hoa') ? 'FLOWER' : 'ORNAMENTAL'),
+      plantGroup: (() => {
+        const mapped = this.mapPlantCategoryToWeatherTarget(plant.category);
+        if (mapped === 'FRUIT') return 'FRUIT';
+        if (mapped === 'FLOWER') return 'FLOWER';
+        return 'ORNAMENTAL';
+      })(),
       userGoal: dto.userGoal,
       currentCondition: dto.diseaseName || 'Khỏe mạnh',
       growthStages: aiData.growth_stages || ['Giai đoạn 1', 'Giai đoạn 2', 'Giai đoạn 3'],
@@ -168,7 +173,10 @@ export class MyGardenService {
     // Check quyền truy cập
     await this.validateUserPlan(userId);
 
-    const gardenPlant = await this.myGardenModel.findOne({ _id: gardenId, userId });
+    const gardenPlant = await this.myGardenModel.findOne({
+      _id: gardenId,
+      userId: new Types.ObjectId(userId),
+    });
     if (!gardenPlant) throw new NotFoundException('Không tìm thấy cây trong vườn.');
 
     const today = new Date();
@@ -219,7 +227,10 @@ export class MyGardenService {
   // 4. HỦY/XÓA CÂY (TRẢ LẠI SLOT CHO USER)
   // ==========================================
   async removePlantFromGarden(gardenId: string, userId: string) {
-    const deletedPlant = await this.myGardenModel.findOneAndDelete({ _id: gardenId, userId });
+    const deletedPlant = await this.myGardenModel.findOneAndDelete({
+      _id: gardenId,
+      userId: new Types.ObjectId(userId),
+    });
     if (!deletedPlant) throw new NotFoundException('Không tìm thấy cây này trong vườn.');
     return { message: 'Đã xóa cây. Bạn đã nhận lại 1 vị trí trống trong vườn.' };
   }

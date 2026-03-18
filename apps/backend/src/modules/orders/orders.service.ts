@@ -132,11 +132,25 @@ export class OrdersService {
     const order = await this.orderModel.findById(orderId);
     if (!order) throw new NotFoundException('Không tìm thấy hóa đơn này!');
 
+    const isSeller = order.sellerId.toString() === userId;
+    const isBuyer = order.buyerId.toString() === userId;
+    const isAdmin = userRole === 'ADMIN';
+
     // Chỉ Chủ Shop hoặc Admin mới có quyền đổi trạng thái đơn
-    if (order.sellerId.toString() !== userId && userRole !== 'ADMIN') {
-      throw new ForbiddenException(
-        'Bạn không có quyền thao tác trên đơn hàng của shop khác!',
-      );
+    if (!isSeller && !isAdmin && !isBuyer) {
+      throw new ForbiddenException('Bạn không có quyền thao tác trên đơn hàng này!');
+    }
+
+    // Buyer chỉ được cancel khi đơn còn PENDING (chưa xử lý)
+    if (isBuyer && !isSeller && !isAdmin) {
+      if (dto.status !== 'CANCELLED') {
+        throw new ForbiddenException('Người mua chỉ có thể hủy đơn hàng!');
+      }
+      if (order.orderStatus !== 'PENDING') {
+        throw new BadRequestException('Không thể hủy đơn đã được xác nhận hoặc đang giao!');
+      }
+      // Override cancelReason cho buyer
+      order.cancelReason = dto.cancelReason || 'Người mua hủy đơn';
     }
 
     // Nếu Hủy đơn hàng -> Phải hoàn lại tồn kho cho sản phẩm
