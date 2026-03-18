@@ -19,7 +19,6 @@ import {
   Leaf,
   ShieldCheck,
   Sprout,
-  Users,
   X,
   User as UserIcon,
   Settings,
@@ -28,9 +27,10 @@ import {
   CloudSun,
   BookOpen,
   ShoppingCart,
-  Store, // 🔥 Thêm icon Store cho Gian hàng
-  ShieldAlert, // 🔥 Thêm icon Shield cho Admin
-  MessageSquare, // 🔥 Thêm icon MessageSquare cho Gửi phản hồi
+  Store,
+  ShieldAlert,
+  MessageSquare,
+  Library,
 } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
@@ -40,7 +40,6 @@ export default function UserHomeScreen() {
   const insets = useSafeAreaInsets();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // 🔥 Cập nhật: Thêm trường role để phân quyền
   const [userData, setUserData] = useState<{
     fullName?: string;
     email?: string;
@@ -143,7 +142,6 @@ export default function UserHomeScreen() {
         ? "#8b5cf6"
         : "#d1d5db";
 
-  // 🔥 DANH SÁCH TÍNH NĂNG (Đã thêm Gian hàng của tôi)
   const features = [
     {
       icon: <ShieldCheck size={28} color="#2563eb" />,
@@ -152,6 +150,14 @@ export default function UserHomeScreen() {
         "Nhận diện bệnh cây qua ảnh chụp tức thời với độ chính xác cao.",
       colorBg: "#eff6ff",
       route: "/scan",
+    },
+    {
+      icon: <Library size={28} color="#0ea5e9" />,
+      title: "Từ điển cây",
+      description:
+        "Tra cứu thông tin chi tiết về các loại bệnh và cách phòng trừ.",
+      colorBg: "#e0f2fe",
+      route: "/treeDic", // 🔥 ĐÃ SỬA: Khớp với tên file treeDic.tsx
     },
     {
       icon: <CloudSun size={28} color="#06b6d4" />,
@@ -170,7 +176,6 @@ export default function UserHomeScreen() {
       route: "/shop",
     },
     {
-      // 🔥 NÚT MỚI: GIAN HÀNG CỦA TÔI
       icon: <Store size={28} color="#db2777" />,
       title: "Gian hàng của tôi",
       description: "Đăng bán nông sản, vật tư và quản lý đơn khách đặt.",
@@ -285,12 +290,6 @@ export default function UserHomeScreen() {
                   <Text style={styles.userEmail} numberOfLines={1}>
                     {userData?.email || "Đang tải email..."}
                   </Text>
-                  {/* Hiển thị badge Admin nếu là Admin */}
-                  {userData?.role === "ADMIN" && (
-                    <View style={styles.adminBadge}>
-                      <Text style={styles.adminBadgeText}>Quản trị viên</Text>
-                    </View>
-                  )}
                 </View>
               </View>
 
@@ -298,7 +297,6 @@ export default function UserHomeScreen() {
                 style={styles.menuLinks}
                 showsVerticalScrollIndicator={false}
               >
-                {/* 🔥 NÚT QUẢN TRỊ ADMIN (Chỉ hiện khi role là ADMIN) */}
                 {userData?.role === "ADMIN" && (
                   <TouchableOpacity
                     style={styles.adminMenuItem}
@@ -308,7 +306,6 @@ export default function UserHomeScreen() {
                     <Text style={styles.adminMenuText}>Quản trị Hệ thống</Text>
                   </TouchableOpacity>
                 )}
-
                 <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
                   <Text style={styles.menuItemText}>Trang chủ</Text>
                 </TouchableOpacity>
@@ -317,6 +314,14 @@ export default function UserHomeScreen() {
                   onPress={() => handleNavigate("/scan")}
                 >
                   <Text style={styles.menuItemText}>Chẩn đoán AI</Text>
+                </TouchableOpacity>
+
+                {/* 🔥 ĐÃ SỬA: Trỏ về /treeDic */}
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/treeDic")}
+                >
+                  <Text style={styles.menuItemText}>Từ điển cây</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -335,32 +340,12 @@ export default function UserHomeScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
-                  onPress={() => handleNavigate("/my-orders")}
-                >
-                  <Text style={styles.menuItemText}>Lịch sử mua hàng</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
                   onPress={() => handleNavigate("/my-garden")}
                 >
                   <Text style={styles.menuItemText}>Vườn của tôi</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/weather")}
-                >
-                  <Text style={styles.menuItemText}>Thời tiết nông nghiệp</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/community")}
-                >
-                  <Text style={styles.menuItemText}>Cộng đồng</Text>
-                </TouchableOpacity>
 
                 <View style={styles.divider} />
-                {/* 🔥 THÊM NÚT GỬI PHẢN HỒI VÀO ĐÂY */}
                 <TouchableOpacity
                   style={styles.menuItemWithIcon}
                   onPress={() => handleNavigate("/feedback")}
@@ -422,7 +407,6 @@ export default function UserHomeScreen() {
             Chẩn đoán bệnh cây trồng tức thì bằng AI. Nhận phác đồ điều trị khoa
             học và lộ trình chăm sóc bền vững.
           </Text>
-
           <View style={styles.buttonGroup}>
             <TouchableOpacity
               style={styles.primaryBtn}
@@ -442,7 +426,6 @@ export default function UserHomeScreen() {
               Công nghệ tiên phong{"\n"}cho nông nghiệp bền vững
             </Text>
           </View>
-
           <View style={styles.featuresList}>
             {features.map((item, index) => (
               <TouchableOpacity
@@ -601,17 +584,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   userEmail: { fontSize: 13, color: "#6b7280", marginBottom: 4 },
-  adminBadge: {
-    backgroundColor: "#fee2e2",
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  adminBadgeText: { color: "#dc2626", fontSize: 11, fontWeight: "bold" },
   menuLinks: { flex: 1, paddingHorizontal: 24, paddingTop: 10 },
-
-  // Nút Admin
   adminMenuItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -625,7 +598,6 @@ const styles = StyleSheet.create({
     borderColor: "#fecaca",
   },
   adminMenuText: { fontSize: 15, color: "#dc2626", fontWeight: "bold" },
-
   menuItem: {
     paddingVertical: 16,
     borderBottomWidth: 1,
@@ -712,25 +684,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   primaryBtnText: { color: "#fff", fontWeight: "bold", fontSize: 15 },
-  secondaryBtn: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 22,
-    paddingVertical: 14,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  secondaryBtnText: { color: "#374151", fontWeight: "600", fontSize: 15 },
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingRight: 20,
-    marginBottom: 20,
-  },
-  statBox: { alignItems: "flex-start" },
-  statNum: { fontSize: 26, fontWeight: "900", color: "#111827" },
-  statLabel: { fontSize: 12, color: "#6b7280", marginTop: 2 },
   featuresSection: {
     paddingHorizontal: 20,
     paddingTop: 10,
