@@ -18,6 +18,8 @@ import {
   Truck,
   XCircle,
   Package,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react-native";
 
 import { orderApi } from "@agri-scan/shared";
@@ -29,6 +31,9 @@ export default function MyOrdersScreen() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 🔥 State để theo dõi những đơn hàng nào đang được "Mở rộng" để xem toàn bộ sản phẩm
+  const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
+
   useEffect(() => {
     fetchMyOrders();
   }, []);
@@ -36,7 +41,7 @@ export default function MyOrdersScreen() {
   const fetchMyOrders = async () => {
     try {
       setLoading(true);
-      const res = await orderApi.getMyOrders(1, 100); // Lấy lịch sử 100 đơn gần nhất
+      const res = await orderApi.getMyOrders(1, 100);
       setOrders(res.data || []);
     } catch (error) {
       console.error("Lỗi tải lịch sử đơn hàng:", error);
@@ -50,6 +55,16 @@ export default function MyOrdersScreen() {
       style: "currency",
       currency: "VND",
     }).format(amount || 0);
+  };
+
+  // Hàm xử lý Mở rộng / Thu gọn đơn hàng
+  const toggleExpandOrder = (orderId: string) => {
+    setExpandedOrders(
+      (prev) =>
+        prev.includes(orderId)
+          ? prev.filter((id) => id !== orderId) // Nếu đang mở thì đóng lại
+          : [...prev, orderId], // Nếu đang đóng thì mở ra
+    );
   };
 
   const getStatusConfig = (status: string) => {
@@ -137,15 +152,21 @@ export default function MyOrdersScreen() {
           ) : (
             orders.map((order) => {
               const statusConfig = getStatusConfig(order.orderStatus);
-              // Lấy thông tin mặt hàng đầu tiên để hiển thị đại diện
-              const firstItem = order.items?.[0] || {};
-              const productInfo = firstItem.productId || {};
+              const isExpanded = expandedOrders.includes(order._id);
+
+              // 🔥 Nếu đang expanded thì hiển thị tất cả, nếu không chỉ hiển thị item đầu tiên
+              const displayedItems = isExpanded
+                ? order.items
+                : [order.items?.[0]];
 
               return (
                 <View key={order._id} style={styles.orderCard}>
                   <View style={styles.orderHeader}>
                     <Text style={styles.shopName}>
-                      🛒 {order.sellerId?.fullName || "Gian hàng"}
+                      🛒{" "}
+                      {order.sellerId?.shopName ||
+                        order.sellerId?.fullName ||
+                        "Gian hàng"}
                     </Text>
                     <View
                       style={[
@@ -165,39 +186,66 @@ export default function MyOrdersScreen() {
                     </View>
                   </View>
 
-                  <View style={styles.orderBody}>
-                    <Image
-                      source={{
-                        uri:
-                          productInfo.images?.[0] || "https://placehold.co/100",
-                      }}
-                      style={styles.productImg}
-                    />
-                    <View style={styles.productInfo}>
-                      <Text style={styles.productName} numberOfLines={2}>
-                        {productInfo.name || "Sản phẩm không xác định"}
-                      </Text>
+                  {/* VÒNG LẶP HIỂN THỊ CÁC SẢN PHẨM */}
+                  {displayedItems.map((item: any, index: number) => {
+                    if (!item) return null;
+                    const productInfo = item.productId || {};
+                    return (
                       <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          marginTop: 8,
-                        }}
+                        key={index}
+                        style={[
+                          styles.orderBody,
+                          index > 0 && styles.borderTopDivider, // Gạch phân cách giữa các sp
+                        ]}
                       >
-                        <Text style={styles.productPrice}>
-                          {formatCurrency(firstItem.priceAtPurchase)}
-                        </Text>
-                        <Text style={styles.productQty}>
-                          x{firstItem.quantity}
-                        </Text>
+                        <Image
+                          source={{
+                            uri:
+                              productInfo.images?.[0] ||
+                              "https://placehold.co/100",
+                          }}
+                          style={styles.productImg}
+                        />
+                        <View style={styles.productInfo}>
+                          <Text style={styles.productName} numberOfLines={2}>
+                            {productInfo.name || "Sản phẩm không xác định"}
+                          </Text>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              justifyContent: "space-between",
+                              marginTop: 8,
+                            }}
+                          >
+                            <Text style={styles.productPrice}>
+                              {formatCurrency(item.priceAtPurchase)}
+                            </Text>
+                            <Text style={styles.productQty}>
+                              x{item.quantity}
+                            </Text>
+                          </View>
+                        </View>
                       </View>
-                    </View>
-                  </View>
+                    );
+                  })}
 
+                  {/* NÚT XEM THÊM / THU GỌN NẾU CÓ NHIỀU HƠN 1 SẢN PHẨM */}
                   {order.items?.length > 1 && (
-                    <Text style={styles.moreItemsText}>
-                      Và {order.items.length - 1} sản phẩm khác...
-                    </Text>
+                    <TouchableOpacity
+                      style={styles.expandBtn}
+                      onPress={() => toggleExpandOrder(order._id)}
+                    >
+                      <Text style={styles.expandBtnText}>
+                        {isExpanded
+                          ? "Thu gọn"
+                          : `Xem thêm ${order.items.length - 1} sản phẩm`}
+                      </Text>
+                      {isExpanded ? (
+                        <ChevronUp size={16} color="#16a34a" />
+                      ) : (
+                        <ChevronDown size={16} color="#16a34a" />
+                      )}
+                    </TouchableOpacity>
                   )}
 
                   <View style={styles.orderFooter}>
@@ -279,7 +327,13 @@ const styles = StyleSheet.create({
   },
   statusText: { fontSize: 12, fontWeight: "bold" },
 
-  orderBody: { flexDirection: "row" },
+  orderBody: { flexDirection: "row", paddingVertical: 4 },
+  borderTopDivider: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#f1f5f9",
+  },
   productImg: {
     width: 70,
     height: 70,
@@ -291,12 +345,23 @@ const styles = StyleSheet.create({
   productPrice: { fontSize: 15, fontWeight: "bold", color: "#111827" },
   productQty: { fontSize: 14, color: "#64748b" },
 
-  moreItemsText: {
-    fontSize: 13,
-    color: "#64748b",
-    textAlign: "center",
+  // 🔥 Style cho nút Xem thêm / Thu gọn
+  expandBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 12,
-    fontStyle: "italic",
+    paddingVertical: 8,
+    backgroundColor: "#f0fdf4",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dcfce3",
+  },
+  expandBtnText: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#16a34a",
+    marginRight: 4,
   },
 
   orderFooter: {

@@ -385,23 +385,15 @@ export default function LoginScreen() {
                 <Text style={styles.socialBtnText}>Google</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.socialBtn,
-                  { backgroundColor: "#1877F2", borderColor: "#1877F2" },
-                ]}
-                onPress={handleFacebookLogin}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={styles.socialBtn}>
                 <Image
                   source={{
-                    uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/120px-2021_Facebook_icon.svg.png",
+                    uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/1024px-2021_Facebook_icon.svg.png",
                   }}
-                  style={[styles.socialIcon, { tintColor: "#fff" }]}
+                  style={{ width: 24, height: 24 }}
+                  resizeMode="contain"
                 />
-                <Text style={[styles.socialBtnText, { color: "#fff" }]}>
-                  Facebook
-                </Text>
+                <Text style={styles.socialBtnText}>Facebook</Text>
               </TouchableOpacity>
             </View>
 
