@@ -68,9 +68,11 @@ export default function AdminMobileScreen() {
   const [replyingId, setReplyingId] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
 
   useEffect(() => {
     loadAdminProfile();
+    fetchPendingFeedbackCount();
   }, []);
 
   useEffect(() => {
@@ -93,6 +95,15 @@ export default function AdminMobileScreen() {
       if (userStr) setAdminInfo(JSON.parse(userStr));
     } catch (e) {
       console.log("Không thể đọc thông tin admin");
+    }
+  };
+
+  const fetchPendingFeedbackCount = async () => {
+    try {
+      const res = await adminApi.getFeedbacks("PENDING", 1, 1);
+      setPendingFeedbackCount(res.pagination?.total || 0);
+    } catch (error) {
+      console.log("Lỗi lấy số đếm thông báo");
     }
   };
 
@@ -158,11 +169,11 @@ export default function AdminMobileScreen() {
     }
   };
 
-  // 🔥 Tính năng Kéo xuống để tải lại (Pull-to-Refresh)
   const onRefresh = async () => {
     setRefreshing(true);
     setErrorMsg("");
     try {
+      fetchPendingFeedbackCount(); // Cập nhật lại số đếm luôn
       if (activeTab === "DASHBOARD") await fetchDashboardData();
       else if (activeTab === "USERS") await fetchUsersData();
       else if (activeTab === "REPORT") await fetchReportData();
@@ -180,44 +191,53 @@ export default function AdminMobileScreen() {
     try {
       setIsSubmittingReply(true);
       await adminApi.replyFeedback(feedbackId, replyContent);
-      Alert.alert("Thành công", "Đã gửi câu trả lời cho người dùng!");
+      if (Platform.OS === "web") {
+        window.alert("Đã gửi câu trả lời cho người dùng!");
+      } else {
+        Alert.alert("Thành công", "Đã gửi câu trả lời cho người dùng!");
+      }
       setReplyContent("");
       setReplyingId(null);
       fetchFeedbacksData();
+      fetchPendingFeedbackCount(); // Cập nhật lại số đếm sau khi trả lời
     } catch (error: any) {
-      Alert.alert(
-        "Lỗi",
-        error.response?.data?.message || "Không thể gửi câu trả lời.",
-      );
+      const msg = error.response?.data?.message || "Không thể gửi câu trả lời.";
+      Platform.OS === "web" ? window.alert(msg) : Alert.alert("Lỗi", msg);
     } finally {
       setIsSubmittingReply(false);
     }
   };
 
   const handleLogout = async () => {
-    Alert.alert(
-      "Đăng xuất",
-      "Bạn có chắc chắn muốn đăng xuất khỏi quyền quản trị?",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Đăng xuất",
-          style: "destructive",
-          onPress: async () => {
-            if (Platform.OS === "web") {
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
-              localStorage.removeItem("user");
-            } else {
+    if (Platform.OS === "web") {
+      const confirmLogout = window.confirm(
+        "Bạn có chắc chắn muốn đăng xuất khỏi quyền quản trị?",
+      );
+      if (confirmLogout) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        router.replace("/auth/login" as any);
+      }
+    } else {
+      Alert.alert(
+        "Đăng xuất",
+        "Bạn có chắc chắn muốn đăng xuất khỏi quyền quản trị?",
+        [
+          { text: "Hủy", style: "cancel" },
+          {
+            text: "Đăng xuất",
+            style: "destructive",
+            onPress: async () => {
               await SecureStore.deleteItemAsync("accessToken");
               await SecureStore.deleteItemAsync("refreshToken");
               await SecureStore.deleteItemAsync("user");
-            }
-            router.replace("/login" as any);
+              router.replace("/auth/login" as any);
+            },
           },
-        },
-      ],
-    );
+        ],
+      );
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -774,10 +794,20 @@ export default function AdminMobileScreen() {
           style={styles.bottomTab}
           onPress={() => setActiveTab("FEEDBACK")}
         >
-          <MessageSquare
-            size={24}
-            color={activeTab === "FEEDBACK" ? "#16a34a" : "#94a3b8"}
-          />
+          <View style={{ position: "relative" }}>
+            <MessageSquare
+              size={24}
+              color={activeTab === "FEEDBACK" ? "#16a34a" : "#94a3b8"}
+            />
+            {/* 🔥 HIỆN CHẤM ĐỎ THÔNG BÁO NẾU CÓ FEEDBACK CHỜ XỬ LÝ */}
+            {pendingFeedbackCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>
+                  {pendingFeedbackCount > 99 ? "99+" : pendingFeedbackCount}
+                </Text>
+              </View>
+            )}
+          </View>
           <Text
             style={[
               styles.bottomTabText,
@@ -1234,4 +1264,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   bottomTabTextActive: { color: "#16a34a", fontWeight: "bold" },
+
+  // CSS chấm đỏ thông báo
+  notificationBadge: {
+    position: "absolute",
+    top: -4,
+    right: -8,
+    backgroundColor: "#ef4444",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: "#fff",
+  },
+  notificationText: { color: "#fff", fontSize: 10, fontWeight: "bold" },
 });

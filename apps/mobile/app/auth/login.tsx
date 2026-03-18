@@ -48,9 +48,7 @@ export default function LoginScreen() {
   const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID; // Trỏ đúng tên biến trong file .env
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId:
-      process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
-      "123456-tam-thoi.apps.googleusercontent.com",
+    webClientId: googleClientId,
     iosClientId: googleClientId, // Đưa Web ID cho iOS để "lách luật" thư viện
     androidClientId: googleClientId, // Đưa Web ID cho Android để "lách luật" thư viện
     redirectUri: makeRedirectUri({
