@@ -3,7 +3,11 @@ import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 export class AddPlantToGardenDto {
   @IsString()
   @IsNotEmpty()
-  plantId: string;
+  label: string; // Tên cây hoặc bệnh từ AI (VD: "Hoa hồng", "Bệnh đốm lá cà chua")
+
+  @IsString()
+  @IsOptional()
+  imageUrl?: string; // Ảnh người dùng vừa quét (để hiển thị trong vườn)
 
   @IsString()
   @IsOptional()
@@ -12,10 +16,6 @@ export class AddPlantToGardenDto {
   @IsString()
   @IsNotEmpty()
   userGoal: string; // VD: 'GET_FRUIT', 'HEAL_DISEASE'
-
-  @IsString()
-  @IsOptional()
-  diseaseName?: string; // Tên bệnh từ kết quả AI quét
 
   @IsNumber()
   @IsNotEmpty()

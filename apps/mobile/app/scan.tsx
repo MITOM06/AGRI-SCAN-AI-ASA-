@@ -52,7 +52,7 @@ const getDateGroup = (date: string | Date): string => {
   const diffDays = Math.floor(
     (todayStart.getTime() -
       new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) /
-      (1000 * 60 * 60 * 24),
+    (1000 * 60 * 60 * 24),
   );
   if (diffDays <= 0) return "Hôm nay";
   if (diffDays === 1) return "Hôm qua";
@@ -70,12 +70,8 @@ export default function ScanChatScreen() {
   const [isBotTyping, setIsBotTyping] = useState(false);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeSidebarTab, setActiveSidebarTab] = useState<"chat" | "scan">(
-    "chat",
-  );
-  const [currentScanLabel, setCurrentScanLabel] = useState<string | undefined>(
-    undefined,
-  );
+  const [activeSidebarTab, setActiveSidebarTab] = useState<"chat" | "scan">("chat");
+  const [currentScanLabel, setCurrentScanLabel] = useState<string | undefined>(undefined);
 
   type SessionItem = {
     id: string;
@@ -86,12 +82,8 @@ export default function ScanChatScreen() {
     rawData?: any;
   };
   const [sessions, setSessions] = useState<SessionItem[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(
-    undefined,
-  );
-  const [lastSyncedSessionId, setLastSyncedSessionId] = useState<
-    string | undefined
-  >(undefined);
+  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(undefined);
+  const [lastSyncedSessionId, setLastSyncedSessionId] = useState<string | undefined>(undefined);
 
   const slideAnim = useRef(new Animated.Value(-width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -102,10 +94,7 @@ export default function ScanChatScreen() {
   }, []);
 
   useEffect(() => {
-    setTimeout(
-      () => scrollViewRef.current?.scrollToEnd({ animated: true }),
-      100,
-    );
+    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
   }, [messages, isBotTyping]);
 
   const fetchSidebarData = async () => {
@@ -127,10 +116,8 @@ export default function ScanChatScreen() {
       (scanItems || []).forEach((s: any) => {
         const rawId = s.id ?? s.scanHistoryId ?? s._id;
         const topDiseaseInfo = s.aiPredictions?.[0]?.diseaseId;
-        const topName =
-          topDiseaseInfo?.name || s.topPrediction?.diseaseName || "Quét ảnh";
-        const scannedAt =
-          s.scannedAt ?? s.createdAt ?? s.updatedAt ?? Date.now();
+        const topName = topDiseaseInfo?.name || s.topPrediction?.diseaseName || "Quét ảnh";
+        const scannedAt = s.scannedAt ?? s.createdAt ?? s.updatedAt ?? Date.now();
 
         merged.push({
           id: `scan-${rawId}`,
@@ -176,31 +163,15 @@ export default function ScanChatScreen() {
   const openSidebar = () => {
     setIsSidebarOpen(true);
     Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
     ]).start();
   };
 
   const closeSidebar = () => {
     Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: -width,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
+      Animated.timing(slideAnim, { toValue: -width, duration: 300, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
     ]).start(() => setIsSidebarOpen(false));
   };
 
@@ -217,9 +188,7 @@ export default function ScanChatScreen() {
   const loadScanSessionFromData = (detail: any) => {
     try {
       const rawId = detail.id ?? detail.scanHistoryId ?? detail._id;
-      const imageUrl =
-        detail.imageUrl ?? detail.image ?? detail.image?.url ?? undefined;
-
+      const imageUrl = detail.imageUrl ?? detail.image ?? detail.image?.url ?? undefined;
       const topPrediction = detail.aiPredictions?.[0];
       const diseaseInfo = topPrediction?.diseaseId;
 
@@ -228,24 +197,11 @@ export default function ScanChatScreen() {
         topDisease: diseaseInfo,
       };
 
-      const scanTime = new Date(
-        detail.scannedAt ?? detail.createdAt ?? Date.now(),
-      );
+      const scanTime = new Date(detail.scannedAt ?? detail.createdAt ?? Date.now());
 
       setMessages([
-        {
-          id: `scan-user-${rawId}`,
-          image: imageUrl,
-          sender: "user",
-          timestamp: scanTime,
-        },
-        {
-          id: `scan-bot-${rawId}`,
-          text: "Kết quả chẩn đoán",
-          sender: "bot",
-          timestamp: new Date(scanTime.getTime() + 1000),
-          scanResult: fakeResult,
-        },
+        { id: `scan-user-${rawId}`, image: imageUrl, sender: "user", timestamp: scanTime },
+        { id: `scan-bot-${rawId}`, text: "Kết quả chẩn đoán", sender: "bot", timestamp: new Date(scanTime.getTime() + 1000), scanResult: fakeResult },
       ]);
 
       setLastSyncedSessionId(undefined);
@@ -266,83 +222,46 @@ export default function ScanChatScreen() {
     closeSidebar();
   };
 
-  // =================================================================
-  // 🔥 XỬ LÝ QUYỀN MÁY ẢNH VÀ THƯ VIỆN ẢNH CHUẨN XÁC NHẤT
-  // =================================================================
-
   const handleOpenCamera = async () => {
     if (Platform.OS === "web") {
-      alert(
-        "Máy ảnh không hỗ trợ trên trình duyệt, vui lòng dùng nút chọn ảnh.",
-      );
+      alert("Máy ảnh không hỗ trợ trên trình duyệt, vui lòng dùng nút chọn ảnh.");
       return;
     }
-
     try {
       const currentPerm = await ImagePicker.getCameraPermissionsAsync();
-
       if (currentPerm?.status !== "granted") {
         const newPerm = await ImagePicker.requestCameraPermissionsAsync();
-
         if (newPerm?.status !== "granted") {
-          Alert.alert(
-            "Cấp quyền Máy ảnh",
-            "Agri-Scan cần quyền truy cập máy ảnh để bạn có thể chụp hình cây trồng. Vui lòng mở Cài đặt của điện thoại và cho phép.",
-            [
-              { text: "Đóng", style: "cancel" },
-              { text: "Mở Cài đặt", onPress: () => Linking.openSettings() },
-            ],
-          );
+          Alert.alert("Cấp quyền Máy ảnh", "Vui lòng mở Cài đặt của điện thoại và cho phép.", [
+            { text: "Đóng", style: "cancel" },
+            { text: "Mở Cài đặt", onPress: () => Linking.openSettings() },
+          ]);
           return;
         }
       }
-
-      // 🔥 FIX WARNING: Dùng ['images'] thay cho MediaTypeOptions
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ["images"],
-        quality: 1,
-      });
-
+      const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 1 });
       if (!result.canceled && result.assets && result.assets[0].uri) {
         setSelectedImage(result.assets[0].uri);
       }
     } catch (error) {
-      console.log("Lỗi mở camera:", error);
-      Alert.alert(
-        "Lỗi",
-        "Không thể mở máy ảnh. Lưu ý: Máy ảo (Emulator) có thể không hỗ trợ camera.",
-      );
+      Alert.alert("Lỗi", "Không thể mở máy ảnh.");
     }
   };
 
   const pickImage = async () => {
     try {
       const currentPerm = await ImagePicker.getMediaLibraryPermissionsAsync();
-
       if (currentPerm?.status !== "granted") {
         const newPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
         if (newPerm?.status !== "granted") {
-          Alert.alert(
-            "Cấp quyền Thư viện ảnh",
-            "Agri-Scan cần quyền truy cập bộ sưu tập để bạn tải ảnh lên chẩn đoán. Vui lòng mở Cài đặt của điện thoại và cho phép.",
-            [
-              { text: "Đóng", style: "cancel" },
-              { text: "Mở Cài đặt", onPress: () => Linking.openSettings() },
-            ],
-          );
+          Alert.alert("Cấp quyền Thư viện ảnh", "Vui lòng mở Cài đặt của điện thoại và cho phép.", [
+            { text: "Đóng", style: "cancel" },
+            { text: "Mở Cài đặt", onPress: () => Linking.openSettings() },
+          ]);
           return;
         }
       }
-
-      // 🔥 FIX WARNING: Dùng ['images'] thay cho MediaTypeOptions
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        quality: 1,
-        allowsEditing: false,
-        aspect: [4, 3],
-      });
-
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 1, allowsEditing: false, aspect: [4, 3] });
       if (!result.canceled && result.assets && result.assets[0].uri) {
         setSelectedImage(result.assets[0].uri);
       }
@@ -351,8 +270,6 @@ export default function ScanChatScreen() {
     }
   };
 
-  // =================================================================
-
   const createFileFromUri = async (uri: string) => {
     if (Platform.OS === "web") {
       const response = await fetch(uri);
@@ -360,23 +277,59 @@ export default function ScanChatScreen() {
       const name = uri.split("/").pop() || `photo-${Date.now()}.jpg`;
       return new File([blob], name, { type: blob.type || "image/jpeg" });
     }
-
     let filename = uri.split("/").pop() || `scan_image_${Date.now()}.jpg`;
     if (!filename.includes(".")) filename = `${filename}.jpg`;
-
     const match = /\.(\w+)$/.exec(filename);
     const type = match ? `image/${match[1]}` : `image/jpeg`;
-
     return { uri, name: filename, type } as any;
+  };
+
+  
+
+  // =================================================================
+  // 🔥 HÀM POLLING: KIỂM TRA KẾT QUẢ TỪ RABBITMQ
+  // =================================================================
+  const pollForChatAnswer = async (sessionId: string, attempt = 1) => {
+    if (attempt > 30) { 
+      // Timeout sau 30 lần thử (~60s)
+      setIsBotTyping(false);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now().toString(), text: "⚠️ Trợ lý đang bận hoặc phản hồi quá lâu. Vui lòng thử lại sau.", sender: "bot", timestamp: new Date() },
+      ]);
+      return;
+    }
+
+    try {
+      const detail = await scanApi.getSessionMessages(sessionId);
+      if (detail && detail.messages && detail.messages.length > 0) {
+        const lastMsg = detail.messages[detail.messages.length - 1];
+
+        // Nếu tin nhắn cuối đã được cập nhật (worker điền xong)
+        if (lastMsg.role === "ai" && (lastMsg as any).status !== "PENDING" && lastMsg.content) {
+          setIsBotTyping(false);
+          setMessages((prev) => [
+            ...prev,
+            { id: (Date.now() + 1).toString(), text: lastMsg.content, sender: "bot", timestamp: new Date(lastMsg.timestamp) },
+          ]);
+          await fetchSidebarData();
+          return;
+        }
+      }
+
+      // Chưa xong, gọi lại sau 2 giây
+      setTimeout(() => pollForChatAnswer(sessionId, attempt + 1), 2000);
+    } catch (error) {
+      // Bỏ qua lỗi mạng chập chờn, tiếp tục thử lại
+      setTimeout(() => pollForChatAnswer(sessionId, attempt + 1), 2000);
+    }
   };
 
   const handleSend = async () => {
     if (!inputText.trim() && !selectedImage) return;
 
     if (lastSyncedSessionId && !currentSessionId) {
-      alert(
-        "Bạn đang xem lịch sử chat cũ.\n\nHãy bấm nút '+' để tạo cuộc trò chuyện mới trước khi gửi tin nhắn!",
-      );
+      alert("Bạn đang xem lịch sử chat cũ.\n\nHãy bấm nút '+' để tạo cuộc trò chuyện mới trước khi gửi tin nhắn!");
       return;
     }
 
@@ -385,126 +338,119 @@ export default function ScanChatScreen() {
 
     setMessages((prev) => [
       ...prev,
-      {
-        id: Date.now().toString(),
-        text: userText || undefined,
-        image: userImage || undefined,
-        sender: "user",
-        timestamp: new Date(),
-      },
+      { id: Date.now().toString(), text: userText || undefined, image: userImage || undefined, sender: "user", timestamp: new Date() },
     ]);
 
     setInputText("");
     setSelectedImage(null);
     setIsBotTyping(true);
 
+    let isPollingStarted = false; // Biến cờ để quản lý loading indicator
+
     try {
       if (userImage) {
         const imageFileToUpload = await createFileFromUri(userImage);
 
-        const result = await scanApi.scanImage(imageFileToUpload);
+        // FIX: Backend RabbitMQ chỉ trả về { scanHistoryId, status: 'PROCESSING' }
+        // Phải poll GET /scan/status/:scanId cho đến khi COMPLETED
+        const submitResult = await scanApi.scanImage(imageFileToUpload);
+        const scanHistoryId = (submitResult as any).scanHistoryId;
 
-        // Lưu label bệnh hàng đầu để dùng trong các tin nhắn tiếp theo
-        const topLabel = result.topDisease?.name;
-        if (topLabel) {
-          setCurrentScanLabel(topLabel);
+        if (!scanHistoryId) {
+          // Fallback nếu API cũ trả kết quả ngay
+          const topLabel = (submitResult as any).topDisease?.name;
+          if (topLabel) setCurrentScanLabel(topLabel);
+          setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: "Kết quả chẩn đoán", sender: "bot", timestamp: new Date(), scanResult: submitResult }]);
+          fetchSidebarData();
+        } else {
+          isPollingStarted = true;
+          let attempt = 0;
+          const pollScan = async (): Promise<void> => {
+            attempt++;
+            if (attempt > 30) {
+              setIsBotTyping(false);
+              setMessages((prev) => [...prev, { id: Date.now().toString(), text: "⚠️ Phân tích ảnh mất quá lâu. Vui lòng thử lại.", sender: "bot", timestamp: new Date() }]);
+              return;
+            }
+            try {
+              const statusResult = await (scanApi as any).getScanStatus(scanHistoryId);
+              if ((statusResult as any).status === 'COMPLETED') {
+                const topLabel = (statusResult as any).topDisease?.name;
+                if (topLabel) setCurrentScanLabel(topLabel);
+                setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: "Kết quả chẩn đoán", sender: "bot", timestamp: new Date(), scanResult: statusResult }]);
+                setIsBotTyping(false);
+                fetchSidebarData();
+              } else if ((statusResult as any).status === 'FAILED') {
+                setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: `⚠️ ${(statusResult as any).message || 'Không nhận diện được ảnh.'}`, sender: "bot", timestamp: new Date() }]);
+                setIsBotTyping(false);
+              } else {
+                setTimeout(pollScan, 2000);
+              }
+            } catch {
+              setTimeout(pollScan, 2000);
+            }
+          };
+          pollScan();
         }
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            text: "Kết quả chẩn đoán",
-            sender: "bot",
-            timestamp: new Date(),
-            scanResult: result,
-          },
-        ]);
-        fetchSidebarData();
       } else if (userText) {
-        const aiResponse = await scanApi.chatWithAi(
-          userText,
-          currentScanLabel,
-          currentSessionId || undefined,
-        );
+        
+        // 🔥 ĐOẠN MỚI THÊM VÀO ĐÂY 🔥
+        const aiResponse = await scanApi.chatWithAi(userText, currentScanLabel, currentSessionId);
 
         if (aiResponse.sessionId && !currentSessionId) {
-          setCurrentSessionId(aiResponse.sessionId);
-          setLastSyncedSessionId(undefined);
+          setCurrentSessionId(aiResponse.sessionId as string);
         }
 
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: (Date.now() + 1).toString(),
-            text: aiResponse.answer,
-            sender: "bot",
-            timestamp: new Date(),
-          },
-        ]);
-        await fetchSidebarData();
+        if ((aiResponse as any).status === "PROCESSING") {
+          isPollingStarted = true; // Đánh dấu đã bắt đầu poll, không tắt isBotTyping ngay lập tức
+          const pollingSessionId = (aiResponse.sessionId || currentSessionId) as string;
+          pollForChatAnswer(pollingSessionId);
+        } else {
+          // Khách vãng lai (guest) trả về đáp án ngay lập tức
+          setMessages((prev) => [
+            ...prev,
+            { id: (Date.now() + 1).toString(), text: aiResponse.answer, sender: "bot", timestamp: new Date() },
+          ]);
+          await fetchSidebarData();
+        }
       }
     } catch (error: any) {
-      console.log("🔥 LỖI THẬT SỰ:", error?.response?.data || error.message);
       const status = error?.response?.status;
       const backendMsg = error?.response?.data?.message;
-
       let errorText = "Có lỗi kết nối máy chủ. Vui lòng thử lại sau.";
 
-      if (status === 401) {
-        errorText = "Bạn cần đăng nhập để sử dụng tính năng này.";
-      } else if (status === 400) {
+      if (status === 401) errorText = "Bạn cần đăng nhập để sử dụng tính năng này.";
+      else if (status === 400) {
         const detail = Array.isArray(backendMsg) ? backendMsg[0] : backendMsg;
         errorText = `Lỗi dữ liệu: ${detail || "Ảnh không hợp lệ."}`;
-        if (errorText.includes("expected size is less than")) {
-          errorText = "Ảnh quá nặng (> 10MB). Vui lòng chọn ảnh khác nhẹ hơn!";
-        }
-      } else if (status === 500) {
-        errorText =
-          "Hệ thống AI đang quá tải. Vui lòng đợi một lát rồi gửi lại!";
-      } else if (error.message === "Network Error") {
-        errorText = "Lỗi mạng hoặc ảnh bị hỏng. Hãy thử ảnh khác!";
-      } else {
-        errorText = `Lỗi: ${error.message}`;
-      }
-
+        if (errorText.includes("expected size is less than")) errorText = "Ảnh quá nặng (> 10MB). Vui lòng chọn ảnh khác nhẹ hơn!";
+      } 
+      else if (status === 500) errorText = "Hệ thống AI đang quá tải. Vui lòng đợi một lát rồi gửi lại!";
+      else if (error.message === "Network Error") errorText = "Lỗi mạng hoặc kết nối máy chủ thất bại.";
+      
       setMessages((prev) => [
         ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          text: `⚠️ ${errorText}`,
-          sender: "bot",
-          timestamp: new Date(),
-        },
+        { id: (Date.now() + 1).toString(), text: `⚠️ ${errorText}`, sender: "bot", timestamp: new Date() },
       ]);
     } finally {
-      setIsBotTyping(false);
+      // Chỉ tắt hiệu ứng "Đang gõ..." nếu không đi vào trạng thái Polling
+      if (!isPollingStarted) {
+        setIsBotTyping(false);
+      }
     }
   };
 
   const formatDate = (dateStr: string | Date) =>
-    new Date(dateStr).toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    new Date(dateStr).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 
   return (
     <View style={styles.container}>
-      <View
-        style={[styles.header, { paddingTop: Math.max(insets.top, 10) + 10 }]}
-      >
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 10) + 10 }]}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.iconBtn}
-          >
+          <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
             <ArrowLeft size={24} color="#374151" />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={openSidebar}
-            style={[styles.iconBtn, { marginLeft: 4 }]}
-          >
+          <TouchableOpacity onPress={openSidebar} style={[styles.iconBtn, { marginLeft: 4 }]}>
             <PanelLeft size={24} color="#374151" />
           </TouchableOpacity>
         </View>
@@ -517,25 +463,11 @@ export default function ScanChatScreen() {
       <Modal visible={isSidebarOpen} transparent={true} animationType="none">
         <View style={styles.modalContainer}>
           <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
-            <TouchableOpacity
-              style={{ flex: 1 }}
-              activeOpacity={1}
-              onPress={closeSidebar}
-            />
+            <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={closeSidebar} />
           </Animated.View>
 
-          <Animated.View
-            style={[
-              styles.leftDrawer,
-              { transform: [{ translateX: slideAnim }] },
-            ]}
-          >
-            <View
-              style={[
-                styles.sidebarContent,
-                { paddingTop: Math.max(insets.top, 10) + 10 },
-              ]}
-            >
+          <Animated.View style={[styles.leftDrawer, { transform: [{ translateX: slideAnim }] }]}>
+            <View style={[styles.sidebarContent, { paddingTop: Math.max(insets.top, 10) + 10 }]}>
               <View style={styles.sidebarHeader}>
                 <Text style={styles.sidebarTitle}>Lịch sử hoạt động</Text>
                 <TouchableOpacity onPress={closeSidebar}>
@@ -544,89 +476,28 @@ export default function ScanChatScreen() {
               </View>
 
               <View style={styles.tabsContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.tabBtn,
-                    activeSidebarTab === "chat"
-                      ? styles.tabBtnActive
-                      : undefined,
-                  ]}
-                  onPress={() => setActiveSidebarTab("chat")}
-                >
-                  <MessageSquare
-                    size={16}
-                    color={activeSidebarTab === "chat" ? "#86efac" : "#9ca3af"}
-                  />
-                  <Text
-                    style={[
-                      styles.tabText,
-                      activeSidebarTab === "chat"
-                        ? styles.tabTextActive
-                        : undefined,
-                    ]}
-                  >
-                    {" "}
-                    Trò chuyện
-                  </Text>
+                <TouchableOpacity style={[styles.tabBtn, activeSidebarTab === "chat" ? styles.tabBtnActive : undefined]} onPress={() => setActiveSidebarTab("chat")}>
+                  <MessageSquare size={16} color={activeSidebarTab === "chat" ? "#86efac" : "#9ca3af"} />
+                  <Text style={[styles.tabText, activeSidebarTab === "chat" ? styles.tabTextActive : undefined]}> Trò chuyện</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.tabBtn,
-                    activeSidebarTab === "scan"
-                      ? styles.tabBtnActive
-                      : undefined,
-                  ]}
-                  onPress={() => setActiveSidebarTab("scan")}
-                >
-                  <ImageIcon
-                    size={16}
-                    color={activeSidebarTab === "scan" ? "#86efac" : "#9ca3af"}
-                  />
-                  <Text
-                    style={[
-                      styles.tabText,
-                      activeSidebarTab === "scan"
-                        ? styles.tabTextActive
-                        : undefined,
-                    ]}
-                  >
-                    {" "}
-                    Ảnh quét
-                  </Text>
+                <TouchableOpacity style={[styles.tabBtn, activeSidebarTab === "scan" ? styles.tabBtnActive : undefined]} onPress={() => setActiveSidebarTab("scan")}>
+                  <ImageIcon size={16} color={activeSidebarTab === "scan" ? "#86efac" : "#9ca3af"} />
+                  <Text style={[styles.tabText, activeSidebarTab === "scan" ? styles.tabTextActive : undefined]}> Ảnh quét</Text>
                 </TouchableOpacity>
               </View>
 
-              <ScrollView
-                style={styles.historyList}
-                showsVerticalScrollIndicator={false}
-              >
+              <ScrollView style={styles.historyList} showsVerticalScrollIndicator={false}>
                 {activeSidebarTab === "chat" ? (
                   <>
-                    <TouchableOpacity
-                      style={styles.newChatSidebarBtn}
-                      onPress={handleNewChat}
-                    >
+                    <TouchableOpacity style={styles.newChatSidebarBtn} onPress={handleNewChat}>
                       <Plus size={18} color="#fff" />
-                      <Text style={styles.newChatSidebarText}>
-                        Cuộc trò chuyện mới
-                      </Text>
+                      <Text style={styles.newChatSidebarText}>Cuộc trò chuyện mới</Text>
                     </TouchableOpacity>
                     {sessions.filter((s) => s.type === "chat").length === 0 ? (
-                      <Text style={styles.emptySidebarTxt}>
-                        Chưa có lịch sử nào
-                      </Text>
+                      <Text style={styles.emptySidebarTxt}>Chưa có lịch sử nào</Text>
                     ) : (
-                      [
-                        "Hôm nay",
-                        "Hôm qua",
-                        "7 ngày trước",
-                        "30 ngày trước",
-                      ].map((group) => {
-                        const groupSessions = sessions.filter(
-                          (h) =>
-                            h.type === "chat" &&
-                            getDateGroup(h.updatedAt) === group,
-                        );
+                      ["Hôm nay", "Hôm qua", "7 ngày trước", "30 ngày trước"].map((group) => {
+                        const groupSessions = sessions.filter((h) => h.type === "chat" && getDateGroup(h.updatedAt) === group);
                         if (groupSessions.length === 0) return null;
                         return (
                           <View key={group}>
@@ -634,40 +505,13 @@ export default function ScanChatScreen() {
                             {groupSessions.map((item) => (
                               <TouchableOpacity
                                 key={item.id}
-                                style={[
-                                  styles.historyItem,
-                                  currentSessionId === item.id &&
-                                  item.type === "chat"
-                                    ? styles.historyItemActive
-                                    : undefined,
-                                ]}
+                                style={[styles.historyItem, currentSessionId === item.id && item.type === "chat" ? styles.historyItemActive : undefined]}
                                 onPress={() => handleSelectSession(item)}
                               >
-                                <MessageSquare
-                                  size={18}
-                                  color={
-                                    currentSessionId === item.id &&
-                                    item.type === "chat"
-                                      ? "#fff"
-                                      : "#86efac"
-                                  }
-                                />
+                                <MessageSquare size={18} color={currentSessionId === item.id && item.type === "chat" ? "#fff" : "#86efac"} />
                                 <View style={{ marginLeft: 12, flex: 1 }}>
-                                  <Text
-                                    style={[
-                                      styles.historyText,
-                                      currentSessionId === item.id &&
-                                      item.type === "chat"
-                                        ? { color: "#fff" }
-                                        : undefined,
-                                    ]}
-                                    numberOfLines={1}
-                                  >
-                                    {item.title}
-                                  </Text>
-                                  <Text style={styles.historyDate}>
-                                    {formatDate(item.updatedAt)}
-                                  </Text>
+                                  <Text style={[styles.historyText, currentSessionId === item.id && item.type === "chat" ? { color: "#fff" } : undefined]} numberOfLines={1}>{item.title}</Text>
+                                  <Text style={styles.historyDate}>{formatDate(item.updatedAt)}</Text>
                                 </View>
                               </TouchableOpacity>
                             ))}
@@ -677,54 +521,28 @@ export default function ScanChatScreen() {
                     )}
                   </>
                 ) : sessions.filter((s) => s.type === "scan").length === 0 ? (
-                  <Text style={styles.emptySidebarTxt}>
-                    Chưa có lịch sử quét ảnh
-                  </Text>
+                  <Text style={styles.emptySidebarTxt}>Chưa có lịch sử quét ảnh</Text>
                 ) : (
-                  sessions
-                    .filter((s) => s.type === "scan")
-                    .map((item) => (
-                      <TouchableOpacity
-                        key={item.id}
-                        style={styles.historyItem}
-                        onPress={() => handleSelectSession(item)}
-                      >
-                        <ImageIcon size={18} color="#86efac" />
-                        <View style={{ flex: 1, marginLeft: 12 }}>
-                          <Text style={styles.historyText} numberOfLines={1}>
-                            {item.title}
-                          </Text>
-                          <Text style={styles.historyDate}>
-                            {formatDate(item.updatedAt)}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                    ))
+                  sessions.filter((s) => s.type === "scan").map((item) => (
+                    <TouchableOpacity key={item.id} style={styles.historyItem} onPress={() => handleSelectSession(item)}>
+                      <ImageIcon size={18} color="#86efac" />
+                      <View style={{ flex: 1, marginLeft: 12 }}>
+                        <Text style={styles.historyText} numberOfLines={1}>{item.title}</Text>
+                        <Text style={styles.historyDate}>{formatDate(item.updatedAt)}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))
                 )}
               </ScrollView>
 
-              <View
-                style={[
-                  styles.sidebarFooter,
-                  { paddingBottom: Math.max(insets.bottom, 20) },
-                ]}
-              >
-                <TouchableOpacity
-                  style={styles.upgradeBtn}
-                  activeOpacity={0.8}
-                  onPress={() => {
-                    closeSidebar();
-                    setTimeout(() => router.push("/upgrade"), 300);
-                  }}
-                >
+              <View style={[styles.sidebarFooter, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+                <TouchableOpacity style={styles.upgradeBtn} activeOpacity={0.8} onPress={() => { closeSidebar(); setTimeout(() => router.push("/upgrade"), 300); }}>
                   <View style={styles.upgradeIconWrapper}>
                     <Leaf size={20} color="#ca8a04" />
                   </View>
                   <View style={{ marginLeft: 12 }}>
                     <Text style={styles.upgradeTitle}>Nâng cấp gói</Text>
-                    <Text style={styles.upgradeSub}>
-                      Mở khóa tính năng cao cấp
-                    </Text>
+                    <Text style={styles.upgradeSub}>Mở khóa tính năng cao cấp</Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -733,15 +551,8 @@ export default function ScanChatScreen() {
         </View>
       </Modal>
 
-      <KeyboardAvoidingView
-        style={styles.chatArea}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+      <KeyboardAvoidingView style={styles.chatArea} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {messages.length === 0 ? (
             <View style={styles.emptyState}>
               <View style={styles.botAvatarLarge}>
@@ -749,167 +560,71 @@ export default function ScanChatScreen() {
               </View>
               <Text style={styles.emptyTitle}>Agri-Scan AI</Text>
               <Text style={styles.emptyDesc}>
-                Trợ lý nông nghiệp thông minh của bạn. Hãy hỏi tôi về bệnh cây
-                trồng, cách chăm sóc hoặc gửi ảnh để chẩn đoán.
+                Trợ lý nông nghiệp thông minh của bạn. Hãy hỏi tôi về bệnh cây trồng, cách chăm sóc hoặc gửi ảnh để chẩn đoán.
               </Text>
             </View>
           ) : (
             messages.map((msg) => (
-              <View
-                key={msg.id}
-                style={[
-                  styles.messageWrapper,
-                  msg.sender === "user" ? styles.msgRight : styles.msgLeft,
-                ]}
-              >
+              <View key={msg.id} style={[styles.messageWrapper, msg.sender === "user" ? styles.msgRight : styles.msgLeft]}>
                 {msg.sender === "bot" && (
                   <View style={styles.botAvatarSmall}>
                     <Leaf size={14} color="#fff" />
                   </View>
                 )}
-                <View
-                  style={
-                    msg.sender === "user"
-                      ? styles.messageContentUser
-                      : styles.messageContentBot
-                  }
-                >
-                  <Text style={styles.senderLabel}>
-                    {msg.sender === "user" ? "Bạn" : "Agri-Scan AI"}
-                  </Text>
-                  <View
-                    style={[
-                      styles.messageBubble,
-                      msg.sender === "user"
-                        ? styles.bubbleUser
-                        : styles.bubbleBot,
-                    ]}
-                  >
-                    {msg.image && (
-                      <Image
-                        source={{ uri: msg.image }}
-                        style={styles.msgImage}
-                      />
-                    )}
-
+                <View style={msg.sender === "user" ? styles.messageContentUser : styles.messageContentBot}>
+                  <Text style={styles.senderLabel}>{msg.sender === "user" ? "Bạn" : "Agri-Scan AI"}</Text>
+                  <View style={[styles.messageBubble, msg.sender === "user" ? styles.bubbleUser : styles.bubbleBot]}>
+                    {msg.image && <Image source={{ uri: msg.image }} style={styles.msgImage} />}
                     {msg.scanResult ? (
                       <View style={styles.scanResultContainer}>
-                        <Text style={styles.diagnosisTitle}>
-                          Kết quả chẩn đoán
-                        </Text>
+                        <Text style={styles.diagnosisTitle}>Kết quả chẩn đoán</Text>
                         <View style={styles.diseaseSection}>
-                          <Text style={styles.diseaseLabel}>
-                            Bệnh phát hiện:{" "}
-                          </Text>
-                          <Text style={styles.diseaseName}>
-                            {msg.scanResult.topDisease?.name ||
-                              "Không xác định"}
-                          </Text>
+                          <Text style={styles.diseaseLabel}>Bệnh phát hiện: </Text>
+                          <Text style={styles.diseaseName}>{msg.scanResult.topDisease?.name || "Không xác định"}</Text>
                           <Text style={styles.confidenceText}>
-                            Độ tin cậy:{" "}
-                            {Math.round(
-                              (msg.scanResult.predictions?.[0]?.confidence ||
-                                0) * 100,
-                            )}
-                            %
+                            Độ tin cậy: {Math.round((msg.scanResult.predictions?.[0]?.confidence || 0) * 100)}%
                           </Text>
                         </View>
-
-                        {msg.scanResult.topDisease?.symptoms &&
-                        msg.scanResult.topDisease.symptoms.length > 0 ? (
+                        {msg.scanResult.topDisease?.symptoms && msg.scanResult.topDisease.symptoms.length > 0 ? (
                           <View style={styles.symptomsSection}>
-                            <Text style={styles.sectionTitle}>
-                              Triệu chứng:
-                            </Text>
-                            {msg.scanResult.topDisease.symptoms.map(
-                              (symptom: string, idx: number) => (
-                                <Text key={idx} style={styles.bulletText}>
-                                  • {symptom}
-                                </Text>
-                              ),
-                            )}
+                            <Text style={styles.sectionTitle}>Triệu chứng:</Text>
+                            {msg.scanResult.topDisease.symptoms.map((symptom: string, idx: number) => (
+                              <Text key={idx} style={styles.bulletText}>• {symptom}</Text>
+                            ))}
                           </View>
                         ) : null}
-
                         {msg.scanResult.topDisease?.treatments ? (
                           <View style={styles.treatmentsSection}>
-                            <Text style={styles.sectionTitle}>
-                              Phương pháp điều trị:
-                            </Text>
-
-                            {msg.scanResult.topDisease.treatments.biological &&
-                            msg.scanResult.topDisease.treatments.biological
-                              .length > 0 ? (
+                            <Text style={styles.sectionTitle}>Phương pháp điều trị:</Text>
+                            {msg.scanResult.topDisease.treatments.biological && msg.scanResult.topDisease.treatments.biological.length > 0 ? (
                               <View style={styles.treatmentSubSection}>
-                                <Text style={styles.treatmentSubTitle}>
-                                  🌱 Sinh học (Organic):
-                                </Text>
-                                {msg.scanResult.topDisease.treatments.biological.map(
-                                  (treatment: string, idx: number) => (
-                                    <Text
-                                      key={`bio-${idx}`}
-                                      style={styles.treatmentText}
-                                    >
-                                      {treatment}
-                                    </Text>
-                                  ),
-                                )}
+                                <Text style={styles.treatmentSubTitle}>🌱 Sinh học (Organic):</Text>
+                                {msg.scanResult.topDisease.treatments.biological.map((treatment: string, idx: number) => (
+                                  <Text key={`bio-${idx}`} style={styles.treatmentText}>{treatment}</Text>
+                                ))}
                               </View>
                             ) : null}
-
-                            {msg.scanResult.topDisease.treatments.chemical &&
-                            msg.scanResult.topDisease.treatments.chemical
-                              .length > 0 ? (
+                            {msg.scanResult.topDisease.treatments.chemical && msg.scanResult.topDisease.treatments.chemical.length > 0 ? (
                               <View style={styles.treatmentSubSection}>
-                                <Text style={styles.treatmentSubTitle}>
-                                  🧪 Hóa học (Chemical):
-                                </Text>
-                                {msg.scanResult.topDisease.treatments.chemical.map(
-                                  (treatment: string, idx: number) => (
-                                    <Text
-                                      key={`chem-${idx}`}
-                                      style={styles.treatmentText}
-                                    >
-                                      {treatment}
-                                    </Text>
-                                  ),
-                                )}
+                                <Text style={styles.treatmentSubTitle}>🧪 Hóa học (Chemical):</Text>
+                                {msg.scanResult.topDisease.treatments.chemical.map((treatment: string, idx: number) => (
+                                  <Text key={`chem-${idx}`} style={styles.treatmentText}>{treatment}</Text>
+                                ))}
                               </View>
                             ) : null}
-
-                            {msg.scanResult.topDisease.treatments.preventive &&
-                            msg.scanResult.topDisease.treatments.preventive
-                              .length > 0 ? (
+                            {msg.scanResult.topDisease.treatments.preventive && msg.scanResult.topDisease.treatments.preventive.length > 0 ? (
                               <View style={styles.treatmentSubSection}>
-                                <Text style={styles.treatmentSubTitle}>
-                                  🛡️ Phòng ngừa (Preventive):
-                                </Text>
-                                {msg.scanResult.topDisease.treatments.preventive.map(
-                                  (treatment: string, idx: number) => (
-                                    <Text
-                                      key={`prev-${idx}`}
-                                      style={styles.treatmentText}
-                                    >
-                                      {treatment}
-                                    </Text>
-                                  ),
-                                )}
+                                <Text style={styles.treatmentSubTitle}>🛡️ Phòng ngừa (Preventive):</Text>
+                                {msg.scanResult.topDisease.treatments.preventive.map((treatment: string, idx: number) => (
+                                  <Text key={`prev-${idx}`} style={styles.treatmentText}>{treatment}</Text>
+                                ))}
                               </View>
                             ) : null}
                           </View>
                         ) : null}
                       </View>
                     ) : msg.text ? (
-                      <Text
-                        style={[
-                          styles.msgText,
-                          msg.sender === "user"
-                            ? styles.textUser
-                            : styles.textBot,
-                        ]}
-                      >
-                        {msg.text}
-                      </Text>
+                      <Text style={[styles.msgText, msg.sender === "user" ? styles.textUser : styles.textBot]}>{msg.text}</Text>
                     ) : null}
                   </View>
                 </View>
@@ -921,7 +636,6 @@ export default function ScanChatScreen() {
               </View>
             ))
           )}
-
           {isBotTyping && (
             <View style={[styles.messageWrapper, styles.msgLeft]}>
               <View style={styles.botAvatarSmall}>
@@ -929,13 +643,7 @@ export default function ScanChatScreen() {
               </View>
               <View style={styles.messageContentBot}>
                 <Text style={styles.senderLabel}>Agri-Scan AI</Text>
-                <View
-                  style={[
-                    styles.messageBubble,
-                    styles.bubbleBot,
-                    { paddingVertical: 14, paddingHorizontal: 16 },
-                  ]}
-                >
+                <View style={[styles.messageBubble, styles.bubbleBot, { paddingVertical: 14, paddingHorizontal: 16 }]}>
                   <ActivityIndicator size="small" color="#16a34a" />
                 </View>
               </View>
@@ -943,33 +651,18 @@ export default function ScanChatScreen() {
           )}
         </ScrollView>
 
-        <View
-          style={[
-            styles.inputContainer,
-            { paddingBottom: Math.max(insets.bottom, 10) },
-          ]}
-        >
+        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 10) }]}>
           {selectedImage && (
             <View style={styles.previewContainer}>
-              <Image
-                source={{ uri: selectedImage }}
-                style={styles.previewImg}
-              />
-              <TouchableOpacity
-                style={styles.removePreviewBtn}
-                onPress={() => setSelectedImage(null)}
-              >
+              <Image source={{ uri: selectedImage }} style={styles.previewImg} />
+              <TouchableOpacity style={styles.removePreviewBtn} onPress={() => setSelectedImage(null)}>
                 <X size={12} color="#fff" />
               </TouchableOpacity>
             </View>
           )}
           <View style={styles.inputWrapper}>
             <View style={styles.inputBar}>
-              <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={pickImage}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={styles.actionBtn} onPress={pickImage} activeOpacity={0.7}>
                 <ImageIcon size={22} color="#9ca3af" />
               </TouchableOpacity>
               <TextInput
@@ -980,31 +673,19 @@ export default function ScanChatScreen() {
                 value={inputText}
                 onChangeText={setInputText}
               />
-              <TouchableOpacity
-                style={styles.actionBtn}
-                onPress={handleOpenCamera}
-              >
+              <TouchableOpacity style={styles.actionBtn} onPress={handleOpenCamera}>
                 <CameraIcon size={22} color="#9ca3af" />
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.sendBtn,
-                  inputText.trim() || selectedImage
-                    ? styles.sendBtnActive
-                    : styles.sendBtnDisabled,
-                ]}
+                style={[styles.sendBtn, inputText.trim() || selectedImage ? styles.sendBtnActive : styles.sendBtnDisabled]}
                 onPress={handleSend}
                 disabled={(!inputText.trim() && !selectedImage) || isBotTyping}
               >
-                <Send
-                  size={18}
-                  color={inputText.trim() || selectedImage ? "#fff" : "#9ca3af"}
-                />
+                <Send size={18} color={inputText.trim() || selectedImage ? "#fff" : "#9ca3af"} />
               </TouchableOpacity>
             </View>
             <Text style={styles.disclaimer}>
-              Agri-Scan AI có thể mắc lỗi. Hãy kiểm tra lại thông tin quan
-              trọng.
+              Agri-Scan AI có thể mắc lỗi. Hãy kiểm tra lại thông tin quan trọng.
             </Text>
           </View>
         </View>

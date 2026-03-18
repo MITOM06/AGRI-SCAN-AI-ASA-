@@ -26,12 +26,17 @@ export class ScanHistory {
   aiPredictions: AIPrediction[];
 
   @Prop({ type: Boolean, default: null })
-  isAccurate: boolean | null; // null = chưa feedback, true/false = đã feedback
+  isAccurate: boolean | null;
 
-  // BUG FIX: scannedAt bị thiếu trong schema nhưng type IScanHistory có dùng.
-  // timestamps: true chỉ tạo createdAt + updatedAt, không tạo scannedAt.
-  // → Thêm field này để schema khớp với type.
-  // Default = thời điểm tạo document (= lúc scan xong)
+  @Prop({
+    enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'],
+    default: 'PENDING', // FIX: Phải là PENDING, Consumer sẽ cập nhật thành COMPLETED sau khi xử lý xong
+  })
+  status: string;
+  
+  @Prop({ type: String, default: null })
+  errorMessage?: string | null;
+
   @Prop({ default: () => new Date() })
   scannedAt: Date;
 }

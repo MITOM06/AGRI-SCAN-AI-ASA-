@@ -44,6 +44,8 @@ export const API_ENDPOINTS = {
     CHAT: "/api/scan/chat",
     GUEST_CHAT: "/api/scan/guest-chat",
     FEEDBACK: (id: string) => `/api/scan/history/${id}/feedback`,
+    // FIX: Thêm endpoint polling kết quả scan ảnh (RabbitMQ async)
+    STATUS: (scanId: string) => `/api/scan/status/${scanId}`,
   },
 
   // Scan History (Lịch sử quét)
@@ -51,6 +53,8 @@ export const API_ENDPOINTS = {
     SCAN_BASE: "/api/scan/history",
     CHAT_BASE: "/api/scan/chat/history",
     SESSION: (id: string) => `/api/scan/chat/sessions/${id}`,
+    // FIX: Thêm endpoint polling status tin nhắn chat (RabbitMQ async)
+    SESSION_STATUS: (id: string) => `/api/scan/chat/sessions/${id}/status`,
   },
 
   // Weather

@@ -62,7 +62,7 @@ axiosClient.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      originalRequest.url !== "/auth/refresh"
+      originalRequest.url !== "/api/auth/refresh"
     ) {
       originalRequest._retry = true;
 

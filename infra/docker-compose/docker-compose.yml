@@ -1,7 +1,7 @@
 name: agri-scan-ai
 
 services:
-  # 1. CƠ SỞ DỮ LIỆU CHÍNH (MONGODB - CỤC BỘ)
+  # 1. CƠ SỞ DỮ LIỆU CHÍNH (MONGODB)
   mongodb:
     image: mongo:8.0
     container_name: asa-mongodb
@@ -28,7 +28,23 @@ services:
     networks:
       - agri-net
 
-  # 3. AI SERVICE (PYTHON)
+  # 3. MESSAGE BROKER (RABBITMQ) - ĐÃ CHỈNH LẠI CĂN LỀ
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: asa-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"   # Cổng kết nối AMQP
+      - "15672:15672" # Cổng quản lý UI (Username/Pass: guest/guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - agri-net
+
+  # 4. AI SERVICE (PYTHON)
   ai-service:
     build:
       context: ../../apps/ai-service
@@ -37,6 +53,8 @@ services:
     restart: always
     ports:
       - "8000:8000"
+    depends_on:
+      - rabbitmq
     env_file:
       - ../../.env 
     volumes:
@@ -44,7 +62,7 @@ services:
     networks:
       - agri-net
 
-  # 4. BACKEND API (NESTJS)
+  # 5. BACKEND API (NESTJS)
   backend:
     build:
       context: ../../
@@ -56,13 +74,14 @@ services:
     depends_on:
       - mongodb
       - redis
+      - rabbitmq # Thêm rabbitmq vào đây để backend đợi rabbitmq khởi động xong
       - ai-service
     env_file:
       - ../../.env 
     networks:
       - agri-net
 
-  # 5. WEB FRONTEND (NEXT.JS)
+  # 6. WEB FRONTEND (NEXT.JS)
   web:
     build:
       context: ../../
@@ -77,9 +96,11 @@ services:
       - ../../.env
     networks:
       - agri-net
+
 volumes:
   asa-mongo-data:
   asa-redis-data:
+  rabbitmq_data:
 
 networks:
   agri-net:

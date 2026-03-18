@@ -402,83 +402,82 @@ export function Scanner() {
             fileToUpload = await fetchRes.blob();
           }
 
-          const result = await scanApi.scanImage(fileToUpload);
-          const topPrediction = result.predictions?.[0];
-          const disease = result.topDisease;
-          const diseaseName = disease?.name || "Không xác định";
+          // FIX: Backend RabbitMQ chỉ trả về { scanHistoryId, status: 'PROCESSING' }
+          // Phải poll GET /scan/status/:scanId cho đến khi COMPLETED
+          const submitResult = await scanApi.scanImage(fileToUpload);
+          const scanHistoryId = (submitResult as any).scanHistoryId;
 
-          // Lưu label để dùng trong các tin nhắn tiếp theo
-          setCurrentScanLabel(diseaseName);
-          const confidence = topPrediction
-            ? Math.round(topPrediction.confidence * 100)
-            : 0;
-
-          const lines: string[] = [];
-
-          lines.push(`## Kết quả chẩn đoán`);
-          lines.push(`**Bệnh phát hiện:** ${diseaseName.replace(/_/g, " ")}`);
-          lines.push(`**Độ tin cậy:** ${confidence}%`);
-
-          if (disease?.symptoms?.length) {
-            lines.push(`---`);
-            lines.push(`## Triệu chứng`);
-            disease.symptoms.forEach((s: string) => lines.push(`- ${s}`));
-          }
-
-          const bio = (
-            disease?.treatments as
-              | {
-                  biological?: string[];
-                  chemical?: string[];
-                  preventive?: string[];
-                }
-              | undefined
-          )?.biological;
-          const chem = (
-            disease?.treatments as
-              | {
-                  biological?: string[];
-                  chemical?: string[];
-                  preventive?: string[];
-                }
-              | undefined
-          )?.chemical;
-          const prev = (
-            disease?.treatments as
-              | {
-                  biological?: string[];
-                  chemical?: string[];
-                  preventive?: string[];
-                }
-              | undefined
-          )?.preventive;
-
-          if (bio?.length || chem?.length || prev?.length) {
-            lines.push(`---`);
-            lines.push(`## Phương pháp xử lý`);
-            if (bio?.length) {
-              lines.push(`### Sinh học`);
-              bio.forEach((t: string) => lines.push(`- ${t}`));
-            }
-            if (chem?.length) {
-              lines.push(`### Hóa học`);
-              chem.forEach((t: string) => lines.push(`- ${t}`));
-            }
-            if (prev?.length) {
-              lines.push(`### Phòng ngừa`);
-              prev.forEach((t: string) => lines.push(`- ${t}`));
-            }
-          }
-
-          setMessages((prev) => [
-            ...prev,
-            {
+          if (!scanHistoryId) {
+            // Fallback: nếu API cũ trả về kết quả luôn (không qua queue)
+            const topPrediction = (submitResult as any).predictions?.[0];
+            const disease = (submitResult as any).topDisease;
+            const diseaseName = disease?.name || "Không xác định";
+            setCurrentScanLabel(diseaseName);
+            setMessages((prev) => [...prev, {
               id: (Date.now() + 1).toString(),
-              text: lines.join("\n"),
+              text: `## Kết quả chẩn đoán\n**Bệnh:** ${diseaseName}\n**Độ tin cậy:** ${Math.round((topPrediction?.confidence || 0) * 100)}%`,
               sender: "bot",
               timestamp: new Date(),
-            },
-          ]);
+            }]);
+          } else {
+            // Poll cho đến khi Consumer xử lý xong
+            let attempt = 0;
+            const maxAttempts = 30; // 30 * 2s = 60s timeout
+            const poll = async (): Promise<void> => {
+              attempt++;
+              if (attempt > maxAttempts) {
+                setMessages((prev) => [...prev, {
+                  id: (Date.now() + 1).toString(),
+                  text: "⚠️ Phân tích ảnh mất quá lâu. Vui lòng thử lại.",
+                  sender: "bot",
+                  timestamp: new Date(),
+                }]);
+                setIsBotTyping(false);
+                return;
+              }
+              try {
+                const statusResult = await (scanApi as any).getScanStatus(scanHistoryId);
+                if ((statusResult as any).status === 'COMPLETED') {
+                  const disease = (statusResult as any).topDisease;
+                  const predictions = (statusResult as any).predictions || [];
+                  const diseaseName = disease?.name || "Không xác định";
+                  setCurrentScanLabel(diseaseName);
+                  const confidence = predictions[0]?.confidence
+                    ? Math.round(predictions[0].confidence * 100)
+                    : 0;
+                  const lines: string[] = [];
+                  lines.push(`## Kết quả chẩn đoán`);
+                  lines.push(`**Bệnh phát hiện:** ${diseaseName.replace(/_/g, " ")}`);
+                  lines.push(`**Độ tin cậy:** ${confidence}%`);
+                  if (disease?.symptoms?.length) {
+                    lines.push(`---`);
+                    lines.push(`## Triệu chứng`);
+                    disease.symptoms.forEach((s: string) => lines.push(`- ${s}`));
+                  }
+                  const treatments = disease?.treatments as { biological?: string[]; chemical?: string[]; preventive?: string[] } | undefined;
+                  if (treatments?.biological?.length || treatments?.chemical?.length || treatments?.preventive?.length) {
+                    lines.push(`---`);
+                    lines.push(`## Phương pháp xử lý`);
+                    if (treatments?.biological?.length) { lines.push(`### Sinh học`); treatments.biological.forEach((t) => lines.push(`- ${t}`)); }
+                    if (treatments?.chemical?.length) { lines.push(`### Hóa học`); treatments.chemical.forEach((t) => lines.push(`- ${t}`)); }
+                    if (treatments?.preventive?.length) { lines.push(`### Phòng ngừa`); treatments.preventive.forEach((t) => lines.push(`- ${t}`)); }
+                  }
+                  setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: lines.join("\n"), sender: "bot", timestamp: new Date() }]);
+                  setIsBotTyping(false);
+                } else if ((statusResult as any).status === 'FAILED') {
+                  setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: `⚠️ ${(statusResult as any).message || 'Không nhận diện được ảnh. Vui lòng thử lại.'}`, sender: "bot", timestamp: new Date() }]);
+                  setIsBotTyping(false);
+                } else {
+                  // Vẫn PROCESSING — thử lại sau 2 giây
+                  setTimeout(poll, 2000);
+                }
+              } catch {
+                setTimeout(poll, 2000);
+              }
+            };
+            poll(); // Bắt đầu polling, không tắt isBotTyping ở finally
+            return; // return sớm để finally không tắt isBotTyping
+          }
         } else {
           // Text chat flow — works without login
           const response = await scanApi.chatWithAi(
@@ -492,7 +491,6 @@ export function Scanner() {
 
           if (isNewSession) {
             setCurrentSessionId(response.sessionId);
-            // Replace the temp placeholder with the real sessionId
             setHistory((prev) =>
               prev.map((h) =>
                 h.sessionId === TEMP_SESSION_ID
@@ -502,6 +500,38 @@ export function Scanner() {
             );
           }
 
+          // FIX: Nếu backend trả PROCESSING (người dùng đăng nhập + RabbitMQ)
+          // thì phải poll, không được đẩy answer=null vào UI
+          if ((response as any).status === 'PROCESSING') {
+            const pollingSessionId = (response.sessionId || currentSessionId) as string;
+            let attempt = 0;
+            const maxAttempts = 30;
+            const pollChat = async (): Promise<void> => {
+              attempt++;
+              if (attempt > maxAttempts) {
+                setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: "⚠️ Trợ lý đang bận. Vui lòng thử lại.", sender: "bot", timestamp: new Date() }]);
+                setIsBotTyping(false);
+                return;
+              }
+              try {
+                const detail = await scanApi.getSessionMessages(pollingSessionId);
+                const lastMsg = detail?.messages?.[detail.messages.length - 1];
+                if (lastMsg?.role === 'ai' && (lastMsg as any).status !== 'PENDING' && lastMsg.content) {
+                  setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: lastMsg.content, sender: "bot", timestamp: new Date(lastMsg.timestamp) }]);
+                  setIsBotTyping(false);
+                  setTimeout(() => { scanApi.getChatHistory().then(setHistory).catch(() => {}); }, 500);
+                } else {
+                  setTimeout(pollChat, 2000);
+                }
+              } catch {
+                setTimeout(pollChat, 2000);
+              }
+            };
+            pollChat();
+            return; // return sớm để finally không tắt isBotTyping
+          }
+
+          // Khách vãng lai — trả về answer ngay lập tức
           setMessages((prev) => [
             ...prev,
             {
@@ -512,7 +542,6 @@ export function Scanner() {
             },
           ]);
 
-          // Replace optimistic entry with real data once backend finishes generating title
           setTimeout(
             () => {
               scanApi

@@ -7,52 +7,41 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { MyGarden, MyGardenDocument, Plant, User } from '@agri-scan/database';
+import { MyGarden, MyGardenDocument, User } from '@agri-scan/database'; // BỎ import Plant
 import { WeatherService } from '../weather/Weather.service';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
 @Injectable()
 export class MyGardenService {
-  async getUserGarden(userId: string) {
-    return this.myGardenModel
-      .find({ userId: new Types.ObjectId(userId), status: { $ne: 'FAILED' } })
-      .populate('plantId', 'commonName scientificName images category')
-      .sort({ lastInteractionDate: -1 })
-      .lean()
-      .exec();
-  }
   private readonly PLAN_LIMITS = { FREE: 0, PREMIUM: 10, VIP: 20 };
 
   constructor(
     @InjectModel(MyGarden.name) private myGardenModel: Model<MyGardenDocument>,
     @InjectModel(User.name) private userModel: Model<User>,
-    @InjectModel(Plant.name) private plantModel: Model<Plant>,
     private readonly weatherService: WeatherService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   private get aiServiceUrl(): string {
     return this.configService.get<string>('AI_SERVICE_URL', 'http://localhost:8000');
   }
-  private mapPlantCategoryToWeatherTarget(
-    categories: string[]
-  ): 'ALL' | 'FRUIT' | 'FLOWER' | 'VEGETABLE' {
-    const lower = categories.map(c => c.toLowerCase());
-    if (lower.some(c => c.includes('quả') || c.includes('fruit'))) return 'FRUIT';
-    if (lower.some(c => c.includes('hoa') || c.includes('flower'))) return 'FLOWER';
-    if (lower.some(c => c.includes('rau') || c.includes('vegetable') || c.includes('củ'))) return 'VEGETABLE';
-    return 'ALL';
+
+  async getUserGarden(userId: string) {
+    // Không còn populate 'plantId' nữa
+    return this.myGardenModel
+      .find({ userId: new Types.ObjectId(userId), status: { $ne: 'FAILED' } })
+      .sort({ lastInteractionDate: -1 })
+      .lean()
+      .exec();
   }
-  // ==========================================
-  // 1. KIỂM TRA QUYỀN VÀ GIỚI HẠN GÓI CƯỚC
-  // ==========================================
+
   private async validateUserPlan(userId: string) {
+    // ... Giữ nguyên logic cũ của bạn ở đây ...
     const user = await this.userModel.findById(userId);
     if (!user) throw new ForbiddenException('Không tìm thấy người dùng.');
 
     const today = new Date();
-    // Nếu gói hết hạn -> Tự động hạ cấp về FREE
     if (user.plan !== 'FREE' && user.planExpiresAt && user.planExpiresAt < today) {
       user.plan = 'FREE';
       user.planExpiresAt = null;
@@ -60,11 +49,9 @@ export class MyGardenService {
     }
 
     const maxPlants = this.PLAN_LIMITS[user.plan as keyof typeof this.PLAN_LIMITS] ?? 0;
-
     if (maxPlants === 0) {
-      throw new ForbiddenException('Tính năng My Garden chỉ dành cho Premium/VIP. Vui lòng nâng cấp!');
+      throw new ForbiddenException('Tính năng My Garden chỉ dành cho Premium/VIP.');
     }
-
 
     const currentPlantCount = await this.myGardenModel.countDocuments({
       userId: new Types.ObjectId(userId),
@@ -74,33 +61,25 @@ export class MyGardenService {
     return { user, maxPlants, currentPlantCount };
   }
 
-  // ==========================================
-  // 2. THÊM CÂY VÀO VƯỜN (TẠO LỘ TRÌNH TỪ AI)
-  // ==========================================
   async addPlantToGarden(dto: {
     userId: string;
-    plantId: string;
+    label: string;
+    imageUrl?: string;
     customName?: string;
     userGoal: string;
-    diseaseName?: string;
     lat: number;
     lon: number;
   }) {
-    // 2.1. Kiểm tra gói cước
+    // 1. Kiểm tra plan
     const { user, maxPlants, currentPlantCount } = await this.validateUserPlan(dto.userId);
     if (currentPlantCount >= maxPlants) {
-      throw new BadRequestException(`Gói ${user.plan} chỉ cho trồng tối đa ${maxPlants} cây. Vui lòng xóa bớt cây cũ.`);
+      throw new BadRequestException(`Gói ${user.plan} chỉ cho trồng tối đa ${maxPlants} cây.`);
     }
 
-    const plant = await this.plantModel.findById(dto.plantId);
-    if (!plant) throw new NotFoundException('Không tìm thấy thông tin cây trồng.');
-
-    // 2.2. Lấy thời tiết 7 ngày tới
+    // 2. Lấy thời tiết cơ bản để truyền cho AI
     let weatherForecastStr = '';
-
     try {
-      const weatherCategory = this.mapPlantCategoryToWeatherTarget(plant.category);
-      const weatherData = await this.weatherService.getWeatherAndAdvice(dto.lat, dto.lon, weatherCategory);
+      const weatherData = await this.weatherService.getWeatherAndAdvice(dto.lat, dto.lon, 'ALL');
       const dailySummaries = weatherData.weatherData.daily.slice(0, 7).map(
         (day, idx) => `Ngày ${idx + 1}: ${day.summary}, ${day.tempMin}-${day.tempMax}°C`
       );
@@ -109,50 +88,47 @@ export class MyGardenService {
       weatherForecastStr = 'Không có dữ liệu thời tiết.';
     }
 
-    // 2.3. Gọi LLM tạo lộ trình & Thanh tiến trình
-    const conditionStr = dto.diseaseName && dto.diseaseName !== 'Khỏe mạnh'
-      ? `Đang mắc bệnh: ${dto.diseaseName}. Ưu tiên chữa bệnh.`
-      : `Đang khỏe mạnh.`;
-
-    const systemPrompt = `
-      Tạo lộ trình chăm sóc cây bằng JSON nghiêm ngặt.
-      Cây: ${plant.commonName}. Mục tiêu: ${dto.userGoal}. Tình trạng: ${conditionStr}. Thời tiết: ${weatherForecastStr}.
-      
-      Yêu cầu trả về JSON chuẩn xác:
-      {
-        "estimated_days": 7,
-        "growth_stages": ["Cây non", "Phát triển", "Ra hoa", "Đậu quả", "Thu hoạch"],
-        "current_stage_index": 3,
-        "daily_tasks": [
-          { "day": 1, "weatherContext": "...", "waterAction": "...", "fertilizerAction": "...", "careAction": "..." }
-        ]
-      }
-    `;
-
+    // 3. Gọi FastAPI AI Service mới
     let aiData;
     try {
-      const resp = await axios.post(`${this.aiServiceUrl}/plan_garden`, { prompt: systemPrompt });
-      const answerText = typeof resp.data === 'string' ? resp.data : resp.data.answer;
-      aiData = JSON.parse(answerText.replace(/```json/g, '').replace(/```/g, '').trim());
+      const aiPayload = {
+        label: dto.label,
+        prompt: `Mục tiêu người dùng: ${dto.userGoal}. Thời tiết 7 ngày tới: ${weatherForecastStr}. Hãy lập lộ trình phù hợp.`
+      };
+      const resp = await axios.post(`${this.aiServiceUrl}/plant_garden`, aiPayload);
+      aiData = resp.data; // FastAPI đã trả về JSON chuẩn
     } catch (error) {
-      throw new InternalServerErrorException('AI đang bận, không thể lập lộ trình.');
+      throw new InternalServerErrorException('AI đang bận hoặc không thể phân tích cây này.');
     }
 
-    // 2.4. Lưu DB
+    // Phân loại kết quả là cây khỏe (có thông tin thực vật) hay cây bệnh
+    const isHealthy = !!aiData.scientificName; 
+    const currentCondition = isHealthy ? 'Khỏe mạnh' : `Đang điều trị: ${dto.label}`;
+
+    // Tách riêng plantInfo nếu có
+    const plantInfo = isHealthy ? {
+      commonName: aiData.commonName,
+      scientificName: aiData.scientificName,
+      family: aiData.family,
+      description: aiData.description,
+      uses: aiData.uses,
+      care: aiData.care,
+      category: aiData.category,
+      plantGroup: aiData.plantGroup,
+    } : null;
+
+    // 4. Lưu vào MongoDB
     const newGardenPlant = new this.myGardenModel({
       userId: new Types.ObjectId(dto.userId),
-      plantId: new Types.ObjectId(dto.plantId),
-      customName: dto.customName || plant.commonName,
-      plantGroup: (() => {
-        const mapped = this.mapPlantCategoryToWeatherTarget(plant.category);
-        if (mapped === 'FRUIT') return 'FRUIT';
-        if (mapped === 'FLOWER') return 'FLOWER';
-        return 'ORNAMENTAL';
-      })(),
+      aiLabel: dto.label,
+      imageUrl: dto.imageUrl || (aiData.images && aiData.images.length > 0 ? aiData.images[0] : ''),
+      plantInfo: plantInfo,
+      customName: dto.customName || (isHealthy ? aiData.commonName : dto.label),
       userGoal: dto.userGoal,
-      currentCondition: dto.diseaseName || 'Khỏe mạnh',
+      currentCondition: currentCondition,
+      roadmapSummary: aiData.roadmap_summary || '',
       growthStages: aiData.growth_stages || ['Giai đoạn 1', 'Giai đoạn 2', 'Giai đoạn 3'],
-      currentStageIndex: aiData.current_stage_index || 0,
+      currentStageIndex: aiData.current_stage_index || 1,
       progressPercentage: 0,
       lastInteractionDate: new Date(),
       careRoadmap: aiData.daily_tasks.map(task => ({

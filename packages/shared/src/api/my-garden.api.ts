@@ -3,10 +3,10 @@ import { IMyGardenPlant } from '../types/my-garden.types';
 
 // Định nghĩa DTO cho đầu vào của hàm thêm cây
 export interface AddPlantPayload {
-  plantId: string;
+  label: string;
+  imageUrl?: string;
   customName?: string;
   userGoal: string;
-  diseaseName?: string;
   lat: number;
   lon: number;
 }

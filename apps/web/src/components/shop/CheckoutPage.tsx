@@ -20,30 +20,36 @@ export function CheckoutPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   // Mock shipping fee
   const shippingFee = 30000;
   const totalPayment = cartTotal + shippingFee;
 
-const handlePlaceOrder = async () => {
-  if (cartItems.length === 0) return;
-  setIsSubmitting(true);
+  const handlePlaceOrder = async () => {
+    if (cartItems.length === 0) return;
+    setIsSubmitting(true);
 
-  const rawSellerId = cartItems[0].sellerId;
-  const sellerId = typeof rawSellerId === 'object' && rawSellerId !== null
-    ? String(rawSellerId._id)
-    : String(rawSellerId);
+    const rawSellerId = cartItems[0].sellerId;
+    const sellerId = typeof rawSellerId === 'object' && rawSellerId !== null
+      ? String(rawSellerId._id)
+      : String(rawSellerId);
 
-  try {
-    await orderApi.createOrder({
-      sellerId,
-      items: cartItems.map(item => ({
-        productId: item._id,
-        quantity: item.quantity,
-      })),
-      shippingAddress: '475A Điện Biên Phủ, Phường 25, Quận Bình Thạnh, TP. Hồ Chí Minh',
-      phoneNumber: '0987654321',
-      paymentMethod,
-    });
+    try {
+      if (!shippingAddress.trim() || !phoneNumber.trim()) {
+        alert('Vui lòng nhập địa chỉ và số điện thoại nhận hàng!');
+        return;
+      }
+      await orderApi.createOrder({
+        sellerId,
+        items: cartItems.map(item => ({
+          productId: item._id,
+          quantity: item.quantity,
+        })),
+        shippingAddress,
+        phoneNumber,
+        paymentMethod,
+      });
 
       setIsSuccess(true);
       setTimeout(() => {
@@ -273,18 +279,16 @@ const handlePlaceOrder = async () => {
                   <label
                     key={opt.value}
                     onClick={() => setPaymentMethod(opt.value)}
-                    className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${
-                      paymentMethod === opt.value
-                        ? "border-primary bg-primary/5"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
+                    className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === opt.value
+                      ? "border-primary bg-primary/5"
+                      : "border-gray-200 hover:border-gray-300"
+                      }`}
                   >
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
-                        paymentMethod === opt.value
-                          ? "border-primary"
-                          : "border-gray-300"
-                      }`}
+                      className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${paymentMethod === opt.value
+                        ? "border-primary"
+                        : "border-gray-300"
+                        }`}
                     >
                       {paymentMethod === opt.value && (
                         <div className="w-2.5 h-2.5 rounded-full bg-primary" />
@@ -380,11 +384,10 @@ const handlePlaceOrder = async () => {
                 whileTap={{ scale: 0.98 }}
                 onClick={handlePlaceOrder}
                 disabled={isSubmitting}
-                className={`w-full py-4 text-white font-bold rounded-xl transition-colors shadow-lg text-lg flex items-center justify-center gap-2 ${
-                  isSubmitting
-                    ? "bg-gray-400 cursor-not-allowed shadow-none"
-                    : "bg-red-500 hover:bg-red-600 shadow-red-500/20"
-                }`}
+                className={`w-full py-4 text-white font-bold rounded-xl transition-colors shadow-lg text-lg flex items-center justify-center gap-2 ${isSubmitting
+                  ? "bg-gray-400 cursor-not-allowed shadow-none"
+                  : "bg-red-500 hover:bg-red-600 shadow-red-500/20"
+                  }`}
               >
                 {isSubmitting ? (
                   <>

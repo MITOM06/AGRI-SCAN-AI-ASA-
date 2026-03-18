@@ -12,13 +12,16 @@ export interface IChatMessage {
   role: "user" | "ai";
   content: string;
   timestamp: string | Date;
+  status?: 'PENDING' | 'COMPLETED' | 'FAILED'; // FIX: Consumer cập nhật field này, cần có để polling check
 }
 
 // Type cho response khi gửi tin nhắn
 export interface IChatResponse {
   sessionId: string | null; // null nếu chưa đăng nhập
   question: string;
-  answer: string;
+  answer: string | null;    // FIX: null khi status = PROCESSING (RabbitMQ chưa xử lý xong)
+  status?: 'PROCESSING' | 'COMPLETED'; // FIX: thêm field status từ backend RabbitMQ
+  message?: string;         // FIX: thêm message kèm theo khi PROCESSING
 }
 
 // Type cho 1 session (metadata, không có messages)
@@ -33,7 +36,7 @@ export interface IChatSession {
 export interface IChatSessionDetail {
   sessionId: string;
   title: string | null;
-  messages: IChatMessage[];
+  messages: IChatMessage[]; // IChatMessage đã có status?: 'PENDING' | 'COMPLETED' | 'FAILED'
 }
 
 export const scanApi = {
@@ -95,6 +98,19 @@ export const scanApi = {
     return res.data;
   },
 
+  getChatStatus: async (sessionId: string): Promise<{
+    status: 'PROCESSING' | 'COMPLETED' | 'EMPTY' | 'FAILED';
+    answer?: string;
+    message?: string;
+    messages?: IChatMessage[];
+  }> => {
+    // FIX: Dùng API_ENDPOINTS.HISTORY.SESSION_STATUS thay vì tự nối string
+    const res = await axiosClient.get(
+      API_ENDPOINTS.HISTORY.SESSION_STATUS(sessionId)
+    );
+    return res.data;
+  },
+
   /**
    * 4. Lấy nội dung tin nhắn của 1 session cụ thể
    * Gọi đến: GET /scan/chat/sessions/:sessionId
@@ -131,8 +147,26 @@ export const scanApi = {
    */
   getScanDetail: async (scanId: string): Promise<IScanHistoryDetail> => {
     const res = await axiosClient.get<IScanHistoryDetail>(
-      `/scan/history/${scanId}`,
+      // FIX: Thêm /api prefix — trước đây thiếu /api dẫn đến 404
+      `${API_ENDPOINTS.HISTORY.SCAN_BASE}/${scanId}`,
     );
+    return res.data;
+  },
+
+  /**
+   * 8. FIX: Thêm mới — Poll kết quả scan ảnh async (RabbitMQ)
+   * Web và Mobile gọi method này lặp lại cho đến khi status = COMPLETED | FAILED
+   * Gọi đến: GET /scan/status/:scanId
+   */
+  getScanStatus: async (scanId: string): Promise<{
+    status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+    message?: string;
+    scanHistoryId?: string;
+    imageUrl?: string;
+    predictions?: Array<{ label: string; confidence: number }>;
+    topDisease?: any; // FIX: dùng any vì IScanHistoryDetail không expose field topDisease
+  }> => {
+    const res = await axiosClient.get(API_ENDPOINTS.SCAN.STATUS(scanId));
     return res.data;
   },
 };
