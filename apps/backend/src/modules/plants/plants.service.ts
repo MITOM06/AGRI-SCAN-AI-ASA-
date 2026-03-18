@@ -15,15 +15,13 @@ export class PlantsService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     const count = await this.plantModel.countDocuments();
     if (count > 0) {
-      console.log(`🌱 Đã có ${count} cây trong DB, bỏ qua seed tự động.`);
-      return;
-    }
-    console.log('🌱 DB trống, đang seed dữ liệu...');
-    try {
-      const result = await this.seedData();
-      console.log(result.message);
-    } catch (error) {
-      console.error('⚠️ Seed thất bại:', (error as Error).message);
+      console.log('🌱 Đang kiểm tra và đồng bộ dữ liệu từ team AI...');
+      try {
+        const result = await this.seedData();
+        console.log(result.message);
+      } catch (error) {
+        console.error('⚠️ Seed thất bại:', (error as Error).message);
+      }
     }
   }
 
@@ -57,8 +55,6 @@ export class PlantsService implements OnApplicationBootstrap {
     return newPlant.save();
   }
 
-  // 5. Bơm dữ liệu
-  // 5. Bơm dữ liệu (Cây Trồng + Từ điển Bệnh + Nối bệnh vào cây)
   async seedData() {
     try {
       // 1. ĐỌC FILE CÂY TRỒNG
@@ -87,49 +83,37 @@ export class PlantsService implements OnApplicationBootstrap {
       // 2. ĐỌC FILE BỆNH TỪ TEAM AI
       const diseasePath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plant_knowledge.json');
       const diseaseRawData = fs.readFileSync(diseasePath, 'utf-8');
-      const plantKnowledge: Record<string, any> = JSON.parse(diseaseRawData);
-
+      const diseaseList: any[] = JSON.parse(diseaseRawData);
       let diseaseCount = 0;
 
-      for (const [yoloLabel, info] of Object.entries(plantKnowledge)) {
-        const isHealthy = info['Status'] === 'Healthy' || info['Status'] === 'Normal';
-
-        const mappedData = isHealthy ? {
-          name: yoloLabel,
-          commonName: 'Cây khỏe mạnh',
-          description: info['Analysis'] || info['Detail'] || 'Cây phát triển bình thường.',
-          type: 'HEALTHY',
-          treatments: { biological: [], chemical: [] },
-          status: 'APPROVED'
-        } : {
-          name: yoloLabel,
-          commonName: info['LOAI_BENH'],
-          description: `**Đặc điểm:** ${info['DAC_DIEM']}\n\n**Nguyên nhân:** ${info['NGUYEN_NHAN']}\n\n**Lưu ý:** ${info['LUU_Y']}`,
-          type: 'DISEASE',
-          treatments: {
-            biological: [info['GIAI_PHAP']],
-            chemical: [info['LIEU_TRINH_VA_THUOC']?.['Hoat_chat_dac_tri'], info['LIEU_TRINH_VA_THUOC']?.['Lo_trinh_14_ngay']].filter(Boolean),
-          },
-          status: 'APPROVED'
-        };
-
+      for (const diseaseData of diseaseList) {
+        const isHealthy = diseaseData.type === 'HEALTHY' || diseaseData.name?.toLowerCase().includes('healthy');
 
         const savedDisease = await this.diseaseModel.findOneAndUpdate(
-          { name: yoloLabel },
-          mappedData,
+          { name: diseaseData.name },
+          diseaseData, // Truyền trực tiếp object JSON vào
           { upsert: true, new: true }
         );
         diseaseCount++;
 
-        // 3. THUẬT TOÁN NỐI BỆNH VÀO ĐÚNG CÂY
-        const tenCayString = info['TEN_CAY'] || '';
-        const match = tenCayString.match(/\((.*?)\)/); // Trích xuất tên khoa học trong ngoặc tròn
+
+        const commonNameString = diseaseData.commonName || '';
+        const match = commonNameString.match(/\((.*?)\)/);
 
         if (match && match[1]) {
-          const targetPlant = plantDocs.find(p => p.scientificName === match[1]);
-          if (targetPlant && !isHealthy) { // Không nhét "Cây khỏe mạnh" vào danh sách bệnh
-            targetPlant.diseases.push(savedDisease._id);
-            await targetPlant.save();
+          const scientificNameFromDisease = match[1];
+          // Tìm cây tương ứng đã được insert ở bước 1
+          const targetPlant = plantDocs.find(p => p.scientificName === scientificNameFromDisease);
+
+          if (targetPlant && !isHealthy) { // Chỉ nhét các bệnh thực sự vào mảng diseases của cây
+            // Ép kiểu ID sang string để kiểm tra trùng lặp (tránh 1 bệnh bị push 2 lần khi chạy seed nhiều lần)
+            const diseaseIdStr = savedDisease._id.toString();
+            const hasDisease = targetPlant.diseases.some((id: any) => id.toString() === diseaseIdStr);
+
+            if (!hasDisease) {
+              targetPlant.diseases.push(savedDisease._id);
+              await targetPlant.save();
+            }
           }
         }
       }

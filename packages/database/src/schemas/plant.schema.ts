@@ -34,12 +34,12 @@ export class Plant {
   @Prop({ enum: ['Nhanh', 'Trung bình', 'Chậm'] })
   growthRate: string;
 
-  @Prop({ enum: ['Ưa sáng', 'Ưa bóng', 'Bán phần'] })
+  @Prop({ required: true }) 
   light: string;
 
-  @Prop({ enum: ['Ít', 'Trung bình', 'Nhiều'] })
-  water: string;
 
+  @Prop({ required: true })
+  water: string;
   @Prop()
   height: string;
 
