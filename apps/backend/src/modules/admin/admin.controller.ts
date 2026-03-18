@@ -205,4 +205,19 @@ export class AdminController {
   ) {
     return this.adminService.replyFeedback(id, req.user.userId, body.reply);
   }
+
+  /**
+   * GET /feedback
+   * Người dùng xem lại lịch sử các phản hồi của chính mình
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('feedback')
+  getUserFeedbacks(
+    @Req() req: any,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    // Lấy userId từ token đăng nhập để tìm đúng phản hồi của người đó
+    return this.adminService.getUserFeedbacks(req.user.userId, +page, +limit);
+  }
 }

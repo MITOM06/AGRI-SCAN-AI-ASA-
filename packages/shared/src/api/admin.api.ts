@@ -1,5 +1,5 @@
-import { axiosClient } from './axios-client';
-import { API_ENDPOINTS } from '../constants';
+import { axiosClient } from "./axios-client";
+import { API_ENDPOINTS } from "../constants";
 import type {
   IDashboard,
   IAdminUsersResponse,
@@ -12,7 +12,7 @@ import type {
   IFeedbacksResponse,
   ISubmitFeedbackPayload,
   IMessageResponse,
-} from '../types/admin.types';
+} from "../types/admin.types";
 
 export const adminApi = {
   // ════════════════════════════════════════════════════════════
@@ -49,12 +49,11 @@ export const adminApi = {
    */
   updateUserPlan: async (
     userId: string,
-    plan: 'FREE' | 'PREMIUM' | 'VIP',
+    plan: "FREE" | "PREMIUM" | "VIP",
   ): Promise<IUpdatePlanResponse> => {
-    const res = await axiosClient.patch(
-      API_ENDPOINTS.ADMIN.USER_PLAN(userId),
-      { plan },
-    );
+    const res = await axiosClient.patch(API_ENDPOINTS.ADMIN.USER_PLAN(userId), {
+      plan,
+    });
     return res.data;
   },
 
@@ -116,7 +115,7 @@ export const adminApi = {
   exportRevenueCsv: async (from: string, to: string): Promise<Blob> => {
     const res = await axiosClient.get(API_ENDPOINTS.ADMIN.EXPORT.REVENUE, {
       params: { from, to },
-      responseType: 'blob',
+      responseType: "blob",
     });
     return res.data;
   },
@@ -128,7 +127,7 @@ export const adminApi = {
   exportUsersCsv: async (from: string, to: string): Promise<Blob> => {
     const res = await axiosClient.get(API_ENDPOINTS.ADMIN.EXPORT.USERS, {
       params: { from, to },
-      responseType: 'blob',
+      responseType: "blob",
     });
     return res.data;
   },
@@ -153,7 +152,7 @@ export const adminApi = {
    * GET /admin/feedbacks?status=PENDING&page=1&limit=20
    */
   getFeedbacks: async (
-    status?: 'PENDING' | 'REPLIED',
+    status?: "PENDING" | "REPLIED",
     page = 1,
     limit = 20,
   ): Promise<IFeedbacksResponse> => {
@@ -175,6 +174,17 @@ export const adminApi = {
       API_ENDPOINTS.ADMIN.FEEDBACK.REPLY(feedbackId),
       { reply },
     );
+    return res.data;
+  },
+
+  /**
+   * Lấy lịch sử phản hồi của chính User đang đăng nhập
+   * GET /feedback
+   */
+  getMyFeedbacks: async (page = 1, limit = 20): Promise<IFeedbacksResponse> => {
+    const res = await axiosClient.get(API_ENDPOINTS.ADMIN.FEEDBACK.BASE, {
+      params: { page, limit },
+    });
     return res.data;
   },
 };

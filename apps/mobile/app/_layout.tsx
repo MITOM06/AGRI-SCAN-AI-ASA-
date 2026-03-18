@@ -46,6 +46,7 @@ export default function RootLayout() {
         <Stack.Screen name="auth/forgot-password" />
         <Stack.Screen name="auth/otp-verification" />
         <Stack.Screen name="auth/reset-password" />
+        <Stack.Screen name="auth/AuthHeader" />
         <Stack.Screen name="user" />
         <Stack.Screen name="scan" />
         <Stack.Screen name="treeDic" />
@@ -70,6 +71,8 @@ export default function RootLayout() {
         <Stack.Screen name="success-order" />
         <Stack.Screen name="my-shop" />
         <Stack.Screen name="add-product" />
+        <Stack.Screen name="garden-detail" />
+        <Stack.Screen name="garden-setup" />
       </Stack>
     </SafeAreaProvider>
   );

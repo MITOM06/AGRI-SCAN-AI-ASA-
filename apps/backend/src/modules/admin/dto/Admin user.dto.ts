@@ -1,4 +1,12 @@
-import { IsEnum, IsOptional, IsString, Min, IsInt, MinLength, MaxLength } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  Min,
+  IsInt,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdateUserPlanDto {
@@ -34,11 +42,11 @@ export class GetUsersQueryDto {
 
 export class SubmitFeedbackDto {
   @IsString()
-   @MinLength(10, { message: 'Nội dung phản hồi phải có ít nhất 10 ký tự.' })  
-  @MaxLength(1000, { message: 'Nội dung không được vượt quá 1000 ký tự.' })   
   @IsEnum(['BUG', 'FEATURE', 'COMPLAINT', 'GENERAL'])
   category: string;
 
   @IsString()
+  @MinLength(10, { message: 'Nội dung phản hồi phải có ít nhất 10 ký tự.' })
+  @MaxLength(1000, { message: 'Nội dung không được vượt quá 1000 ký tự.' })
   content: string;
 }
