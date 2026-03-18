@@ -36,10 +36,14 @@ export default function FeedbackScreen() {
 
   const handleSubmit = async () => {
     if (content.trim().length < 10) {
-      Alert.alert(
-        "Lỗi",
-        "Vui lòng nhập nội dung phản hồi ít nhất 10 ký tự để Admin hiểu rõ vấn đề nhé!",
-      );
+      Platform.OS === "web"
+        ? window.alert(
+            "Vui lòng nhập nội dung phản hồi ít nhất 10 ký tự để Admin hiểu rõ vấn đề nhé!",
+          )
+        : Alert.alert(
+            "Lỗi",
+            "Vui lòng nhập nội dung phản hồi ít nhất 10 ký tự để Admin hiểu rõ vấn đề nhé!",
+          );
       return;
     }
 
@@ -51,16 +55,24 @@ export default function FeedbackScreen() {
         content: content.trim(),
       });
 
-      Alert.alert(
-        "Gửi thành công!",
-        "Cảm ơn bạn đã gửi phản hồi. Ban quản trị sẽ xem xét và phản hồi sớm nhất.",
-        [{ text: "Về trang chủ", onPress: () => router.back() }],
-      );
+      if (Platform.OS === "web") {
+        window.alert(
+          "🎉 Gửi thành công! Cảm ơn bạn đã gửi phản hồi. Ban quản trị sẽ xem xét và phản hồi sớm nhất.",
+        );
+        router.back();
+      } else {
+        Alert.alert(
+          "Gửi thành công!",
+          "Cảm ơn bạn đã gửi phản hồi. Ban quản trị sẽ xem xét và phản hồi sớm nhất.",
+          [{ text: "Về trang chủ", onPress: () => router.back() }],
+        );
+      }
     } catch (error: any) {
-      Alert.alert(
-        "Lỗi",
-        error.response?.data?.message || "Không thể gửi phản hồi lúc này.",
-      );
+      const errorMsg =
+        error.response?.data?.message || "Không thể gửi phản hồi lúc này.";
+      Platform.OS === "web"
+        ? window.alert(errorMsg)
+        : Alert.alert("Lỗi", errorMsg);
     } finally {
       setIsSubmitting(false);
     }

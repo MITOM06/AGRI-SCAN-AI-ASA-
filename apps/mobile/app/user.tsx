@@ -333,6 +333,12 @@ export default function UserHomeScreen() {
                     Gian hàng của tôi (Bán)
                   </Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/my-orders")}
+                >
+                  <Text style={styles.menuItemText}>Lịch sử mua hàng</Text>
+                </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.menuItem}

@@ -66,6 +66,10 @@ export default function RootLayout() {
         <Stack.Screen name="buy-detail" />
         <Stack.Screen name="admin" />
         <Stack.Screen name="feedback" />
+        <Stack.Screen name="checkout" />
+        <Stack.Screen name="success-order" />
+        <Stack.Screen name="my-shop" />
+        <Stack.Screen name="add-product" />
       </Stack>
     </SafeAreaProvider>
   );

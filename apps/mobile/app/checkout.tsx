@@ -45,6 +45,7 @@ export default function CheckoutScreen() {
     }).format(amount || 0);
   };
 
+  // Tìm hàm này trong file checkout.tsx của bạn
   const handleCreateOrder = async () => {
     if (!address.trim())
       return Alert.alert("Lỗi", "Vui lòng nhập địa chỉ nhận hàng!");
@@ -54,8 +55,8 @@ export default function CheckoutScreen() {
     try {
       setIsSubmitting(true);
 
-      // Gọi API Đặt hàng (Bắn xuống Database)
-      await orderApi.createOrder({
+      // GỌI API ĐẶT HÀNG LƯU XUỐNG DB
+      const result = await orderApi.createOrder({
         sellerId: sellerId as string,
         items: [
           {
@@ -65,20 +66,15 @@ export default function CheckoutScreen() {
         ],
         shippingAddress: address,
         phoneNumber: phone,
-        paymentMethod: "COD", // Hiện tại chỉ hỗ trợ Thanh toán khi nhận hàng
+        paymentMethod: "COD",
       });
 
-      // Thông báo thành công và đá về trang Shop
-      Alert.alert(
-        "🎉 Đặt hàng thành công!",
-        "Cảm ơn bạn đã mua sắm. Gian hàng sẽ sớm chuẩn bị và giao hàng cho bạn.",
-        [
-          {
-            text: "Quay lại Cửa hàng",
-            onPress: () => router.replace("/shop" as any),
-          },
-        ],
-      );
+      // THÀNH CÔNG THÌ ĐÁ SANG TRANG SUCCESS
+      // (Mình gởi kèm cái ID đơn hàng thực tế lấy từ Backend luôn)
+      router.replace({
+        pathname: "/success-order",
+        params: { orderId: result._id?.slice(-6).toUpperCase() }, // Lấy 6 ký tự cuối làm mã đơn ảo
+      } as any);
     } catch (error: any) {
       Alert.alert(
         "Lỗi đặt hàng",
