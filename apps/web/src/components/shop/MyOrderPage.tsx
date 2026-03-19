@@ -230,7 +230,7 @@ export function MyOrdersPage() {
                         </div>
                         <div className="flex-1">
                           <h4 className="text-base font-medium text-gray-900 line-clamp-2 mb-1">
-                            S{typeof item.productId === 'object' ? item.productId.name : `Sản phẩm #${String(item.productId).substring(0, 6)}`}
+                            {typeof item.productId === 'object' ? item.productId.name : `Sản phẩm #${String(item.productId).substring(0, 6)}`}
                           </h4>
                           <p className="text-sm text-gray-500 mb-2">
                             Phân loại: Mặc định

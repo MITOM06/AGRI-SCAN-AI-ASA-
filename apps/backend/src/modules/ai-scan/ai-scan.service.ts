@@ -58,7 +58,10 @@ export class AiScanService implements OnModuleInit {
   }
 
   private get aiServiceUrl(): string {
-    return this.configService.get<string>('AI_SERVICE_URL', 'http://localhost:8000');
+    return this.configService.get<string>(
+      'AI_SERVICE_URL',
+      'http://localhost:8000',
+    );
   }
 
   private async uploadImage(file: Express.Multer.File): Promise<string> {
@@ -69,7 +72,10 @@ export class AiScanService implements OnModuleInit {
   // ==========================================
   // XỬ LÝ ẢNH (RABBITMQ)
   // ==========================================
-  async processImageAndDiagnose(userId: string, imageFile: Express.Multer.File) {
+  async processImageAndDiagnose(
+    userId: string,
+    imageFile: Express.Multer.File,
+  ) {
     await this.checkAndIncrementQuota(userId, 'IMAGE');
 
     try {
@@ -94,13 +100,18 @@ export class AiScanService implements OnModuleInit {
         scanHistoryId: newScan._id,
         imageUrl: savedImageUrl,
         status: 'PROCESSING',
-        message: 'Ảnh đang được hệ thống phân tích, kết quả sẽ cập nhật sau giây lát...',
+        message:
+          'Ảnh đang được hệ thống phân tích, kết quả sẽ cập nhật sau giây lát...',
       };
-
     } catch (error) {
       this.logger.error('Lỗi khi đẩy task scan vào queue:', error.message);
-      if (!(error instanceof BadRequestException) && !(error instanceof UnauthorizedException)) {
-        await this.userModel.findByIdAndUpdate(userId, { $inc: { dailyImageCount: -1 } });
+      if (
+        !(error instanceof BadRequestException) &&
+        !(error instanceof UnauthorizedException)
+      ) {
+        await this.userModel.findByIdAndUpdate(userId, {
+          $inc: { dailyImageCount: -1 },
+        });
       }
       throw error;
     }
@@ -109,12 +120,18 @@ export class AiScanService implements OnModuleInit {
   async getScanStatus(userId: string, scanId: string) {
     const scan = await this.scanHistoryModel
       .findOne({ _id: scanId, userId })
-      .populate({ path: 'aiPredictions.diseaseId', select: 'name pathogen type symptoms treatments' })
+      .populate({
+        path: 'aiPredictions.diseaseId',
+        select: 'name pathogen type symptoms treatments',
+      })
       .exec();
 
     if (!scan) throw new NotFoundException('Không tìm thấy lịch sử quét này!');
 
-    if ((scan as any).status === 'PENDING' || (scan as any).status === 'PROCESSING') {
+    if (
+      (scan as any).status === 'PENDING' ||
+      (scan as any).status === 'PROCESSING'
+    ) {
       return { status: 'PROCESSING', message: 'Đang phân tích...' };
     }
 
@@ -159,7 +176,9 @@ export class AiScanService implements OnModuleInit {
         };
       } catch (error) {
         this.logger.error('[GUEST CHAT] AI Service error:', error.message);
-        throw new InternalServerErrorException('Trợ lý ảo đang bận, vui lòng thử lại!');
+        throw new InternalServerErrorException(
+          'Trợ lý ảo đang bận, vui lòng thử lại!',
+        );
       }
     }
 
@@ -169,15 +188,23 @@ export class AiScanService implements OnModuleInit {
     try {
       let chatDoc: any;
       if (sessionId) {
-        chatDoc = await this.chatHistoryModel.findOne({ _id: sessionId, userId });
+        chatDoc = await this.chatHistoryModel.findOne({
+          _id: sessionId,
+          userId,
+        });
       }
 
       if (!chatDoc) {
         const autoTitle =
           question.trim().length > 0
-            ? question.trim().slice(0, 50) + (question.trim().length > 50 ? '...' : '')
+            ? question.trim().slice(0, 50) +
+              (question.trim().length > 50 ? '...' : '')
             : 'Cuộc hội thoại mới';
-        chatDoc = new this.chatHistoryModel({ userId, title: autoTitle, messages: [] });
+        chatDoc = new this.chatHistoryModel({
+          userId,
+          title: autoTitle,
+          messages: [],
+        });
       }
 
       chatDoc.messages.push({
@@ -212,7 +239,6 @@ export class AiScanService implements OnModuleInit {
         status: 'PROCESSING',
         message: 'Trợ lý đang soạn câu trả lời...',
       };
-
     } catch (error) {
       // Chỉ rollback khi là lỗi hệ thống, không rollback khi quota hết
       if (
@@ -226,14 +252,19 @@ export class AiScanService implements OnModuleInit {
           $inc: { dailyPromptCount: -1 },
         });
       }
-      throw new InternalServerErrorException('Trợ lý ảo đang bận, vui lòng thử lại sau!');
+      throw new InternalServerErrorException(
+        'Trợ lý ảo đang bận, vui lòng thử lại sau!',
+      );
     }
   }
 
   // ==========================================
   // CÁC HÀM HỖ TRỢ
   // ==========================================
-  private async checkAndIncrementQuota(userId: string, type: 'IMAGE' | 'PROMPT') {
+  private async checkAndIncrementQuota(
+    userId: string,
+    type: 'IMAGE' | 'PROMPT',
+  ) {
     const user = await this.userModel.findById(userId);
     if (!user) throw new UnauthorizedException('Không tìm thấy người dùng');
 
@@ -248,7 +279,11 @@ export class AiScanService implements OnModuleInit {
       user.dailyPromptCount = 0;
     }
 
-    if (user.plan !== 'FREE' && user.planExpiresAt && user.planExpiresAt < today) {
+    if (
+      user.plan !== 'FREE' &&
+      user.planExpiresAt &&
+      user.planExpiresAt < today
+    ) {
       await this.userModel.findByIdAndUpdate(userId, {
         $set: { plan: 'FREE', planExpiresAt: null },
       });
@@ -260,13 +295,16 @@ export class AiScanService implements OnModuleInit {
       PROMPT: { FREE: 10, PREMIUM: 50, VIP: Infinity },
     };
     const maxCount = limits[type][user.plan] ?? 3;
-    const countField = type === 'IMAGE' ? 'dailyImageCount' : 'dailyPromptCount';
+    const countField =
+      type === 'IMAGE' ? 'dailyImageCount' : 'dailyPromptCount';
 
     if (user[countField] >= maxCount) {
       throw new BadRequestException(`Đã hết lượt sử dụng gói ${user.plan}.`);
     }
 
-    await this.userModel.findByIdAndUpdate(userId, { $inc: { [countField]: 1 } });
+    await this.userModel.findByIdAndUpdate(userId, {
+      $inc: { [countField]: 1 },
+    });
   }
 
   async getScanDetail(userId: string, scanId: string) {
@@ -279,14 +317,23 @@ export class AiScanService implements OnModuleInit {
   }
 
   async getChatMessageStatus(userId: string, sessionId: string) {
-    const chatDoc = await this.chatHistoryModel.findOne({ _id: sessionId, userId }).exec();
-    if (!chatDoc) throw new NotFoundException('Không tìm thấy phiên hội thoại!');
+    const chatDoc = await this.chatHistoryModel
+      .findOne({ _id: sessionId, userId })
+      .exec();
+    if (!chatDoc)
+      throw new NotFoundException('Không tìm thấy phiên hội thoại!');
 
     const lastMessage = chatDoc.messages[chatDoc.messages.length - 1];
     if (!lastMessage) return { status: 'EMPTY' };
 
-    if (lastMessage.role === 'ai' && (lastMessage as any).status === 'PENDING') {
-      return { status: 'PROCESSING', message: 'Trợ lý đang soạn câu trả lời...' };
+    if (
+      lastMessage.role === 'ai' &&
+      (lastMessage as any).status === 'PENDING'
+    ) {
+      return {
+        status: 'PROCESSING',
+        message: 'Trợ lý đang soạn câu trả lời...',
+      };
     }
 
     return {
@@ -300,7 +347,10 @@ export class AiScanService implements OnModuleInit {
   async getUserScanHistory(userId: string) {
     return this.scanHistoryModel
       .find({ userId })
-      .populate({ path: 'aiPredictions.diseaseId', select: 'name pathogen type treatments' })
+      .populate({
+        path: 'aiPredictions.diseaseId',
+        select: 'name pathogen type treatments',
+      })
       .sort({ scannedAt: -1 })
       .exec();
   }
@@ -320,9 +370,15 @@ export class AiScanService implements OnModuleInit {
   }
 
   async getSessionMessages(userId: string, sessionId: string) {
-    const chatDoc = await this.chatHistoryModel.findOne({ _id: sessionId, userId }).exec();
+    const chatDoc = await this.chatHistoryModel
+      .findOne({ _id: sessionId, userId })
+      .exec();
     if (!chatDoc) return { sessionId, title: null, messages: [] };
-    return { sessionId: chatDoc._id, title: chatDoc.title, messages: chatDoc.messages };
+    return {
+      sessionId: chatDoc._id,
+      title: chatDoc.title,
+      messages: chatDoc.messages,
+    };
   }
 
   async updateAccuracyFeedback(scanId: string, isAccurate: boolean) {
@@ -331,7 +387,8 @@ export class AiScanService implements OnModuleInit {
       { isAccurate },
       { new: true },
     );
-    if (!updatedScan) throw new NotFoundException('Không tìm thấy lịch sử quét này');
+    if (!updatedScan)
+      throw new NotFoundException('Không tìm thấy lịch sử quét này');
     return updatedScan;
   }
 }
