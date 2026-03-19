@@ -17,9 +17,9 @@
 
 ## Quick Links
 * **Website:** [agri-scan-ai](https://agriscan.duckdns.org/) 
-* **Source Code:** [github.com/tapu25z/agri-scan-ai](https://github.com/tapu25z/agri-scan-ai)
-* **Dataset (Kaggle):** [Rice Leaf Diseases Detection](https://www.kaggle.com/datasets/loki4514/rice-leaf-diseases-detection)
-* **Dữ liệu đã chia (Train/Val/Test):** [Google Drive (data_splited)](https://drive.google.com/drive/folders/1Ebmeq0fpYecxsK6QEL-sqtjTGGQbUFB6?usp=sharing)
+* **Source Code:** [GitHub](https://github.com/MITOM06/AGRI-SCAN-AI-ASA-)
+* **Dataset:** [Rice Leaf Diseases Detection - Kaggle](https://www.kaggle.com/datasets/loki4514/rice-leaf-diseases-detection)
+* **Dữ liệu đã chia (Train/Val/Test):** [Google Drive](https://drive.google.com/drive/folders/1Ebmeq0fpYecxsK6QEL-sqtjTGGQbUFB6?usp=sharing)
 
 ## Mục lục 
 * [I. Tổng quan dự án (Project Overview)](#i-tổng-quan-dự-án-project-overview)
