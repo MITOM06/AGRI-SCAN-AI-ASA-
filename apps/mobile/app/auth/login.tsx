@@ -13,15 +13,7 @@ import {
   TextInput,
 } from "react-native";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
-import {
-  Leaf,
-  ArrowLeft,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  Mail,
-  Lock,
-} from "lucide-react-native";
+import { Leaf, ArrowLeft, Eye, EyeOff, Mail, Lock } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
 
@@ -38,8 +30,11 @@ export default function LoginScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
 
+  // Thêm State để quản lý việc đồng ý điều khoản
+  const [isAgreed, setIsAgreed] = useState(false);
+
   // =====================================================================
-  // 🔥 BẮT SỰ KIỆN KHI BACKEND REDIRECT VỀ (SAU KHI LOGIN GOOGLE/FACEBOOK)
+  // BẮT SỰ KIỆN KHI BACKEND REDIRECT VỀ (SAU KHI LOGIN GOOGLE/FACEBOOK)
   // =====================================================================
   useEffect(() => {
     const handleOAuthCallback = async () => {
@@ -96,6 +91,19 @@ export default function LoginScreen() {
       return;
     }
 
+    // Kiểm tra xem đã đồng ý điều khoản chưa
+    if (!isAgreed) {
+      Platform.OS === "web"
+        ? window.alert(
+            "Vui lòng đọc và đồng ý với Điều khoản sử dụng của Agri-Scan.",
+          )
+        : Alert.alert(
+            "Điều khoản sử dụng",
+            "Vui lòng đọc và đồng ý với Điều khoản sử dụng của Agri-Scan.",
+          );
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const res = await authApi.login({ email, password });
@@ -115,7 +123,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       const msg =
         error.response?.data?.message ||
-        "Đăng nhập thất bại. Sai email hoặc mật khẩu.";
+        "Đăng nhập thất bại.Sai email hoặc mật khẩu.";
       Platform.OS === "web"
         ? window.alert(Array.isArray(msg) ? msg.join("\n") : msg)
         : Alert.alert("Lỗi", Array.isArray(msg) ? msg.join("\n") : msg);
@@ -216,6 +224,36 @@ export default function LoginScreen() {
             <Text style={styles.forgotPassText}>Quên mật khẩu?</Text>
           </TouchableOpacity>
 
+          {/* 🔥 KHÔI PHỤC: Ô xác nhận đồng ý điều khoản */}
+          <View style={styles.agreementContainer}>
+            <TouchableOpacity
+              style={styles.checkbox}
+              onPress={() => setIsAgreed(!isAgreed)}
+            >
+              <View
+                style={[
+                  styles.checkboxInner,
+                  isAgreed && styles.checkboxChecked,
+                ]}
+              />
+            </TouchableOpacity>
+            <Text style={styles.agreementText}>
+              Tôi đồng ý với{" "}
+              <Link href={"/auth/terms" as any} asChild>
+                <TouchableOpacity style={styles.inlineLink}>
+                  <Text style={styles.linkText}>Điều khoản sử dụng</Text>
+                </TouchableOpacity>
+              </Link>{" "}
+              và{" "}
+              <Link href={"/auth/privacy" as any} asChild>
+                <TouchableOpacity style={styles.inlineLink}>
+                  <Text style={styles.linkText}>Chính sách bảo mật</Text>
+                </TouchableOpacity>
+              </Link>{" "}
+              của Agri-Scan.
+            </Text>
+          </View>
+
           {/* Nút Đăng nhập */}
           <TouchableOpacity
             style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
@@ -252,7 +290,7 @@ export default function LoginScreen() {
               <Text style={styles.socialBtnText}>Google</Text>
             </TouchableOpacity>
 
-            {/* Nút Facebook (Đã sửa lỗi Icon) */}
+            {/* Nút Facebook */}
             <TouchableOpacity
               style={styles.socialBtn}
               onPress={() => authApi.loginWithFacebook()}
@@ -345,6 +383,38 @@ const styles = StyleSheet.create({
   forgotPassBtn: { alignSelf: "flex-end", marginBottom: 24 },
   forgotPassText: { fontSize: 14, fontWeight: "600", color: "#16a34a" },
 
+  agreementContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+    paddingHorizontal: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1.5,
+    borderColor: "#d1d5db",
+    borderRadius: 6,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  checkboxInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 3,
+    backgroundColor: "transparent",
+  },
+  checkboxChecked: { backgroundColor: "#16a34a" },
+  agreementText: { fontSize: 13, color: "#6b7280", flex: 1, lineHeight: 18 },
+  inlineLink: { justifyContent: "center", alignItems: "center" },
+  linkText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#16a34a",
+    textDecorationLine: "underline",
+  },
+
   submitBtn: {
     backgroundColor: "#16a34a",
     height: 54,
@@ -382,7 +452,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     height: 50,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#e5e5e5",
     borderRadius: 12,
     backgroundColor: "#fff",
   },

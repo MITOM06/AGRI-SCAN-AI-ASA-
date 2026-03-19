@@ -13,11 +13,11 @@ export * from "./schemas";
 // Explicit exports to ensure TS sees them (fixes missing-export errors)
 export { APP_DESCRIPTION } from "./constants/app.constants";
 export { isValidImageFile } from "./utils/validation.utils";
-export type { AddPlantPayload } from './types/my-garden.types';
+export type { AddPlantPayload } from "./types/my-garden.types";
 export type {
   IScanResult,
   IScanHistoryDetail,
-  IYoloPrediction,
+  IAIPrediction,
 } from "./types/scan-history.types";
 export {
   forgotPasswordSchema,
@@ -27,8 +27,8 @@ export {
 // Legacy export (để không break code cũ)
 
 export * from "./api/token-manager";
-export * from "./api/scan.api";
 export * from "./api/axios-client";
+export * from "./api/scan.api";
 export * from "./api/plant.api";
 export * from "./api/auth.api";
 export * from "./api/user.api";
