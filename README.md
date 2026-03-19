@@ -151,6 +151,67 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
 ### 2.3 Giá trị khác biệt (Cập nhật sau)
 
 ---
+Dựa trên tài liệu kỹ thuật bạn cung cấp, đây là nội dung chi tiết cho mục **III. GIẢI PHÁP AI** được viết theo phong cách chuyên nghiệp, giúp bạn tối ưu hóa 15 điểm tiêu chí "Tích hợp AI" trong cuộc thi.
+
+---
+
+## III. GIẢI PHÁP AI (AI SOLUTIONS)
+
+Hệ thống ứng dụng những kỹ thuật tiên tiến trong lĩnh vực Học máy (Machine Learning) và Xử lý ngôn ngữ tự nhiên (NLP) để tạo ra một "Bác sĩ cây trồng" kỹ thuật số có độ chính xác vượt trội.
+
+### 3.1. Kiến trúc cốt lõi (Core Backbone)
+Agri-Scan AI xây dựng trên nền tảng mạng nơ-ron sâu hiện đại kết hợp giữa **Vision Transformer (ViT)** và cơ chế **Mixture of Experts (MoE)**.
+* **Transformer Encoder:** Thực hiện chia cắt hình ảnh thành các "patch", giúp mô hình hiểu được ngữ cảnh không gian và mối liên hệ giữa các vùng bị bệnh trên lá lúa.
+* **Mixture of Experts (MoE):** Sử dụng mạng Gating thông minh để điều hướng dữ liệu đến các "Expert" chuyên biệt, giúp phân biệt chính xác các loại bệnh có triệu chứng tương đồng.
+* **Regularization:** Áp dụng các kỹ thuật Orthogonal, Entropy và Usage Regularization nhằm tối ưu hóa hiệu suất và tính đa dạng của các Expert.
+
+### 3.2. Dữ liệu huấn luyện (Training Data)
+Mô hình được huấn luyện trên tập dữ liệu hình ảnh thực tế từ [rice-leaf-diseases-detection](https://www.kaggle.com/datasets/loki4514/rice-leaf-diseases-detection), bao gồm lá lúa khỏe mạnh và các loại bệnh hại phổ biến nhất. Hệ thống có khả năng phân loại chính xác **9 lớp (classes)** sau:
+* **Bệnh hại:** Bacterial Leaf Blight, Brown Spot, Leaf Blast, Leaf Scald, Narrow Brown Leaf Spot, Neck Blast, Rice Hispa, Sheath Blight[cite: 13, 14, 16, 17, 18, 19, 20, 21].
+* **Khỏe mạnh:** Healthy Rice Leaf.
+
+### 3.3. Các Endpoints API chính
+Dự án cung cấp 3 dịch vụ API độc lập, đảm bảo khả năng mở rộng và tích hợp linh hoạt:
+
+#### 3.3.1. Vision Model - Phân loại bệnh (`/predict`)
+* **Chức năng:** Chẩn đoán tình trạng bệnh lý qua hình ảnh.
+* **Công nghệ:** ViT + MoE Backbone.
+* **Input/Output:** Nhận file ảnh (jpg, png) và trả về nhãn bệnh kèm độ tự tin (Confidence score).
+
+#### 3.3.2. LLM Model - Trợ lý kỹ thuật (`/chat`)
+* **Chức năng:** Tư vấn kỹ thuật canh tác và chăm sóc cây trồng.
+* **Công nghệ:** LLM (Llama-2-70B) kết hợp với kỹ thuật **RAG (Retrieval-Augmented Generation)**.
+* **Đặc điểm:** Truy xuất dữ liệu từ cơ sở tri thức nông nghiệp tin cậy, giúp chatbot đưa ra câu trả lời chính xác và hạn chế tối đa hiện tượng "ảo giác" (hallucination) của AI.
+
+#### 3.3.3. Giải pháp My Garden (`/my_garden`)
+* **Chức năng:** Cung cấp phác đồ điều trị chi tiết sau khi chẩn đoán.
+* **Output:** Hướng dẫn sử dụng thuốc BVTV, điều chỉnh phân bón và quy trình tưới nước cụ thể cho từng loại bệnh.
+
+### 3.4. Kiến trúc hệ thống AI (AI System Pipeline)
+Quy trình xử lý dữ liệu được thiết kế khép kín nhằm tối ưu hóa trải nghiệm người dùng:
+1.  **Tiền xử lý:** Hình ảnh đầu vào được Resize, Normalization và Augmentation (trong quá trình train) để tăng độ bền vững cho mô hình.
+2.  **Inference:** ViT-MoE trích xuất đặc trưng và đưa ra kết quả phân loại.
+3.  **Tối ưu hóa phản hồi:** Kết quả chẩn đoán được đưa vào hệ thống RAG để LLM (Llama-2-70B) tạo ra lộ trình chăm sóc cá nhân hóa (Personalized Calendar).
+
+
+### 3.5. Kết quả thực nghiệm (Experimental Results)
+Dựa trên báo cáo kiểm thử, mô hình đạt được hiệu suất cực kỳ ấn tượng với **Độ chính xác tổng thể (Overall Accuracy) đạt 99.49%**.
+
+| Tên lớp bệnh | Độ chính xác (%) | Số mẫu kiểm thử |
+| :--- | :--- | :--- |
+| **Bacterial Leaf Blight** | 97.52% | 118/121 |
+| **Brown Spot** | 100.00% | 155/155 |
+| **Healthy Rice Leaf** | 100.00% | 109/109 |
+| **Leaf Blast** | 98.26% | 169/172 |
+| **Leaf Scald** | 100.00% | 134/134 |
+| **Neck Blast** | 100.00% | 100/100 |
+| **Rice Hispa** | 100.00% | 131/131 |
+| **Sheath Blight** | 100.00% | 163/163 |
+
+Data đã được chia thành 3 tập train/val/test: tại [data_splited](https://drive.google.com/drive/folders/1Ebmeq0fpYecxsK6QEL-sqtjTGGQbUFB6?usp=sharing)
+---
+
+**Bước tiếp theo:** Bạn có muốn mình hỗ trợ viết phần **"IV. KIẾN TRÚC HỆ THỐNG & CÔNG NGHỆ"** để làm rõ cách bạn triển khai NestJS kết hợp với các AI Endpoints này không?
 
 ## III. Giải pháp AI 
 >
