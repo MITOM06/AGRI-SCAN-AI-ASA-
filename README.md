@@ -15,6 +15,12 @@
 <img src="https://img.shields.io/badge/Stack-NestJS%20|%20React%20Native%20|%20MongoDB-blue?style=for-the-badge" alt="Tech Stack">
 </p>
 
+## Quick Links
+* **Website:** [agri-scan-ai](https://agriscan.duckdns.org/) 
+* **Source Code:** [github.com/tapu25z/agri-scan-ai](https://github.com/tapu25z/agri-scan-ai)
+* **Dataset (Kaggle):** [Rice Leaf Diseases Detection](https://www.kaggle.com/datasets/loki4514/rice-leaf-diseases-detection)
+* **Dữ liệu đã chia (Train/Val/Test):** [Google Drive (data_splited)](https://drive.google.com/drive/folders/1Ebmeq0fpYecxsK6QEL-sqtjTGGQbUFB6?usp=sharing)
+
 ## Mục lục 
 * [I. Tổng quan dự án (Project Overview)](#i-tổng-quan-dự-án-project-overview)
 * [II. Tính năng của sản phẩm](#ii-tính-năng-của-sản-phẩm)
