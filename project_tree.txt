@@ -2,15 +2,6 @@
 ├── DOC
 │   └── README.md
 ├── README.md
-├── agriscan.chat_histories.json
-├── agriscan.diseases.json
-├── agriscan.my_gardens.json
-├── agriscan.orders.json
-├── agriscan.plants.json
-├── agriscan.products.json
-├── agriscan.scanhistories.json
-├── agriscan.users.json
-├── agriscan.weather_rules.json
 ├── apps
 │   ├── ai-service
 │   │   ├── Dockerfile
@@ -62,7 +53,9 @@
 │   │   │       │   ├── ai-scan.consumer.ts
 │   │   │       │   ├── ai-scan.controller.ts
 │   │   │       │   ├── ai-scan.module.ts
-│   │   │       │   └── ai-scan.service.ts
+│   │   │       │   ├── ai-scan.service.ts
+│   │   │       │   └── image
+│   │   │       │       └── 110.jpg
 │   │   │       ├── auth
 │   │   │       │   ├── auth.controller.spec.ts
 │   │   │       │   ├── auth.controller.ts
@@ -213,9 +206,13 @@
 │       │   │   │   │       └── page.tsx
 │       │   │   │   ├── about
 │       │   │   │   │   └── page.tsx
+│       │   │   │   ├── community
+│       │   │   │   │   └── page.tsx
 │       │   │   │   ├── encyclopedia
 │       │   │   │   │   └── page.tsx
 │       │   │   │   ├── layout.tsx
+│       │   │   │   ├── my-garden
+│       │   │   │   │   └── page.tsx
 │       │   │   │   ├── page.tsx
 │       │   │   │   ├── payment
 │       │   │   │   │   └── page.tsx
@@ -250,6 +247,7 @@
 │       │   │   └── providers.tsx
 │       │   ├── components
 │       │   │   ├── AboutPage.tsx
+│       │   │   ├── CommunityPage.tsx
 │       │   │   ├── LandingPage.tsx
 │       │   │   ├── Payment.tsx
 │       │   │   ├── Scanner.tsx
@@ -288,6 +286,17 @@
 │       │   │   │   ├── Header.tsx
 │       │   │   │   ├── Navbar.tsx
 │       │   │   │   └── index.ts
+│       │   │   ├── my-garden
+│       │   │   │   ├── MyGardenPage.tsx
+│       │   │   │   ├── overview
+│       │   │   │   │   └── GardenOverview.tsx
+│       │   │   │   ├── result
+│       │   │   │   │   └── ResultView.tsx
+│       │   │   │   ├── tracking
+│       │   │   │   │   └── TrackingView.tsx
+│       │   │   │   └── upload
+│       │   │   │       ├── AnalyzingView.tsx
+│       │   │   │       └── UploadView.tsx
 │       │   │   └── shop
 │       │   │       ├── CartPage.tsx
 │       │   │       ├── CheckoutPage.tsx
@@ -298,6 +307,7 @@
 │       │   ├── constants
 │       │   │   └── shop.constants.ts
 │       │   ├── context
+│       │   │   ├── AuthContext.tsx
 │       │   │   └── CartContext.tsx
 │       │   ├── hooks
 │       │   │   ├── index.ts
@@ -316,6 +326,25 @@
 │       │       └── animation.tsx
 │       └── tsconfig.json
 ├── deploy.sh
+├── img
+│   ├── 1.jpg
+│   ├── 2.jpg
+│   ├── 3.jpg
+│   ├── 4.jpg
+│   ├── 5.jpg
+│   ├── 6.jpg
+│   ├── 7.jpg
+│   ├── 8.jpg
+│   ├── 9.jpg
+│   ├── chatbot.png
+│   ├── mygarden.png
+│   ├── mygarden1.png
+│   ├── sodo1.png
+│   ├── test
+│   ├── thoitiet.png
+│   ├── thoitiet1.png
+│   ├── wiki.png
+│   └── wiki1.png
 ├── infra
 │   └── docker-compose
 │       └── docker-compose.yml
@@ -393,4 +422,4 @@
 ├── project_tree.txt
 └── tsconfig.json
 
-96 directories, 298 files
+105 directories, 318 files

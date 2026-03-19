@@ -37,8 +37,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:8081',  // Expo Web
       'http://localhost:3000',  // Next.js dev
-      // Thêm domain production sau khi deploy
-      // 'https://agriscan.ai',
+       'https://agriscan.ai',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,

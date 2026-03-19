@@ -38,13 +38,18 @@ class FPTLLM:
             "max_tokens": 1024,
             "temperature": 1,
         }
+        
+        # Thêm User-Agent mặc định vào class
+        self.headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json",
+            "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+        }
 
     def _post(self, payload: dict):
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
-        resp = requests.post(self._completions_url, json=payload, headers=headers, timeout=self.timeout)
+        resp = requests.post(self._completions_url, json=payload, headers=self.headers, timeout=self.timeout)
         resp.raise_for_status()
         return resp.json()
 
@@ -75,16 +80,10 @@ class FPTLLM:
             if key in params and params[key] is not None:
                 body[key] = params[key]
 
-        # Debug prints (uncomment for troubleshooting)
-        # print("FPT URL:", self._completions_url)
-        # print("FPT BODY:", json.dumps(body, ensure_ascii=False, indent=2))
-
         # POST and handle errors
         try:
-            resp = requests.post(self._completions_url, json=body, headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.api_key}"
-            }, timeout=self.timeout)
+            # SỬ DỤNG SELF.HEADERS ĐÃ KHAI BÁO Ở TRÊN
+            resp = requests.post(self._completions_url, json=body, headers=self.headers, timeout=self.timeout)
             resp.raise_for_status()
             data = resp.json()
         except requests.HTTPError as e:
