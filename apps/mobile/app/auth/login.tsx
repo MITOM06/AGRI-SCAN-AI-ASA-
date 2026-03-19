@@ -1,4 +1,3 @@
-import * as WebBrowser from "expo-web-browser";
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -10,8 +9,9 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  ActivityIndicator,
+  TextInput,
 } from "react-native";
-import { useForm, Controller } from "react-hook-form";
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import {
   Leaf,
@@ -19,58 +19,87 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
-  Check,
+  Mail,
+  Lock,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
-import * as Google from "expo-auth-session/providers/google";
-import { makeRedirectUri } from "expo-auth-session";
-import { type LoginFormData, authApi } from "@agri-scan/shared";
-import { Input } from "../../components/ui/Input";
-import { Button } from "../../components/ui/Button";
 
-WebBrowser.maybeCompleteAuthSession();
+import { authApi } from "@agri-scan/shared";
 
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
-  const isFromRegister = params.registered === "true";
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [apiError, setApiError] = useState("");
-  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
 
-  // ==========================================
-  // 🔥 CẤU HÌNH GOOGLE AUTH SESSION TỪ BIẾN MÔI TRƯỜNG
-  // ==========================================
-  const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID; // Trỏ đúng tên biến trong file .env
-
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: googleClientId,
-    iosClientId: googleClientId, // Đưa Web ID cho iOS để "lách luật" thư viện
-    androidClientId: googleClientId, // Đưa Web ID cho Android để "lách luật" thư viện
-    redirectUri: makeRedirectUri({
-      scheme: "mobile",
-      path: "auth/callback",
-    }),
-  });
-
+  // =====================================================================
+  // 🔥 BẮT SỰ KIỆN KHI BACKEND REDIRECT VỀ (SAU KHI LOGIN GOOGLE/FACEBOOK)
+  // =====================================================================
   useEffect(() => {
-    if (response?.type === "success") {
-      const { id_token } = response.params;
-      if (id_token) verifyGoogleTokenWithBackend(id_token);
-    } else if (response?.type === "error") {
-      setApiError("Hủy đăng nhập hoặc có lỗi từ Google.");
-    }
-  }, [response]);
+    const handleOAuthCallback = async () => {
+      // Kiểm tra xem trên URL có trả về token không
+      if (params.accessToken && params.refreshToken && params.user) {
+        try {
+          setIsOAuthLoading(true);
 
-  const verifyGoogleTokenWithBackend = async (idToken: string) => {
-    setIsSubmitting(true);
-    setApiError("");
+          // 1. Giải mã thông tin user từ URL
+          const userObj = JSON.parse(decodeURIComponent(params.user as string));
+
+          // 2. Lưu Token vào máy (để dùng cho các API khác)
+          if (Platform.OS === "web") {
+            localStorage.setItem("accessToken", params.accessToken as string);
+            localStorage.setItem("refreshToken", params.refreshToken as string);
+            localStorage.setItem("user", JSON.stringify(userObj));
+          } else {
+            await SecureStore.setItemAsync(
+              "accessToken",
+              params.accessToken as string,
+            );
+            await SecureStore.setItemAsync(
+              "refreshToken",
+              params.refreshToken as string,
+            );
+            await SecureStore.setItemAsync("user", JSON.stringify(userObj));
+          }
+
+          // 3. KIỂM TRA ĐÃ CÓ MẬT KHẨU CHƯA ĐỂ CHUYỂN TRANG
+          if (userObj.isPasswordSet === false) {
+            router.replace("/auth/set-password" as any);
+          } else {
+            router.replace("/user" as any);
+          }
+        } catch (error) {
+          console.error("Lỗi xử lý đăng nhập Mạng xã hội:", error);
+          Alert.alert("Lỗi", "Quá trình đồng bộ tài khoản thất bại.");
+          setIsOAuthLoading(false);
+        }
+      }
+    };
+
+    handleOAuthCallback();
+  }, [params]);
+
+  // =====================================================================
+  // HÀM XỬ LÝ ĐĂNG NHẬP BẰNG EMAIL / MẬT KHẨU
+  // =====================================================================
+  const handleEmailLogin = async () => {
+    if (!email || !password) {
+      Platform.OS === "web"
+        ? window.alert("Vui lòng nhập đầy đủ email và mật khẩu.")
+        : Alert.alert("Lỗi", "Vui lòng nhập đầy đủ email và mật khẩu.");
+      return;
+    }
+
     try {
-      const res = await authApi.verifyGoogleTokenForMobile(idToken);
+      setIsSubmitting(true);
+      const res = await authApi.login({ email, password });
+
       if (Platform.OS === "web") {
         localStorage.setItem("accessToken", res.accessToken);
         localStorage.setItem("refreshToken", res.refreshToken);
@@ -80,149 +109,37 @@ export default function LoginScreen() {
         await SecureStore.setItemAsync("refreshToken", res.refreshToken);
         await SecureStore.setItemAsync("user", JSON.stringify(res.user));
       }
-      if (res.user?.role === "ADMIN") {
-        router.replace("/admin");
-      } else {
-        router.replace("/user");
-      }
+
+      // Đăng nhập bằng Email thì chắc chắn đã có mật khẩu -> Về trang chủ
+      router.replace("/user" as any);
     } catch (error: any) {
-      setApiError(
-        error.response?.data?.message || "Đăng nhập Google thất bại!",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleGoogleLogin = () => {
-    if (!agreeTerms) {
-      setApiError(
-        "Vui lòng đồng ý với Điều khoản và Chính sách bảo mật trước!",
-      );
-      return;
-    }
-    promptAsync();
-  };
-
-  const handleFacebookLogin = async () => {
-    if (!agreeTerms) {
-      setApiError(
-        "Vui lòng đồng ý với Điều khoản và Chính sách bảo mật trước!",
-      );
-      return;
-    }
-
-    setIsSubmitting(true);
-    setApiError("");
-
-    try {
-      const API_URL =
-        process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000";
-
-      // Mở trang đăng nhập Facebook của backend trong trình duyệt in-app
-      const result = await WebBrowser.openAuthSessionAsync(
-        `${API_URL}/api/auth/facebook`,
-        makeRedirectUri({ scheme: "mobile", path: "auth/callback" }),
-      );
-
-      if (result.type === "success" && result.url) {
-        // Lấy token từ query string trong redirect URL
-        const url = new URL(result.url);
-        const accessToken = url.searchParams.get("accessToken");
-        const refreshToken = url.searchParams.get("refreshToken");
-        const userParam = url.searchParams.get("user");
-
-        if (!accessToken || !refreshToken) {
-          setApiError("Đăng nhập Facebook thất bại. Vui lòng thử lại!");
-          return;
-        }
-
-        const user = userParam
-          ? JSON.parse(decodeURIComponent(userParam))
-          : null;
-
-        if (Platform.OS === "web") {
-          localStorage.setItem("accessToken", accessToken);
-          localStorage.setItem("refreshToken", refreshToken);
-          if (user) localStorage.setItem("user", JSON.stringify(user));
-        } else {
-          await SecureStore.setItemAsync("accessToken", accessToken);
-          await SecureStore.setItemAsync("refreshToken", refreshToken);
-          if (user)
-            await SecureStore.setItemAsync("user", JSON.stringify(user));
-        }
-
-        if (user?.role === "ADMIN") {
-          router.replace("/admin");
-        } else {
-          router.replace("/user");
-        }
-      } else if (result.type === "cancel" || result.type === "dismiss") {
-        setApiError("Bạn đã hủy đăng nhập Facebook.");
-      }
-    } catch (error: any) {
-      setApiError(
-        error.response?.data?.message || "Đăng nhập Facebook thất bại!",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // ==========================================
-  // 🔥 LOGIC ĐĂNG NHẬP (ĐÃ CHUYỂN SANG BẮT LỖI THỦ CÔNG)
-  // ==========================================
-
-  // Lấy getValues ra để lấy dữ liệu thay vì chờ handleSubmit
-  const { control, getValues } = useForm<LoginFormData>({
-    defaultValues: { email: "", password: "" },
-  });
-
-  const onManualSubmit = async () => {
-    const data = getValues(); // Lấy dữ liệu ngay lập tức từ ô input
-
-    // 1. Rào chắn: Phải nhập đủ thông tin
-    if (!data.email || !data.password) {
-      setApiError("Vui lòng nhập đầy đủ Email và Mật khẩu!");
-      return;
-    }
-
-    // 2. Rào chắn: Phải đồng ý điều khoản
-    if (!agreeTerms) {
-      setApiError("Vui lòng đồng ý với Điều khoản và Chính sách bảo mật!");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setApiError("");
-
-    try {
-      // 3. Gọi API đăng nhập
-      const res = await authApi.login(data);
-      if (Platform.OS === "web") {
-        localStorage.setItem("accessToken", res.accessToken);
-        localStorage.setItem("refreshToken", res.refreshToken);
-        localStorage.setItem("user", JSON.stringify(res.user));
-      } else {
-        await SecureStore.setItemAsync("accessToken", res.accessToken);
-        await SecureStore.setItemAsync("refreshToken", res.refreshToken);
-        await SecureStore.setItemAsync("user", JSON.stringify(res.user));
-      }
-      if (res.user?.role === "ADMIN") {
-        router.replace("/admin");
-      } else {
-        router.replace("/user");
-      }
-    } catch (error: any) {
-      // Bắt lỗi từ Backend trả về
-      setApiError(
+      const msg =
         error.response?.data?.message ||
-          "Đăng nhập thất bại. Vui lòng thử lại!",
-      );
+        "Đăng nhập thất bại. Sai email hoặc mật khẩu.";
+      Platform.OS === "web"
+        ? window.alert(Array.isArray(msg) ? msg.join("\n") : msg)
+        : Alert.alert("Lỗi", Array.isArray(msg) ? msg.join("\n") : msg);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Màn hình loading khi đang xử lý token từ URL
+  if (isOAuthLoading) {
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <ActivityIndicator size="large" color="#16a34a" />
+        <Text style={{ marginTop: 16, color: "#4b5563", fontWeight: "bold" }}>
+          Đang đồng bộ tài khoản...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -230,181 +147,134 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingTop: Math.max(insets.top, 20) + 20 },
-        ]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled" // 🔥 ĐÃ THÊM: Sửa triệt để lỗi phải bấm 2 lần
+        contentContainerStyle={{ paddingBottom: 40 }}
       >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backBtn}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
+        {/* HEADER */}
+        <View style={[styles.header, { paddingTop: Math.max(insets.top, 40) }]}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <ArrowLeft size={24} color="#111827" />
+          </TouchableOpacity>
+        </View>
 
-        <View style={styles.card}>
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Leaf size={32} color="#16a34a" />
-            </View>
-            <Text style={styles.title}>Chào mừng trở lại!</Text>
-            <Text style={styles.subtitle}>
-              Đăng nhập để tiếp tục chăm sóc khu vườn của bạn
-            </Text>
+        <View style={styles.titleContainer}>
+          <View style={styles.logoIconBox}>
+            <Leaf size={28} color="#fff" />
           </View>
+          <Text style={styles.title}>Chào mừng trở lại!</Text>
+          <Text style={styles.subtitle}>
+            Đăng nhập để tiếp tục chăm sóc khu vườn của bạn.
+          </Text>
+        </View>
 
-          {isFromRegister && (
-            <View style={styles.successAlert}>
-              <CheckCircle2 size={20} color="#16a34a" />
-              <View style={styles.successTextContainer}>
-                <Text style={styles.successTitle}>Đăng ký thành công!</Text>
-                <Text style={styles.successDesc}>
-                  Vui lòng đăng nhập với tài khoản vừa tạo.
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {apiError ? (
-            <View style={styles.errorAlert}>
-              <Text style={styles.errorText}>{apiError}</Text>
-            </View>
-          ) : null}
-
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Controller
-                control={control}
-                name="email"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    label="Email"
-                    placeholder="Nhập địa chỉ email"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    onBlur={onBlur}
-                    onChangeText={(text) => {
-                      onChange(text);
-                      if (apiError) setApiError("");
-                    }}
-                    value={value}
-                  />
-                )}
+        <View style={styles.form}>
+          {/* Email Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email của bạn</Text>
+            <View style={styles.inputWrapper}>
+              <Mail size={20} color="#64748b" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Ví dụ: agriscan@gmail.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
               />
             </View>
+          </View>
 
-            <View style={styles.inputGroup}>
-              <View style={styles.passwordHeader}>
-                <Text style={styles.inputLabel}>Mật khẩu</Text>
-                <Link href="/auth/forgot-password" asChild>
-                  <TouchableOpacity>
-                    <Text style={styles.forgotPassword}>Quên mật khẩu?</Text>
-                  </TouchableOpacity>
-                </Link>
-              </View>
-              <View style={styles.passwordWrapper}>
-                <Controller
-                  control={control}
-                  name="password"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      placeholder="Nhập mật khẩu của bạn"
-                      secureTextEntry={!showPassword}
-                      onBlur={onBlur}
-                      onChangeText={(text) => {
-                        onChange(text);
-                        if (apiError) setApiError("");
-                      }}
-                      value={value}
-                    />
-                  )}
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#9ca3af" />
-                  ) : (
-                    <Eye size={20} color="#9ca3af" />
-                  )}
-                </TouchableOpacity>
-              </View>
+          {/* Password Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Mật khẩu</Text>
+            <View style={styles.inputWrapper}>
+              <Lock size={20} color="#64748b" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Nhập mật khẩu của bạn"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                {showPassword ? (
+                  <Eye size={20} color="#64748b" />
+                ) : (
+                  <EyeOff size={20} color="#64748b" />
+                )}
+              </TouchableOpacity>
             </View>
+          </View>
 
-            {/* CHECKBOX */}
+          <TouchableOpacity
+            style={styles.forgotPassBtn}
+            onPress={() => router.push("/auth/forgot-password" as any)}
+          >
+            <Text style={styles.forgotPassText}>Quên mật khẩu?</Text>
+          </TouchableOpacity>
+
+          {/* Nút Đăng nhập */}
+          <TouchableOpacity
+            style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
+            onPress={handleEmailLogin}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitBtnText}>Đăng nhập ngay</Text>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>Hoặc đăng nhập bằng</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* ĐĂNG NHẬP MẠNG XÃ HỘI */}
+          <View style={styles.socialContainer}>
+            {/* Nút Google */}
             <TouchableOpacity
-              style={styles.checkboxContainer}
-              activeOpacity={0.7}
-              onPress={() => {
-                setAgreeTerms(!agreeTerms);
-                if (apiError) setApiError("");
-              }}
+              style={styles.socialBtn}
+              onPress={() => authApi.loginWithGoogle()}
             >
-              <View
-                style={[styles.checkbox, agreeTerms && styles.checkboxActive]}
-              >
-                {agreeTerms && <Check size={14} color="#fff" strokeWidth={3} />}
-              </View>
-              <Text style={styles.checkboxText}>
-                Tôi đồng ý với <Text style={styles.linkText}>Điều khoản</Text>{" "}
-                và <Text style={styles.linkText}>CSBM</Text>
-              </Text>
+              <Image
+                source={{
+                  uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png",
+                }}
+                style={{ width: 22, height: 22, marginRight: 10 }}
+                resizeMode="contain"
+              />
+              <Text style={styles.socialBtnText}>Google</Text>
             </TouchableOpacity>
 
-            <Button
-              title="Đăng nhập"
-              onPress={onManualSubmit} // 🔥 ĐÃ THAY ĐỔI: Gọi trực tiếp hàm submit siêu an toàn
-              isLoading={isSubmitting}
-              style={{ marginTop: 8 }}
-            />
+            {/* Nút Facebook (Đã sửa lỗi Icon) */}
+            <TouchableOpacity
+              style={styles.socialBtn}
+              onPress={() => authApi.loginWithFacebook()}
+            >
+              <Image
+                source={{
+                  uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/1024px-2021_Facebook_icon.svg.png",
+                }}
+                style={{ width: 24, height: 24, marginRight: 10 }}
+                resizeMode="contain"
+              />
+              <Text style={styles.socialBtnText}>Facebook</Text>
+            </TouchableOpacity>
+          </View>
 
-            {/* MẠNG XÃ HỘI */}
-            <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>hoặc đăng nhập bằng</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <View style={styles.socialContainer}>
-              <TouchableOpacity
-                style={[styles.socialBtn, isSubmitting && { opacity: 0.5 }]}
-                onPress={handleGoogleLogin}
-                disabled={isSubmitting || !request}
-                activeOpacity={0.7}
-              >
-                <Image
-                  source={{
-                    uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png",
-                  }}
-                  style={styles.socialIcon}
-                />
-                <Text style={styles.socialBtnText}>Google</Text>
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerText}>Bạn chưa có tài khoản? </Text>
+            <Link href="/auth/register" asChild>
+              <TouchableOpacity>
+                <Text style={styles.registerLink}>Đăng ký ngay</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity style={styles.socialBtn}>
-                <Image
-                  source={{
-                    uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/1024px-2021_Facebook_icon.svg.png",
-                  }}
-                  style={{ width: 24, height: 24 }}
-                  resizeMode="contain"
-                />
-                <Text style={styles.socialBtnText}>Facebook</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>Chưa có tài khoản? </Text>
-              <Link href="/auth/register" asChild>
-                <TouchableOpacity>
-                  <Text style={styles.registerLink}>Đăng ký ngay</Text>
-                </TouchableOpacity>
-              </Link>
-            </View>
+            </Link>
           </View>
         </View>
       </ScrollView>
@@ -413,132 +283,116 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
-  scrollContent: { paddingHorizontal: 16, paddingBottom: 40 },
+  container: { flex: 1, backgroundColor: "#fff" },
+  header: { paddingHorizontal: 20, paddingBottom: 10 },
   backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  card: {
-    backgroundColor: "#ffffff",
-    padding: 24,
-    borderRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  header: { alignItems: "center", marginBottom: 24 },
-  iconContainer: {
-    width: 60,
-    height: 60,
-    backgroundColor: "rgba(22, 163, 74, 0.1)",
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#f3f4f6",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#111827",
-    marginBottom: 8,
-  },
-  subtitle: { color: "#4b5563", textAlign: "center", fontSize: 14 },
-  successAlert: {
-    flexDirection: "row",
-    backgroundColor: "#f0fdf4",
-    borderWidth: 1,
-    borderColor: "#bbf7d0",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    alignItems: "flex-start",
-  },
-  successTextContainer: { marginLeft: 12, flex: 1 },
-  successTitle: {
-    fontSize: 15,
-    fontWeight: "bold",
-    color: "#15803d",
-    marginBottom: 4,
-  },
-  successDesc: { fontSize: 13, color: "#166534", lineHeight: 20 },
-  errorAlert: {
-    backgroundColor: "#fef2f2",
-    borderWidth: 1,
-    borderColor: "#fecaca",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorText: { color: "#dc2626", fontSize: 14, textAlign: "center" },
-  form: { width: "100%" },
-  inputGroup: { marginBottom: 16 },
-  passwordHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  inputLabel: { fontSize: 14, fontWeight: "600", color: "#374151" },
-  forgotPassword: { fontSize: 13, color: "#16a34a", fontWeight: "600" },
-  passwordWrapper: { position: "relative" },
-  eyeIcon: { position: "absolute", right: 12, top: 12, padding: 4 },
 
-  checkboxContainer: {
-    flexDirection: "row",
+  titleContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 30,
+    alignItems: "center",
+  },
+  logoIconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: "#16a34a",
+    justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
-    marginTop: 4,
+    elevation: 4,
+    shadowColor: "#16a34a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    borderWidth: 1.5,
+  title: { fontSize: 26, fontWeight: "900", color: "#111827", marginBottom: 8 },
+  subtitle: { fontSize: 15, color: "#64748b", textAlign: "center" },
+
+  form: { paddingHorizontal: 24 },
+  inputGroup: { marginBottom: 20 },
+  label: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
     borderColor: "#d1d5db",
-    marginRight: 10,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    height: 52,
+    backgroundColor: "#f9fafb",
+  },
+  inputIcon: { marginRight: 10 },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    color: "#111827",
+    outlineStyle: "none" as any,
+  },
+
+  forgotPassBtn: { alignSelf: "flex-end", marginBottom: 24 },
+  forgotPassText: { fontSize: 14, fontWeight: "600", color: "#16a34a" },
+
+  submitBtn: {
+    backgroundColor: "#16a34a",
+    height: 54,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
+    elevation: 2,
   },
-  checkboxActive: { backgroundColor: "#16a34a", borderColor: "#16a34a" },
-  checkboxText: { flex: 1, fontSize: 13, color: "#4b5563", lineHeight: 20 },
-  linkText: { color: "#16a34a", fontWeight: "bold" },
+  submitBtnDisabled: { opacity: 0.7 },
+  submitBtnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
 
   dividerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 24,
+    marginVertical: 30,
   },
   dividerLine: { flex: 1, height: 1, backgroundColor: "#e5e7eb" },
-  dividerText: { marginHorizontal: 12, color: "#9ca3af", fontSize: 13 },
+  dividerText: {
+    marginHorizontal: 12,
+    color: "#9ca3af",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
   socialContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 24,
+    gap: 16,
+    marginBottom: 30,
   },
   socialBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
-    borderRadius: 12,
+    height: 50,
     borderWidth: 1,
     borderColor: "#e5e7eb",
+    borderRadius: 12,
     backgroundColor: "#fff",
-    marginHorizontal: 4,
   },
-  socialIcon: { width: 20, height: 20, marginRight: 8, resizeMode: "contain" },
-  socialBtnText: { fontSize: 15, fontWeight: "600", color: "#374151" },
+  socialBtnText: { fontSize: 15, fontWeight: "bold", color: "#374151" },
+
   registerContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },
-  registerText: { color: "#6b7280", fontSize: 14 },
-  registerLink: { color: "#16a34a", fontWeight: "bold", fontSize: 14 },
+  registerText: { fontSize: 14, color: "#6b7280" },
+  registerLink: { fontSize: 14, fontWeight: "bold", color: "#16a34a" },
 });
