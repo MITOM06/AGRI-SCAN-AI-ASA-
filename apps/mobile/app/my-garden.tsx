@@ -14,9 +14,9 @@ import {
   Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import * as ImagePicker from "expo-image-picker"; // Dùng ImagePicker y như trang Scan
+import * as ImagePicker from "expo-image-picker";
 import {
   ArrowLeft,
   Crown,
@@ -35,53 +35,68 @@ import { myGardenApi } from "@agri-scan/shared";
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 48) / 2;
 
-// --- COMPONENT CON: THANH TIẾN ĐỘ ---
 const ProgressBar = ({ progress }: { progress: number }) => (
   <View style={styles.progressBarContainer}>
-    <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
-    <Text style={styles.progressText}>{Math.round(progress * 100)}%</Text>
+    <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+    <Text style={styles.progressText}>{progress}%</Text>
   </View>
 );
 
-// --- COMPONENT CON: THẺ CÂY TRỒNG ---
 const PlantCard = ({ plant, onPress }: { plant: any; onPress: () => void }) => {
-  const getHealthStatus = (status: string) => {
-    switch (status) {
-      case "HEALTHY":
-        return {
-          text: "Khỏe mạnh",
-          color: "#16a34a",
-          icon: <CheckCircle size={14} color="#16a34a" />,
-        };
-      case "SICK":
-        return {
-          text: "Bệnh / Cần xử lý",
-          color: "#ef4444",
-          icon: <AlertTriangle size={14} color="#ef4444" />,
-        };
-      case "DEAD":
-        return {
-          text: "Đã héo",
-          color: "#64748b",
-          icon: <XCircle size={14} color="#64748b" />,
-        };
+  const getHealthStatus = (status: string, condition: string) => {
+    if (status === "COMPLETED")
+      return {
+        text: "Hoàn thành",
+        color: "#16a34a",
+        icon: <Crown size={14} color="#16a34a" />,
+      };
+    if (status === "FAILED")
+      return {
+        text: "Thất bại",
+        color: "#ef4444",
+        icon: <XCircle size={14} color="#ef4444" />,
+      };
+    if (condition === "Khỏe mạnh")
+      return {
+        text: "Khỏe mạnh",
+        color: "#16a34a",
+        icon: <CheckCircle size={14} color="#16a34a" />,
+      };
+    if (condition && condition.includes("Đang điều trị"))
+      return {
+        text: "Đang trị bệnh",
+        color: "#ef4444",
+        icon: <AlertTriangle size={14} color="#ef4444" />,
+      };
+    return {
+      text: condition || "Chờ cập nhật",
+      color: "#64748b",
+      icon: <AlertTriangle size={14} color="#64748b" />,
+    };
+  };
+
+  const healthStatus = getHealthStatus(plant.status, plant.currentCondition);
+
+  const getGoalText = (goal: string) => {
+    switch (goal) {
+      case "HEAL_DISEASE":
+        return "Chữa bệnh";
+      case "GET_FRUIT":
+        return "Lấy quả";
+      case "GET_FLOWER":
+        return "Lấy hoa";
+      case "MAINTAIN":
+        return "Duy trì khỏe mạnh";
       default:
-        return {
-          text: "Chờ cập nhật",
-          color: "#64748b",
-          icon: <AlertTriangle size={14} color="#64748b" />,
-        };
+        return "Nuôi trồng";
     }
   };
-  const healthStatus = getHealthStatus(plant.healthStatus || plant.status);
 
   return (
     <TouchableOpacity style={styles.plantCard} onPress={onPress}>
       <Image
         source={{
-          uri:
-            plant.plantInfo?.aiPrediction?.imageUrl ||
-            "https://placehold.co/100?text=Agri+Scan",
+          uri: plant.imageUrl || "https://placehold.co/150?text=Agri+Scan",
         }}
         style={styles.plantImage}
       />
@@ -90,18 +105,16 @@ const PlantCard = ({ plant, onPress }: { plant: any; onPress: () => void }) => {
           {plant.customName}
         </Text>
         <Text style={styles.goalText} numberOfLines={1}>
-          <Target size={12} color="#64748b" />{" "}
-          {plant.userGoal || "Chưa có mục tiêu"}
+          <Target size={12} color="#64748b" /> {getGoalText(plant.userGoal)}
         </Text>
         <Text style={styles.progressLabel}>Tiến độ nuôi trồng:</Text>
-        <ProgressBar
-          progress={
-            plant.progressPercentage ? plant.progressPercentage / 100 : 0
-          }
-        />
+        <ProgressBar progress={plant.progressPercentage || 0} />
         <View style={styles.statusRow}>
           {healthStatus.icon}
-          <Text style={[styles.statusText, { color: healthStatus.color }]}>
+          <Text
+            style={[styles.statusText, { color: healthStatus.color }]}
+            numberOfLines={1}
+          >
             {healthStatus.text}
           </Text>
         </View>
@@ -119,74 +132,48 @@ export default function MyGardenScreen() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
-  useEffect(() => {
-    loadUserDataAndGarden();
-  }, []);
-
-  // const loadUserDataAndGarden ＝ async （） ＝＞ ｛
-  //   try {
-  //     setLoading(true);
-  //     setErrorMsg("");
-
-  //     let userStr =
-  //       Platform.OS === "web"
-  //         ? localStorage.getItem("user")
-  //         : await SecureStore.getItemAsync("user");
-  //     const user = userStr ? JSON.parse(userStr) : {};
-  //     setUserPlan(user);
-
-  //     if (user.plan === "FREE") {
-  //       setPlants([]);
-  //       setLoading(false);
-  //       return;
-  //     }
-
-  //     const res = await myGardenApi.getUserGarden();
-  //     setPlants(res || []);
-  //   } catch (error) {
-  //     setErrorMsg("Không thể tải thông tin vườn lúc này.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  // Gọi lại API mỗi khi tab này được focus lại
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserDataAndGarden();
+    }, []),
+  );
 
   const loadUserDataAndGarden = async () => {
     try {
       setLoading(true);
       setErrorMsg("");
 
-      // Ép mặc định thành gói VIP để test full tính năng mở Camera
       let userStr =
         Platform.OS === "web"
           ? localStorage.getItem("user")
           : await SecureStore.getItemAsync("user");
-      const user = userStr
-        ? JSON.parse(userStr)
-        : { plan: "VIP", fullName: "Test User" };
-      setUserPlan(user);
+      const user = userStr ? JSON.parse(userStr) : null;
+      setUserPlan(user || {});
 
-      if (user.plan === "FREE") {
+      if (!user || user.plan === "FREE") {
         setPlants([]);
         setLoading(false);
         return;
       }
 
-      // 🔥 GIẢ LẬP GỌI API: Chờ 1 giây rồi load thẳng dữ liệu giả (mockPlants)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setPlants(mockPlants);
+      // 🔥 KẾT NỐI API THẬT
+      const res = await myGardenApi.getUserGarden();
+      setPlants(res || []);
     } catch (error) {
+      console.log("Lỗi load vườn:", error);
       setErrorMsg("Không thể tải thông tin vườn lúc này.");
     } finally {
       setLoading(false);
     }
   };
+
   const getPlanLimits = (plan?: string) => {
     switch (plan) {
       case "VIP":
         return 20;
       case "PREMIUM":
         return 10;
-      case "FREE":
       default:
         return 0;
     }
@@ -196,9 +183,6 @@ export default function MyGardenScreen() {
   const planLimit = getPlanLimits(userPlan.plan);
   const remainingSlots = Math.max(0, planLimit - totalPlants);
 
-  // =================================================================
-  // CÁC HÀM XỬ LÝ ẢNH (GIỐNG HỆT TRANG SCAN.TSX)
-  // =================================================================
   const handleOpenCamera = async () => {
     if (Platform.OS === "web") {
       alert(
@@ -206,7 +190,6 @@ export default function MyGardenScreen() {
       );
       return;
     }
-
     try {
       const currentPerm = await ImagePicker.getCameraPermissionsAsync();
       if (currentPerm?.status !== "granted") {
@@ -219,12 +202,10 @@ export default function MyGardenScreen() {
           return;
         }
       }
-
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ["images"],
         quality: 0.8,
       });
-
       if (!result.canceled && result.assets && result.assets[0].uri) {
         router.push({
           pathname: "/garden-setup",
@@ -242,7 +223,6 @@ export default function MyGardenScreen() {
         mediaTypes: ["images"],
         quality: 0.8,
       });
-
       if (!result.canceled && result.assets && result.assets[0].uri) {
         router.push({
           pathname: "/garden-setup",
@@ -254,43 +234,9 @@ export default function MyGardenScreen() {
     }
   };
 
-  const mockPlants = [
-    {
-      _id: "1",
-      customName: "Cây hoa hồng VIP",
-      progressPercentage: 60,
-      healthStatus: "HEALTHY",
-      plantInfo: {
-        aiPrediction: {
-          imageUrl:
-            "https://hips.hearstapps.com/hmg-prod/images/cute-rose-photos-1616781223.jpg",
-        },
-      },
-    },
-    {
-      _id: "2",
-      customName: "Cà chua vườn PREMIUM",
-      progressPercentage: 20,
-      healthStatus: "SICK",
-      plantInfo: {
-        aiPrediction: {
-          imageUrl:
-            "https://plantify.com.sg/cdn/shop/files/Plantify_TomatoVine_Healthy.png",
-        },
-      },
-    },
-  ];
-  const activePlants =
-    plants.length > 0
-      ? plants
-      : userPlan.plan && userPlan.plan !== "FREE"
-        ? mockPlants
-        : [];
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#111827" />
@@ -299,7 +245,7 @@ export default function MyGardenScreen() {
         <View style={styles.headerRight}>
           <View style={styles.tempBox}>
             <Thermometer size={16} color="#475569" />
-            <Text style={styles.tempText}>28°C</Text>
+            <Text style={styles.tempText}>--°C</Text>
           </View>
         </View>
       </View>
@@ -308,7 +254,6 @@ export default function MyGardenScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* TÓM TẮT SLOT */}
         <View style={styles.summaryContainer}>
           <View style={styles.summaryCard}>
             <View style={{ flex: 1 }}>
@@ -339,13 +284,9 @@ export default function MyGardenScreen() {
           </View>
         </View>
 
-        {/* ==================================================== */}
-        {/* BẢNG ĐIỀU KHIỂN CAMERA & ẢNH (KHÔNG NHÚNG TRỰC TIẾP) */}
-        {/* ==================================================== */}
-        {userPlan.plan && userPlan.plan !== "FREE" && (
+        {userPlan.plan && userPlan.plan !== "FREE" && remainingSlots > 0 && (
           <View style={styles.scannerSection}>
             <Text style={styles.sectionHeading}>Thêm cây mới vào vườn</Text>
-
             <View style={styles.actionCard}>
               <View style={styles.actionIconBox}>
                 <CameraIcon size={48} color="#16a34a" />
@@ -355,7 +296,6 @@ export default function MyGardenScreen() {
                 Sử dụng AI để nhận diện cây và tình trạng bệnh, sau đó bắt đầu
                 lộ trình chăm sóc.
               </Text>
-
               <View style={styles.actionBtnRow}>
                 <TouchableOpacity
                   style={styles.btnPrimary}
@@ -364,7 +304,6 @@ export default function MyGardenScreen() {
                   <CameraIcon size={20} color="#fff" />
                   <Text style={styles.btnPrimaryText}>Mở Máy Ảnh</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   style={styles.btnSecondary}
                   onPress={handlePickImage}
@@ -377,7 +316,6 @@ export default function MyGardenScreen() {
           </View>
         )}
 
-        {/* DANH SÁCH CÂY ĐANG TRỒNG */}
         <Text style={styles.sectionHeading}>Cây đang nuôi trồng</Text>
 
         {loading ? (
@@ -391,7 +329,7 @@ export default function MyGardenScreen() {
             <AlertTriangle size={30} color="#dc2626" />
             <Text style={styles.errorText}>{errorMsg}</Text>
           </View>
-        ) : userPlan.plan === "FREE" || !userPlan.plan ? (
+        ) : !userPlan.plan || userPlan.plan === "FREE" ? (
           <View style={styles.freeBox}>
             <Sprout size={50} color="#cbd5e1" />
             <Text style={styles.freeText}>Vườn đang đóng.</Text>
@@ -399,11 +337,14 @@ export default function MyGardenScreen() {
               Nâng cấp lên gói VIP hoặc PREMIUM để mở khóa tính năng nuôi trồng
               cây!
             </Text>
-            <TouchableOpacity style={styles.upgradeBtn}>
+            <TouchableOpacity
+              style={styles.upgradeBtn}
+              onPress={() => router.push("/upgrade" as any)}
+            >
               <Text style={styles.upgradeBtnText}>Nâng cấp ngay</Text>
             </TouchableOpacity>
           </View>
-        ) : activePlants.length === 0 ? (
+        ) : plants.length === 0 ? (
           <View style={styles.emptyBox}>
             <Sprout size={50} color="#cbd5e1" />
             <Text style={styles.emptyText}>
@@ -415,7 +356,7 @@ export default function MyGardenScreen() {
           </View>
         ) : (
           <View style={styles.plantListGrid}>
-            {activePlants.map((plant) => (
+            {plants.map((plant) => (
               <PlantCard
                 key={plant._id}
                 plant={plant}
@@ -434,6 +375,7 @@ export default function MyGardenScreen() {
   );
 }
 
+// BẠN GIỮ NGUYÊN CÁC STYLES TỪ FILE CŨ NHÉ
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb" },
   header: {
@@ -467,7 +409,6 @@ const styles = StyleSheet.create({
   },
   tempText: { fontSize: 13, color: "#1d4ed8", fontWeight: "600" },
   scrollContent: { padding: 16, paddingBottom: 100 },
-
   summaryContainer: { marginBottom: 20 },
   summaryCard: {
     flexDirection: "row",
@@ -504,8 +445,6 @@ const styles = StyleSheet.create({
     color: "#0f172a",
     marginBottom: 12,
   },
-
-  // Giao diện Camera kiểu mới (Giống scan)
   scannerSection: { marginBottom: 24 },
   actionCard: {
     backgroundColor: "#fff",
@@ -563,7 +502,6 @@ const styles = StyleSheet.create({
     borderColor: "#e2e8f0",
   },
   btnSecondaryText: { color: "#16a34a", fontSize: 15, fontWeight: "bold" },
-
   plantListGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -626,7 +564,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   statusText: { fontSize: 11, fontWeight: "600" },
-
   emptyBox: {
     flex: 1,
     backgroundColor: "#fff",

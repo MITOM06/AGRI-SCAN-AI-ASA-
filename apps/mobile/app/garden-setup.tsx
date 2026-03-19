@@ -25,6 +25,8 @@ import {
   CheckCircle2,
 } from "lucide-react-native";
 
+import { scanApi, myGardenApi } from "@agri-scan/shared";
+
 const GOALS = [
   { id: "HEAL_DISEASE", label: "Chữa bệnh cho cây", icon: "💊" },
   { id: "GET_FRUIT", label: "Thu hoạch quả", icon: "🍅" },
@@ -35,28 +37,29 @@ const GOALS = [
 export default function GardenSetupScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-
-  // Nhận link ảnh từ trang My Garden truyền sang
   const { imageUri } = useLocalSearchParams();
 
   const [isScanning, setIsScanning] = useState(true);
   const [scanData, setScanData] = useState<any>(null);
 
+  // Dữ liệu bóc tách từ AI
+  const [scannedImageUrl, setScannedImageUrl] = useState<string>("");
+  const [plantName, setPlantName] = useState<string>("Cây trồng");
+  const [diseaseName, setDiseaseName] = useState<string>("Khỏe mạnh");
+
   const [customName, setCustomName] = useState("");
   const [selectedGoal, setSelectedGoal] = useState("MAINTAIN");
-
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(
     null,
   );
   const [locationStatus, setLocationStatus] = useState("Đang lấy vị trí...");
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     getLocation();
 
     if (imageUri) {
-      processImageWithAI_MOCK(imageUri as string);
+      processImageWithAI_REAL(imageUri as string);
     } else {
       Alert.alert("Lỗi", "Không tìm thấy ảnh hợp lệ.");
       router.back();
@@ -70,47 +73,87 @@ export default function GardenSetupScreen() {
         setLocationStatus("Đã lấy vị trí (Web Mode)");
         return;
       }
-
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setLocationStatus("Bị từ chối quyền vị trí");
         setLocation({ lat: 10.762622, lon: 106.660172 });
         return;
       }
-
       let loc = await Location.getCurrentPositionAsync({});
       setLocation({ lat: loc.coords.latitude, lon: loc.coords.longitude });
       setLocationStatus("Đã lấy vị trí chính xác");
     } catch (error) {
       setLocationStatus("Không thể lấy vị trí");
-      setLocation({ lat: 10.762622, lon: 106.660172 }); // Fallback
+      setLocation({ lat: 10.762622, lon: 106.660172 });
     }
   };
 
   // ====================================================================
-  // 🔥 HÀM GIẢ LẬP AI QUÉT ẢNH (CHỜ 2 GIÂY RỒI TRẢ VỀ BỆNH)
+  // 🔥 API THẬT: QUÉT ẢNH LẤY KẾT QUẢ BỆNH VÀ TÊN CÂY
   // ====================================================================
-  const processImageWithAI_MOCK = async (uri: string) => {
+  const processImageWithAI_REAL = async (uri: string) => {
     try {
       setIsScanning(true);
 
-      // Giả lập thời gian AI xử lý mất 2 giây
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // 1. Chuẩn bị file
+      let fileToUpload: any;
+      if (Platform.OS === "web") {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const FileRef = (window as any).File;
+        fileToUpload = new FileRef([blob], "upload.jpg", {
+          type: blob.type || "image/jpeg",
+        });
+      } else {
+        fileToUpload = { uri, name: "upload.jpg", type: "image/jpeg" };
+      }
 
-      // Tạo kết quả giả định (Giả sử AI quét ra bệnh Đốm lá)
-      const fakeResult = {
-        topDisease: {
-          name: "Bệnh đốm lá (Test Mode)",
-          plantId: { _id: "60d5ecb8b392d700153ef123" },
-        },
-      };
+      // 2. Gọi AI phân tích
+      const result = await scanApi.scanImageAndWait(fileToUpload);
+      setScanData(result);
 
-      setScanData(fakeResult);
+      // Lấy link URL ảnh từ Cloudinary do Backend trả về
+      const uploadedImgUrl =
+        (result as any).imageUrl || (result as any).image?.url;
+      if (uploadedImgUrl) {
+        setScannedImageUrl(uploadedImgUrl);
+      }
 
-      // Tự động chuyển mục tiêu thành "Chữa bệnh"
-      setSelectedGoal("HEAL_DISEASE");
+      // 3. Phân tích kết quả bệnh
+      const topPred =
+        (result as any).predictions?.[0] || (result as any).aiPredictions?.[0];
+      const diseaseLabel =
+        topPred?.diseaseId?.name ||
+        (result as any).topDisease?.name ||
+        "Khỏe mạnh";
+
+      let pName = "Cây trồng";
+      let dName = diseaseLabel;
+
+      // Nếu AI trả về format kiểu "Corn___Northern_Leaf_Blight"
+      if (diseaseLabel.includes("___")) {
+        const parts = diseaseLabel.split("___");
+        pName = parts[0].replace(/_/g, " ");
+        dName = parts[1].replace(/_/g, " ");
+      } else if (diseaseLabel.includes("_")) {
+        pName = diseaseLabel.split("_")[0];
+      }
+
+      setPlantName(pName);
+      setDiseaseName(dName);
+
+      // Tự động gợi ý mục tiêu
+      if (dName !== "Khỏe mạnh" && dName !== "healthy") {
+        setSelectedGoal("HEAL_DISEASE");
+      } else {
+        setSelectedGoal("MAINTAIN");
+      }
     } catch (error: any) {
-      Alert.alert("Lỗi AI", "Không thể nhận diện ảnh lúc này.");
+      console.log("Lỗi scan ảnh tạo vườn:", error);
+      Alert.alert(
+        "Lỗi AI",
+        error?.message || "Không thể nhận diện ảnh lúc này.",
+      );
       router.back();
     } finally {
       setIsScanning(false);
@@ -118,9 +161,9 @@ export default function GardenSetupScreen() {
   };
 
   // ====================================================================
-  // 🔥 HÀM GIẢ LẬP LƯU LỘ TRÌNH (CHỜ 2 GIÂY RỒI BÁO THÀNH CÔNG)
+  // 🔥 API THẬT: GỬI LÊN BACKEND TẠO LỘ TRÌNH VƯỜN
   // ====================================================================
-  const handleCreateRoadmap_MOCK = async () => {
+  const handleCreateRoadmap_REAL = async () => {
     if (!customName.trim())
       return Alert.alert(
         "Thiếu thông tin",
@@ -135,13 +178,19 @@ export default function GardenSetupScreen() {
     try {
       setIsSubmitting(true);
 
-      // Giả lập thời gian Backend lưu DB và gọi AI tạo lộ trình mất 2 giây
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await myGardenApi.addPlantToGarden({
+        plantName: plantName,
+        diseaseName: diseaseName,
+        imageUrl: scannedImageUrl || (imageUri as string),
+        customName: customName.trim(),
+        userGoal: selectedGoal,
+        lat: location.lat,
+        lon: location.lon,
+      });
 
-      // Không gọi API thật nữa, báo thành công luôn
       Alert.alert(
-        "🎉 Thành công (Chế độ Test)!",
-        "AI đã phân tích thời tiết và tạo xong lộ trình chăm sóc 7 ngày cho cây của bạn.",
+        "🎉 Thành công!",
+        "AI đã phân tích thời tiết và tạo xong lộ trình chăm sóc cho cây của bạn.",
         [
           {
             text: "Xem vườn ngay",
@@ -150,7 +199,11 @@ export default function GardenSetupScreen() {
         ],
       );
     } catch (error: any) {
-      Alert.alert("Lỗi", "Có lỗi xảy ra khi tạo lộ trình.");
+      console.log("Lỗi tạo lộ trình:", error);
+      Alert.alert(
+        "Lỗi",
+        error?.response?.data?.message || "Có lỗi xảy ra khi tạo lộ trình.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -186,7 +239,6 @@ export default function GardenSetupScreen() {
             source={{ uri: imageUri as string }}
             style={styles.previewImg}
           />
-
           {isScanning ? (
             <View style={styles.scanningOverlay}>
               <ActivityIndicator size="large" color="#16a34a" />
@@ -200,7 +252,7 @@ export default function GardenSetupScreen() {
               <View style={{ marginLeft: 8, flex: 1 }}>
                 <Text style={styles.resultTitle}>Hoàn tất phân tích!</Text>
                 <Text style={styles.resultDesc} numberOfLines={1}>
-                  Phát hiện: {scanData?.topDisease?.name || "Cây khỏe mạnh"}
+                  Phát hiện: {diseaseName}
                 </Text>
               </View>
             </View>
@@ -295,7 +347,7 @@ export default function GardenSetupScreen() {
             styles.submitBtn,
             (isScanning || isSubmitting) && styles.submitBtnDisabled,
           ]}
-          onPress={handleCreateRoadmap_MOCK}
+          onPress={handleCreateRoadmap_REAL}
           disabled={isScanning || isSubmitting}
         >
           {isSubmitting ? (
@@ -317,6 +369,7 @@ export default function GardenSetupScreen() {
   );
 }
 
+// BẠN GIỮ NGUYÊN CÁC STYLES TỪ FILE CŨ NHÉ
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8fafc" },
   header: {
@@ -339,7 +392,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontWeight: "bold", color: "#111827" },
   content: { padding: 16, paddingBottom: 40 },
-
   imageSection: {
     position: "relative",
     marginBottom: 24,
@@ -375,7 +427,6 @@ const styles = StyleSheet.create({
   },
   resultTitle: { fontSize: 14, fontWeight: "bold", color: "#16a34a" },
   resultDesc: { fontSize: 13, color: "#475569", marginTop: 2 },
-
   inputGroup: { marginBottom: 24 },
   label: {
     fontSize: 16,
@@ -389,7 +440,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontStyle: "italic",
   },
-
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -407,7 +457,6 @@ const styles = StyleSheet.create({
     color: "#1e293b",
     outlineStyle: "none" as any,
   },
-
   goalsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   goalBtn: {
     flexDirection: "row",
@@ -424,7 +473,6 @@ const styles = StyleSheet.create({
   goalIcon: { fontSize: 18, marginRight: 8 },
   goalText: { fontSize: 13, fontWeight: "600", color: "#64748b", flex: 1 },
   goalTextActive: { color: "#16a34a" },
-
   locationBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -461,7 +509,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontStyle: "italic",
   },
-
   footer: {
     backgroundColor: "#fff",
     paddingHorizontal: 16,
