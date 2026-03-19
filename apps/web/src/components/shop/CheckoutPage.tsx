@@ -20,29 +20,48 @@ export function CheckoutPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
-  const [shippingAddress, setShippingAddress] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+
+  const [receiverName, setReceiverName] = useState("Trần Văn Nông");
+  const [phoneNumber, setPhoneNumber] = useState("0987.654.321");
+  const [shippingAddress, setShippingAddress] = useState(
+    "475A Điện Biên Phủ, Phường 25, Quận Bình Thạnh, TP. Hồ Chí Minh",
+  );
+  const [checkoutError, setCheckoutError] = useState("");
   // Mock shipping fee
   const shippingFee = 30000;
   const totalPayment = cartTotal + shippingFee;
 
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) return;
+
+    setCheckoutError("");
     setIsSubmitting(true);
 
     const rawSellerId = cartItems[0].sellerId;
-    const sellerId = typeof rawSellerId === 'object' && rawSellerId !== null
-      ? String(rawSellerId._id)
-      : String(rawSellerId);
+    const sellerId =
+      typeof rawSellerId === "object" && rawSellerId !== null
+        ? String(rawSellerId._id)
+        : String(rawSellerId);
 
     try {
-      if (!shippingAddress.trim() || !phoneNumber.trim()) {
-        alert('Vui lòng nhập địa chỉ và số điện thoại nhận hàng!');
+      if (!receiverName.trim()) {
+        setCheckoutError("Vui lòng nhập tên người nhận.");
         return;
       }
+
+      if (!phoneNumber.trim()) {
+        setCheckoutError("Vui lòng nhập số điện thoại nhận hàng.");
+        return;
+      }
+
+      if (!shippingAddress.trim()) {
+        setCheckoutError("Vui lòng nhập địa chỉ nhận hàng.");
+        return;
+      }
+
       await orderApi.createOrder({
         sellerId,
-        items: cartItems.map(item => ({
+        items: cartItems.map((item) => ({
           productId: item._id,
           quantity: item.quantity,
         })),
@@ -58,12 +77,7 @@ export function CheckoutPage() {
       }, 2500);
     } catch (error) {
       console.error("Failed to place order:", error);
-      // Fallback for demo if API fails
-      setIsSuccess(true);
-      setTimeout(() => {
-        clearCart();
-        router.push("/shop");
-      }, 2500);
+      setCheckoutError("Không thể đặt hàng lúc này. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
     }
@@ -178,28 +192,58 @@ export function CheckoutPage() {
                   <MapPin size={20} className="text-primary" />
                   Địa chỉ nhận hàng
                 </div>
-                <button
-                  className="text-sm font-medium text-primary hover:underline"
-                  onClick={() => router.push("/account/address")}
-                >
-                  Thay đổi
-                </button>
+                <span className="text-sm font-medium text-gray-400">
+                  Nhập trực tiếp
+                </span>
               </div>
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="font-bold text-gray-900">Trần Văn Nông</span>
-                  <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                  <span className="text-gray-600 font-medium">
-                    0987.654.321
-                  </span>
-                  <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-bold rounded">
-                    Mặc định
-                  </span>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Tên người nhận
+                    </label>
+                    <input
+                      type="text"
+                      value={receiverName}
+                      onChange={(e) => setReceiverName(e.target.value)}
+                      placeholder="Nhập tên người nhận"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Số điện thoại
+                    </label>
+                    <input
+                      type="text"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="Nhập số điện thoại"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                    />
+                  </div>
                 </div>
-                <p className="text-gray-600">
-                  475A Điện Biên Phủ, Phường 25, Quận Bình Thạnh, TP. Hồ Chí
-                  Minh
-                </p>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Địa chỉ nhận hàng
+                  </label>
+                  <textarea
+                    value={shippingAddress}
+                    onChange={(e) => setShippingAddress(e.target.value)}
+                    placeholder="Nhập số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
+                  />
+                </div>
+
+                {checkoutError && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                    {checkoutError}
+                  </div>
+                )}
               </div>
             </motion.div>
 
@@ -279,16 +323,18 @@ export function CheckoutPage() {
                   <label
                     key={opt.value}
                     onClick={() => setPaymentMethod(opt.value)}
-                    className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${paymentMethod === opt.value
-                      ? "border-primary bg-primary/5"
-                      : "border-gray-200 hover:border-gray-300"
-                      }`}
+                    className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${
+                      paymentMethod === opt.value
+                        ? "border-primary bg-primary/5"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
                   >
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${paymentMethod === opt.value
-                        ? "border-primary"
-                        : "border-gray-300"
-                        }`}
+                      className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                        paymentMethod === opt.value
+                          ? "border-primary"
+                          : "border-gray-300"
+                      }`}
                     >
                       {paymentMethod === opt.value && (
                         <div className="w-2.5 h-2.5 rounded-full bg-primary" />
@@ -384,10 +430,11 @@ export function CheckoutPage() {
                 whileTap={{ scale: 0.98 }}
                 onClick={handlePlaceOrder}
                 disabled={isSubmitting}
-                className={`w-full py-4 text-white font-bold rounded-xl transition-colors shadow-lg text-lg flex items-center justify-center gap-2 ${isSubmitting
-                  ? "bg-gray-400 cursor-not-allowed shadow-none"
-                  : "bg-red-500 hover:bg-red-600 shadow-red-500/20"
-                  }`}
+                className={`w-full py-4 text-white font-bold rounded-xl transition-colors shadow-lg text-lg flex items-center justify-center gap-2 ${
+                  isSubmitting
+                    ? "bg-gray-400 cursor-not-allowed shadow-none"
+                    : "bg-red-500 hover:bg-red-600 shadow-red-500/20"
+                }`}
               >
                 {isSubmitting ? (
                   <>
