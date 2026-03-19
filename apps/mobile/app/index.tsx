@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -13,69 +13,27 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import {
   ArrowRight,
   Leaf,
   ShieldCheck,
   Sprout,
+  Users,
+  Menu,
   X,
-  User as UserIcon,
-  Settings,
-  LogOut,
-  Bell,
-  CloudSun,
-  BookOpen,
+  PlayCircle,
   ShoppingCart,
-  Store,
-  ShieldAlert,
-  MessageSquare,
-  Library,
-  Package, // 🔥 Bổ sung icon Package cho Lịch sử mua hàng
 } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
 
-export default function UserHomeScreen() {
+export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userData, setUserData] = useState<{
-    fullName?: string;
-    email?: string;
-    plan?: string;
-    role?: string;
-  } | null>(null);
-
   const slideAnim = useRef(new Animated.Value(width)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        let userStr = null;
-        if (Platform.OS === "web") {
-          userStr = localStorage.getItem("user");
-        } else {
-          userStr = await SecureStore.getItemAsync("user");
-        }
-        if (userStr) setUserData(JSON.parse(userStr));
-      } catch (error) {
-        console.error("Lỗi khi load thông tin User:", error);
-      }
-    };
-    fetchUserData();
-  }, []);
-
-  const getInitials = (name?: string) => {
-    if (!name) return "U";
-    const words = name.trim().split(" ");
-    if (words.length === 1) return words[0].charAt(0).toUpperCase();
-    return (
-      words[0].charAt(0) + words[words.length - 1].charAt(0)
-    ).toUpperCase();
-  };
 
   const openMenu = () => {
     setIsMenuOpen(true);
@@ -115,96 +73,30 @@ export default function UserHomeScreen() {
     }, 300);
   };
 
-  const handleLogout = async () => {
-    try {
-      if (Platform.OS === "web") {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-      } else {
-        await SecureStore.deleteItemAsync("accessToken");
-        await SecureStore.deleteItemAsync("refreshToken");
-        await SecureStore.deleteItemAsync("user");
-      }
-      closeMenu();
-      setTimeout(() => {
-        router.replace("/auth/login" as any);
-      }, 300);
-    } catch (error) {
-      console.error("Lỗi khi đăng xuất:", error);
-    }
-  };
-
-  const currentPlanStr = userData?.plan || "FREE";
-  const planColor =
-    currentPlanStr === "VIP" || currentPlanStr === "PRO"
-      ? "#eab308"
-      : currentPlanStr === "PLUS" || currentPlanStr === "PREMIUM"
-        ? "#8b5cf6"
-        : "#d1d5db";
-
   const features = [
     {
       icon: <ShieldCheck size={28} color="#2563eb" />,
-      title: "AI Diagnosis",
+      title: "Chẩn đoán nhanh 2s",
       description:
-        "Nhận diện bệnh cây qua ảnh chụp tức thời với độ chính xác cao.",
+        "Dùng thử miễn phí 3 lượt nhận diện bệnh trên cây trồng không cần tài khoản.",
       colorBg: "#eff6ff",
-      route: "/scan",
+      path: "/scan",
     },
     {
-      icon: <Library size={28} color="#0ea5e9" />,
-      title: "Từ điển bệnh hại",
+      icon: <Sprout size={28} color="#16a34a" />,
+      title: "Giải pháp sinh học",
       description:
-        "Tra cứu thông tin chi tiết về các loại bệnh và cách phòng trừ.",
-      colorBg: "#e0f2fe",
-      route: "/treeDic",
+        "Hướng dẫn cách trị bệnh bằng phương pháp an toàn, không độc hại.",
+      colorBg: "#f0fdf4",
+      path: "/scan",
     },
     {
-      icon: <CloudSun size={28} color="#06b6d4" />,
-      title: "Agri-Weather",
+      icon: <Users size={28} color="#ea580c" />,
+      title: "Hàng ngàn nhà nông",
       description:
-        "Dự báo thời tiết chuyên sâu và khuyến nghị chăm sóc theo ngày.",
-      colorBg: "#ecfeff",
-      route: "/weather",
-    },
-    {
-      icon: <ShoppingCart size={28} color="#f59e0b" />,
-      title: "Agri-Shop",
-      description:
-        "Chợ vật tư nông nghiệp, phân bón và thuốc sinh học chính hãng.",
-      colorBg: "#fef3c7",
-      route: "/shop",
-    },
-    {
-      icon: <Store size={28} color="#db2777" />,
-      title: "Gian hàng của tôi",
-      description: "Đăng bán nông sản, vật tư và quản lý đơn khách đặt.",
-      colorBg: "#fce7f3",
-      route: "/my-shop",
-    },
-    // 🔥 ĐÃ BỔ SUNG: Nút Lịch sử mua hàng hiển thị ngoài màn hình chính
-    {
-      icon: <Package size={28} color="#059669" />,
-      title: "Lịch sử mua hàng",
-      description: "Xem lại danh sách đơn hàng đã mua và theo dõi vận chuyển.",
-      colorBg: "#d1fae5",
-      route: "/my-orders",
-    },
-    {
-      icon: <Sprout size={28} color="#8b5cf6" />,
-      title: "My Garden",
-      description: "Quản lý danh sách cây trồng và theo dõi lịch chăm sóc.",
-      colorBg: "#f3e8ff",
-      route: "/my-garden",
-    },
-    {
-      icon: <BookOpen size={28} color="#10b981" />,
-      title: "Farming Tips",
-      description:
-        "Cẩm nang kiến thức, bí quyết bón phân và chăm sóc cây trồng.",
-      colorBg: "#ecfdf5",
-      route: "/tips",
+        "Đăng nhập để tham gia cộng đồng và lưu trữ lịch sử chăm sóc cây.",
+      colorBg: "#fff7ed",
+      path: "/auth/login",
     },
   ];
 
@@ -228,25 +120,25 @@ export default function UserHomeScreen() {
 
         <View style={styles.headerRight}>
           <TouchableOpacity
-            onPress={() => router.push("/notification" as any)}
-            style={styles.bellBtn}
+            onPress={() => router.push("/shop" as any)}
+            style={styles.navIconBtn}
           >
-            <Bell size={24} color="#374151" />
-            <View style={styles.bellDot} />
+            <ShoppingCart size={20} color="#4b5563" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push("/auth/login" as any)}
+            style={styles.navLoginBtn}
+          >
+            <Text style={styles.navLoginText}>Đăng nhập</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={openMenu}
-            style={styles.avatarBtnNavbar}
+            style={styles.menuBtn}
             activeOpacity={0.8}
           >
-            <View style={[styles.avatarRingSmall, { borderColor: planColor }]}>
-              <View style={styles.avatarCircleSmall}>
-                <Text style={styles.avatarTextSmall}>
-                  {getInitials(userData?.fullName)}
-                </Text>
-              </View>
-            </View>
+            <Menu size={24} color="#374151" />
           </TouchableOpacity>
         </View>
       </View>
@@ -276,45 +168,16 @@ export default function UserHomeScreen() {
               ]}
             >
               <View style={styles.menuHeader}>
-                <Text style={styles.menuTitle}>Tài khoản</Text>
+                <Text style={styles.menuTitle}>Danh mục</Text>
                 <TouchableOpacity onPress={closeMenu} style={styles.closeBtn}>
                   <X size={26} color="#374151" />
                 </TouchableOpacity>
-              </View>
-
-              <View style={styles.userInfoSection}>
-                <View
-                  style={[styles.avatarRingLarge, { borderColor: planColor }]}
-                >
-                  <View style={styles.avatarCircleLarge}>
-                    <Text style={styles.avatarTextLarge}>
-                      {getInitials(userData?.fullName)}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.userDetails}>
-                  <Text style={styles.userName} numberOfLines={1}>
-                    {userData?.fullName || "Người Dùng"}
-                  </Text>
-                  <Text style={styles.userEmail} numberOfLines={1}>
-                    {userData?.email || "Đang tải email..."}
-                  </Text>
-                </View>
               </View>
 
               <ScrollView
                 style={styles.menuLinks}
                 showsVerticalScrollIndicator={false}
               >
-                {userData?.role === "ADMIN" && (
-                  <TouchableOpacity
-                    style={styles.adminMenuItem}
-                    onPress={() => handleNavigate("/admin")}
-                  >
-                    <ShieldAlert size={20} color="#dc2626" />
-                    <Text style={styles.adminMenuText}>Quản trị Hệ thống</Text>
-                  </TouchableOpacity>
-                )}
                 <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
                   <Text style={styles.menuItemText}>Trang chủ</Text>
                 </TouchableOpacity>
@@ -322,94 +185,43 @@ export default function UserHomeScreen() {
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/scan")}
                 >
-                  <Text style={styles.menuItemText}>Chẩn đoán AI</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/treeDic")}
-                >
-                  <Text style={styles.menuItemText}>Từ điển bệnh hại</Text>
+                  <Text style={styles.menuItemText}>Dùng thử AI (Guest)</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/shop")}
                 >
-                  <Text style={styles.menuItemText}>Cửa hàng vật tư (Mua)</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/my-shop")}
-                >
-                  <Text style={[styles.menuItemText, { color: "#db2777" }]}>
-                    Gian hàng của tôi (Bán)
-                  </Text>
-                </TouchableOpacity>
-
-                {/* 🔥 ĐÃ BỔ SUNG LẠI NÚT LỊCH SỬ MUA HÀNG VÀO NAVBAR */}
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/my-orders")}
-                >
-                  <Text style={styles.menuItemText}>Lịch sử mua hàng</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/my-garden")}
-                >
-                  <Text style={styles.menuItemText}>Vườn của tôi</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/weather")}
-                >
-                  <Text style={styles.menuItemText}>Thời tiết nông nghiệp</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/community")}
-                >
-                  <Text style={styles.menuItemText}>Cộng đồng</Text>
-                </TouchableOpacity>
-
-                <View style={styles.divider} />
-                <TouchableOpacity
-                  style={styles.menuItemWithIcon}
-                  onPress={() => handleNavigate("/feedback")}
-                >
-                  <MessageSquare size={20} color="#4b5563" />
-                  <Text style={styles.menuItemTextIcon}>
-                    Gửi phản hồi & Hỗ trợ
+                  <Text style={styles.menuItemText}>
+                    Chợ vật tư nông nghiệp
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.menuItemWithIcon}
-                  onPress={() => handleNavigate("/profile")}
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/onboarding")}
                 >
-                  <UserIcon size={20} color="#4b5563" />
-                  <Text style={styles.menuItemTextIcon}>Hồ sơ của tôi</Text>
+                  <Text style={styles.menuItemText}>
+                    Xem hướng dẫn ứng dụng
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.menuItemWithIcon}
-                  onPress={() => handleNavigate("/setting")}
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/about")}
                 >
-                  <Settings size={20} color="#4b5563" />
-                  <Text style={styles.menuItemTextIcon}>Cài đặt</Text>
+                  <Text style={styles.menuItemText}>Về chúng tôi</Text>
                 </TouchableOpacity>
               </ScrollView>
 
               <View
                 style={[
                   styles.menuFooter,
-                  { paddingBottom: insets.bottom || 24 },
+                  { paddingBottom: Math.max(insets.bottom, 24) },
                 ]}
               >
                 <TouchableOpacity
-                  style={styles.menuLogoutBtn}
-                  onPress={handleLogout}
+                  style={styles.menuLoginBtn}
+                  onPress={() => handleNavigate("/auth/login")}
                 >
-                  <LogOut size={20} color="#ef4444" />
-                  <Text style={styles.menuLogoutText}>Đăng xuất</Text>
+                  <Text style={styles.menuLoginText}>Đăng nhập / Đăng ký</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -424,42 +236,62 @@ export default function UserHomeScreen() {
         <View style={styles.heroSection}>
           <View style={styles.badgeWeb}>
             <View style={styles.dot} />
-            <Text style={styles.badgeText}>AI Innovation Contest 2026</Text>
+            <Text style={styles.badgeText}>
+              Dùng thử miễn phí không cần Đăng nhập
+            </Text>
           </View>
           <Text style={styles.mainTitle}>
-            Bác Sĩ{"\n"}
-            <Text style={styles.greenTitle}>Cây Trồng{"\n"}</Text>Thông Minh
+            Bác Sĩ <Text style={styles.greenTitle}>Thực Vật</Text>
+            {"\n"}Bỏ Túi
           </Text>
           <Text style={styles.description}>
-            Chẩn đoán bệnh cây trồng tức thì bằng AI. Nhận phác đồ điều trị khoa
-            học và lộ trình chăm sóc bền vững.
+            Hệ thống AI phân tích bệnh trên lá cây với độ chính xác 98%. Tham
+            gia cùng hơn 10,000+ nông dân Việt Nam.
           </Text>
+
           <View style={styles.buttonGroup}>
             <TouchableOpacity
               style={styles.primaryBtn}
               activeOpacity={0.8}
-              onPress={() => router.push("/scan" as any)}
+              onPress={() => router.push("/scan")}
             >
-              <Text style={styles.primaryBtnText}>Chẩn đoán ngay</Text>
+              <Text style={styles.primaryBtnText}>Quét thử ngay</Text>
               <ArrowRight size={18} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.onboardingBtn}
+              activeOpacity={0.6}
+              onPress={() => router.push("/onboarding")}
+            >
+              <PlayCircle size={20} color="#16a34a" />
+              <Text style={styles.onboardingBtnText}>Xem hướng dẫn</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.publicFeaturesRow}>
+            <TouchableOpacity
+              style={styles.publicFeatureBtn}
+              onPress={() => router.push("/shop" as any)}
+            >
+              <ShoppingCart size={22} color="#f59e0b" />
+              <Text style={styles.publicFeatureText}>
+                Khám phá Chợ vật tư nông nghiệp
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.featuresSection}>
-          <View style={styles.featuresHeader}>
-            <Text style={styles.featuresEyebrow}>HỆ SINH THÁI TÍNH NĂNG</Text>
-            <Text style={styles.featuresTitle}>
-              Công nghệ tiên phong{"\n"}cho nông nghiệp bền vững
-            </Text>
-          </View>
+          <Text style={styles.featuresTitle}>Vì sao chọn Agri-Scan?</Text>
           <View style={styles.featuresList}>
+            {/* Đưa comment ra ngoài vòng lặp map để tránh lỗi JSX */}
             {features.map((item, index) => (
               <TouchableOpacity
                 key={index}
                 style={styles.featureCard}
                 activeOpacity={0.7}
-                onPress={() => router.push(item.route as any)}
+                onPress={() => router.push(item.path as any)}
               >
                 <View
                   style={[
@@ -469,20 +301,11 @@ export default function UserHomeScreen() {
                 >
                   {item.icon}
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.featureItemTitle}>{item.title}</Text>
-                  <Text style={styles.featureItemDesc}>{item.description}</Text>
-                </View>
-                <ArrowRight size={20} color="#d1d5db" />
+                <Text style={styles.featureItemTitle}>{item.title}</Text>
+                <Text style={styles.featureItemDesc}>{item.description}</Text>
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            © 2026 Agri-Scan AI. All rights reserved.
-          </Text>
         </View>
       </ScrollView>
     </View>
@@ -503,43 +326,18 @@ const styles = StyleSheet.create({
   logoWrapper: { flexDirection: "row", alignItems: "center", gap: 8 },
   logoIconBox: { backgroundColor: "#2e7d32", padding: 6, borderRadius: 8 },
   logoTitle: { fontSize: 20, fontWeight: "800", color: "#111827" },
-  headerRight: { flexDirection: "row", alignItems: "center", gap: 12 },
-  bellBtn: { position: "relative", padding: 4 },
-  bellDot: {
-    position: "absolute",
-    top: 4,
-    right: 6,
-    width: 10,
-    height: 10,
-    backgroundColor: "#ef4444",
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: "#fafaf9",
+
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
+  navIconBtn: { padding: 8, backgroundColor: "#f3f4f6", borderRadius: 12 },
+  navLoginBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#16a34a",
+    borderRadius: 12,
   },
-  avatarBtnNavbar: { padding: 4 },
-  avatarRingSmall: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 2,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-  },
-  avatarCircleSmall: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#dc2626",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarTextSmall: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
-    letterSpacing: 1,
-  },
+  navLoginText: { color: "#fff", fontWeight: "bold", fontSize: 13 },
+  menuBtn: { padding: 8, backgroundColor: "#f3f4f6", borderRadius: 12 },
+
   modalContainer: { flex: 1, flexDirection: "row" },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -568,130 +366,55 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f3f4f6",
   },
-  menuTitle: { fontSize: 16, fontWeight: "600", color: "#111827" },
+  menuTitle: { fontSize: 18, fontWeight: "700", color: "#111827" },
   closeBtn: { padding: 4 },
-  userInfoSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f3f4f6",
-    backgroundColor: "#fafaf9",
-  },
-  avatarRingLarge: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 3,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    marginRight: 12,
-  },
-  avatarCircleLarge: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: "#dc2626",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarTextLarge: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    letterSpacing: 1,
-  },
-  userDetails: { flex: 1, paddingRight: 10 },
-  userName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 2,
-  },
-  userEmail: { fontSize: 13, color: "#6b7280", marginBottom: 4 },
-  adminBadge: {
-    backgroundColor: "#fee2e2",
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  adminBadgeText: { color: "#dc2626", fontSize: 11, fontWeight: "bold" },
-  menuLinks: { flex: 1, paddingHorizontal: 24, paddingTop: 10 },
-  adminMenuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fef2f2",
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    marginBottom: 10,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: "#fecaca",
-  },
-  adminMenuText: { fontSize: 15, color: "#dc2626", fontWeight: "bold" },
+  menuLinks: { flex: 1, paddingHorizontal: 24, paddingTop: 20 },
   menuItem: {
-    paddingVertical: 16,
+    paddingVertical: 18,
     borderBottomWidth: 1,
     borderBottomColor: "#f9fafb",
   },
   menuItemText: { fontSize: 16, color: "#374151", fontWeight: "600" },
-  divider: { height: 1, backgroundColor: "#f3f4f6", marginVertical: 10 },
-  menuItemWithIcon: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-    gap: 12,
-  },
-  menuItemTextIcon: { fontSize: 16, color: "#4b5563", fontWeight: "500" },
   menuFooter: {
     paddingHorizontal: 20,
     borderTopWidth: 1,
     borderTopColor: "#f3f4f6",
     paddingTop: 20,
   },
-  menuLogoutBtn: {
-    flexDirection: "row",
-    backgroundColor: "#fef2f2",
+  menuLoginBtn: {
+    backgroundColor: "#16a34a",
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
   },
-  menuLogoutText: { color: "#ef4444", fontSize: 15, fontWeight: "bold" },
+  menuLoginText: { color: "#fff", fontSize: 15, fontWeight: "bold" },
   heroSection: {
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 30,
     alignItems: "flex-start",
   },
   badgeWeb: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0fdf4",
+    backgroundColor: "#fef08a",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#dcfce3",
     marginBottom: 15,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#16a34a",
+    backgroundColor: "#ca8a04",
     marginRight: 8,
   },
-  badgeText: { fontSize: 12, color: "#16a34a", fontWeight: "600" },
+  badgeText: { fontSize: 12, color: "#854d0e", fontWeight: "700" },
   mainTitle: {
-    fontSize: 42,
+    fontSize: 48,
     fontWeight: "900",
     color: "#111827",
-    lineHeight: 48,
+    lineHeight: 56,
     letterSpacing: -1,
   },
   greenTitle: { color: "#16a34a" },
@@ -700,60 +423,76 @@ const styles = StyleSheet.create({
     color: "#4b5563",
     lineHeight: 24,
     marginTop: 15,
-    marginBottom: 25,
+    marginBottom: 30,
   },
   buttonGroup: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
-    marginBottom: 30,
+    marginBottom: 20,
   },
   primaryBtn: {
     backgroundColor: "#16a34a",
-    paddingHorizontal: 22,
-    paddingVertical: 14,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
     borderRadius: 30,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    elevation: 2,
   },
-  primaryBtnText: { color: "#fff", fontWeight: "bold", fontSize: 15 },
+  primaryBtnText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  onboardingBtn: {
+    backgroundColor: "#f0fdf4",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 30,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#dcfce3",
+  },
+  onboardingBtnText: { color: "#16a34a", fontWeight: "bold", fontSize: 16 },
+
+  publicFeaturesRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 40,
+    width: "100%",
+  },
+  publicFeatureBtn: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    gap: 8,
+    elevation: 1,
+  },
+  publicFeatureText: { fontSize: 14, fontWeight: "700", color: "#374151" },
+
   featuresSection: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    paddingBottom: 40,
     backgroundColor: "#fafaf9",
   },
-  featuresHeader: { alignItems: "center", marginBottom: 30 },
-  featuresEyebrow: {
-    color: "#16a34a",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
   featuresTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "800",
     color: "#111827",
-    textAlign: "center",
-    lineHeight: 32,
-    marginBottom: 12,
+    marginBottom: 20,
   },
   featuresList: { gap: 16 },
   featureCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
+    padding: 20,
     backgroundColor: "#fff",
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "#f3f4f6",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
     elevation: 2,
   },
   featureIconBox: {
@@ -762,15 +501,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16,
+    marginBottom: 16,
   },
   featureItemTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
     color: "#111827",
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  featureItemDesc: { fontSize: 13, color: "#6b7280", lineHeight: 20 },
-  footer: { paddingVertical: 20, alignItems: "center" },
-  footerText: { fontSize: 12, color: "#9ca3af" },
+  featureItemDesc: { fontSize: 14, color: "#4b5563", lineHeight: 22 },
 });
