@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -11,37 +12,95 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCart } from "../../context/CartContext";
-import { orderApi, PaymentMethod } from "@agri-scan/shared";
-import { OrderStatus } from "@agri-scan/shared";
+import { orderApi, productApi, PaymentMethod } from "@agri-scan/shared";
 
 export function CheckoutPage() {
   const router = useRouter();
   const { cartItems, cartTotal, clearCart } = useCart();
+
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
 
   const [receiverName, setReceiverName] = useState("Trần Văn Nông");
-  const [phoneNumber, setPhoneNumber] = useState("0987.654.321");
+  const [phoneNumber, setPhoneNumber] = useState("0934104327");
   const [shippingAddress, setShippingAddress] = useState(
     "475A Điện Biên Phủ, Phường 25, Quận Bình Thạnh, TP. Hồ Chí Minh",
   );
   const [checkoutError, setCheckoutError] = useState("");
-  // Mock shipping fee
+
   const shippingFee = 30000;
   const totalPayment = cartTotal + shippingFee;
+
+  // FE-only fallback cho demo khi API product trả sellerId = null
+  const FALLBACK_SELLER_ID = "69b8f096a79ecb777a9ed3d7";
+
+  const normalizeId = (value: any): string => {
+    if (!value) return "";
+
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed || trimmed === "null" || trimmed === "undefined") return "";
+      return trimmed;
+    }
+
+    if (typeof value === "object") {
+      if (value._id) return normalizeId(value._id);
+      if (value.id) return normalizeId(value.id);
+    }
+
+    return "";
+  };
+
+  const extractSellerIdFromResponse = (source: any): string => {
+    if (!source) return "";
+
+    if (source.data) {
+      const fromData = extractSellerIdFromResponse(source.data);
+      if (fromData) return fromData;
+    }
+
+    if (source.product) {
+      const fromProduct = extractSellerIdFromResponse(source.product);
+      if (fromProduct) return fromProduct;
+    }
+
+    if (source.sellerId) {
+      const fromSeller = normalizeId(source.sellerId);
+      if (fromSeller) return fromSeller;
+    }
+
+    return "";
+  };
+
+  const resolveSellerId = async (): Promise<string> => {
+    const firstItem = cartItems[0];
+    if (!firstItem) return "";
+
+    // 1) Ưu tiên lấy từ cart
+    const fromCart = normalizeId((firstItem as any).sellerId);
+    if (fromCart) return fromCart;
+
+    // 2) Fallback: fetch lại product
+    try {
+      const freshProduct = await productApi.getProductById(String(firstItem._id));
+      console.log("FRESH PRODUCT RESPONSE", freshProduct);
+
+      const fromApi = extractSellerIdFromResponse(freshProduct);
+      if (fromApi) return fromApi;
+    } catch (error) {
+      console.error("Không lấy lại được sellerId từ product:", error);
+    }
+
+    // 3) FE-only fallback cuối cùng
+    return FALLBACK_SELLER_ID;
+  };
 
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) return;
 
     setCheckoutError("");
     setIsSubmitting(true);
-
-    const rawSellerId = cartItems[0].sellerId;
-    const sellerId =
-      typeof rawSellerId === "object" && rawSellerId !== null
-        ? String(rawSellerId._id)
-        : String(rawSellerId);
 
     try {
       if (!receiverName.trim()) {
@@ -59,16 +118,32 @@ export function CheckoutPage() {
         return;
       }
 
-      await orderApi.createOrder({
+      const sellerId = await resolveSellerId();
+
+      console.log("FIRST CART ITEM", cartItems[0]);
+      console.log("RESOLVED SELLER ID", sellerId);
+
+      if (!sellerId) {
+        setCheckoutError(
+          "Không xác định được người bán của sản phẩm. Vui lòng quay lại giỏ hàng và thêm lại sản phẩm.",
+        );
+        return;
+      }
+
+      const payload = {
         sellerId,
         items: cartItems.map((item) => ({
-          productId: item._id,
+          productId: String(item._id),
           quantity: item.quantity,
         })),
         shippingAddress,
-        phoneNumber,
+        phoneNumber: phoneNumber.replace(/\D/g, ""),
         paymentMethod,
-      });
+      };
+
+      console.log("ORDER PAYLOAD", payload);
+
+      await orderApi.createOrder(payload);
 
       setIsSuccess(true);
       setTimeout(() => {
@@ -95,13 +170,16 @@ export function CheckoutPage() {
           >
             <CheckCircle2 size={48} className="text-white" />
           </motion.div>
+
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
             Đặt hàng thành công!
           </h2>
+
           <p className="text-gray-500 mb-8">
-            Cảm ơn bạn đã mua sắm tại Agri-Shop. Đơn hàng của bạn đang được xử
-            lý và sẽ sớm được giao.
+            Cảm ơn bạn đã mua sắm tại Agri-Shop. Đơn hàng của bạn đang được xử lý
+            và sẽ sớm được giao.
           </p>
+
           <button
             onClick={() => router.push("/shop")}
             className="w-full py-3.5 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors"
@@ -113,7 +191,6 @@ export function CheckoutPage() {
     );
   }
 
-  // Redirect if cart is empty
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
@@ -134,7 +211,6 @@ export function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-2 text-sm text-gray-500">
           <span
@@ -151,35 +227,33 @@ export function CheckoutPage() {
             Cửa hàng
           </span>
           <ChevronRight size={16} />
-          <span
-            className="hover:text-primary cursor-pointer"
-            onClick={() => router.push("/shop/cart")}
-          >
-            Giỏ hàng
-          </span>
-          <ChevronRight size={16} />
-          <span className="font-medium text-gray-900">Thanh toán</span>
+          <span className="text-gray-900 font-medium">Thanh toán</span>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Thanh toán</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-4xl font-extrabold text-gray-900 mb-10 tracking-tight"
+        >
+          Thanh toán
+        </motion.h1>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Column: Checkout Details */}
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
           <motion.div
             initial="hidden"
             animate="show"
             variants={{
-              hidden: { opacity: 0 },
+              hidden: {},
               show: {
-                opacity: 1,
-                transition: { staggerChildren: 0.1 },
+                transition: {
+                  staggerChildren: 0.08,
+                },
               },
             }}
             className="flex-1 space-y-6"
           >
-            {/* Shipping Address */}
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -247,7 +321,6 @@ export function CheckoutPage() {
               </div>
             </motion.div>
 
-            {/* Shipping Method */}
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -259,14 +332,10 @@ export function CheckoutPage() {
                 <Truck size={20} className="text-blue-500" />
                 Đơn vị vận chuyển
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="relative flex cursor-pointer rounded-xl border bg-white p-4 shadow-sm focus:outline-none border-primary ring-1 ring-primary">
-                  <input
-                    type="radio"
-                    name="shipping"
-                    className="sr-only"
-                    defaultChecked
-                  />
+                <label className="relative flex cursor-pointer rounded-xl border bg-white p-4 shadow-sm focus:outline-none border-primary bg-primary/5">
+                  <input type="radio" name="shipping" className="sr-only" checked readOnly />
                   <span className="flex flex-1">
                     <span className="flex flex-col">
                       <span className="block text-sm font-medium text-gray-900">
@@ -279,8 +348,9 @@ export function CheckoutPage() {
                   </span>
                   <CheckCircle2 className="h-5 w-5 text-primary" />
                 </label>
+
                 <label className="relative flex cursor-pointer rounded-xl border border-gray-200 bg-white p-4 shadow-sm focus:outline-none hover:border-gray-300">
-                  <input type="radio" name="shipping" className="sr-only" />
+                  <input type="radio" name="shipping" className="sr-only" readOnly />
                   <span className="flex flex-1">
                     <span className="flex flex-col">
                       <span className="block text-sm font-medium text-gray-900">
@@ -295,7 +365,6 @@ export function CheckoutPage() {
               </div>
             </motion.div>
 
-            {/* Payment Method */}
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
@@ -307,6 +376,7 @@ export function CheckoutPage() {
                 <CreditCard size={20} className="text-purple-500" />
                 Phương thức thanh toán
               </div>
+
               <div className="space-y-3">
                 {[
                   {
@@ -349,7 +419,6 @@ export function CheckoutPage() {
             </motion.div>
           </motion.div>
 
-          {/* Right Column: Order Summary */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -367,23 +436,24 @@ export function CheckoutPage() {
                   <div key={item._id} className="flex gap-3">
                     <div className="w-16 h-16 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
                       <img
-                        src={item.images[0]}
+                        src={item.images?.[0] || "/placeholder-product.png"}
                         alt={item.name}
                         className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
                       />
                     </div>
+
                     <div className="flex-1 flex flex-col justify-center">
                       <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">
                         {item.name}
                       </p>
+
                       <div className="flex justify-between items-center mt-1">
                         <p className="text-xs text-gray-500">
                           SL: {item.quantity}
                         </p>
                         <p className="text-sm font-bold text-gray-900">
-                          {(item.price * item.quantity).toLocaleString("vi-VN")}
-                          đ
+                          {(item.price * item.quantity).toLocaleString("vi-VN")}đ
                         </p>
                       </div>
                     </div>
@@ -391,60 +461,46 @@ export function CheckoutPage() {
                 ))}
               </div>
 
-              <div className="space-y-3 text-sm border-t border-gray-100 pt-6 mb-6">
+              <div className="space-y-3 text-sm border-t border-b border-gray-100 py-4 mb-5">
                 <div className="flex justify-between text-gray-600">
                   <span>Tạm tính:</span>
-                  <span className="font-medium text-gray-900">
-                    {cartTotal.toLocaleString("vi-VN")}đ
-                  </span>
+                  <span>{cartTotal.toLocaleString("vi-VN")}đ</span>
                 </div>
+
                 <div className="flex justify-between text-gray-600">
                   <span>Phí vận chuyển:</span>
-                  <span className="font-medium text-gray-900">
-                    {shippingFee.toLocaleString("vi-VN")}đ
-                  </span>
+                  <span>{shippingFee.toLocaleString("vi-VN")}đ</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+
+                <div className="flex justify-between text-emerald-600">
                   <span>Giảm giá:</span>
-                  <span className="font-medium text-emerald-600">-0đ</span>
+                  <span>-0đ</span>
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 pt-4 mb-6">
-                <div className="flex justify-between items-end">
-                  <span className="font-bold text-gray-900">
-                    Tổng thanh toán:
-                  </span>
-                  <div className="text-right">
-                    <span className="text-2xl font-bold text-red-500 block leading-none mb-1">
-                      {totalPayment.toLocaleString("vi-VN")}đ
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      (Đã bao gồm VAT)
-                    </span>
-                  </div>
+              <div className="flex justify-between items-end mb-6">
+                <div>
+                  <p className="text-lg font-bold text-gray-900">Tổng thanh toán:</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-4xl font-extrabold text-red-500 tracking-tight">
+                    {totalPayment.toLocaleString("vi-VN")}đ
+                  </p>
+                  <p className="text-sm text-gray-400 mt-1">(Đã bao gồm VAT)</p>
                 </div>
               </div>
 
-              <motion.button
-                whileTap={{ scale: 0.98 }}
+              <button
                 onClick={handlePlaceOrder}
                 disabled={isSubmitting}
-                className={`w-full py-4 text-white font-bold rounded-xl transition-colors shadow-lg text-lg flex items-center justify-center gap-2 ${
+                className={`w-full py-5 rounded-2xl font-bold text-xl transition-all duration-300 shadow-lg ${
                   isSubmitting
-                    ? "bg-gray-400 cursor-not-allowed shadow-none"
-                    : "bg-red-500 hover:bg-red-600 shadow-red-500/20"
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-red-500 text-white hover:bg-red-600 hover:shadow-red-500/30"
                 }`}
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Đang xử lý...
-                  </>
-                ) : (
-                  "Đặt hàng ngay"
-                )}
-              </motion.button>
+                {isSubmitting ? "Đang xử lý..." : "Đặt hàng ngay"}
+              </button>
             </div>
           </motion.div>
         </div>
