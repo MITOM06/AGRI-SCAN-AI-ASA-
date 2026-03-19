@@ -202,6 +202,9 @@ Quy trình xử lý dữ liệu được thiết kế khép kín nhằm tối ư
 2.  **Inference:** ViT-MoE trích xuất đặc trưng và đưa ra kết quả phân loại.
 3.  **Tối ưu hóa phản hồi:** Kết quả chẩn đoán được đưa vào hệ thống RAG để LLM (Llama-2-70B) tạo ra lộ trình chăm sóc cá nhân hóa (Personalized Calendar).
 
+<p align="center">
+<img src="img/sodo1.png" alt="AI Architechture" height="400px" style="border-radius: 10px;">
+</p>
 
 ### 3.5. Kết quả thực nghiệm 
 Dựa trên báo cáo kiểm thử, mô hình đạt được hiệu suất cực kỳ ấn tượng với **Độ chính xác tổng thể (Overall Accuracy) đạt 99.49%**.
