@@ -46,6 +46,7 @@ export default function RootLayout() {
         <Stack.Screen name="auth/forgot-password" />
         <Stack.Screen name="auth/otp-verification" />
         <Stack.Screen name="auth/reset-password" />
+        <Stack.Screen name="auth/set-password" />
         <Stack.Screen name="auth/AuthHeader" />
         <Stack.Screen name="user" />
         <Stack.Screen name="scan" />
