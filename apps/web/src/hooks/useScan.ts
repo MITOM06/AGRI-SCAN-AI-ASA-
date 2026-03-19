@@ -1,14 +1,14 @@
 'use client';
 import { useState, useCallback } from 'react';
 import { isValidImageFile } from '@agri-scan/shared';
-import type { IScanResult, IScanHistoryDetail } from '@agri-scan/shared';
+import type { IScanStatusResponse, IScanHistoryDetail } from '@agri-scan/shared';
 import { scanApi } from '@agri-scan/shared';
 
 interface UseScanResult {
   isScanning: boolean;
-  scanResult: IScanResult | null;
+  scanResult: IScanStatusResponse | null;
   error: string | null;
-  scan: (file: File) => Promise<IScanResult | null>;
+  scan: (file: File) => Promise<IScanStatusResponse | null>;
   getScanDetail: (scanId: string) => Promise<IScanHistoryDetail | null>;
   sendFeedback: (scanId: string, isAccurate: boolean) => Promise<void>;
   reset: () => void;
@@ -16,11 +16,10 @@ interface UseScanResult {
 
 export function useScan(): UseScanResult {
   const [isScanning, setIsScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<IScanResult | null>(null);
+  const [scanResult, setScanResult] = useState<IScanStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const scan = useCallback(async (file: File): Promise<IScanResult | null> => {
-    // Validate file trước khi upload
+  const scan = useCallback(async (file: File): Promise<IScanStatusResponse | null> => {
     const validation = isValidImageFile(file);
     if (!validation.valid) {
       setError(validation.error || 'File không hợp lệ');
@@ -31,11 +30,17 @@ export function useScan(): UseScanResult {
     setError(null);
 
     try {
-      const result = await scanApi.scanImage(file);
+      const result = await scanApi.scanImageAndWait(file);
+
+      if (result.status !== 'COMPLETED') {
+        throw new Error(result.message || 'Không thể hoàn tất phân tích ảnh');
+      }
+
       setScanResult(result);
       return result;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Có lỗi xảy ra khi quét ảnh';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Có lỗi xảy ra khi quét ảnh';
       setError(errorMessage);
       return null;
     } finally {
@@ -47,7 +52,8 @@ export function useScan(): UseScanResult {
     try {
       return await scanApi.getScanDetail(scanId);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Không thể lấy chi tiết kết quả';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Không thể lấy chi tiết kết quả';
       setError(errorMessage);
       return null;
     }

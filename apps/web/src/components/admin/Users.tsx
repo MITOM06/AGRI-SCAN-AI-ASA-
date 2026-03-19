@@ -57,6 +57,9 @@ export default function UsersTab() {
         planExpiresAt: u.planExpiresAt ? new Date(u.planExpiresAt) : null,
         createdAt: new Date(u.createdAt),
         updatedAt: new Date(u.updatedAt),
+        lastResetDate: (u as any).lastResetDate
+          ? new Date((u as any).lastResetDate)
+          : new Date(),
       }));
 
       setUsers(formattedUsers);
@@ -204,9 +207,9 @@ export default function UsersTab() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        {user.avatar ? (
+                        {(user as any).avatar ? (
                           <img
-                            src={user.avatar}
+                            src={(user as any).avatar}
                             alt={user.fullName}
                             className="w-10 h-10 rounded-full object-cover border border-slate-200"
                             referrerPolicy="no-referrer"

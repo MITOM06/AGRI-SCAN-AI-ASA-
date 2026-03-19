@@ -8,39 +8,48 @@ export interface IDailyTask {
   isCompleted: boolean;
 }
 
+export interface IPlantInfo {
+  commonName?: string;
+  scientificName?: string;
+  family?: string;
+  description?: string;
+  uses?: string;
+  care?: string;
+  category?: string[];
+  plantGroup?: string;
+  images?: string[];
+}
+
 export interface IMyGardenPlant {
   _id: string;
   userId: string;
-  plantId: {
-    _id: string;
-    commonName: string;
-    images: string[];
-  };
+  aiLabel: string;
+  imageUrl?: string;
+  plantInfo?: IPlantInfo | null;
   customName: string;
-  plantGroup: "FRUIT" | "FLOWER" | "ORNAMENTAL";
-  userGoal: string;
+  userGoal: "HEAL_DISEASE" | "GET_FRUIT" | "GET_FLOWER" | "MAINTAIN";
   currentCondition: string;
+  roadmapSummary?: string;
   growthStages: string[];
   currentStageIndex: number;
   progressPercentage: number;
   lastInteractionDate: string;
   careRoadmap: IDailyTask[];
   status: "IN_PROGRESS" | "COMPLETED" | "FAILED";
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-// ── Thêm: DTO dùng chung cho cả web và mobile ──
-// Định nghĩa DTO cho đầu vào của hàm thêm cây
 export interface AddPlantPayload {
   plantName: string;
   diseaseName: string;
   imageUrl?: string;
   customName?: string;
-  userGoal: string;
+  userGoal: "HEAL_DISEASE" | "GET_FRUIT" | "GET_FLOWER" | "MAINTAIN";
   lat: number;
   lon: number;
 }
 
-// Định nghĩa DTO cho đầu vào của hàm Check-in
 export interface DailyCheckInPayload {
   currentDay: number;
   imageUrl: string;
