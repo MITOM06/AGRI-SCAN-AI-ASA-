@@ -38,8 +38,7 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
 * **Kịp thời:** Chẩn đoán ngay tại đồng ruộng chỉ với một chiếc smartphone.
 * **Bền vững:** Ưu tiên các giải pháp sinh học và quy trình chăm sóc thân thiện môi trường.
 
----
-## II. Thành viên nhóm
+### 1.5 Thành viên nhóm
 
 <table align="center">
   <tr>
