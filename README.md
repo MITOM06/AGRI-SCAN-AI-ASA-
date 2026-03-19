@@ -203,7 +203,6 @@ Dự án áp dụng kiến trúc **Monolithic (Nguyên khối)** để tối ưu
 ---
 
 
-
 ## V. Hạn chế hiện tại và định hướng phát triển
 
 Dù ở giai đoạn MVP tập trung vào công nghệ, dự án vẫn vạch ra lộ trình sinh lời rõ ràng để đảm bảo tính bền vững:
@@ -215,22 +214,13 @@ Dù ở giai đoạn MVP tập trung vào công nghệ, dự án vẫn vạch ra
 
 
 ---
-## VI. Hướng dẫn cài đặt
-
-- **Prerequisites:** Yêu cầu về môi trường (Node.js, Docker, v.v.).
-- **Quick Start:** Các dòng lệnh để khởi chạy dự án trong 30 giây (Ưu tiên dùng Docker Compose).
-- **Environment Variables:** Danh sách các biến `.env` cần thiết (như API Key của AI).
+## VI. Hướng dẫn cài đặt (Update Later)
 ---
 
-## VII. Project Management & OSS (Quản lý dự án & Mã nguồn mở)
+## VII. Project Management & OSS (Update Later)
 
 
-- **Git Workflow:** Mô tả cách nhóm sử dụng Git Flow (như bạn đã viết).
-- **Changelog:** Nhật ký thay đổi (Lưu ý: Nhấn mạnh các bản **Release sớm** để ăn thêm 5đ mục 3 Bảng 1).
-- **Contributing Guide:** Hướng dẫn cộng đồng tham gia đóng góp code (thể hiện tính lan tỏa)
-
-
-## VIII. THIẾT KẾ CƠ SỞ DỮ LIỆU (DATABASE SCHEMA)
+## VIII. THIẾT KẾ CƠ SỞ DỮ LIỆU
 
 Dự án sử dụng **MongoDB**, áp dụng nguyên tắc thiết kế NoSQL: Hạn chế join phức tạp, ưu tiên tốc độ đọc. Hệ thống quản lý chặt chẽ hạn mức sử dụng của người dùng (Rate Limiting cho AI Scan & Prompt).
 
