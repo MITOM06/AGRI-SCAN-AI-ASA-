@@ -15,6 +15,16 @@
 <img src="https://img.shields.io/badge/Stack-NestJS%20|%20React%20Native%20|%20MongoDB-blue?style=for-the-badge" alt="Tech Stack">
 </p>
 
+## Mục lục 
+* [I. Tổng quan dự án (Project Overview)](#i-tổng-quan-dự-án-project-overview)
+* [II. Tính năng của sản phẩm](#ii-tính-năng-của-sản-phẩm)
+* [III. Giải pháp AI (AI Solutions)](#iii-giải-pháp-ai-ai-solutions)
+* [IV. Kiến trúc hệ thống & Công nghệ](#iv-kiến-trúc-hệ-thống--công-nghệ)
+* [V. Hạn chế hiện tại và định hướng phát triển](#v-hạn-chế-hiện-tại-và-định-hướng-phát-triển)
+* [VI. Hướng dẫn cài đặt](#vi-hướng-dẫn-cài-đặt-update-later)
+* [VII. Project Management & OSS](#vii-project-management--oss-update-later)
+* [VIII. Thiết kế cơ sở dữ liệu](#viii-thiết-kế-cơ-sở-dữ-liệu)
+
 ## I. TỔNG QUAN DỰ ÁN (PROJECT OVERVIEW)
 
 ### 1.1. Giới thiệu dự án
