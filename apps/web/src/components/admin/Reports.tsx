@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Download,
@@ -10,6 +10,8 @@ import {
   Activity,
   DollarSign,
   PieChart as PieChartIcon,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import {
   BarChart,
@@ -27,20 +29,102 @@ import {
   Area,
 } from "recharts";
 import { formatCurrency, formatDate, pageVariants } from "./utils";
-import {
-  MOCK_REVENUE_DATA,
-  MOCK_USAGE_DATA,
-  MOCK_DASHBOARD,
-} from "./mockData";
+import { MOCK_REVENUE_DATA, MOCK_USAGE_DATA } from "./mockData";
+import { adminApi } from "@agri-scan/shared";
+import type { IDashboard } from "@agri-scan/shared";
 
 export default function ReportsTab() {
-  const [dashboardData] = useState(MOCK_DASHBOARD);
+  const [dashboardData, setDashboardData] = useState<IDashboard | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const pieData = [
-    { name: "Gói FREE", value: dashboardData.users.byPlan.FREE, color: "#cbd5e1" },
-    { name: "Gói PREMIUM", value: dashboardData.users.byPlan.PREMIUM, color: "#3b82f6" },
-    { name: "Gói VIP", value: dashboardData.users.byPlan.VIP, color: "#f59e0b" },
-  ];
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await adminApi.getDashboard();
+        setDashboardData(data);
+      } catch (err: any) {
+        console.error("Load reports dashboard failed:", err);
+        setError(
+          err?.response?.data?.message || "Không tải được dữ liệu báo cáo."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadDashboard();
+  }, []);
+
+  const pieData = useMemo(() => {
+    if (!dashboardData) return [];
+    return [
+      {
+        name: "Gói FREE",
+        value: dashboardData.users.byPlan.FREE,
+        color: "#cbd5e1",
+      },
+      {
+        name: "Gói PREMIUM",
+        value: dashboardData.users.byPlan.PREMIUM,
+        color: "#3b82f6",
+      },
+      {
+        name: "Gói VIP",
+        value: dashboardData.users.byPlan.VIP,
+        color: "#f59e0b",
+      },
+    ];
+  }, [dashboardData]);
+
+  const avgRevenuePerUser =
+    dashboardData && dashboardData.users.total > 0
+      ? dashboardData.revenue.total / dashboardData.users.total
+      : 0;
+
+  const paidUsers =
+    dashboardData
+      ? dashboardData.users.byPlan.PREMIUM + dashboardData.users.byPlan.VIP
+      : 0;
+
+  const conversionRate =
+    dashboardData && dashboardData.users.total > 0
+      ? (paidUsers / dashboardData.users.total) * 100
+      : 0;
+
+  const avgDailyUsage =
+    MOCK_USAGE_DATA.length > 0
+      ? Math.round(
+          MOCK_USAGE_DATA.reduce(
+            (sum, item) => sum + item.images + item.prompts,
+            0
+          ) / MOCK_USAGE_DATA.length
+        )
+      : 0;
+
+  if (loading) {
+    return (
+      <div className="bg-white p-12 rounded-2xl shadow-sm border border-slate-100 text-center">
+        <Loader2 size={28} className="mx-auto text-emerald-600 animate-spin mb-3" />
+        <p className="text-slate-600 font-medium">Đang tải báo cáo...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-100 text-red-700 rounded-2xl px-4 py-3 flex items-start gap-2">
+        <AlertCircle size={18} className="mt-0.5 shrink-0" />
+        <span className="font-medium">{error}</span>
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
+    return <div className="p-6">Không có dữ liệu báo cáo.</div>;
+  }
 
   return (
     <motion.div
@@ -76,15 +160,15 @@ export default function ReportsTab() {
                 Doanh thu trung bình / User
               </p>
               <h3 className="text-2xl font-bold text-slate-900">
-                {formatCurrency(120000)}
+                {formatCurrency(avgRevenuePerUser)}
               </h3>
             </div>
             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
               <CreditCard size={20} />
             </div>
           </div>
-          <p className="text-sm text-emerald-500 font-medium mt-4 flex items-center gap-1">
-            <TrendingUp size={14} /> +12.5% so với tuần trước
+          <p className="text-sm text-slate-500 font-medium mt-4">
+            Tổng doanh thu: {formatCurrency(dashboardData.revenue.total)}
           </p>
         </motion.div>
 
@@ -97,14 +181,16 @@ export default function ReportsTab() {
               <p className="text-sm font-medium text-slate-500 mb-1">
                 Tỷ lệ chuyển đổi (Free {">"} Paid)
               </p>
-              <h3 className="text-2xl font-bold text-slate-900">8.5%</h3>
+              <h3 className="text-2xl font-bold text-slate-900">
+                {conversionRate.toFixed(1)}%
+              </h3>
             </div>
             <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
               <Zap size={20} />
             </div>
           </div>
-          <p className="text-sm text-emerald-500 font-medium mt-4 flex items-center gap-1">
-            <TrendingUp size={14} /> +2.1% so với tuần trước
+          <p className="text-sm text-slate-500 font-medium mt-4 flex items-center gap-1">
+            <TrendingUp size={14} /> {paidUsers.toLocaleString()} người dùng trả phí
           </p>
         </motion.div>
 
@@ -115,10 +201,10 @@ export default function ReportsTab() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-slate-500 mb-1">
-                Lượt dùng API trung bình
+                Lượt dùng trung bình
               </p>
               <h3 className="text-2xl font-bold text-slate-900">
-                4,250{" "}
+                {avgDailyUsage.toLocaleString()}{" "}
                 <span className="text-sm font-medium text-slate-500">
                   lượt/ngày
                 </span>
@@ -128,8 +214,8 @@ export default function ReportsTab() {
               <Activity size={20} />
             </div>
           </div>
-          <p className="text-sm text-emerald-500 font-medium mt-4 flex items-center gap-1">
-            <TrendingUp size={14} /> +15% so với tuần trước
+          <p className="text-sm text-slate-500 font-medium mt-4">
+            Dựa trên dữ liệu mock usage hiện tại
           </p>
         </motion.div>
       </div>
@@ -310,7 +396,7 @@ export default function ReportsTab() {
                   tick={{ fill: "#64748b", fontSize: 12 }}
                 />
                 <Tooltip
-                  labelFormatter={(label) => formatDate(label)}
+                  labelFormatter={(label) => formatDate(String(label))}
                   contentStyle={{
                     borderRadius: "12px",
                     border: "none",

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -19,9 +20,11 @@ import { adminApi } from "@agri-scan/shared";
 type AdminTabKey = "dashboard" | "users" | "reports" | "feedbacks";
 
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<AdminTabKey>("dashboard");
   const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const fetchPendingFeedbackCount = async () => {
@@ -36,6 +39,20 @@ export default function AdminDashboardPage() {
 
     void fetchPendingFeedbackCount();
   }, []);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    try {
+      setIsLoggingOut(true);
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      router.push("/login");
+      router.refresh();
+    }
+  };
 
   const menuItems = useMemo(
     () => [
@@ -85,15 +102,52 @@ export default function AdminDashboardPage() {
         <aside className="w-[280px] bg-white border-r border-slate-200 shadow-sm hidden lg:flex lg:flex-col">
           <div className="px-6 py-6 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg">
-                A
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="text-emerald-500"
+                >
+                  <path
+                    d="M8 4H4V8"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M16 4H20V8"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M8 20H4V16"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M16 20H20V16"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
-              <div>
-                <h1 className="text-lg font-bold text-slate-800">
-                  Admin Dashboard
+
+              <div className="leading-tight">
+                <h1 className="text-[15px] font-extrabold text-emerald-600">
+                  AgriScan
                 </h1>
-                <p className="text-sm text-slate-500">
-                  {user?.fullName || user?.email || "Quản trị viên"}
+                <p className="text-[11px] tracking-[0.18em] font-bold text-slate-400 uppercase mt-1">
+                  Admin Portal
                 </p>
               </div>
             </div>
@@ -144,11 +198,12 @@ export default function AdminDashboardPage() {
 
           <div className="p-4 border-t border-slate-100">
             <button
-              onClick={logout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <LogOut size={18} />
-              Đăng xuất
+              {isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}
             </button>
           </div>
         </aside>
