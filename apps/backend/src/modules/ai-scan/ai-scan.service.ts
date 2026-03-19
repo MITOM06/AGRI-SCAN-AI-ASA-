@@ -17,10 +17,16 @@ import type { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
 import { ClientProxy } from '@nestjs/microservices';
 import axios from 'axios';
+import { Storage, StorageOptions } from '@google-cloud/storage';
+import { extname } from 'path';
 
 @Injectable()
 export class AiScanService implements OnModuleInit {
   private readonly logger = new Logger(AiScanService.name);
+
+  // 1. Khai báo biến storage
+  private storage: Storage;
+  private bucketName: string;
 
   constructor(
     @InjectModel(ScanHistory.name) private scanHistoryModel: Model<ScanHistory>,
@@ -31,15 +37,50 @@ export class AiScanService implements OnModuleInit {
     @Inject('CHAT_SERVICE') private readonly chatClient: ClientProxy,
     private readonly plantsService: PlantsService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    // 2. Cấu hình Google Cloud Storage Client (Bọc thép chống lỗi)
+    this.bucketName = this.configService.get<string>('GCS_BUCKET_NAME', '');
+
+    const projectId = this.configService.get<string>('GCS_PROJECT_ID');
+    const clientEmail = this.configService.get<string>('GCS_CLIENT_EMAIL');
+    const privateKey = this.configService.get<string>('GCS_PRIVATE_KEY');
+
+    const storageOptions: StorageOptions = {
+      projectId: projectId,
+    };
+
+    // LOGIC TÙY CƠ ỨNG BIẾN: Local dùng Key, Server dùng ADC
+    if (clientEmail && privateKey) {
+      try {
+        // Xử lý triệt để: Xóa dấu nháy kép thừa và chuyển chuỗi "\n" thành ký tự xuống dòng thực tế
+        const formattedPrivateKey = privateKey
+          .replace(/^"|"$/g, '')
+          .replace(/\\n/g, '\n');
+
+        storageOptions.credentials = {
+          client_email: clientEmail,
+          private_key: formattedPrivateKey,
+        };
+        this.logger.log('☁️ GCS Init: Đang chạy bằng Private Key (Local Mode)');
+      } catch (error) {
+        this.logger.error(
+          '❌ Lỗi Parse Private Key GCS. Kiểm tra lại file .env!',
+          error,
+        );
+      }
+    } else {
+      this.logger.log(
+        '☁️ GCS Init: Không tìm thấy Key, tự động dùng ADC (Server Mode)',
+      );
+    }
+
+    this.storage = new Storage(storageOptions);
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // ROOT CAUSE FIX: ClientProxy là lazy — không tự connect khi inject.
   // Lần đầu gọi .emit() nó cố connect; nếu RabbitMQ chưa sẵn sàng
   // hoặc URL sai → throw error → bị catch → rollback quota → 500.
-  //
-  // onModuleInit() được NestJS gọi SAU KHI tất cả dependency được inject
-  // nhưng TRƯỚC KHI app nhận request → đây là nơi đúng để connect.
   // ═══════════════════════════════════════════════════════════════
   async onModuleInit() {
     try {
@@ -64,9 +105,45 @@ export class AiScanService implements OnModuleInit {
     );
   }
 
+  // 3. Hàm uploadImage bảo mật, chống sập (Fault-tolerance)
   private async uploadImage(file: Express.Multer.File): Promise<string> {
-    // TODO: thay bằng Cloudinary/S3 thực tế
-    return 'https://res.cloudinary.com/demo/image/upload/v1/sample.jpg';
+    return new Promise((resolve, reject) => {
+      if (!this.bucketName) {
+        this.logger.error('❌ GCS_BUCKET_NAME chưa được cấu hình!');
+        return reject(new Error('Lỗi cấu hình máy chủ lưu trữ.'));
+      }
+
+      if (!file || !file.buffer) {
+        return reject(new Error('Không tìm thấy dữ liệu ảnh để upload.'));
+      }
+
+      const bucket = this.storage.bucket(this.bucketName);
+
+      // Tạo tên file độc nhất (dùng Timestamp + Random)
+      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      const ext = extname(file.originalname || '.jpg');
+      const filename = `scans/${uniqueSuffix}${ext}`;
+
+      const blob = bucket.file(filename);
+
+      const blobStream = blob.createWriteStream({
+        resumable: false,
+        contentType: file.mimetype,
+      });
+
+      blobStream.on('error', (err) => {
+        this.logger.error(`❌ Lỗi ghi file lên GCS: ${err.message}`, err.stack);
+        reject(new Error('Quá trình lưu ảnh thất bại. Vui lòng thử lại sau.'));
+      });
+
+      blobStream.on('finish', () => {
+        const publicUrl = `https://storage.googleapis.com/${this.bucketName}/${blob.name}`;
+        this.logger.log(`✅ Upload thành công: ${publicUrl}`);
+        resolve(publicUrl);
+      });
+
+      blobStream.end(file.buffer);
+    });
   }
 
   // ==========================================
