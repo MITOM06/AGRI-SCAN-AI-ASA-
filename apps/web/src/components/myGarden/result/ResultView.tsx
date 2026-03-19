@@ -39,8 +39,38 @@ export function ResultView({
 }: ResultViewProps) {
   if (!selectedPlant) return null;
 
-  const getHealthColors = (health: string) => {
-    if (health === "GOOD")
+  const displayName =
+    selectedPlant.customName?.trim() ||
+    selectedPlant.plantInfo?.commonName?.trim() ||
+    selectedPlant.aiLabel?.trim() ||
+    "Cây trồng";
+
+  const subTitle =
+    selectedPlant.plantInfo?.commonName?.trim() ||
+    selectedPlant.aiLabel?.trim() ||
+    "Chưa có thông tin chi tiết";
+
+  const imageSrc =
+    selectedPlant.imageUrl ||
+    selectedPlant.plantInfo?.images?.[0] ||
+    "/placeholder-plant.png";
+
+  const conditionText =
+    selectedPlant.currentCondition?.trim() || "Chưa có chẩn đoán";
+
+  const isHealthy = [
+    "khỏe mạnh",
+    "khoe manh",
+    "healthy",
+    "normal",
+  ].includes(conditionText.toLowerCase());
+
+  const health: "GOOD" | "NEEDS_ATTENTION" = isHealthy
+    ? "GOOD"
+    : "NEEDS_ATTENTION";
+
+  const getHealthColors = (value: "GOOD" | "NEEDS_ATTENTION" | "BAD") => {
+    if (value === "GOOD") {
       return {
         bg: "bg-emerald-50",
         border: "border-emerald-200",
@@ -48,7 +78,9 @@ export function ResultView({
         icon: "text-emerald-500",
         glow: "shadow-emerald-500/20",
       };
-    if (health === "NEEDS_ATTENTION")
+    }
+
+    if (value === "NEEDS_ATTENTION") {
       return {
         bg: "bg-amber-50",
         border: "border-amber-200",
@@ -56,6 +88,8 @@ export function ResultView({
         icon: "text-amber-500",
         glow: "shadow-amber-500/20",
       };
+    }
+
     return {
       bg: "bg-red-50",
       border: "border-red-200",
@@ -65,14 +99,10 @@ export function ResultView({
     };
   };
 
-  // THAY BẰNG:
-  const health =
-    selectedPlant.currentCondition === "Khỏe mạnh" ? "GOOD" : "NEEDS_ATTENTION";
   const healthStyle = getHealthColors(health);
 
   const renderFruitSpecific = () => (
     <div className="space-y-8">
-      {/* Fruiting Timeline */}
       <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-orange-100 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-orange-100/50 to-transparent rounded-bl-full -z-10 transition-transform duration-700 group-hover:scale-110"></div>
         <div className="flex items-center gap-4 mb-8">
@@ -112,7 +142,6 @@ export function ResultView({
         </div>
       </div>
 
-      {/* How to get fruits */}
       <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
@@ -166,7 +195,6 @@ export function ResultView({
 
   const renderFlowerSpecific = () => (
     <div className="space-y-8">
-      {/* Blooming Timeline */}
       <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-pink-100 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-pink-100/50 to-transparent rounded-bl-full -z-10 transition-transform duration-700 group-hover:scale-110"></div>
         <div className="flex items-center gap-4 mb-8">
@@ -206,7 +234,6 @@ export function ResultView({
         </div>
       </div>
 
-      {/* How to get flowers */}
       <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center text-pink-600">
@@ -265,7 +292,6 @@ export function ResultView({
 
   const renderOrnamentalSpecific = () => (
     <div className="space-y-8">
-      {/* Pruning Guide */}
       <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-emerald-100 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-emerald-100/50 to-transparent rounded-bl-full -z-10 transition-transform duration-700 group-hover:scale-110"></div>
         <div className="flex items-center gap-4 mb-8">
@@ -327,7 +353,6 @@ export function ResultView({
         </div>
       </div>
 
-      {/* Aesthetic Care */}
       <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600">
@@ -392,7 +417,6 @@ export function ResultView({
       animate="show"
       className="max-w-6xl mx-auto px-4 py-8"
     >
-      {/* Header / Back button */}
       <div className="flex justify-between items-center mb-8">
         <motion.button
           variants={itemVariants}
@@ -417,16 +441,14 @@ export function ResultView({
         )}
       </div>
 
-      {/* Plant Profile Hero Card */}
       <motion.div
         variants={itemVariants}
         className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden mb-10 relative"
       >
-        {/* Blurred background element */}
         <div
           className="absolute top-0 right-0 w-1/2 h-full opacity-10 blur-3xl pointer-events-none"
           style={{
-            backgroundImage: `url(${selectedPlant.plantId?.images?.[0]})`,
+            backgroundImage: `url(${imageSrc})`,
             backgroundSize: "cover",
           }}
         ></div>
@@ -435,23 +457,24 @@ export function ResultView({
           <div className="md:w-2/5 h-80 md:h-auto relative p-4">
             <div className="w-full h-full rounded-[2rem] overflow-hidden shadow-inner relative group">
               <img
-                src={selectedPlant.plantId?.images?.[0]}
-                alt={selectedPlant.customName}
+                src={imageSrc}
+                alt={displayName}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-80"></div>
               <div className="absolute bottom-6 left-6 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full text-sm font-bold text-gray-900 shadow-xl flex items-center gap-2">
-                {selectedPlant.plantGroup === "FRUIT" && (
+                {selectedPlant.userGoal === "GET_FRUIT" && (
                   <>
                     <Apple size={16} className="text-orange-500" /> Nhóm Ăn Quả
                   </>
                 )}
-                {selectedPlant.plantGroup === "FLOWER" && (
+                {selectedPlant.userGoal === "GET_FLOWER" && (
                   <>
                     <Flower2 size={16} className="text-pink-500" /> Nhóm Cây Hoa
                   </>
                 )}
-                {selectedPlant.plantGroup === "ORNAMENTAL" && (
+                {(selectedPlant.userGoal === "MAINTAIN" ||
+                  selectedPlant.userGoal === "HEAL_DISEASE") && (
                   <>
                     <Leaf size={16} className="text-emerald-500" /> Nhóm Cây
                     Kiểng
@@ -475,21 +498,23 @@ export function ResultView({
                 Đã nhận diện thành công
               </span>
             </motion.div>
+
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-3"
             >
-              {selectedPlant.customName}
+              {displayName}
             </motion.h1>
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
               className="text-gray-500 text-xl italic mb-10 font-serif"
             >
-              {selectedPlant.plantId?.commonName}
+              {subTitle}
             </motion.p>
 
             <motion.div
@@ -552,7 +577,6 @@ export function ResultView({
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Common Health & Treatment */}
         <motion.div variants={itemVariants} className="lg:col-span-1 space-y-8">
           <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
             <div className="flex items-center gap-4 mb-8">
@@ -579,22 +603,18 @@ export function ResultView({
                   <p
                     className={`text-xl font-extrabold mb-2 ${healthStyle.text}`}
                   >
-                    {health === "GOOD"
-                      ? "Cây khỏe mạnh"
-                      : health === "NEEDS_ATTENTION"
-                        ? "Cần chú ý"
-                        : "Đang bị bệnh"}
+                    {health === "GOOD" ? "Cây khỏe mạnh" : "Cần chú ý"}
                   </p>
                   <p
                     className={`text-sm leading-relaxed ${healthStyle.text} opacity-90 font-medium`}
                   >
-                    {selectedPlant.currentCondition}
+                    {conditionText}
                   </p>
                 </div>
               </div>
             </div>
 
-            {selectedPlant.currentCondition !== "GOOD" && (
+            {health !== "GOOD" && (
               <div className="space-y-5">
                 <h3 className="font-bold text-gray-900 text-lg">
                   Phác đồ điều trị:
@@ -626,6 +646,7 @@ export function ResultView({
                     </p>
                   </li>
                 </ul>
+
                 <button className="w-full mt-6 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-gray-800 transition-all hover:shadow-lg hover:shadow-gray-900/20 flex items-center justify-center gap-2 group">
                   Mua thuốc đặc trị
                   <ArrowRight
@@ -636,7 +657,6 @@ export function ResultView({
               </div>
             )}
 
-            {/* Add to Garden Action (Only for new scans) */}
             {!isViewingTracked && (
               <div className="mt-8 pt-8 border-t border-gray-100">
                 <button
@@ -653,11 +673,11 @@ export function ResultView({
           </div>
         </motion.div>
 
-        {/* Right Column: Specific UI based on Group */}
         <motion.div variants={itemVariants} className="lg:col-span-2">
-          {selectedPlant.plantGroup === "FRUIT" && renderFruitSpecific()}
-          {selectedPlant.plantGroup === "FLOWER" && renderFlowerSpecific()}
-          {selectedPlant.plantGroup === "ORNAMENTAL" &&
+          {selectedPlant.userGoal === "GET_FRUIT" && renderFruitSpecific()}
+          {selectedPlant.userGoal === "GET_FLOWER" && renderFlowerSpecific()}
+          {(selectedPlant.userGoal === "MAINTAIN" ||
+            selectedPlant.userGoal === "HEAL_DISEASE") &&
             renderOrnamentalSpecific()}
         </motion.div>
       </div>

@@ -63,19 +63,29 @@ export class AiScanController {
     // Truyền null vào userId để Service hiểu đây là khách
     return this.aiScanService.askVirtualAssistant(null, question, label);
   }
+
+  // @UseGuards(JwtAuthGuard)
+  // @Get('history')
+  // @Get('chat/history')
+  // async getChatHistory(@Req() req: any) {
+  //   const userId = req.user.userId || req.user._id || req.user.sub;
+  //   return this.aiScanService.getUserChatHistory(userId);
+  // }
+
+  // 1. API lấy danh sách Lịch sử Quét ảnh (Scan)
   @UseGuards(JwtAuthGuard)
   @Get('history')
-  async getScanHistory(@Req() req: any) {
+  async getScanHistoryList(@Req() req: any) {
     const userId = req.user.userId || req.user._id || req.user.sub;
-    return this.aiScanService.getUserScanHistory(userId);
+    return this.aiScanService.getUserScanHistory(userId); // Gọi đúng hàm Scan
   }
 
-  // FIX: Tách thành method riêng, không thể stack 2 @Get trên cùng 1 method
+  // 2. API lấy danh sách Lịch sử Trò chuyện (Chat)
   @UseGuards(JwtAuthGuard)
   @Get('chat/history')
   async getChatHistory(@Req() req: any) {
     const userId = req.user.userId || req.user._id || req.user.sub;
-    return this.aiScanService.getUserChatHistory(userId);
+    return this.aiScanService.getUserChatHistory(userId); // Gọi đúng hàm Chat
   }
 
   @UseGuards(JwtAuthGuard)

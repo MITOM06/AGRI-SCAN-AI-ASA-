@@ -3,20 +3,14 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Send,
-  Image as ImageIcon,
   Camera,
   X,
-  Loader2,
   Leaf,
   User,
-  Bot,
   Plus,
   MessageSquare,
   PanelLeftClose,
   PanelLeft,
-  History,
-  Settings,
-  LogOut,
   Zap,
   Sparkles,
   ImagePlus,
@@ -27,7 +21,7 @@ import { default as ReactWebcam } from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { cn, scanApi } from "@agri-scan/shared";
-import type { IChatSession } from "@agri-scan/shared";
+import type { IChatSession, IScanStatusResponse } from "@agri-scan/shared";
 
 interface Message {
   id: string;
@@ -65,23 +59,26 @@ const getDateGroup = (date: string | Date): string => {
       new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) /
       (1000 * 60 * 60 * 24),
   );
+
   if (diffDays <= 0) return "Hôm nay";
   if (diffDays === 1) return "Hôm qua";
   if (diffDays <= 7) return "7 ngày trước";
   return "30 ngày trước";
 };
 
-/** Render inline: **bold**, `code` */
 function renderInline(text: string): React.ReactNode[] {
   const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+
   return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**"))
+    if (part.startsWith("**") && part.endsWith("**")) {
       return (
         <strong key={i} className="font-semibold">
           {part.slice(2, -2)}
         </strong>
       );
-    if (part.startsWith("`") && part.endsWith("`"))
+    }
+
+    if (part.startsWith("`") && part.endsWith("`")) {
       return (
         <code
           key={i}
@@ -90,11 +87,12 @@ function renderInline(text: string): React.ReactNode[] {
           {part.slice(1, -1)}
         </code>
       );
+    }
+
     return part;
   });
 }
 
-/** Render markdown-like bot response as structured JSX */
 function BotMessageContent({ text }: { text: string }) {
   const lines = text.split("\n");
   const nodes: React.ReactNode[] = [];
@@ -103,20 +101,17 @@ function BotMessageContent({ text }: { text: string }) {
   while (i < lines.length) {
     const line = lines[i];
 
-    // Blank line
     if (line.trim() === "") {
       i++;
       continue;
     }
 
-    // Horizontal rule
     if (/^---+$/.test(line.trim())) {
       nodes.push(<div key={i} className="my-4 border-t border-gray-200/70" />);
       i++;
       continue;
     }
 
-    // H1
     if (line.startsWith("# ")) {
       nodes.push(
         <h2
@@ -131,7 +126,6 @@ function BotMessageContent({ text }: { text: string }) {
       continue;
     }
 
-    // H2 — main section badge
     if (line.startsWith("## ")) {
       nodes.push(
         <div key={i} className="mt-4 mb-2 first:mt-0">
@@ -145,7 +139,6 @@ function BotMessageContent({ text }: { text: string }) {
       continue;
     }
 
-    // H3 — sub-section with accent bar
     if (line.startsWith("### ")) {
       nodes.push(
         <h4
@@ -160,9 +153,9 @@ function BotMessageContent({ text }: { text: string }) {
       continue;
     }
 
-    // Bullet list block
     if (/^[-*•]\s/.test(line)) {
       const items: React.ReactNode[] = [];
+
       while (i < lines.length && /^[-*•]\s/.test(lines[i])) {
         items.push(
           <li key={i} className="flex gap-3 items-start">
@@ -174,6 +167,7 @@ function BotMessageContent({ text }: { text: string }) {
         );
         i++;
       }
+
       nodes.push(
         <ul key={`ul-${i}`} className="my-2 space-y-2 text-sm pl-0.5">
           {items}
@@ -182,15 +176,14 @@ function BotMessageContent({ text }: { text: string }) {
       continue;
     }
 
-    // Numbered list block
     if (/^\d+\.\s/.test(line)) {
       const items: React.ReactNode[] = [];
       let num = 1;
+
       while (i < lines.length) {
         const currentLine = lines[i];
-        // Skip blank lines between list items (don't end the list block)
+
         if (currentLine.trim() === "") {
-          // Peek ahead: if next non-blank line is also a numbered item, skip the blank
           const nextNonBlank = lines.slice(i + 1).find((l) => l.trim() !== "");
           if (nextNonBlank && /^\d+\.\s/.test(nextNonBlank)) {
             i++;
@@ -198,7 +191,9 @@ function BotMessageContent({ text }: { text: string }) {
           }
           break;
         }
+
         if (!/^\d+\.\s/.test(currentLine)) break;
+
         items.push(
           <li key={i} className="flex gap-3 items-start">
             <span className="shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center mt-0.5">
@@ -209,9 +204,11 @@ function BotMessageContent({ text }: { text: string }) {
             </span>
           </li>,
         );
+
         i++;
         num++;
       }
+
       nodes.push(
         <ol key={`ol-${i}`} className="my-2 space-y-2 text-sm pl-0.5">
           {items}
@@ -220,7 +217,6 @@ function BotMessageContent({ text }: { text: string }) {
       continue;
     }
 
-    // Normal paragraph
     nodes.push(
       <p key={i} className="text-sm leading-relaxed text-gray-700">
         {renderInline(line)}
@@ -230,6 +226,64 @@ function BotMessageContent({ text }: { text: string }) {
   }
 
   return <div className="space-y-2">{nodes}</div>;
+}
+
+function formatScanResultMessage(result: IScanStatusResponse): string {
+  const disease = result.topDisease as
+    | {
+        name?: string;
+        symptoms?: string[];
+        treatments?: {
+          biological?: string[];
+          chemical?: string[];
+          preventive?: string[];
+        };
+      }
+    | undefined;
+
+  const predictions = result.predictions || [];
+  const diseaseName = disease?.name || "Không xác định";
+  const confidence = predictions[0]?.confidence
+    ? Math.round(predictions[0].confidence * 100)
+    : 0;
+
+  const lines: string[] = [];
+  lines.push("## Kết quả chẩn đoán");
+  lines.push(`**Bệnh phát hiện:** ${diseaseName.replace(/_/g, " ")}`);
+  lines.push(`**Độ tin cậy:** ${confidence}%`);
+
+  if (disease?.symptoms?.length) {
+    lines.push("---");
+    lines.push("## Triệu chứng");
+    disease.symptoms.forEach((s) => lines.push(`- ${s}`));
+  }
+
+  const treatments = disease?.treatments;
+  if (
+    treatments?.biological?.length ||
+    treatments?.chemical?.length ||
+    treatments?.preventive?.length
+  ) {
+    lines.push("---");
+    lines.push("## Phương pháp xử lý");
+
+    if (treatments?.biological?.length) {
+      lines.push("### Sinh học");
+      treatments.biological.forEach((t) => lines.push(`- ${t}`));
+    }
+
+    if (treatments?.chemical?.length) {
+      lines.push("### Hóa học");
+      treatments.chemical.forEach((t) => lines.push(`- ${t}`));
+    }
+
+    if (treatments?.preventive?.length) {
+      lines.push("### Phòng ngừa");
+      treatments.preventive.forEach((t) => lines.push(`- ${t}`));
+    }
+  }
+
+  return lines.join("\n");
 }
 
 export function Scanner() {
@@ -262,9 +316,8 @@ export function Scanner() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isBotTyping]);
+  }, [messages, isBotTyping, scrollToBottom]);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -279,7 +332,6 @@ export function Scanner() {
     }
   }, [inputText]);
 
-  // Responsive sidebar
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
@@ -288,12 +340,13 @@ export function Scanner() {
         setIsSidebarOpen(true);
       }
     };
+
     window.addEventListener("resize", handleResize);
     handleResize();
+
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Sidebar drag-to-resize
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging.current) return;
@@ -304,21 +357,23 @@ export function Scanner() {
       );
       setSidebarWidth(newWidth);
     };
+
     const onMouseUp = () => {
       if (!isDragging.current) return;
       isDragging.current = false;
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
+
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
+
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
     };
   }, []);
 
-  // Load chat history from API on mount
   useEffect(() => {
     scanApi
       .getChatHistory()
@@ -329,31 +384,34 @@ export function Scanner() {
   const handleImageUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file) {
-        setSelectedImageFile(file);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setSelectedImage(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-        e.target.value = "";
-      }
+      if (!file) return;
+
+      setSelectedImageFile(file);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      e.target.value = "";
     },
     [],
   );
 
-  const capture = React.useCallback(() => {
+  const capture = useCallback(() => {
     const imageSrc = webcamRef.current?.getScreenshot();
-    if (imageSrc) {
-      setSelectedImage(imageSrc);
-      setSelectedImageFile(null); // webcam gives base64; will convert to blob at send time
-      setIsCameraOpen(false);
-    }
-  }, [webcamRef]);
+    if (!imageSrc) return;
+
+    setSelectedImage(imageSrc);
+    setSelectedImageFile(null);
+    setIsCameraOpen(false);
+  }, []);
 
   const handleSend = useCallback(
     async (overrideText?: string) => {
       const textToSend = overrideText !== undefined ? overrideText : inputText;
+
       if (!textToSend.trim() && !selectedImage) return;
 
       const userMessage: Message = {
@@ -370,12 +428,12 @@ export function Scanner() {
       const capturedImage = selectedImage;
       const capturedFile = selectedImageFile;
 
-      // Optimistically add to sidebar immediately when starting a brand-new chat
-      const TEMP_SESSION_ID = `temp-${Date.now()}`;
+      const tempSessionId = `temp-${Date.now()}`;
+
       if (!currentSessionId && !capturedImage && questionText) {
         setHistory((prev) => [
           {
-            sessionId: TEMP_SESSION_ID,
+            sessionId: tempSessionId,
             title: questionText.slice(0, 60),
             updatedAt: new Date().toISOString(),
           } as IChatSession,
@@ -388,177 +446,104 @@ export function Scanner() {
       setSelectedImageFile(null);
       setIsBotTyping(true);
 
-      if (textareaRef.current) textareaRef.current.style.height = "auto";
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
 
       try {
         if (capturedImage) {
-          // Image scan flow — requires login
-          let fileToUpload: File | Blob;
+          let fileToUpload: File;
+
           if (capturedFile) {
             fileToUpload = capturedFile;
           } else {
-            // webcam base64 → blob
             const fetchRes = await fetch(capturedImage);
-            fileToUpload = await fetchRes.blob();
+            const blob = await fetchRes.blob();
+            fileToUpload = new File([blob], "captured-image.jpg", {
+              type: blob.type || "image/jpeg",
+            });
           }
 
-          // FIX: Backend RabbitMQ chỉ trả về { scanHistoryId, status: 'PROCESSING' }
-          // Phải poll GET /scan/status/:scanId cho đến khi COMPLETED
-          const submitResult = await scanApi.scanImage(fileToUpload);
-          const scanHistoryId = (submitResult as any).scanHistoryId;
+          const statusResult = await scanApi.scanImageAndWait(fileToUpload);
 
-          if (!scanHistoryId) {
-            // Fallback: nếu API cũ trả về kết quả luôn (không qua queue)
-            const topPrediction = (submitResult as any).predictions?.[0];
-            const disease = (submitResult as any).topDisease;
-            const diseaseName = disease?.name || "Không xác định";
+          if (statusResult.status === "COMPLETED") {
+            const diseaseName = statusResult.topDisease?.name || "Không xác định";
             setCurrentScanLabel(diseaseName);
-            setMessages((prev) => [...prev, {
-              id: (Date.now() + 1).toString(),
-              text: `## Kết quả chẩn đoán\n**Bệnh:** ${diseaseName}\n**Độ tin cậy:** ${Math.round((topPrediction?.confidence || 0) * 100)}%`,
-              sender: "bot",
-              timestamp: new Date(),
-            }]);
+
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: (Date.now() + 1).toString(),
+                text: formatScanResultMessage(statusResult),
+                sender: "bot",
+                timestamp: new Date(),
+              },
+            ]);
           } else {
-            // Poll cho đến khi Consumer xử lý xong
-            let attempt = 0;
-            const maxAttempts = 30; // 30 * 2s = 60s timeout
-            const poll = async (): Promise<void> => {
-              attempt++;
-              if (attempt > maxAttempts) {
-                setMessages((prev) => [...prev, {
-                  id: (Date.now() + 1).toString(),
-                  text: "⚠️ Phân tích ảnh mất quá lâu. Vui lòng thử lại.",
-                  sender: "bot",
-                  timestamp: new Date(),
-                }]);
-                setIsBotTyping(false);
-                return;
-              }
-              try {
-                const statusResult = await (scanApi as any).getScanStatus(scanHistoryId);
-                if ((statusResult as any).status === 'COMPLETED') {
-                  const disease = (statusResult as any).topDisease;
-                  const predictions = (statusResult as any).predictions || [];
-                  const diseaseName = disease?.name || "Không xác định";
-                  setCurrentScanLabel(diseaseName);
-                  const confidence = predictions[0]?.confidence
-                    ? Math.round(predictions[0].confidence * 100)
-                    : 0;
-                  const lines: string[] = [];
-                  lines.push(`## Kết quả chẩn đoán`);
-                  lines.push(`**Bệnh phát hiện:** ${diseaseName.replace(/_/g, " ")}`);
-                  lines.push(`**Độ tin cậy:** ${confidence}%`);
-                  if (disease?.symptoms?.length) {
-                    lines.push(`---`);
-                    lines.push(`## Triệu chứng`);
-                    disease.symptoms.forEach((s: string) => lines.push(`- ${s}`));
-                  }
-                  const treatments = disease?.treatments as { biological?: string[]; chemical?: string[]; preventive?: string[] } | undefined;
-                  if (treatments?.biological?.length || treatments?.chemical?.length || treatments?.preventive?.length) {
-                    lines.push(`---`);
-                    lines.push(`## Phương pháp xử lý`);
-                    if (treatments?.biological?.length) { lines.push(`### Sinh học`); treatments.biological.forEach((t) => lines.push(`- ${t}`)); }
-                    if (treatments?.chemical?.length) { lines.push(`### Hóa học`); treatments.chemical.forEach((t) => lines.push(`- ${t}`)); }
-                    if (treatments?.preventive?.length) { lines.push(`### Phòng ngừa`); treatments.preventive.forEach((t) => lines.push(`- ${t}`)); }
-                  }
-                  setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: lines.join("\n"), sender: "bot", timestamp: new Date() }]);
-                  setIsBotTyping(false);
-                } else if ((statusResult as any).status === 'FAILED') {
-                  setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: `⚠️ ${(statusResult as any).message || 'Không nhận diện được ảnh. Vui lòng thử lại.'}`, sender: "bot", timestamp: new Date() }]);
-                  setIsBotTyping(false);
-                } else {
-                  // Vẫn PROCESSING — thử lại sau 2 giây
-                  setTimeout(poll, 2000);
-                }
-              } catch {
-                setTimeout(poll, 2000);
-              }
-            };
-            poll(); // Bắt đầu polling, không tắt isBotTyping ở finally
-            return; // return sớm để finally không tắt isBotTyping
-          }
-        } else {
-          // Text chat flow — works without login
-          const response = await scanApi.chatWithAi(
-            questionText,
-            currentScanLabel,
-            currentSessionId || undefined,
-          );
-
-          const isNewSession =
-            response.sessionId && response.sessionId !== currentSessionId;
-
-          if (isNewSession) {
-            setCurrentSessionId(response.sessionId);
-            setHistory((prev) =>
-              prev.map((h) =>
-                h.sessionId === TEMP_SESSION_ID
-                  ? { ...h, sessionId: response.sessionId as string }
-                  : h,
-              ),
-            );
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: (Date.now() + 1).toString(),
+                text:
+                  statusResult.message ||
+                  "⚠️ Không thể hoàn tất phân tích ảnh. Vui lòng thử lại.",
+                sender: "bot",
+                timestamp: new Date(),
+              },
+            ]);
           }
 
-          // FIX: Nếu backend trả PROCESSING (người dùng đăng nhập + RabbitMQ)
-          // thì phải poll, không được đẩy answer=null vào UI
-          if ((response as any).status === 'PROCESSING') {
-            const pollingSessionId = (response.sessionId || currentSessionId) as string;
-            let attempt = 0;
-            const maxAttempts = 30;
-            const pollChat = async (): Promise<void> => {
-              attempt++;
-              if (attempt > maxAttempts) {
-                setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: "⚠️ Trợ lý đang bận. Vui lòng thử lại.", sender: "bot", timestamp: new Date() }]);
-                setIsBotTyping(false);
-                return;
-              }
-              try {
-                const detail = await scanApi.getSessionMessages(pollingSessionId);
-                const lastMsg = detail?.messages?.[detail.messages.length - 1];
-                if (lastMsg?.role === 'ai' && (lastMsg as any).status !== 'PENDING' && lastMsg.content) {
-                  setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), text: lastMsg.content, sender: "bot", timestamp: new Date(lastMsg.timestamp) }]);
-                  setIsBotTyping(false);
-                  setTimeout(() => { scanApi.getChatHistory().then(setHistory).catch(() => {}); }, 500);
-                } else {
-                  setTimeout(pollChat, 2000);
-                }
-              } catch {
-                setTimeout(pollChat, 2000);
-              }
-            };
-            pollChat();
-            return; // return sớm để finally không tắt isBotTyping
-          }
+          return;
+        }
 
-          // Khách vãng lai — trả về answer ngay lập tức
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: (Date.now() + 1).toString(),
-              text: response.answer,
-              sender: "bot",
-              timestamp: new Date(),
-            },
-          ]);
+        const response = await scanApi.chatAndWait(
+          questionText,
+          currentScanLabel,
+          currentSessionId || undefined,
+        );
 
-          setTimeout(
-            () => {
-              scanApi
-                .getChatHistory()
-                .then(setHistory)
-                .catch(() => {});
-            },
-            isNewSession ? 800 : 0,
+        const isNewSession =
+          !!response.sessionId && response.sessionId !== currentSessionId;
+
+        if (response.sessionId && response.sessionId !== currentSessionId) {
+          setCurrentSessionId(response.sessionId);
+
+          setHistory((prev) =>
+            prev.map((h) =>
+              h.sessionId === tempSessionId
+                ? { ...h, sessionId: response.sessionId as string }
+                : h,
+            ),
           );
         }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            text: response.answer || "Trợ lý chưa có phản hồi.",
+            sender: "bot",
+            timestamp: new Date(),
+          },
+        ]);
+
+        setTimeout(() => {
+          scanApi
+            .getChatHistory()
+            .then(setHistory)
+            .catch(() => {});
+        }, isNewSession ? 800 : 0);
       } catch (error: unknown) {
+        setHistory((prev) => prev.filter((h) => h.sessionId !== tempSessionId));
+
         const status = (error as { response?: { status?: number } })?.response
           ?.status;
+
         const errorText =
           status === 401
             ? "Bạn cần đăng nhập để sử dụng tính năng quét ảnh."
             : "Có lỗi xảy ra. Vui lòng thử lại.";
+
         setMessages((prev) => [
           ...prev,
           {
@@ -572,7 +557,6 @@ export function Scanner() {
         setIsBotTyping(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       inputText,
       selectedImage,
@@ -595,15 +579,19 @@ export function Scanner() {
   const loadSession = useCallback(async (sessionId: string) => {
     setCurrentSessionId(sessionId);
     setIsBotTyping(true);
+
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
+
     try {
       const detail = await scanApi.getSessionMessages(sessionId);
+
       const loadedMessages: Message[] = detail.messages.map((msg, i) => ({
         id: `${sessionId}-${i}`,
-        text: msg.content,
+        text: typeof msg.content === "string" ? msg.content : "",
         sender: msg.role === "user" ? "user" : "bot",
         timestamp: new Date(msg.timestamp),
       }));
+
       setMessages(loadedMessages);
     } catch {
       setMessages([]);
@@ -619,6 +607,7 @@ export function Scanner() {
     setSelectedImageFile(null);
     setCurrentSessionId(null);
     setCurrentScanLabel(undefined);
+
     if (window.innerWidth < 1024) setIsSidebarOpen(false);
   }, []);
 
@@ -631,7 +620,6 @@ export function Scanner() {
 
   return (
     <div className="fixed top-16 left-0 w-full h-[calc(100vh-4rem)] flex bg-white overflow-hidden font-sans text-gray-800">
-      {/* Sidebar */}
       <motion.div
         initial={false}
         animate={{
@@ -655,12 +643,15 @@ export function Scanner() {
               const groupSessions = history.filter(
                 (h) => getDateGroup(h.updatedAt) === group,
               );
+
               if (groupSessions.length === 0) return null;
+
               return (
                 <div key={group}>
                   <div className="mt-4 mb-2 px-3 text-xs font-medium text-green-200/70">
                     {group}
                   </div>
+
                   {groupSessions.map((h) => (
                     <button
                       key={h.sessionId}
@@ -697,7 +688,6 @@ export function Scanner() {
           </button>
         </div>
 
-        {/* Drag handle */}
         {isSidebarOpen && (
           <div
             onMouseDown={(e) => {
@@ -712,9 +702,7 @@ export function Scanner() {
         )}
       </motion.div>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col h-full relative bg-white">
-        {/* Top Bar (Mobile/Toggle) */}
         <div className="absolute top-0 left-0 z-10">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -728,7 +716,6 @@ export function Scanner() {
           </button>
         </div>
 
-        {/* Messages Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center p-4 sm:p-8 text-center max-w-3xl mx-auto">
@@ -740,6 +727,7 @@ export function Scanner() {
               >
                 <Leaf size={40} strokeWidth={1.5} />
               </motion.div>
+
               <motion.h2
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -748,6 +736,7 @@ export function Scanner() {
               >
                 Xin chào, tôi có thể giúp gì cho bạn?
               </motion.h2>
+
               <motion.p
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -757,6 +746,7 @@ export function Scanner() {
                 Hỏi tôi về bệnh cây trồng, cách chăm sóc hoặc gửi ảnh để chẩn
                 đoán chính xác.
               </motion.p>
+
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -853,7 +843,7 @@ export function Scanner() {
                           (msg.sender === "bot" ? (
                             <BotMessageContent text={msg.text} />
                           ) : (
-                            <div className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word text-white">
+                            <div className="text-sm leading-relaxed whitespace-pre-wrap break-words text-white">
                               {msg.text}
                             </div>
                           ))}
@@ -886,12 +876,12 @@ export function Scanner() {
                   </div>
                 </motion.div>
               )}
+
               <div ref={messagesEndRef} />
             </div>
           )}
         </div>
 
-        {/* Input Area */}
         <div className="absolute bottom-0 left-0 w-full bg-linear-to-t from-white via-white to-transparent pt-10 pb-6 px-4">
           <div className="max-w-3xl mx-auto relative">
             <AnimatePresence>
@@ -927,6 +917,7 @@ export function Scanner() {
               >
                 <Plus size={22} />
               </button>
+
               <input
                 type="file"
                 ref={fileInputRef}
@@ -953,6 +944,7 @@ export function Scanner() {
                 >
                   <Camera size={22} />
                 </button>
+
                 <button
                   onClick={() => handleSend()}
                   disabled={!inputText.trim() && !selectedImage}
@@ -972,6 +964,7 @@ export function Scanner() {
                 </button>
               </div>
             </div>
+
             <div className="text-center mt-3">
               <p className="text-xs text-gray-400">
                 Agri-Scan AI có thể mắc lỗi. Hãy kiểm tra lại thông tin quan
@@ -982,7 +975,6 @@ export function Scanner() {
         </div>
       </div>
 
-      {/* Camera Modal */}
       <AnimatePresence>
         {isCameraOpen && (
           <motion.div
@@ -999,12 +991,14 @@ export function Scanner() {
                 screenshotFormat="image/jpeg"
                 className="w-full h-full object-cover"
               />
+
               <button
                 onClick={() => setIsCameraOpen(false)}
                 className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70"
               >
                 <X size={24} />
               </button>
+
               <div className="absolute bottom-6 left-0 right-0 flex justify-center">
                 <button
                   onClick={capture}

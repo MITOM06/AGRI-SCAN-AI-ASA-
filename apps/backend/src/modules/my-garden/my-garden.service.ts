@@ -23,7 +23,7 @@ export class MyGardenService {
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly weatherService: WeatherService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   private get aiServiceUrl(): string {
     return this.configService.get<string>('AI_SERVICE_URL', 'http://localhost:8000');

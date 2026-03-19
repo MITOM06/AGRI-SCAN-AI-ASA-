@@ -31,6 +31,7 @@ interface AuthContextType {
   ) => void;
   loginWithGoogle: () => void; // ← THÊM DÒNG NÀY
   loginWithFacebook: () => void;
+  setPassword: (newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -117,6 +118,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const setPassword = useCallback(
+    async (newPassword: string) => {
+      await authApi.setPassword(newPassword);
+      await refreshUser(); // Cập nhật lại isPasswordSet
+    },
+    [refreshUser],
+  );
+
   // ── ĐĂNG XUẤT ────────────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     try {
@@ -165,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         handleOAuthSuccess,
         loginWithGoogle, // Thêm vào đây
         loginWithFacebook, // Thêm vào đây
+        setPassword
       }}
     >
       {children}
