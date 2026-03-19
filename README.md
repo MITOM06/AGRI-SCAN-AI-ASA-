@@ -1,4 +1,4 @@
-# 🌿 AGRI-SCAN AI | BÁC SĨ CÂY TRỒNG THÔNG MINH
+# AGRI-SCAN AI | BÁC SĨ CÂY TRỒNG THÔNG MINH
 
 > **Dự án tham gia:** Website & AI Innovation Contest 2026
 
@@ -93,7 +93,7 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
 
 | Thành viên | Vai trò | Trách nhiệm chính | University |
 | :--- | :--- | :--- | :--- |
-| **Bùi Huỳnh Tây** | **Team Leader & AI Architect** | Quản lý dự án, thiết kế kiến trúc AI RAG, triển khai LLM. | ĐH CNTT - ĐHQG-HCM |
+| **Bùi Huỳnh Tây** | **Team Leader & AI Architect** | Quản lý dự án, thiết kế kiến trúc AI RAG, triển khai LLM. | Trường ĐH CNTT - ĐHQG-HCM |
 | **Hà Lê Thành Nhân** | **AI Engineer** | Nghiên cứu & huấn luyện Computer Vision Model (ViT + MoE), tiền xử lý Dataset. | Đại học FPT |
 | **Trần Phúc Khang** | **Backend & DevOps** | Phát triển Core API (NestJS), thiết kế Database (MongoDB), đóng gói Docker & CI/CD. | FPT Aptech |
 | **Châu Băng Sơn** | **UI/UX & Web Dev** | Thiết kế giao diện Figma, phát triển Dashboard Admin & Landing Page (React/NextJS). | Đại học FPT |
@@ -110,16 +110,34 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
    * Lưu lại các phiên chẩn đoán và lịch sử chat với AI để người dùng theo dõi tiến triển của cây.
 
 <p align="center">
-<img src="https://via.placeholder.com/600x350.png?text=Demo+Plant+Wiki+Interface" alt="Plant Wiki Demo" width="600px" style="border-radius: 10px;">
+<img src="img/chatbot.png" alt="Plant Wiki Demo" width="800px" style="border-radius: 10px;">
 </p>
+
 2. **Plant Wiki:**
    * Tra cứu danh sách các loại cây và các bệnh lý đặc trưng của chúng.
+
+<p align="center">
+<img src="img/wiki.png" alt="Plant Wiki Demo" width="500px" style="border-radius: 10px;">
+<img src="img/wiki1.png" alt="Plant Wiki Demo" width="500px" style="border-radius: 10px;">
+</p>
+
 3. **Vườn của tôi:**
    * Hiển thị thông tin chi tiết về loại bệnh hệ thống vừa nhận diện.
    * Đề xuất hướng xử lý tức thời (cắt tỉa, cách ly, loại thuốc sinh học khuyên dùng).
    * Gợi ý lộ trình chăm sóc phục hồi.
+
+<p align="center">
+<img src="img/mygarden.png" alt="Plant Wiki Demo" height="410px" style="border-radius: 10px;">
+<img src="img/mygarden1.png" alt="Plant Wiki Demo" height="410px" style="border-radius: 10px;">
+</p>
+
 4. **Thời tiết:**
    * Dự báo thời tiết sắp tới
+
+<p align="center">
+<img src="img/thoitiet.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
+<img src="img/thoitiet1.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
+</p>
 
 ### 2.2. Các tính năng KHÔNG LÀM trong giai đoạn này (Out of Scope):
 * *Sàn thương mại điện tử:* Không tích hợp chức năng mua bán vật tư nông nghiệp/thuốc trừ sâu.
