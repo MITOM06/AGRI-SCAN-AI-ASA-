@@ -1,6 +1,9 @@
-🌿 AGRI-SCAN AI | BÁC SĨ CÂY TRỒNG THÔNG MINH
-> **Dự án tham gia:** Website & AI Innovation Contest 2026 
+# 🌿 AGRI-SCAN AI | BÁC SĨ CÂY TRỒNG THÔNG MINH
+
+> **Dự án tham gia:** Website & AI Innovation Contest 2026
+
 > **Hạng mục:** Bảng A - Foundation Track
+
 > **Trạng thái:** Đang phát triển
 
 <p align="center">
