@@ -219,7 +219,7 @@ Quy trình xử lý dữ liệu được thiết kế khép kín nhằm tối ư
 3.  **Tối ưu hóa phản hồi:** Kết quả chẩn đoán được đưa vào hệ thống RAG để LLM (Llama-2-70B) tạo ra lộ trình chăm sóc cá nhân hóa (Personalized Calendar).
 
 <p align="center">
-<img src="img/sodo1.png" alt="AI Architechture" height="400px" style="border-radius: 10px;">
+<img src="img/gemini_last.jpg" alt="AI Architechture" height="400px" style="border-radius: 10px;">
 </p>
 
 ### 3.5. Kết quả thực nghiệm 
