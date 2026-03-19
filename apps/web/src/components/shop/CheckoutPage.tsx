@@ -23,7 +23,9 @@ export function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
 
   const [receiverName, setReceiverName] = useState("Trần Văn Nông");
+
   const [phoneNumber, setPhoneNumber] = useState("0934104327");
+
   const [shippingAddress, setShippingAddress] = useState(
     "475A Điện Biên Phủ, Phường 25, Quận Bình Thạnh, TP. Hồ Chí Minh",
   );
@@ -99,12 +101,15 @@ export function CheckoutPage() {
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) return;
 
+
     setCheckoutError("");
     setIsSubmitting(true);
+
 
     try {
       if (!receiverName.trim()) {
         setCheckoutError("Vui lòng nhập tên người nhận.");
+
         return;
       }
 
@@ -113,10 +118,12 @@ export function CheckoutPage() {
         return;
       }
 
+
       if (!shippingAddress.trim()) {
         setCheckoutError("Vui lòng nhập địa chỉ nhận hàng.");
         return;
       }
+
 
       const sellerId = await resolveSellerId();
 
@@ -134,6 +141,7 @@ export function CheckoutPage() {
         sellerId,
         items: cartItems.map((item) => ({
           productId: String(item._id),
+
           quantity: item.quantity,
         })),
         shippingAddress,
@@ -298,6 +306,7 @@ export function CheckoutPage() {
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                     />
                   </div>
+
                 </div>
 
                 <div>
@@ -312,6 +321,7 @@ export function CheckoutPage() {
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
                   />
                 </div>
+
 
                 {checkoutError && (
                   <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
@@ -493,10 +503,12 @@ export function CheckoutPage() {
               <button
                 onClick={handlePlaceOrder}
                 disabled={isSubmitting}
+
                 className={`w-full py-5 rounded-2xl font-bold text-xl transition-all duration-300 shadow-lg ${
                   isSubmitting
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-red-500 text-white hover:bg-red-600 hover:shadow-red-500/30"
+
                 }`}
               >
                 {isSubmitting ? "Đang xử lý..." : "Đặt hàng ngay"}
