@@ -16,7 +16,7 @@ interface AuthContextType {
   user: IUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<any>;
   register: (
     email: string,
     fullName: string,
@@ -24,6 +24,13 @@ interface AuthContextType {
   ) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  handleOAuthSuccess: (
+    accessToken: string,
+    refreshToken: string,
+    user: IUser,
+  ) => void;
+  loginWithGoogle: () => void; // ← THÊM DÒNG NÀY
+  loginWithFacebook: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,19 +41,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Khôi phục session từ localStorage khi app load
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
     const accessToken = localStorage.getItem("accessToken");
-    if (storedUser && accessToken) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        // JSON lỗi → xóa sạch
-        localStorage.removeItem("user");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+
+    if (accessToken) {
+      // Hiển thị user cũ từ cache trước để UI không bị trống
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch {
+          localStorage.removeItem("user");
+        }
       }
+
+      // Fetch profile mới nhất từ server
+      authApi
+        .getProfile()
+        .then((profile) => {
+          localStorage.setItem("user", JSON.stringify(profile));
+          setUser(profile);
+        })
+        .catch(() => {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("user");
+          setUser(null);
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false); // ← quan trọng, không có token vẫn phải tắt loading
     }
-    setIsLoading(false);
   }, []);
 
   // ── ĐĂNG NHẬP ────────────────────────────────────────────────────────────────
@@ -60,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("refreshToken", response.refreshToken);
       localStorage.setItem("user", JSON.stringify(response.user));
       setUser(response.user);
+      return response.user;
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +133,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const loginWithGoogle = useCallback(() => {
+    authApi.loginWithGoogle();
+  }, []);
+
+  const loginWithFacebook = useCallback(() => {
+    authApi.loginWithFacebook();
+  }, []);
+
+  // ── XỬ LÝ SAU OAUTH ──────────────────────────────────────────────────────────
+  const handleOAuthSuccess = useCallback(
+    (accessToken: string, refreshToken: string, userData: IUser) => {
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
+    },
+    [],
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -118,6 +162,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         refreshUser,
+        handleOAuthSuccess,
+        loginWithGoogle, // Thêm vào đây
+        loginWithFacebook, // Thêm vào đây
       }}
     >
       {children}

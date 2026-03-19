@@ -20,8 +20,15 @@ export class Disease {
   @Prop({ required: true })
   name: string; // Tên bệnh
 
-  @Prop({ required: true })
-  pathogen: string; // Tác nhân (Nấm, Vi khuẩn...)
+  // ĐỔI required: false vì AI data không có pathogen cụ thể
+  @Prop({ type: String, default: null })
+  pathogen?: string | null;
+
+  @Prop({ type: String, default: null })
+  commonName?: string | null;
+
+   @Prop({ type: String, default: null })
+  description?: string | null;
 
   @Prop({ enum: ['FUNGUS', 'BACTERIA', 'VIRUS', 'PEST', 'NUTRIENT', 'HEALTHY'] })
   type: string;

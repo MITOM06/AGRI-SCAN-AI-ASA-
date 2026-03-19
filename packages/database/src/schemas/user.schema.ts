@@ -8,8 +8,9 @@ export class User {
   @Prop({ required: true, unique: true })
   email: string;
 
-  @Prop({ required: true })
-  password: string;
+  // ✅ THAY ĐỔI: Không còn required vì OAuth user chưa có mật khẩu ban đầu
+  @Prop({ type: String, default: null, required: false }) 
+  password?: string | null;
 
   @Prop({ required: true })
   fullName: string;
@@ -17,14 +18,34 @@ export class User {
   @Prop({ default: 'FARMER', enum: ['FARMER', 'EXPERT', 'ADMIN'] })
   role: string;
 
-  // 🔥 THÊM MỚI: Quản lý gói cước
+  // ── OAUTH FIELDS ─────────────────────────────────────────────────────────────
+
+  // Google OAuth ID (sparse cho phép nhiều document có giá trị null)
+  @Prop({ type: String, default: null, sparse: true }) // THÊM type: String VÀO ĐÂY
+  googleId?: string | null;
+
+  // Facebook OAuth ID
+  @Prop({ type: String, default: null, sparse: true }) // THÊM type: String VÀO ĐÂY
+  facebookId?: string | null;
+
+  // Các phương thức đăng nhập đã liên kết: ['local'], ['google'], ['local','google']
+  @Prop({ type: [String], default: [], enum: ['local', 'google', 'facebook'] })
+  authProviders: string[];
+
+  // false = OAuth user chưa thiết lập mật khẩu, true = đã có mật khẩu
+  @Prop({ default: false })
+  isPasswordSet: boolean;
+
+  // ── PLAN FIELDS ──────────────────────────────────────────────────────────────
+
   @Prop({ default: 'FREE', enum: ['FREE', 'PREMIUM', 'VIP'] })
   plan: string;
 
   @Prop({ type: Date, default: null })
   planExpiresAt: Date | null;
 
-  // 🔥 THÊM MỚI: Quản lý bộ đếm theo ngày
+  // ── RATE LIMIT FIELDS ────────────────────────────────────────────────────────
+
   @Prop({ default: 0 })
   dailyImageCount: number;
 
@@ -32,7 +53,7 @@ export class User {
   dailyPromptCount: number;
 
   @Prop({ type: Date, default: Date.now })
-  lastResetDate: Date; // Ngày cuối cùng sử dụng để biết khi nào qua ngày mới
+  lastResetDate: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

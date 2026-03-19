@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { useRouter } from "next/navigation";
 import {
@@ -14,15 +14,137 @@ import {
   Calendar,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { scanApi } from "@agri-scan/shared";
+
+type StatsState = {
+  scanCount: number;
+  chatCount: number;
+  diseaseCount: number;
+};
 
 export function UserProfile() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
+  const [stats, setStats] = useState<StatsState>({
+    scanCount: 0,
+    chatCount: 0,
+    diseaseCount: 0,
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setLoadingStats(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadStats = async () => {
+      try {
+        setLoadingStats(true);
+
+        const [scans, chats] = await Promise.all([
+          scanApi.getScanHistory(),
+          scanApi.getChatHistory(),
+        ]);
+
+        const diseases = new Set(
+          scans.flatMap((scan: any) =>
+            scan.aiPredictions
+              ?.map((prediction: any) => prediction?.diseaseId?.name)
+              .filter(Boolean) ?? [],
+          ),
+        );
+
+        if (!isMounted) return;
+
+        setStats({
+          scanCount: scans.length,
+          chatCount: chats.length,
+          diseaseCount: diseases.size,
+        });
+      } catch (error) {
+        console.error("Load profile stats failed:", error);
+
+        if (!isMounted) return;
+
+        setStats({
+          scanCount: 0,
+          chatCount: 0,
+          diseaseCount: 0,
+        });
+      } finally {
+        if (isMounted) {
+          setLoadingStats(false);
+        }
+      }
+    };
+
+    loadStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
   const handleLogout = () => {
     logout();
     router.push("/");
   };
+
+  const planBadge = (() => {
+    if (user?.plan === "PREMIUM") {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold shadow-sm">
+          <Star size={12} className="fill-current" />
+          Premium
+        </span>
+      );
+    }
+
+    if (user?.plan === "VIP") {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold shadow-sm">
+          <Crown size={12} className="fill-current" />
+          VIP
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-bold shadow-sm">
+        <Zap size={12} className="fill-current" />
+        Free
+      </span>
+    );
+  })();
+
+  const planIcon = (() => {
+    if (user?.plan === "VIP") {
+      return <Crown size={18} className="text-amber-500" />;
+    }
+
+    if (user?.plan === "PREMIUM") {
+      return <Star size={18} className="text-purple-500" />;
+    }
+
+    return <Zap size={18} className="text-gray-500" />;
+  })();
+
+  const planText = (() => {
+    if (user?.plan === "PREMIUM") return "Premium";
+    if (user?.plan === "VIP") return "VIP";
+    return "Free";
+  })();
+
+  const planTextColor =
+    user?.plan === "VIP"
+      ? "text-amber-600"
+      : user?.plan === "PREMIUM"
+        ? "text-purple-600"
+        : "text-gray-700";
 
   if (!user) {
     return (
@@ -54,31 +176,18 @@ export function UserProfile() {
                     <User size={40} />
                   </div>
                 </div>
+
                 <button className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full shadow-md border border-gray-100 text-gray-500 hover:text-primary transition-colors">
                   <Settings size={16} />
                 </button>
               </div>
 
               <div className="text-center sm:text-left flex-1">
-                <div className="flex items-center justify-center sm:justify-start gap-2">
+                <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                   <h1 className="text-3xl font-extrabold text-white drop-shadow-md">
                     {user.fullName}
                   </h1>
-                  {user.plan === "PREMIUM" && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold shadow-sm">
-                      <Star size={12} className="fill-current" /> Premium
-                    </span>
-                  )}
-                  {user.plan === "VIP" && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold shadow-sm">
-                      <Crown size={12} className="fill-current" /> VIP
-                    </span>
-                  )}
-                  {(!user.plan || user.plan === "FREE") && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-bold shadow-sm">
-                      <Zap size={12} className="fill-current" /> Free
-                    </span>
-                  )}
+                  {planBadge}
                 </div>
                 <p className="text-gray-500 font-medium">{user.email}</p>
               </div>
@@ -99,39 +208,20 @@ export function UserProfile() {
                 {/* Plan Info Card */}
                 <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
                   <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    {user.plan === "VIP" ? (
-                      <Crown size={18} className="text-amber-500" />
-                    ) : user.plan === "PREMIUM" ? (
-                      <Star size={18} className="text-purple-500" />
-                    ) : (
-                      <Zap size={18} className="text-gray-500" />
-                    )}
+                    {planIcon}
                     Gói dịch vụ hiện tại
                   </h3>
 
                   <div className="mb-4">
-                    <span
-                      className={`text-2xl font-bold ${
-                        user.plan === "VIP"
-                          ? "text-amber-600"
-                          : user.plan === "PREMIUM"
-                            ? "text-purple-600"
-                            : "text-gray-700"
-                      }`}
-                    >
-                      {user.plan === "PREMIUM"
-                        ? "Premium"
-                        : user.plan === "VIP"
-                          ? "VIP"
-                          : "Free"}
+                    <span className={`text-2xl font-bold ${planTextColor}`}>
+                      {planText}
                     </span>
+
                     {user.planExpiresAt && (
                       <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
                         <Calendar size={14} />
                         Hết hạn:{" "}
-                        {new Date(user.planExpiresAt).toLocaleDateString(
-                          "vi-VN",
-                        )}
+                        {new Date(user.planExpiresAt).toLocaleDateString("vi-VN")}
                       </p>
                     )}
                   </div>
@@ -149,22 +239,46 @@ export function UserProfile() {
                     <Leaf size={18} className="text-primary" />
                     Thống kê
                   </h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Cây đã quét</span>
-                      <span className="font-bold text-gray-900">12</span>
+
+                  {loadingStats ? (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Cây đã quét</span>
+                        <span className="font-bold text-gray-400">...</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Bệnh phát hiện</span>
+                        <span className="font-bold text-gray-400">...</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Đoạn chat</span>
+                        <span className="font-bold text-gray-400">...</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">
-                        Bệnh phát hiện
-                      </span>
-                      <span className="font-bold text-gray-900">5</span>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Cây đã quét</span>
+                        <span className="font-bold text-gray-900">
+                          {stats.scanCount}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">
+                          Bệnh phát hiện
+                        </span>
+                        <span className="font-bold text-gray-900">
+                          {stats.diseaseCount}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Đoạn chat</span>
+                        <span className="font-bold text-gray-900">
+                          {stats.chatCount}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Đóng góp</span>
-                      <span className="font-bold text-gray-900">3</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
@@ -174,6 +288,7 @@ export function UserProfile() {
                   <h3 className="text-lg font-bold text-gray-900 mb-4">
                     Hoạt động gần đây
                   </h3>
+
                   <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
                       <div
@@ -199,6 +314,7 @@ export function UserProfile() {
                       </div>
                     ))}
                   </div>
+
                   <button className="w-full mt-4 py-2 text-sm text-primary font-medium hover:text-primary-dark transition-colors">
                     Xem tất cả hoạt động
                   </button>

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { APP_NAME, APP_DESCRIPTION } from "@agri-scan/shared";
-import { Navbar } from "@/components/layout/Navbar";
 import { Providers } from "./providers";
 import "./globals.css";
+import { CartProvider } from "@/context/CartContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,10 +35,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <div className="min-h-screen bg-gray-50 font-sans">
-            <Navbar />
-            <main>{children}</main>
-          </div>
+          <CartProvider>{children}</CartProvider>
         </Providers>
       </body>
     </html>

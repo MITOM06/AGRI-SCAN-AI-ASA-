@@ -46,6 +46,8 @@ export default function RootLayout() {
         <Stack.Screen name="auth/forgot-password" />
         <Stack.Screen name="auth/otp-verification" />
         <Stack.Screen name="auth/reset-password" />
+        <Stack.Screen name="auth/set-password" />
+        <Stack.Screen name="auth/AuthHeader" />
         <Stack.Screen name="user" />
         <Stack.Screen name="scan" />
         <Stack.Screen name="treeDic" />
@@ -54,8 +56,8 @@ export default function RootLayout() {
         <Stack.Screen name="about" />
         <Stack.Screen name="payment" />
         <Stack.Screen name="community" />
-        <Stack.Screen name="settings" />
-        <Stack.Screen name="notifications" />
+        <Stack.Screen name="setting" />
+        <Stack.Screen name="notification" />
         <Stack.Screen name="tips" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="weather" />
@@ -64,6 +66,14 @@ export default function RootLayout() {
         <Stack.Screen name="product-detail" />
         <Stack.Screen name="my-cart" />
         <Stack.Screen name="buy-detail" />
+        <Stack.Screen name="admin" />
+        <Stack.Screen name="feedback" />
+        <Stack.Screen name="checkout" />
+        <Stack.Screen name="success-order" />
+        <Stack.Screen name="my-shop" />
+        <Stack.Screen name="add-product" />
+        <Stack.Screen name="garden-detail" />
+        <Stack.Screen name="garden-setup" />
       </Stack>
     </SafeAreaProvider>
   );

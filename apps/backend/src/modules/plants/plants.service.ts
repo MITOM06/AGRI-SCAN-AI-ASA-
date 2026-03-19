@@ -3,30 +3,78 @@ import { Model } from 'mongoose';
 import { Plant, Disease } from '@agri-scan/database';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Injectable, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, NotFoundException, OnApplicationBootstrap, Logger } from '@nestjs/common';
 
 @Injectable()
 export class PlantsService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(PlantsService.name);
+
   constructor(
     @InjectModel(Plant.name) private plantModel: Model<Plant>,
     @InjectModel(Disease.name) private diseaseModel: Model<Disease>,
   ) { }
 
   async onApplicationBootstrap() {
-    console.log('🌱 Đang kiểm tra và đồng bộ dữ liệu Tủ thuốc từ team AI...');
-    try {
-      const result = await this.seedData();
-      console.log(result.message);
-    } catch (error) {
-      console.error('⚠️ Bỏ qua đồng bộ dữ liệu:', (error as Error).message);
+    const count = await this.plantModel.countDocuments();
+
+    if (count === 0) {
+      // Lần đầu tiên: DB trống → seed toàn bộ
+      console.log('🌱 DB trống, đang seed dữ liệu lần đầu...');
+      try {
+        const result = await this.seedData();
+        console.log(result.message);
+      } catch (error) {
+        console.error('⚠️ Seed thất bại:', (error as Error).message);
+      }
+    } else {
+      // DB đã có data → chỉ sync (upsert) không xóa, im lặng để không spam log
+      console.log(`🌱 DB đã có ${count} cây. Đang đồng bộ dữ liệu AI...`);
+      try {
+        const result = await this.seedData();
+        console.log(result.message);
+      } catch (error) {
+        console.error('⚠️ Sync thất bại:', (error as Error).message);
+      }
     }
   }
-
+async findDiseaseByLabel(label: string) {
+  if (!label) return null;
+  
+  try {
+    // 1. Tìm chính xác theo tên
+    let disease = await this.diseaseModel.findOne({
+      name: { $regex: label, $options: 'i' }
+    }).exec();
+    
+    if (disease) return disease;
+    
+    // 2. Nếu không có, tách label (format: "Plant___Disease")
+    const cleanLabel = label.replace(/___/g, ' ').replace(/_/g, ' ');
+    const words = cleanLabel.split(' ');
+    
+    if (words.length > 1) {
+      // Bỏ tên cây, chỉ lấy tên bệnh (phần sau)
+      const diseaseName = words.slice(1).join(' ');
+      disease = await this.diseaseModel.findOne({
+        name: { $regex: diseaseName, $options: 'i' }
+      }).exec();
+      
+      if (disease) return disease;
+    }
+    
+    this.logger.warn(`Không tìm thấy disease cho label: ${label}`);
+    return null;
+    
+  } catch (error) {
+    this.logger.error('Lỗi khi tìm disease:', error);
+    return null;
+  }
+}
   // 1. Lấy danh sách cây (Chỉ lấy APPROVED hoặc data cũ chưa có trường status)
   async findAllPlants() {
     return this.plantModel.find({
       $or: [{ status: 'APPROVED' }, { status: { $exists: false } }]
-    }).select('commonName scientificName images status').exec();
+    }).select('commonName scientificName family images status category growthRate light water').exec();
   }
 
   // 2. Lấy chi tiết 1 loại cây
@@ -52,25 +100,23 @@ export class PlantsService implements OnApplicationBootstrap {
     return newPlant.save();
   }
 
-  // 5. Bơm dữ liệu
- // 5. Bơm dữ liệu (Cây Trồng + Từ điển Bệnh + Nối bệnh vào cây)
   async seedData() {
     try {
-// 1. ĐỌC FILE CÂY TRỒNG
+      // 1. ĐỌC FILE CÂY TRỒNG
       const plantsPath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plants_data.json');
       const plantsRawData = fs.readFileSync(plantsPath, 'utf-8');
       const plantsList = JSON.parse(plantsRawData);
 
       // 🔥 FIX LỖI TYPE 'never': Khai báo rõ kiểu dữ liệu là mảng chứa bất kỳ object nào (any[])
-      const plantDocs: any[] = []; 
-      
+      const plantDocs: any[] = [];
+
       for (const plantData of plantsList) {
         const plant = await this.plantModel.findOneAndUpdate(
           { scientificName: plantData.scientificName },
           plantData,
           { upsert: true, new: true }
         );
-        
+
         // 🔥 Bổ sung kiểm tra plant tồn tại để tránh lỗi strict null check
         if (plant) {
           plant.diseases = []; // Reset mảng bệnh trước khi nối lại
@@ -82,49 +128,37 @@ export class PlantsService implements OnApplicationBootstrap {
       // 2. ĐỌC FILE BỆNH TỪ TEAM AI
       const diseasePath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plant_knowledge.json');
       const diseaseRawData = fs.readFileSync(diseasePath, 'utf-8');
-      const plantKnowledge: Record<string, any> = JSON.parse(diseaseRawData);
-
+      const diseaseList: any[] = JSON.parse(diseaseRawData);
       let diseaseCount = 0;
 
-      for (const [yoloLabel, info] of Object.entries(plantKnowledge)) {
-        const isHealthy = info['Status'] === 'Healthy' || info['Status'] === 'Normal';
-        
-        const mappedData = isHealthy ? {
-          name: yoloLabel,
-          commonName: 'Cây khỏe mạnh',
-          description: info['Analysis'] || info['Detail'] || 'Cây phát triển bình thường.',
-          type: 'HEALTHY',
-          treatments: { biological: [], chemical: [] },
-          status: 'APPROVED'
-        } : {
-          name: yoloLabel,
-          commonName: info['LOAI_BENH'],
-          description: `**Đặc điểm:** ${info['DAC_DIEM']}\n\n**Nguyên nhân:** ${info['NGUYEN_NHAN']}\n\n**Lưu ý:** ${info['LUU_Y']}`,
-          type: 'DISEASE',
-          treatments: {
-            biological: [info['GIAI_PHAP']],
-            chemical: [info['LIEU_TRINH_VA_THUOC']?.['Hoat_chat_dac_tri'], info['LIEU_TRINH_VA_THUOC']?.['Lo_trinh_14_ngay']].filter(Boolean),
-          },
-          status: 'APPROVED'
-        };
-        
-          
+      for (const diseaseData of diseaseList) {
+        const isHealthy = diseaseData.type === 'HEALTHY' || diseaseData.name?.toLowerCase().includes('healthy');
+
         const savedDisease = await this.diseaseModel.findOneAndUpdate(
-          { name: yoloLabel },
-          mappedData,
+          { name: diseaseData.name },
+          diseaseData, // Truyền trực tiếp object JSON vào
           { upsert: true, new: true }
         );
         diseaseCount++;
-        
-        // 3. THUẬT TOÁN NỐI BỆNH VÀO ĐÚNG CÂY
-        const tenCayString = info['TEN_CAY'] || '';
-        const match = tenCayString.match(/\((.*?)\)/); // Trích xuất tên khoa học trong ngoặc tròn
-        
+
+
+        const commonNameString = diseaseData.commonName || '';
+        const match = commonNameString.match(/\((.*?)\)/);
+
         if (match && match[1]) {
-          const targetPlant = plantDocs.find(p => p.scientificName === match[1]);
-          if (targetPlant && !isHealthy) { // Không nhét "Cây khỏe mạnh" vào danh sách bệnh
-            targetPlant.diseases.push(savedDisease._id);
-            await targetPlant.save();
+          const scientificNameFromDisease = match[1];
+          // Tìm cây tương ứng đã được insert ở bước 1
+          const targetPlant = plantDocs.find(p => p.scientificName === scientificNameFromDisease);
+
+          if (targetPlant && !isHealthy) { // Chỉ nhét các bệnh thực sự vào mảng diseases của cây
+            // Ép kiểu ID sang string để kiểm tra trùng lặp (tránh 1 bệnh bị push 2 lần khi chạy seed nhiều lần)
+            const diseaseIdStr = savedDisease._id.toString();
+            const hasDisease = targetPlant.diseases.some((id: any) => id.toString() === diseaseIdStr);
+
+            if (!hasDisease) {
+              targetPlant.diseases.push(savedDisease._id);
+              await targetPlant.save();
+            }
           }
         }
       }

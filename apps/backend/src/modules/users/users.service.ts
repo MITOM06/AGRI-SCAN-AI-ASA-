@@ -2,20 +2,64 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import { User, UserDocument } from '@agri-scan/database';
-
+import { Payment, PaymentDocument } from '@agri-scan/database';
 @Injectable()
 export class UsersService {
   constructor(
+    @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) { }
-
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).exec();
   }
 
-  async findById(id: string): Promise<UserDocument | null> {
-    return this.userModel.findById(id).exec();
+  async createOAuthUser(data: {
+    email: string;
+    fullName: string;
+    provider: 'google' | 'facebook';
+    providerId: string;
+  }): Promise<UserDocument> {
+    const providerIdField = data.provider === 'google' ? 'googleId' : 'facebookId';
+
+    const newUser = new this.userModel({
+      email: data.email,
+      fullName: data.fullName,
+      password: null,
+      isPasswordSet: false,
+      authProviders: [data.provider],
+      [providerIdField]: data.providerId,
+    });
+
+    return newUser.save();
   }
+
+  // ── 2. Liên kết thêm OAuth provider vào user đã có ──────────
+  async linkOAuthProvider(
+    userId: string,
+    data: { providerIdField: string; providerId: string; provider: string },
+  ): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      $set: { [data.providerIdField]: data.providerId },
+      $addToSet: { authProviders: data.provider },
+    });
+  }
+
+  // ── 3. Thiết lập mật khẩu lần đầu cho OAuth user ────────────
+  async setPassword(userId: string, hashedPassword: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      $set: {
+        password: hashedPassword,
+        isPasswordSet: true,
+      },
+      $addToSet: { authProviders: 'local' },
+    });
+  }
+
+  // ── 4. Tìm user theo ID (nếu chưa có trong service) ─────────
+  async findById(userId: string): Promise<UserDocument | null> {
+    return this.userModel.findById(userId).exec();
+  }
+
 
   async create(userData: Partial<User>): Promise<UserDocument> {
     const createdUser = new this.userModel(userData);
@@ -25,38 +69,6 @@ export class UsersService {
   async updatePassword(email: string, newPassword: string): Promise<void> {
     await this.userModel.updateOne({ email }, { password: newPassword }).exec();
   }
-
-  // 🔥 THÊM MỚI: Hàm kiểm tra và reset bộ đếm nếu qua ngày mới
-  async checkAndResetDailyQuotas(user: UserDocument): Promise<UserDocument> {
-    const today = new Date();
-    const lastReset = new Date(user.lastResetDate);
-
-    let needsUpdate = false;
-
-    // 1. Kiểm tra hết hạn gói cước
-    if (user.plan !== 'FREE' && user.planExpiresAt && user.planExpiresAt < today) {
-      user.plan = 'FREE';
-      user.planExpiresAt = null; // TypeScript giờ đã cho phép
-      needsUpdate = true;
-    }
-
-    // 2. Kiểm tra qua ngày mới
-    if (lastReset.toDateString() !== today.toDateString()) {
-      user.dailyImageCount = 0;
-      user.dailyPromptCount = 0;
-      user.lastResetDate = today;
-      needsUpdate = true;
-    }
-
-    if (needsUpdate) {
-      // Dùng markModified nếu cần thiết với các trường phức tạp, 
-      // nhưng ở đây gán trực tiếp và save() là đủ.
-      await user.save();
-    }
-
-    return user;
-  }
-
   // 🔥 THÊM MỚI: Hàm Mock Payment Nâng cấp gói
   async upgradePlan(userId: string, plan: 'PREMIUM' | 'VIP'): Promise<UserDocument> {
     const user = await this.userModel.findById(userId);
@@ -74,6 +86,14 @@ export class UsersService {
     user.dailyPromptCount = 0;
     user.lastResetDate = now;
 
+    const PLAN_PRICES = { PREMIUM: 99000, VIP: 199000 };
+    await this.paymentModel.create({
+      userId: user._id,
+      plan,
+      amount: PLAN_PRICES[plan],
+      status: 'SUCCESS',
+      method: 'MOCK',
+    });
     return user.save();
   }
 }

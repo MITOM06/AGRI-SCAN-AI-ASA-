@@ -72,9 +72,14 @@ export function Payment() {
     setError(null);
     setIsLoading(true);
     try {
-      // Map tên plan từ URL param sang format backend ('PREMIUM' | 'VIP')
-      const planKey = plan.name.toUpperCase() as "PREMIUM" | "VIP";
-      await userApi.upgradePlan(planKey);
+      const PLAN_MAP: Record<string, 'PREMIUM' | 'VIP'> = {
+        PLUS: 'PREMIUM',
+        PREMIUM: 'PREMIUM',
+        PRO: 'VIP',
+        VIP: 'VIP',
+      };
+      const planKey = PLAN_MAP[plan.name.toUpperCase()];
+      if (!planKey) throw new Error('Gói không hợp lệ');
 
       // Gọi lại /auth/profile để đồng bộ user state trong context
       await refreshUser();

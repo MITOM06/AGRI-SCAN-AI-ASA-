@@ -1,46 +1,122 @@
-/**
- * Scan History Types - Dùng chung cho Web và Mobile
- * Khớp với Collection: scan_histories trong MongoDB
- */
-
 import { IDisease } from './disease.types';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SCAN — TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface IAIPrediction {
-  diseaseId: string;
-  diseaseName?: string;    // Tên bệnh để hiển thị
-  confidence: number;      // Độ tin cậy (0.0 - 1.0, VD: 0.95 = 95%)
+  diseaseId: IDisease | string;  // Đã populate khi COMPLETED, chỉ là string ID khi chưa
+  confidence: number;            // 0.0 – 1.0
 }
 
 /**
- * Kết quả thô từ FastAPI YOLO model, trả về trong IScanResult.predictions
- * Không giống IAIPrediction — đây là format của AI service, không phải DB
+ * Response của POST /scan/analyze (bước 1 — gửi ảnh)
+ *
+ * THAY ĐỔI: Trước đây trả về predictions ngay lập tức.
+ * Giờ backend đẩy job vào RabbitMQ và trả về PROCESSING ngay.
+ * Frontend phải dùng scanHistoryId để poll GET /scan/status/:id.
  */
-export interface IYoloPrediction {
-  yolo_label: string;      // Nhãn bệnh từ YOLO model (ví dụ: "Bac_la_lua")
-  confidence: number;      // Độ tin cậy (0.0 - 1.0)
-  success: boolean;
+export interface IScanSubmitResponse {
+  scanHistoryId: string;
+  imageUrl: string;
+  status: 'PROCESSING';
+  message: string;
+}
+
+/**
+ * Response của GET /scan/status/:scanHistoryId (bước 2 — poll kết quả)
+ *
+ * MỚI HOÀN TOÀN: Không có type này trước đây.
+ * Poll endpoint này sau 2-3 giây cho đến khi status = COMPLETED | FAILED.
+ */
+export interface IScanStatusResponse {
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  message?: string;
+  // Chỉ có khi status = COMPLETED
+  scanHistoryId?: string;
+  imageUrl?: string;
+  predictions?: IAIPrediction[];
+  topDisease?: IDisease | null;
+}
+
+// Giữ IScanResult như alias để không break code cũ đang dùng
+// @deprecated — dùng IScanSubmitResponse thay thế
+export type IScanResult = IScanSubmitResponse;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHAT — TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface IChatMessage {
+  role: 'user' | 'ai';
+  content: string;
+  timestamp: string | Date;
+  status?: 'PENDING' | 'COMPLETED' | 'FAILED';
+}
+
+/**
+ * Response của POST /scan/chat (bước 1 — gửi câu hỏi)
+ *
+ * THAY ĐỔI: answer giờ là null khi status = PROCESSING.
+ * Frontend phải poll GET /scan/chat/sessions/:sessionId/status để lấy câu trả lời thật.
+ */
+export interface IChatSubmitResponse {
+  sessionId: string;
+  question: string;
+  answer: string | null;          // null khi PROCESSING, string khi COMPLETED
+  status: 'PROCESSING' | 'COMPLETED';
+  message?: string;
+}
+
+/**
+ * Response của GET /scan/chat/sessions/:sessionId/status (bước 2 — poll kết quả)
+ *
+ * MỚI HOÀN TOÀN: Không có type này trước đây.
+ */
+export interface IChatStatusResponse {
+  status: 'PROCESSING' | 'COMPLETED' | 'EMPTY' | 'FAILED';
+  answer?: string;
+  message?: string;
+  sessionId?: string;
+  messages?: IChatMessage[];
+}
+
+// Giữ IChatResponse như alias để không break code cũ
+// @deprecated — dùng IChatSubmitResponse thay thế
+export type IChatResponse = IChatSubmitResponse;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SESSION / HISTORY — TYPES (giữ nguyên, không thay đổi)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface IChatSession {
+  sessionId: string;
+  title: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+export interface IChatSessionDetail {
+  sessionId: string;
+  title: string | null;
+  messages: IChatMessage[];
 }
 
 export interface IScanHistory {
   id: string;
   userId: string;
-  imageUrl: string;        // URL ảnh người dùng upload
+  imageUrl: string;
   aiPredictions: IAIPrediction[];
-  isAccurate?: boolean;    // Người dùng feedback đúng/sai
+  isAccurate?: boolean;
   scannedAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface IScanHistoryCreate {
-  imageUrl: string;
-  aiPredictions: IAIPrediction[];
-}
-
 export interface IScanHistoryListItem {
   id: string;
   imageUrl: string;
-  topPrediction: IAIPrediction;  // Dự đoán có độ tin cậy cao nhất
+  topPrediction: IAIPrediction;
   scannedAt: Date;
 }
 
@@ -49,15 +125,4 @@ export interface IScanHistoryDetail extends IScanHistory {
     disease: IDisease;
     confidence: number;
   }>;
-}
-
-export interface IScanUploadRequest {
-  image: File | Blob;      // File ảnh để upload
-}
-
-export interface IScanResult {
-  scanHistoryId: string;
-  imageUrl: string;
-  predictions: IYoloPrediction[];  // Kết quả thô từ YOLO/FastAPI
-  topDisease?: IDisease;   // Chi tiết bệnh có độ tin cậy cao nhất (đã populate từ DB)
 }

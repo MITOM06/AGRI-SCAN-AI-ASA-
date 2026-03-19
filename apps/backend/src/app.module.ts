@@ -6,7 +6,12 @@ import { redisStore } from 'cache-manager-redis-yet';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { PlantsModule } from './modules/plants/plants.module';
-import {AiScanModule} from './modules/ai-scan/ai-scan.module';
+import { AiScanModule } from './modules/ai-scan/ai-scan.module';
+import { WeatherModule } from './modules/weather/Weather.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { ProductsModule } from './modules/products/products.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { MyGardenModule } from './modules/my-garden/my-garden.module';
 @Module({
   imports: [
     // 1. Load .env toàn cục
@@ -39,11 +44,15 @@ import {AiScanModule} from './modules/ai-scan/ai-scan.module';
       inject: [ConfigService],
     }),
 
-    
     UsersModule,
     AuthModule,
     PlantsModule,
     AiScanModule,
+    WeatherModule,
+    AdminModule,
+    ProductsModule,
+    OrdersModule,
+    MyGardenModule,
   ],
   controllers: [],
   providers: [],

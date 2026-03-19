@@ -7,10 +7,10 @@ export type WaterRequirement = 'Ít' | 'Trung bình' | 'Nhiều';
 
 export interface IPlant {
   id: string;
-  commonName: string;      
-  scientificName: string;  
-  family: string;          
-  description: string;     
+  commonName: string;
+  scientificName: string;
+  family: string;
+  description: string;
   images: string[];
   uses: string;
   care: string;
@@ -22,7 +22,7 @@ export interface IPlant {
   floweringTime?: string;
   suitableLocation?: string;
   soil?: string;
-  diseases: string[];      
+  diseases: string[];
   status: ApprovalStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -39,6 +39,10 @@ export interface IPlantListItem {
   family: string;
   images: string[];
   status: ApprovalStatus;
+  category: string[];
+  growthRate: GrowthRate;
+  light: LightRequirement;
+  water: WaterRequirement;
 }
 
 export interface IPlantDetail extends IPlant {

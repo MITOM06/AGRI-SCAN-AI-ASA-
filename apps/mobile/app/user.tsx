@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ImageBackground,
   Dimensions,
   Platform,
   Modal,
@@ -19,10 +18,7 @@ import {
   ArrowRight,
   Leaf,
   ShieldCheck,
-  Activity,
   Sprout,
-  Users,
-  Search,
   X,
   User as UserIcon,
   Settings,
@@ -31,6 +27,10 @@ import {
   CloudSun,
   BookOpen,
   ShoppingCart,
+  Store,
+  ShieldAlert,
+  MessageSquare,
+  Library,
 } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
@@ -44,6 +44,7 @@ export default function UserHomeScreen() {
     fullName?: string;
     email?: string;
     plan?: string;
+    role?: string;
   } | null>(null);
 
   const slideAnim = useRef(new Animated.Value(width)).current;
@@ -126,7 +127,7 @@ export default function UserHomeScreen() {
       }
       closeMenu();
       setTimeout(() => {
-        router.replace("/auth/login");
+        router.replace("/auth/login" as any);
       }, 300);
     } catch (error) {
       console.error("Lỗi khi đăng xuất:", error);
@@ -141,7 +142,6 @@ export default function UserHomeScreen() {
         ? "#8b5cf6"
         : "#d1d5db";
 
-  // 🔥 DANH SÁCH 6 TÍNH NĂNG CHÍNH
   const features = [
     {
       icon: <ShieldCheck size={28} color="#2563eb" />,
@@ -152,19 +152,20 @@ export default function UserHomeScreen() {
       route: "/scan",
     },
     {
+      icon: <Library size={28} color="#0ea5e9" />,
+      title: "Từ điển cây",
+      description:
+        "Tra cứu thông tin chi tiết về các loại bệnh và cách phòng trừ.",
+      colorBg: "#e0f2fe",
+      route: "/treeDic", // 🔥 ĐÃ SỬA: Khớp với tên file treeDic.tsx
+    },
+    {
       icon: <CloudSun size={28} color="#06b6d4" />,
       title: "Agri-Weather",
       description:
         "Dự báo thời tiết chuyên sâu và khuyến nghị chăm sóc theo ngày.",
       colorBg: "#ecfeff",
       route: "/weather",
-    },
-    {
-      icon: <Sprout size={28} color="#8b5cf6" />,
-      title: "My Garden",
-      description: "Quản lý danh sách cây trồng và theo dõi lịch chăm sóc.",
-      colorBg: "#f3e8ff",
-      route: "/my-garden",
     },
     {
       icon: <ShoppingCart size={28} color="#f59e0b" />,
@@ -175,20 +176,26 @@ export default function UserHomeScreen() {
       route: "/shop",
     },
     {
+      icon: <Store size={28} color="#db2777" />,
+      title: "Gian hàng của tôi",
+      description: "Đăng bán nông sản, vật tư và quản lý đơn khách đặt.",
+      colorBg: "#fce7f3",
+      route: "/my-shop",
+    },
+    {
+      icon: <Sprout size={28} color="#8b5cf6" />,
+      title: "My Garden",
+      description: "Quản lý danh sách cây trồng và theo dõi lịch chăm sóc.",
+      colorBg: "#f3e8ff",
+      route: "/my-garden",
+    },
+    {
       icon: <BookOpen size={28} color="#10b981" />,
       title: "Farming Tips",
       description:
         "Cẩm nang kiến thức, bí quyết bón phân và chăm sóc cây trồng.",
       colorBg: "#ecfdf5",
       route: "/tips",
-    },
-    {
-      icon: <Users size={28} color="#ea580c" />,
-      title: "Community",
-      description:
-        "Tham gia diễn đàn chia sẻ kinh nghiệm cùng hàng ngàn nhà nông.",
-      colorBg: "#fff7ed",
-      route: "/community",
     },
   ];
 
@@ -212,7 +219,7 @@ export default function UserHomeScreen() {
 
         <View style={styles.headerRight}>
           <TouchableOpacity
-            onPress={() => router.push("/notification")}
+            onPress={() => router.push("/notification" as any)}
             style={styles.bellBtn}
           >
             <Bell size={24} color="#374151" />
@@ -290,6 +297,15 @@ export default function UserHomeScreen() {
                 style={styles.menuLinks}
                 showsVerticalScrollIndicator={false}
               >
+                {userData?.role === "ADMIN" && (
+                  <TouchableOpacity
+                    style={styles.adminMenuItem}
+                    onPress={() => handleNavigate("/admin")}
+                  >
+                    <ShieldAlert size={20} color="#dc2626" />
+                    <Text style={styles.adminMenuText}>Quản trị Hệ thống</Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
                   <Text style={styles.menuItemText}>Trang chủ</Text>
                 </TouchableOpacity>
@@ -300,46 +316,45 @@ export default function UserHomeScreen() {
                   <Text style={styles.menuItemText}>Chẩn đoán AI</Text>
                 </TouchableOpacity>
 
-                {/* 🔥 CÁC CHỨC NĂNG MỚI ĐƯỢC THÊM VÀO MENU DỌC */}
+                {/* 🔥 ĐÃ SỬA: Trỏ về /treeDic */}
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/treeDic")}
+                >
+                  <Text style={styles.menuItemText}>Từ điển cây</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/shop")}
+                >
+                  <Text style={styles.menuItemText}>Cửa hàng vật tư (Mua)</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => handleNavigate("/my-shop")}
+                >
+                  <Text style={[styles.menuItemText, { color: "#db2777" }]}>
+                    Gian hàng của tôi (Bán)
+                  </Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/my-garden")}
                 >
                   <Text style={styles.menuItemText}>Vườn của tôi</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/weather")}
-                >
-                  <Text style={styles.menuItemText}>Thời tiết nông nghiệp</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/shop")}
-                >
-                  <Text style={styles.menuItemText}>Cửa hàng vật tư</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/treeDic")}
-                >
-                  <Text style={styles.menuItemText}>Từ điển cây trồng</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/tips")}
-                >
-                  <Text style={styles.menuItemText}>Cẩm nang & Mẹo</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => handleNavigate("/community")}
-                >
-                  <Text style={styles.menuItemText}>Cộng đồng</Text>
-                </TouchableOpacity>
 
                 <View style={styles.divider} />
-
+                <TouchableOpacity
+                  style={styles.menuItemWithIcon}
+                  onPress={() => handleNavigate("/feedback")}
+                >
+                  <MessageSquare size={20} color="#4b5563" />
+                  <Text style={styles.menuItemTextIcon}>
+                    Gửi phản hồi & Hỗ trợ
+                  </Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItemWithIcon}
                   onPress={() => handleNavigate("/profile")}
@@ -392,38 +407,15 @@ export default function UserHomeScreen() {
             Chẩn đoán bệnh cây trồng tức thì bằng AI. Nhận phác đồ điều trị khoa
             học và lộ trình chăm sóc bền vững.
           </Text>
-
           <View style={styles.buttonGroup}>
             <TouchableOpacity
               style={styles.primaryBtn}
               activeOpacity={0.8}
-              onPress={() => router.push("/scan")}
+              onPress={() => router.push("/scan" as any)}
             >
               <Text style={styles.primaryBtnText}>Chẩn đoán ngay</Text>
               <ArrowRight size={18} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.secondaryBtn}
-              activeOpacity={0.6}
-              onPress={() => router.push("/about")}
-            >
-              <Text style={styles.secondaryBtnText}>Tìm hiểu thêm</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statNum}>98%</Text>
-              <Text style={styles.statLabel}>Độ chính xác</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statNum}>2s</Text>
-              <Text style={styles.statLabel}>Thời gian xử lý</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statNum}>500+</Text>
-              <Text style={styles.statLabel}>Loại bệnh</Text>
-            </View>
           </View>
         </View>
 
@@ -434,7 +426,6 @@ export default function UserHomeScreen() {
               Công nghệ tiên phong{"\n"}cho nông nghiệp bền vững
             </Text>
           </View>
-
           <View style={styles.featuresList}>
             {features.map((item, index) => (
               <TouchableOpacity
@@ -592,8 +583,21 @@ const styles = StyleSheet.create({
     color: "#111827",
     marginBottom: 2,
   },
-  userEmail: { fontSize: 13, color: "#6b7280" },
+  userEmail: { fontSize: 13, color: "#6b7280", marginBottom: 4 },
   menuLinks: { flex: 1, paddingHorizontal: 24, paddingTop: 10 },
+  adminMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fef2f2",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginBottom: 10,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: "#fecaca",
+  },
+  adminMenuText: { fontSize: 15, color: "#dc2626", fontWeight: "bold" },
   menuItem: {
     paddingVertical: 16,
     borderBottomWidth: 1,
@@ -680,25 +684,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   primaryBtnText: { color: "#fff", fontWeight: "bold", fontSize: 15 },
-  secondaryBtn: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 22,
-    paddingVertical: 14,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  secondaryBtnText: { color: "#374151", fontWeight: "600", fontSize: 15 },
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingRight: 20,
-    marginBottom: 20,
-  },
-  statBox: { alignItems: "flex-start" },
-  statNum: { fontSize: 26, fontWeight: "900", color: "#111827" },
-  statLabel: { fontSize: 12, color: "#6b7280", marginTop: 2 },
   featuresSection: {
     paddingHorizontal: 20,
     paddingTop: 10,
@@ -722,7 +707,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   featuresList: { gap: 16 },
-
   featureCard: {
     flexDirection: "row",
     alignItems: "center",

@@ -32,3 +32,11 @@ build/
 .temp/
 .tmp/
 coverage/
+
+# Log files
+*.log
+.ServiceHub/
+node_modules/
+dist/
+.expo/
+npm-debug.log*

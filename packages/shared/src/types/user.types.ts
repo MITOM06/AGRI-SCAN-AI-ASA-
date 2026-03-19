@@ -4,11 +4,16 @@ export enum UserRole {
   ADMIN = 'ADMIN',
 }
 
-// 🔥 THÊM MỚI: Enum Gói cước
 export enum SubscriptionPlan {
   FREE = 'FREE',
   PREMIUM = 'PREMIUM',
   VIP = 'VIP',
+}
+
+export enum AuthProvider {
+  LOCAL = 'local',
+  GOOGLE = 'google',
+  FACEBOOK = 'facebook',
 }
 
 export interface IUser {
@@ -16,12 +21,17 @@ export interface IUser {
   email: string;
   fullName: string;
   role: UserRole;
-  plan: SubscriptionPlan; // 🔥 THÊM MỚI
-  planExpiresAt: Date | null; // 🔥 THÊM MỚI
-  dailyImageCount: number; // 🔥 THÊM MỚI
-  dailyPromptCount: number; // 🔥 THÊM MỚI
+  plan: SubscriptionPlan;
+  planExpiresAt: Date | null;
+  dailyImageCount: number;
+  dailyPromptCount: number;
   createdAt: Date;
   updatedAt: Date;
+  isPasswordSet: boolean;
+  isGoogleLinked?: boolean;      
+  isFacebookLinked?: boolean; 
+   lastResetDate: Date; 
+    authProviders: AuthProvider[];  
 }
 
 export interface IUserCreate {
@@ -29,6 +39,15 @@ export interface IUserCreate {
   password: string;
   fullName: string;
   role?: UserRole;
+}
+
+// Dùng riêng cho luồng OAuth (không cần password)
+export interface IOAuthUserCreate {
+  email: string;
+  fullName: string;
+  avatar?: string;
+  provider: AuthProvider;
+  providerId: string;
 }
 
 export interface IUserLogin {
@@ -40,8 +59,10 @@ export interface IUserResponse {
   id: string;
   email: string;
   fullName: string;
+  avatar: string | null;
   role: UserRole;
-  plan: SubscriptionPlan; // Bắn gói cước về cho Frontend
+  plan: SubscriptionPlan;
+  provider: AuthProvider;
 }
 
 export interface IAuthResponse {
