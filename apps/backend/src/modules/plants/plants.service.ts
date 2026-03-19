@@ -36,7 +36,9 @@ export class PlantsService implements OnApplicationBootstrap {
         console.error('⚠️ Sync thất bại:', (error as Error).message);
       }
     }
+
     const plantsPath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plants_data.json');
+
 
   }
 async findDiseaseByLabel(label: string) {
@@ -106,6 +108,7 @@ async findDiseaseByLabel(label: string) {
     try {
       // 1. ĐỌC FILE CÂY TRỒNG
       const plantsPath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plant_knowledge.json');
+
       const plantsRawData = fs.readFileSync(plantsPath, 'utf-8');
       const plantsList = JSON.parse(plantsRawData);
 
@@ -129,7 +132,7 @@ async findDiseaseByLabel(label: string) {
       }
 
       // 2. ĐỌC FILE BỆNH TỪ TEAM AI
-      const diseasePath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plant_knowledge.json');
+      const diseasePath = path.join(process.cwd(), 'data', 'plant_knowledge.json');
       const diseaseRawData = fs.readFileSync(diseasePath, 'utf-8');
       const diseaseList: any[] = JSON.parse(diseaseRawData);
       let diseaseCount = 0;

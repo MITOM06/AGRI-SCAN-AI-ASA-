@@ -46,6 +46,15 @@ export interface AddPlantPayload {
   imageUrl?: string;
   customName?: string;
   userGoal: "HEAL_DISEASE" | "GET_FRUIT" | "GET_FLOWER" | "MAINTAIN";
+
+  lat: number;
+  lon: number;
+}
+
+export interface DailyCheckInPayload {
+  currentDay: number;
+  imageUrl: string;
+
   lat: number;
   lon: number;
 }
