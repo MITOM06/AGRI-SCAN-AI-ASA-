@@ -41,6 +41,7 @@ export * from "./api/my-garden.api";
 // Feature types
 export * from "./types/weather.types";
 export * from "./types/my-garden.types";
+export * from "./types/admin.types";
 
 export const helloWorld = () => {
   return "Hello from Shared Logic!";
