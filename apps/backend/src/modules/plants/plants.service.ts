@@ -36,6 +36,8 @@ export class PlantsService implements OnApplicationBootstrap {
         console.error('⚠️ Sync thất bại:', (error as Error).message);
       }
     }
+    const plantsPath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plants_data.json');
+
   }
 async findDiseaseByLabel(label: string) {
   if (!label) return null;
@@ -103,7 +105,7 @@ async findDiseaseByLabel(label: string) {
   async seedData() {
     try {
       // 1. ĐỌC FILE CÂY TRỒNG
-      const plantsPath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plants_data.json');
+      const plantsPath = path.join(process.cwd(), '..', 'ai-service', 'data', 'plant_knowledge.json');
       const plantsRawData = fs.readFileSync(plantsPath, 'utf-8');
       const plantsList = JSON.parse(plantsRawData);
 
@@ -123,6 +125,7 @@ async findDiseaseByLabel(label: string) {
           await plant.save();
           plantDocs.push(plant);
         }
+        
       }
 
       // 2. ĐỌC FILE BỆNH TỪ TEAM AI
@@ -168,5 +171,6 @@ async findDiseaseByLabel(label: string) {
       console.error('Lỗi khi bơm dữ liệu:', error);
       throw new Error('Bơm dữ liệu thất bại, vui lòng kiểm tra lại đường dẫn file JSON.');
     }
+    
   }
 }

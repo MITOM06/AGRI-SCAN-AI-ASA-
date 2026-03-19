@@ -1,21 +1,17 @@
-import { axiosClient } from "./axios-client"; // Hàm axiosClient đã được bạn config sẵn
-import { IMyGardenPlant } from "../types/my-garden.types";
+import { axiosClient } from './axios-client';
+import {
+  IMyGardenPlant,
+  AddPlantPayload,
+  DailyCheckInPayload,
+} from '../types/my-garden.types';
 
-// Định nghĩa DTO cho đầu vào của hàm thêm cây
-export interface AddPlantPayload {
-  plantName: string; // Sửa label thành plantName
-  diseaseName: string; // Thêm diseaseName
-  imageUrl?: string;
-  customName?: string;
-  userGoal: string;
-  lat: number;
-  lon: number;
-}
+// Re-export để Web/Mobile có thể import dùng chung nếu cần
+export type { AddPlantPayload, DailyCheckInPayload };
 
 export const myGardenApi = {
   // 1. Lấy danh sách cây đang trồng
   getUserGarden: async (): Promise<IMyGardenPlant[]> => {
-    const response = await axiosClient.get("/api/my-garden");
+    const response = await axiosClient.get('/api/my-garden');
     return response.data;
   },
 
@@ -23,20 +19,20 @@ export const myGardenApi = {
   addPlantToGarden: async (
     payload: AddPlantPayload,
   ): Promise<{ message: string; data: IMyGardenPlant }> => {
-    const response = await axiosClient.post("/api/my-garden", payload);
+    const response = await axiosClient.post('/api/my-garden', payload);
     return response.data;
   },
 
   // 3. Check-in tiến trình hằng ngày
-  // 🔥 ĐÃ SỬA: Thêm imageUrl, lat, lon vào payload
   dailyCheckIn: async (
     gardenId: string,
-    payload: { currentDay: number; imageUrl: string; lat: number; lon: number },
+    payload: DailyCheckInPayload,
   ): Promise<{
     requireRegeneration: boolean;
     message: string;
     progressPercentage?: number;
     status?: string;
+    todayTask?: unknown;
   }> => {
     const response = await axiosClient.post(
       `/api/my-garden/${gardenId}/check-in`,
