@@ -224,7 +224,7 @@ export default function LoginScreen() {
             <Text style={styles.forgotPassText}>Quên mật khẩu?</Text>
           </TouchableOpacity>
 
-          {/* 🔥 KHÔI PHỤC: Ô xác nhận đồng ý điều khoản */}
+          {/* 🔥 Ô xác nhận đồng ý điều khoản (Đã sửa lỗi chữ nhấp nhô) */}
           <View style={styles.agreementContainer}>
             <TouchableOpacity
               style={styles.checkbox}
@@ -240,15 +240,11 @@ export default function LoginScreen() {
             <Text style={styles.agreementText}>
               Tôi đồng ý với{" "}
               <Link href={"/auth/terms" as any} asChild>
-                <TouchableOpacity style={styles.inlineLink}>
-                  <Text style={styles.linkText}>Điều khoản sử dụng</Text>
-                </TouchableOpacity>
+                <Text style={styles.linkText}>Điều khoản sử dụng</Text>
               </Link>{" "}
               và{" "}
               <Link href={"/auth/privacy" as any} asChild>
-                <TouchableOpacity style={styles.inlineLink}>
-                  <Text style={styles.linkText}>Chính sách bảo mật</Text>
-                </TouchableOpacity>
+                <Text style={styles.linkText}>Chính sách bảo mật</Text>
               </Link>{" "}
               của Agri-Scan.
             </Text>
@@ -275,14 +271,14 @@ export default function LoginScreen() {
 
           {/* ĐĂNG NHẬP MẠNG XÃ HỘI */}
           <View style={styles.socialContainer}>
-            {/* Nút Google */}
+            {/* Nút Google (Đã sửa link ảnh ổn định) */}
             <TouchableOpacity
               style={styles.socialBtn}
               onPress={() => authApi.loginWithGoogle()}
             >
               <Image
                 source={{
-                  uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png",
+                  uri: "https://img.icons8.com/color/48/google-logo.png",
                 }}
                 style={{ width: 22, height: 22, marginRight: 10 }}
                 resizeMode="contain"
@@ -290,14 +286,14 @@ export default function LoginScreen() {
               <Text style={styles.socialBtnText}>Google</Text>
             </TouchableOpacity>
 
-            {/* Nút Facebook */}
+            {/* Nút Facebook (Đã sửa link ảnh ổn định) */}
             <TouchableOpacity
               style={styles.socialBtn}
               onPress={() => authApi.loginWithFacebook()}
             >
               <Image
                 source={{
-                  uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/1024px-2021_Facebook_icon.svg.png",
+                  uri: "https://img.icons8.com/color/48/facebook-new.png",
                 }}
                 style={{ width: 24, height: 24, marginRight: 10 }}
                 resizeMode="contain"
@@ -407,7 +403,6 @@ const styles = StyleSheet.create({
   },
   checkboxChecked: { backgroundColor: "#16a34a" },
   agreementText: { fontSize: 13, color: "#6b7280", flex: 1, lineHeight: 18 },
-  inlineLink: { justifyContent: "center", alignItems: "center" },
   linkText: {
     fontSize: 13,
     fontWeight: "600",
