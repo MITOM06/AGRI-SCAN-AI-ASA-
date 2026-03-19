@@ -252,12 +252,8 @@ Dự án áp dụng kiến trúc **Monolithic (Nguyên khối)** để tối ưu
 
 ## V. Hạn chế hiện tại và định hướng phát triển
 
-Dù ở giai đoạn MVP tập trung vào công nghệ, dự án vẫn vạch ra lộ trình sinh lời rõ ràng để đảm bảo tính bền vững:
-1. **Freemium Model (Mô hình miễn phí cơ bản):**
-   * *Miễn phí:* Giới hạn số lượt quét AI mỗi ngày, truy cập từ điển cơ bản.
-   * *Premium (Gói cước tháng/năm):* Quét AI và Chat không giới hạn, lưu trữ lịch sử trọn đời, mở khóa lộ trình chăm sóc chuyên sâu (Care Roadmap) và chat trực tiếp với chuyên gia nông nghiệp.
-2. **B2B Affiliate & Partnership (Tương lai):**
-   * Hợp tác với các đại lý vật tư nông nghiệp, vườn ươm để gợi ý sản phẩm sinh học (phân bón, thuốc) trực tiếp trong phác đồ điều trị, nhận hoa hồng trên mỗi lượt chuyển đổi (Affiliate).
+### 5.1 Hạn chế
+### 5.2 Định hướng phát triển
 
 
 ---
@@ -265,13 +261,13 @@ Dù ở giai đoạn MVP tập trung vào công nghệ, dự án vẫn vạch ra
 ---
 
 ## VII. Project Management & OSS (Update Later)
-
+---
 
 ## VIII. THIẾT KẾ CƠ SỞ DỮ LIỆU
 
 Dự án sử dụng **MongoDB**, áp dụng nguyên tắc thiết kế NoSQL: Hạn chế join phức tạp, ưu tiên tốc độ đọc. Hệ thống quản lý chặt chẽ hạn mức sử dụng của người dùng (Rate Limiting cho AI Scan & Prompt).
 
-### 5.1. Collection: `users`
+### 8.1. Collection: `users`
 Lưu trữ thông tin người dùng, phân quyền và quản lý gói cước dịch vụ.
 
 ```typescript
@@ -288,7 +284,7 @@ export declare class User {
 }
 ```
 
-### 5.2. Collection: `plants`
+### 8.2. Collection: `plants`
 Khớp với dữ liệu phân loại thực vật học, lưu trữ thông số sinh trưởng chi tiết.
 
 ```typescript
@@ -313,7 +309,7 @@ export declare class Plant {
 }
 ```
 
-### 5.3. Collection: `diseases`
+### 8.3. Collection: `diseases`
 Từ điển bệnh lý chi tiết, nguyên nhân và phác đồ điều trị đa phương pháp.
 
 ```typescript
@@ -327,7 +323,7 @@ export declare class Disease {
 }
 ```
 
-### 5.4. Collection: `scan_histories` & `chat_histories`
+### 8.4. Collection: `scan_histories` & `chat_histories`
 Lưu vết quá trình tương tác của người dùng với hệ thống AI để theo dõi sự cải thiện của cây trồng.
 
 ```typescript
