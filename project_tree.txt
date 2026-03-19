@@ -125,7 +125,8 @@
 │   │   │   │   ├── login.tsx
 │   │   │   │   ├── otp-verification.tsx
 │   │   │   │   ├── register.tsx
-│   │   │   │   └── reset-password.tsx
+│   │   │   │   ├── reset-password.tsx
+│   │   │   │   └── set-password.tsx
 │   │   │   ├── buy-detail.tsx
 │   │   │   ├── checkout.tsx
 │   │   │   ├── community.tsx
@@ -393,7 +394,6 @@
 ├── pnpm-lock.yaml
 ├── pnpm-workspace.yaml
 ├── project_tree.txt
-├── rabbitmq_review.zip
 └── tsconfig.json
 
 102 directories, 295 files

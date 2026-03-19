@@ -155,7 +155,7 @@ async def chat_endpoint(req: ChatRequest):
 
 
 # ─────────────────────────────────────────────────────────────────
-# /plant_garden endpoint (giữ nguyên)
+# /plant_garden endpoint
 # ─────────────────────────────────────────────────────────────────
 class DailyTask(BaseModel):
     day: int
@@ -195,32 +195,60 @@ class HealthyPlantResp(BaseModel):
     current_stage_index: int
     daily_tasks: List[DailyTask]
 
+# ROOT CAUSE FIX: Tạo model riêng cho /plant_garden
+# ChatRequest chỉ có `label` + `prompt` — Backend mới gửi 4 field khác
+# nên Pydantic fail 422 ngay khi validate vì thiếu field `label` bắt buộc
+class PlantGardenRequest(BaseModel):
+    plant_name: str
+    disease_name: str
+    user_goal: str
+    weather_forecast: Optional[str] = "Không có dữ liệu thời tiết."
+    # daily check-in gửi thêm 2 field này, optional để không break lần đầu tạo vườn
+    current_day: Optional[int] = None
+    image_url: Optional[str] = None
+
 
 @app.post("/plant_garden", response_model=Union[HealthyPlantResp, DiseasedPlantResp])
-async def plant_garden_endpoint(req: ChatRequest):
+async def plant_garden_endpoint(req: PlantGardenRequest):
     global VECTOR_DB
     context_text = ""
 
     try:
         vs = VECTOR_DB if VECTOR_DB is not None else init_vector_db()
-        is_healthy = "healthy" in req.label.lower() or "khỏe mạnh" in req.label.lower()
 
-        search_query = f"Đặc tính cây {req.label}" if is_healthy else f"Điều trị bệnh {req.label}"
+        # ROOT CAUSE FIX: is_healthy kiểm tra disease_name thay vì req.label
+        is_healthy = req.disease_name.strip().lower() in ("khỏe mạnh", "healthy", "")
+
+        search_query = (
+            f"Đặc tính sinh trưởng chăm sóc cây {req.plant_name}"
+            if is_healthy
+            else f"Điều trị bệnh {req.disease_name} trên cây {req.plant_name}"
+        )
         contexts = query_vectorstore(vs, search_query, k=3)
         if contexts:
             context_text = "\n".join([c['content'] for c in contexts])
 
+        goal_map = {
+            "GET_FRUIT":    "ép ra trái/thu hoạch",
+            "HEAL_DISEASE": "chữa bệnh và phục hồi",
+            "GENERAL_CARE": "chăm sóc tổng quát",
+            "GET_FLOWER":   "kích thích ra hoa",
+        }
+        goal_vn = goal_map.get(req.user_goal, req.user_goal)
+
         if is_healthy:
             prompt_llm = f"""
-Bạn là chuyên gia thực vật. Cây này KHỎE MẠNH ({req.label}).
-Nhiệm vụ: Cung cấp thông tin thực vật và lộ trình chăm sóc 7 ngày.
+Bạn là chuyên gia thực vật. Cây {req.plant_name} đang KHỎE MẠNH.
+Mục tiêu người dùng: {goal_vn}.
+Thời tiết 7 ngày tới: {req.weather_forecast}
 Dữ liệu tham khảo: {context_text}
 
-BẮT BUỘC TRẢ VỀ JSON RAW, KHÔNG CÓ KÝ TỰ LẠ, KHÔNG CÓ DẤU BA CHẤM.
-Cấu trúc:
+NHIỆM VỤ: Cung cấp thông tin thực vật và lộ trình chăm sóc 7 ngày phù hợp với thời tiết.
+BẮT BUỘC trả về JSON RAW duy nhất, không có markdown (```), không có chú thích.
+Cấu trúc bắt buộc:
 {{
   "commonName": "...", "scientificName": "...", "family": "...", "description": "...",
-  "uses": "...", "care": "...", "category": [], "plantGroup": "...", "growthRate": "...",
+  "uses": "...", "care": "...", "category": ["..."], "plantGroup": "...", "growthRate": "...",
   "light": "...", "water": "...", "height": "...", "floweringTime": "...",
   "suitableLocation": "...", "soil": "...", "status": "APPROVED", "images": [],
   "estimated_days": 7,
@@ -228,45 +256,51 @@ Cấu trúc:
   "growth_stages": ["Cây non", "Phát triển", "Trưởng thành"],
   "current_stage_index": 1,
   "daily_tasks": [
-    {{"day": 1, "weatherContext": "...", "waterAction": "...", "fertilizerAction": "...", "careAction": "..."}}
+    {{"day": 1, "weatherContext": "mô tả thời tiết ngày 1", "waterAction": "...", "fertilizerAction": "...", "careAction": "..."}}
   ]
 }}
-(Hãy tạo đủ 7 ngày trong daily_tasks)
+Tạo đủ 7 phần tử trong daily_tasks. weatherContext của mỗi ngày phải dựa trên dữ liệu thời tiết được cung cấp.
 """
         else:
             prompt_llm = f"""
-Bạn là chuyên gia bệnh lý thực vật. Cây bị BỆNH ({req.label}).
-Nhiệm vụ: Lập lộ trình điều trị 7 ngày.
+Bạn là chuyên gia bệnh lý thực vật.
+Cây: {req.plant_name}
+Bệnh: {req.disease_name}
+Mục tiêu: {goal_vn}
+Thời tiết 7 ngày tới: {req.weather_forecast}
 Dữ liệu điều trị: {context_text}
 
-BẮT BUỘC TRẢ VỀ JSON RAW. KHÔNG TRẢ VỀ thông tin thực vật (như scientificName, family...).
-Cấu trúc:
+NHIỆM VỤ: Lập lộ trình điều trị {req.disease_name} trong 7 ngày, điều chỉnh theo thời tiết.
+BẮT BUỘC trả về JSON RAW duy nhất, không có markdown (```), không có chú thích.
+Cấu trúc bắt buộc:
 {{
   "estimated_days": 7,
-  "roadmap_summary": "...",
+  "roadmap_summary": "tóm tắt tình trạng và kế hoạch điều trị",
   "growth_stages": ["Cây non", "Phát triển", "Ra hoa", "Đậu quả", "Nuôi quả", "Thu hoạch"],
   "current_stage_index": 1,
   "daily_tasks": [
-    {{"day": 1, "weatherContext": "...", "waterAction": "...", "fertilizerAction": "...", "careAction": "..."}}
+    {{"day": 1, "weatherContext": "mô tả thời tiết ngày 1", "waterAction": "...", "fertilizerAction": "...", "careAction": "hành động điều trị cụ thể"}}
   ]
 }}
-(Hãy tạo đủ 7 ngày trong daily_tasks)
+Tạo đủ 7 phần tử trong daily_tasks. weatherContext phải dựa trên dữ liệu thời tiết được cung cấp.
 """
 
         llm = get_llm()
         res = llm.invoke(prompt_llm) if hasattr(llm, "invoke") else llm(prompt_llm)
         raw_answer = getattr(res, "content", str(res))
 
+        # Làm sạch markdown thừa mà FPT Llama hay sinh ra
         clean_answer = re.sub(r"```json|```", "", raw_answer).strip()
         json_match = re.search(r"\{.*\}", clean_answer, re.DOTALL)
 
         if json_match:
             json_str = json_match.group()
+            # Xoá trailing comma trước ] hoặc } để tránh json.loads lỗi
             json_str = re.sub(r",\s*([\]}])", r"\1", json_str)
             final_json = json.loads(json_str)
             return final_json
         else:
-            raise ValueError("Mô hình không sinh ra cấu trúc JSON.")
+            raise ValueError("Mô hình không sinh ra cấu trúc JSON hợp lệ.")
 
     except Exception as e:
         traceback.print_exc()

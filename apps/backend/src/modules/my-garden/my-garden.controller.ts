@@ -16,14 +16,22 @@ export class MyGardenController {
 
     @Post()
     async addPlantToGarden(@Req() req, @Body() dto: AddPlantToGardenDto) {
-        const userId = req.user.userId; 
+        const userId = req.user.userId;
         return this.myGardenService.addPlantToGarden({ userId, ...dto });
     }
 
     @Post(':id/check-in')
     async dailyCheckIn(@Req() req, @Param('id') gardenId: string, @Body() dto: DailyCheckInDto) {
-        const userId = req.user.userId; 
-        return this.myGardenService.dailyCheckIn(gardenId, userId, dto.currentDay);
+        const userId = req.user.userId;
+        // BUG 6 FIX: truyền đủ imageUrl, lat, lon xuống service
+        return this.myGardenService.dailyCheckIn(
+            gardenId,
+            userId,
+            dto.currentDay,
+            dto.imageUrl,
+            dto.lat,
+            dto.lon,
+        );
     }
 
     @Delete(':id')
