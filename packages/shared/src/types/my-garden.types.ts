@@ -27,7 +27,7 @@ export interface IMyGardenPlant {
   imageUrl?: string;
   plantInfo?: IPlantInfo | null;
   customName: string;
-  userGoal: 'HEAL_DISEASE' | 'GET_FRUIT' | 'GET_FLOWER' | 'MAINTAIN';
+  userGoal: "HEAL_DISEASE" | "GET_FRUIT" | "GET_FLOWER" | "MAINTAIN";
   currentCondition: string;
   roadmapSummary?: string;
   growthStages: string[];
@@ -35,7 +35,7 @@ export interface IMyGardenPlant {
   progressPercentage: number;
   lastInteractionDate: string;
   careRoadmap: IDailyTask[];
-  status: 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  status: "IN_PROGRESS" | "COMPLETED" | "FAILED";
   createdAt?: string;
   updatedAt?: string;
 }
@@ -45,7 +45,7 @@ export interface AddPlantPayload {
   diseaseName: string;
   imageUrl?: string;
   customName?: string;
-  userGoal: 'HEAL_DISEASE' | 'GET_FRUIT' | 'GET_FLOWER' | 'MAINTAIN';
+  userGoal: "HEAL_DISEASE" | "GET_FRUIT" | "GET_FLOWER" | "MAINTAIN";
   lat: number;
   lon: number;
 }
