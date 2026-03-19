@@ -3,10 +3,12 @@ import { Model } from 'mongoose';
 import { Plant, Disease } from '@agri-scan/database';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Injectable, NotFoundException, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, NotFoundException, OnApplicationBootstrap, Logger } from '@nestjs/common';
 
 @Injectable()
 export class PlantsService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(PlantsService.name);
+
   constructor(
     @InjectModel(Plant.name) private plantModel: Model<Plant>,
     @InjectModel(Disease.name) private diseaseModel: Model<Disease>,
@@ -35,7 +37,39 @@ export class PlantsService implements OnApplicationBootstrap {
       }
     }
   }
-
+async findDiseaseByLabel(label: string) {
+  if (!label) return null;
+  
+  try {
+    // 1. Tìm chính xác theo tên
+    let disease = await this.diseaseModel.findOne({
+      name: { $regex: label, $options: 'i' }
+    }).exec();
+    
+    if (disease) return disease;
+    
+    // 2. Nếu không có, tách label (format: "Plant___Disease")
+    const cleanLabel = label.replace(/___/g, ' ').replace(/_/g, ' ');
+    const words = cleanLabel.split(' ');
+    
+    if (words.length > 1) {
+      // Bỏ tên cây, chỉ lấy tên bệnh (phần sau)
+      const diseaseName = words.slice(1).join(' ');
+      disease = await this.diseaseModel.findOne({
+        name: { $regex: diseaseName, $options: 'i' }
+      }).exec();
+      
+      if (disease) return disease;
+    }
+    
+    this.logger.warn(`Không tìm thấy disease cho label: ${label}`);
+    return null;
+    
+  } catch (error) {
+    this.logger.error('Lỗi khi tìm disease:', error);
+    return null;
+  }
+}
   // 1. Lấy danh sách cây (Chỉ lấy APPROVED hoặc data cũ chưa có trường status)
   async findAllPlants() {
     return this.plantModel.find({

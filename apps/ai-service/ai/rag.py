@@ -34,20 +34,38 @@ def init_vector_db(emb_model_name: str = None, force: bool = False):
 
     kb = load_knowledge()
     docs = []
-    for key, data in kb.items():
-        # only include non-normal entries (same logic as original)
-        if data.get("Status") != "Normal":
-            content = (
-                f"Bệnh: {data.get('LOAI_BENH')}. "
-                f"Triệu chứng: {data.get('DAC_DIEM')}. "
-                f"Cách trị: {data.get('GIAI_PHAP')}. "
-                f"Thuốc: {data.get('LIEU_TRINH_VA_THUOC', {}).get('Hoat_chat_dac_tri', '')}"
-            )
-            meta = {"class_name": key, "ten_cay": data.get("TEN_CAY")}
-            docs.append(Document(page_content=content, metadata=meta))
+    if isinstance(kb, list):
+        for item in kb:
+            if item.get("Status") != "Normal":
+                content = (
+                    f"Bệnh: {item.get('LOAI_BENH')}. "
+                    f"Triệu chứng: {item.get('DAC_DIEM')}. "
+                    f"Cách trị: {item.get('GIAI_PHAP')}. "
+                    f"Thuốc: {item.get('LIEU_TRINH_VA_THUOC', {}).get('Hoat_chat_dac_tri', '')}"
+                )
+                # Vì là List nên không có 'key', ta dùng 'LOAI_BENH' hoặc ID làm class_name
+                meta = {"class_name": item.get("LOAI_BENH"), "ten_cay": item.get("TEN_CAY")}
+                docs.append(Document(page_content=content, metadata=meta))
+    
+    # Nếu kb là Dictionary (Đối tượng)
+    elif isinstance(kb, dict):
+        for key, data in kb.items():
+            if data.get("Status") != "Normal":
+                content = (
+                    f"Bệnh: {data.get('LOAI_BENH')}. "
+                    f"Triệu chứng: {data.get('DAC_DIEM')}. "
+                    f"Cách trị: {data.get('GIAI_PHAP')}. "
+                    f"Thuốc: {data.get('LIEU_TRINH_VA_THUOC', {}).get('Hoat_chat_dac_tri', '')}"
+                )
+                meta = {"class_name": key, "ten_cay": data.get("TEN_CAY")}
+                docs.append(Document(page_content=content, metadata=meta))
+    # --- ĐOẠN SỬA ĐỔI KẾT THÚC ---
 
     if not docs:
         print("[rag.py] Warning: no docs created from KB.")
+        # Trả về None hoặc xử lý tùy ý để không crash Chroma
+        return None 
+
     vs = Chroma.from_documents(docs, embeddings)
     _vectorstore = vs
     return vs

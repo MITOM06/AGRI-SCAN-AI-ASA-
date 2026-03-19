@@ -4,13 +4,16 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+// ═══════════════════════════════════════════════════════════════
+// BUG #8 FIX: Chuyển từ dynamic import sang static import.
+// Dynamic import bên trong async handler gây ra:
+//   1. Không được resolve ở thời điểm module load → lỗi tiềm ẩn khi bundle
+//   2. Mỗi lần xử lý message đều phải require lại module → chậm không cần thiết
+// ═══════════════════════════════════════════════════════════════
+import FormData from 'form-data';
 import { ScanHistory, ChatHistory } from '@agri-scan/database';
+import { PlantsService } from '../plants/plants.service';
 
-/**
- * Consumer lắng nghe RabbitMQ queue.
- * Nhận message → gọi Python AI Service → cập nhật kết quả vào MongoDB.
- * Redis cache (CACHE_MANAGER) vẫn dùng bình thường ở AiScanService, không đụng vào đây.
- */
 @Controller()
 export class AiScanConsumer {
   private readonly logger = new Logger(AiScanConsumer.name);
@@ -19,10 +22,10 @@ export class AiScanConsumer {
     @InjectModel(ScanHistory.name) private scanHistoryModel: Model<ScanHistory>,
     @InjectModel(ChatHistory.name) private chatHistoryModel: Model<ChatHistory>,
     private readonly configService: ConfigService,
+    private readonly plantsService: PlantsService,
   ) {}
 
   private get aiServiceUrl(): string {
-    // Trong Docker dùng tên service, local dev dùng localhost
     return this.configService.get<string>('AI_SERVICE_URL', 'http://localhost:8000');
   }
 
@@ -39,7 +42,6 @@ export class AiScanConsumer {
     this.logger.log(`[SCAN] Nhận scanId: ${data.scanId}`);
 
     try {
-      // Cập nhật status → PROCESSING
       await this.scanHistoryModel.findByIdAndUpdate(data.scanId, {
         $set: { status: 'PROCESSING' },
       });
@@ -51,7 +53,7 @@ export class AiScanConsumer {
       });
 
       // Gửi sang Python /predict dạng multipart/form-data
-      const FormData = (await import('form-data')).default;
+      // BUG #8 FIX: FormData đã được import static ở đầu file
       const form = new FormData();
       form.append('file', Buffer.from(imgRes.data), {
         filename: 'plant.jpg',
@@ -73,13 +75,28 @@ export class AiScanConsumer {
           },
         });
       } else {
-        await this.scanHistoryModel.findByIdAndUpdate(data.scanId, {
-          $set: {
-            status: 'COMPLETED',
-            aiPredictions: [{ label: result.yolo_label, confidence: result.confidence }],
-          },
-        });
-        this.logger.log(`[SCAN] Xong ${data.scanId} → ${result.yolo_label} (${result.confidence})`);
+        const disease = await this.plantsService.findDiseaseByLabel(result.yolo_label);
+
+        if (!disease) {
+          this.logger.warn(`[SCAN] Không tìm thấy disease cho label: ${result.yolo_label}`);
+          await this.scanHistoryModel.findByIdAndUpdate(data.scanId, {
+            $set: {
+              status: 'COMPLETED',
+              aiPredictions: [],
+            },
+          });
+        } else {
+          await this.scanHistoryModel.findByIdAndUpdate(data.scanId, {
+            $set: {
+              status: 'COMPLETED',
+              aiPredictions: [{
+                diseaseId: disease._id,
+                confidence: result.confidence,
+              }],
+            },
+          });
+          this.logger.log(`[SCAN] Xong ${data.scanId} → ${disease.name} (${result.confidence})`);
+        }
       }
 
       channel.ack(originalMsg);
@@ -88,7 +105,6 @@ export class AiScanConsumer {
       await this.scanHistoryModel.findByIdAndUpdate(data.scanId, {
         $set: { status: 'FAILED', errorMessage: 'Hệ thống AI đang bận, vui lòng thử lại.' },
       }).catch(() => {});
-      // nack + không requeue tránh vòng lặp lỗi
       channel.nack(originalMsg, false, false);
     }
   }
@@ -122,7 +138,6 @@ export class AiScanConsumer {
         ? String(aiRes.data.answer)
         : JSON.stringify(aiRes.data);
 
-      // Cập nhật đúng vị trí message trong mảng
       const field = `messages.${data.pendingMessageIndex}`;
       await this.chatHistoryModel.findByIdAndUpdate(data.sessionId, {
         $set: {
