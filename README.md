@@ -93,7 +93,7 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
 
 | Thành viên | Vai trò | Trách nhiệm chính | University |
 | :--- | :--- | :--- | :--- |
-| **Bùi Huỳnh Tây** | **Team Leader & AI Architect** | Quản lý dự án, thiết kế kiến trúc AI RAG, triển khai LLM. | Trường ĐH CNTT - ĐHQG-HCM |
+| **Bùi Huỳnh Tây** | **Team Leader & AI Architect** | Quản lý dự án, Data Engineering, thiết kế kiến trúc AI, triển khai LLM. | Trường ĐH CNTT - ĐHQG-HCM |
 | **Hà Lê Thành Nhân** | **AI Engineer** | Nghiên cứu & huấn luyện Computer Vision Model (ViT + MoE), tiền xử lý Dataset. | Đại học FPT |
 | **Trần Phúc Khang** | **Backend & DevOps** | Phát triển Core API (NestJS), thiết kế Database (MongoDB), đóng gói Docker & CI/CD. | FPT Aptech |
 | **Châu Băng Sơn** | **UI/UX & Web Dev** | Thiết kế giao diện Figma, phát triển Dashboard Admin & Landing Page (React/NextJS). | Đại học FPT |
@@ -104,7 +104,7 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
 Để đảm bảo tiến độ cuộc thi và tập trung vào tính năng cốt lõi có ứng dụng AI (tiêu chí ăn điểm nhất), phiên bản MVP (Minimum Viable Product) của Agri-Scan AI sẽ được giới hạn nghiêm ngặt như sau:
 
 ### 2.1. Tính năng cốt lõi BẮT BUỘC HOÀN THIỆN:
-1. **Chatbot AI:**
+#### 2.1.1. **Chatbot AI:**
    * Người dùng tải lên hoặc chụp trực tiếp ảnh lá cây/thân cây bị bệnh.
    * Hệ thống xử lý ảnh và trả về kết quả: Tên bệnh, Độ tin cậy (%).
    * Lưu lại các phiên chẩn đoán và lịch sử chat với AI để người dùng theo dõi tiến triển của cây.
@@ -113,27 +113,32 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
 <img src="img/chatbot.png" alt="Plant Wiki Demo" width="800px" style="border-radius: 10px;">
 </p>
 
-2. **Plant Wiki:**
-   * Tra cứu danh sách các loại cây và các bệnh lý đặc trưng của chúng.
+#### 2.1.2. **Plant Wiki:**
+* Dữ liệu chuyên sâu: Cung cấp thông tin chi tiết về đặc điểm sinh học, môi trường sống, và các bệnh lý đặc trưng của loài cây trồng tại Việt Nam.
+* Bộ lọc thông minh: Cho phép người dùng phân loại nhanh theo: Loại cây (Cây ăn quả, cây công nghiệp, cây cảnh...), Tốc độ sinh trưởng, và Nhu cầu ánh sáng/nước.
+* Thông tin bệnh lý tích hợp: Mỗi loài cây đi kèm với danh sách các loại nấm, vi khuẩn và sâu bệnh thường gặp, giúp người dùng có cái nhìn tổng quan trước khi canh tác.
 
 <p align="center">
 <img src="img/wiki.png" alt="Plant Wiki Demo" width="500px" style="border-radius: 10px;">
 <img src="img/wiki1.png" alt="Plant Wiki Demo" width="500px" style="border-radius: 10px;">
 </p>
 
-3. **Vườn của tôi:**
-   * Hiển thị thông tin chi tiết về loại bệnh hệ thống vừa nhận diện.
-   * Đề xuất hướng xử lý tức thời (cắt tỉa, cách ly, loại thuốc sinh học khuyên dùng).
-   * Gợi ý lộ trình chăm sóc phục hồi.
-
+#### 2.1.3. **Vườn của tôi:**
+- Dashboard theo dõi sinh trưởng: Hiển thị lộ trình phát triển của cây qua từng giai đoạn (Cây non -> Phát triển -> Ra hoa -> Đậu quả -> Thu hoạch).
+- Phân tích chỉ số lý tưởng: Cung cấp thông tin về Độ ẩm đất, Ánh sáng, Dinh dưỡng và Tỷ lệ đậu quả phù hợp nhất cho từng loại cây cụ thể đang trồng.
+- Chẩn đoán & Giải pháp (Smart Diagnosis):
+   * Tự động hiển thị chi tiết loại bệnh vừa nhận diện từ AI Chatbot.
+   * Đề xuất Bí quyết chăm sóc chuyên sâu: Ví dụ như siết nước, bón phân Kali cao, hay kỹ thuật thụ phấn nhân tạo để tăng năng suất.
+   * Gợi ý lộ trình phục hồi cây bị bệnh theo từng bước (Step-by-step).
 <p align="center">
 <img src="img/mygarden.png" alt="Plant Wiki Demo" height="410px" style="border-radius: 10px;">
 <img src="img/mygarden1.png" alt="Plant Wiki Demo" height="410px" style="border-radius: 10px;">
 </p>
 
-4. **Thời tiết:**
-   * Dự báo thời tiết sắp tới
-
+#### 2.1.4. **Thời tiết:**
+* Cảnh báo rủi ro (Risk Alert): Tự động đưa ra cảnh báo về Sốc nhiệt hoặc biến động nhiệt độ ngày đêm lớn (>15°C), giúp người nông dân chủ động phòng tránh tình trạng cây bị stress.
+* Dự báo chi tiết 24h & 8 ngày: Hiển thị nhiệt độ, độ ẩm, tốc độ gió và chỉ số UV theo thời gian thực tại vị trí người dùng.
+* Bác sĩ cây trồng khuyến nghị: Dựa trên thời tiết (ví dụ: độ ẩm cao), hệ thống sẽ đưa ra lời khuyên canh tác phù hợp như: "Hạn chế bón phân hữu cơ trong thời tiết nồm ẩm để tránh nấm bệnh".
 <p align="center">
 <img src="img/thoitiet.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
 <img src="img/thoitiet1.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
@@ -144,7 +149,7 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
 * *Cộng đồng/Mạng xã hội:* Chưa làm tính năng đăng bài, bình luận, chia sẻ phức tạp.
 *(Lý do: Tập trung toàn lực vào độ mượt mà của hệ thống AI và trải nghiệm UI/UX).*
 
-### 2.3 Giá trị khác biệt
+### 2.3 Giá trị khác biệt (Cập nhật sau)
 
 ---
 
