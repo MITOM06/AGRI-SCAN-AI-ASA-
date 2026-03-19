@@ -17,7 +17,7 @@ export type { AddPlantPayload } from './types/my-garden.types';
 export type {
   IScanResult,
   IScanHistoryDetail,
-  IYoloPrediction,
+  IAIPrediction,
 } from "./types/scan-history.types";
 export {
   forgotPasswordSchema,

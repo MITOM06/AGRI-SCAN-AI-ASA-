@@ -1,22 +1,20 @@
 name: agri-scan-ai
 
 services:
-  # 1. CƠ SỞ DỮ LIỆU CHÍNH (MONGODB)
-  mongodb:
-    image: mongo:8.0
-    container_name: asa-mongodb
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: asa-nginx-proxy
     restart: always
     ports:
-      - "27018:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-secretPassword}
+      - '80:80'
+      - '81:81'
+      - '443:443'
     volumes:
-      - asa-mongo-data:/data/db
+      - ./npm-data:/data
+      - ./letsencrypt:/etc/letsencrypt
     networks:
       - agri-net
 
-  # 2. BỘ NHỚ ĐỆM (REDIS)
   redis:
     image: redis:7.4-alpine
     container_name: asa-redis
@@ -28,14 +26,13 @@ services:
     networks:
       - agri-net
 
-  # 3. MESSAGE BROKER (RABBITMQ) - ĐÃ CHỈNH LẠI CĂN LỀ
   rabbitmq:
     image: rabbitmq:3-management
     container_name: asa-rabbitmq
     restart: always
     ports:
-      - "5672:5672"   # Cổng kết nối AMQP
-      - "15672:15672" # Cổng quản lý UI (Username/Pass: guest/guest)
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -44,11 +41,8 @@ services:
     networks:
       - agri-net
 
-  # 4. AI SERVICE (PYTHON)
   ai-service:
-    build:
-      context: ../../apps/ai-service
-      dockerfile: Dockerfile
+    image: asia-southeast1-docker.pkg.dev/project-f338c3d2-64dd-47cd-873/agri-scan-repo/asa-ai:v1
     container_name: asa-ai
     restart: always
     ports:
@@ -56,36 +50,29 @@ services:
     depends_on:
       - rabbitmq
     env_file:
-      - ../../.env 
+      - .env.ai
     volumes:
-      - ../../apps/ai-service/models:/app/models
+      - ./models:/app/models
     networks:
       - agri-net
 
-  # 5. BACKEND API (NESTJS)
   backend:
-    build:
-      context: ../../
-      dockerfile: apps/backend/Dockerfile
+    image: asia-southeast1-docker.pkg.dev/project-f338c3d2-64dd-47cd-873/agri-scan-repo/asa-backend:v1
     container_name: asa-backend
     restart: always
     ports:
       - "4000:4000"
     depends_on:
-      - mongodb
       - redis
-      - rabbitmq # Thêm rabbitmq vào đây để backend đợi rabbitmq khởi động xong
+      - rabbitmq
       - ai-service
     env_file:
-      - ../../.env 
+      - .env.backend
     networks:
       - agri-net
 
-  # 6. WEB FRONTEND (NEXT.JS)
   web:
-    build:
-      context: ../../
-      dockerfile: apps/web/Dockerfile
+    image: asia-southeast1-docker.pkg.dev/project-f338c3d2-64dd-47cd-873/agri-scan-repo/asa-web:v1
     container_name: asa-web
     restart: always
     ports:
@@ -93,12 +80,11 @@ services:
     depends_on:
       - backend
     env_file:
-      - ../../.env
+      - .env.web
     networks:
       - agri-net
 
 volumes:
-  asa-mongo-data:
   asa-redis-data:
   rabbitmq_data:
 

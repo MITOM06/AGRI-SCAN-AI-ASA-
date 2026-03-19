@@ -2,6 +2,15 @@
 ├── DOC
 │   └── README.md
 ├── README.md
+├── agriscan.chat_histories.json
+├── agriscan.diseases.json
+├── agriscan.my_gardens.json
+├── agriscan.orders.json
+├── agriscan.plants.json
+├── agriscan.products.json
+├── agriscan.scanhistories.json
+├── agriscan.users.json
+├── agriscan.weather_rules.json
 ├── apps
 │   ├── ai-service
 │   │   ├── Dockerfile
@@ -207,8 +216,6 @@
 │       │   │   │   ├── encyclopedia
 │       │   │   │   │   └── page.tsx
 │       │   │   │   ├── layout.tsx
-│       │   │   │   ├── my-garden
-│       │   │   │   │   └── page.tsx
 │       │   │   │   ├── page.tsx
 │       │   │   │   ├── payment
 │       │   │   │   │   └── page.tsx
@@ -281,17 +288,6 @@
 │       │   │   │   ├── Header.tsx
 │       │   │   │   ├── Navbar.tsx
 │       │   │   │   └── index.ts
-│       │   │   ├── myGarden
-│       │   │   │   ├── MyGardenPage.tsx
-│       │   │   │   ├── overview
-│       │   │   │   │   └── GardenOverview.tsx
-│       │   │   │   ├── result
-│       │   │   │   │   └── ResultView.tsx
-│       │   │   │   ├── tracking
-│       │   │   │   │   └── TrackingView.tsx
-│       │   │   │   └── upload
-│       │   │   │       ├── AnalyzingView.tsx
-│       │   │   │       └── UploadView.tsx
 │       │   │   └── shop
 │       │   │       ├── CartPage.tsx
 │       │   │       ├── CheckoutPage.tsx
@@ -319,6 +315,7 @@
 │       │   └── utils
 │       │       └── animation.tsx
 │       └── tsconfig.json
+├── deploy.sh
 ├── infra
 │   └── docker-compose
 │       └── docker-compose.yml
@@ -396,4 +393,4 @@
 ├── project_tree.txt
 └── tsconfig.json
 
-102 directories, 295 files
+96 directories, 298 files

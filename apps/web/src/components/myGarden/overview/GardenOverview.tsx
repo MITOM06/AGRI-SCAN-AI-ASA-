@@ -262,7 +262,7 @@ export function GardenOverview({
                     {/* Image */}
                     <div className="w-full sm:w-40 h-48 sm:h-40 rounded-2xl overflow-hidden shrink-0 relative">
                       <img
-                        src={plant.plantId?.images?.[0]}
+                        src={plant.imageUrl || plant.plantInfo?.images?.[0] || '/placeholder-plant.png'}
                         alt={plant.customName}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />

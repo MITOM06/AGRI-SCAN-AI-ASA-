@@ -9,3 +9,4 @@ build
 apps/ai-service/models
 npm-debug.log
 .env
+*.log

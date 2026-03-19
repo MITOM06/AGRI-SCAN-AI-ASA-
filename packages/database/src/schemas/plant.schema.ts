@@ -31,10 +31,14 @@ export class Plant {
   @Prop([String])
   category: string[];
 
-  @Prop({ enum: ['Nhanh', 'Trung bình', 'Chậm'] })
+  @Prop({
+    type: String,
+    enum: ['Slow', 'Medium', 'Fast', 'Rất nhanh', 'Nhanh', 'Trung bình', 'Chậm'], // Thêm vào đây
+    default: 'Medium'
+  })
   growthRate: string;
 
-  @Prop({ required: true }) 
+  @Prop({ required: true })
   light: string;
 
 

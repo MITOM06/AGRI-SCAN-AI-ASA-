@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { motion } from "framer-motion";
 import {
@@ -11,18 +13,26 @@ import {
 } from "lucide-react";
 
 interface UploadViewProps {
-  setStep: (
-    step: "OVERVIEW" | "UPLOAD" | "ANALYZING" | "RESULT" | "TRACKING",
-  ) => void;
-  handleRealUpload: (file: File) => void;
+  onBack: () => void;
+  handleRealUpload: (file: File) => Promise<void>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 export function UploadView({
-  setStep,
+  onBack,
   handleRealUpload,
   fileInputRef,
 }: UploadViewProps) {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    await handleRealUpload(file);
+    event.target.value = "";
+  };
+
   return (
     <motion.div
       key="upload"
@@ -34,11 +44,12 @@ export function UploadView({
     >
       <div className="text-center mb-12 relative">
         <button
-          onClick={() => setStep("OVERVIEW")}
+          onClick={onBack}
           className="absolute left-0 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
         >
           <ChevronLeft size={28} />
         </button>
+
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -48,12 +59,14 @@ export function UploadView({
           <Sparkles size={16} className="animate-pulse" />
           <span>AI Plant Doctor 2.0</span>
         </motion.div>
+
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
           Bác sĩ cây trồng{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">
             thông minh
           </span>
         </h1>
+
         <p className="text-gray-500 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
           Chụp ảnh cây của bạn. AI sẽ nhận diện loại cây, chẩn đoán sức khỏe và
           đưa ra phác đồ chăm sóc cá nhân hóa chỉ trong vài giây.
@@ -69,7 +82,6 @@ export function UploadView({
           className="relative overflow-hidden border-2 border-dashed border-emerald-200 rounded-[2rem] p-12 md:p-16 text-center bg-gradient-to-b from-emerald-50/50 to-teal-50/50 cursor-pointer group transition-all hover:border-emerald-400 hover:bg-emerald-50/80"
           onClick={() => fileInputRef.current?.click()}
         >
-          {/* Background decorative blobs */}
           <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-200/30 rounded-full mix-blend-multiply filter blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 -translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 right-0 w-64 h-64 bg-teal-200/30 rounded-full mix-blend-multiply filter blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 translate-x-1/2 translate-y-1/2"></div>
 
@@ -77,11 +89,7 @@ export function UploadView({
             type="file"
             className="hidden"
             ref={fileInputRef}
-            // THAY BẰNG:
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleRealUpload(file);
-            }}
+            onChange={handleFileChange}
             accept="image/*"
           />
 
@@ -104,68 +112,19 @@ export function UploadView({
             nét, đủ sáng.
           </p>
 
-          <button className="relative z-10 px-8 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-gray-800 transition-all flex items-center gap-3 mx-auto shadow-lg shadow-gray-900/20 group-hover:shadow-gray-900/40 group-hover:-translate-y-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
+            className="relative z-10 px-8 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-gray-800 transition-all flex items-center gap-3 mx-auto shadow-lg shadow-gray-900/20 group-hover:shadow-gray-900/40 group-hover:-translate-y-1"
+          >
             <Upload
               size={20}
               className="group-hover:-translate-y-1 transition-transform"
             />
             Chọn ảnh từ thiết bị
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Development Helper: Quick select mock data */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="mt-16 pt-8 border-t border-gray-200/60"
-      >
-        <p className="text-xs text-gray-400 font-bold mb-6 text-center uppercase tracking-widest">
-          Khu vực Test (Dành cho Dev)
-        </p>
-        <div className="flex flex-wrap gap-4 justify-center">
-          <button
-            onClick={async () => {
-              const res = await fetch(
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Sunflower_from_Silesia2.jpg/320px-Sunflower_from_Silesia2.jpg",
-              );
-              const blob = await res.blob();
-              handleRealUpload(
-                new File([blob], "test.jpg", { type: "image/jpeg" }),
-              );
-            }}
-            className="px-6 py-3 bg-orange-50 text-orange-600 border border-orange-200 text-sm font-bold rounded-2xl hover:bg-orange-100 hover:scale-105 hover:shadow-lg hover:shadow-orange-500/10 transition-all flex items-center gap-2"
-          >
-            <Apple size={18} /> Cây Ăn Quả
-          </button>
-          <button
-            onClick={async () => {
-              const res = await fetch(
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Sunflower_from_Silesia2.jpg/320px-Sunflower_from_Silesia2.jpg",
-              );
-              const blob = await res.blob();
-              handleRealUpload(
-                new File([blob], "test.jpg", { type: "image/jpeg" }),
-              );
-            }}
-            className="px-6 py-3 bg-pink-50 text-pink-600 border border-pink-200 text-sm font-bold rounded-2xl hover:bg-pink-100 hover:scale-105 hover:shadow-lg hover:shadow-pink-500/10 transition-all flex items-center gap-2"
-          >
-            <Flower2 size={18} /> Cây Hoa
-          </button>
-          <button
-            onClick={async () => {
-              const res = await fetch(
-                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Sunflower_from_Silesia2.jpg/320px-Sunflower_from_Silesia2.jpg",
-              );
-              const blob = await res.blob();
-              handleRealUpload(
-                new File([blob], "test.jpg", { type: "image/jpeg" }),
-              );
-            }}
-            className="px-6 py-3 bg-emerald-50 text-emerald-600 border border-emerald-200 text-sm font-bold rounded-2xl hover:bg-emerald-100 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/10 transition-all flex items-center gap-2"
-          >
-            <Leaf size={18} /> Cây Kiểng
           </button>
         </div>
       </motion.div>
