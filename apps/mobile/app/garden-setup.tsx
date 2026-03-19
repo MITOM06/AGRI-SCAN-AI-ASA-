@@ -353,6 +353,7 @@ export default function GardenSetupScreen() {
   );
 }
 
+// BẠN GIỮ NGUYÊN CÁC STYLES TỪ FILE CŨ NHÉ
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8fafc" },
   header: {
