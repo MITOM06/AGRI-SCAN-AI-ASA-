@@ -11,10 +11,6 @@ import {
 import { formatDate, pageVariants } from "./utils";
 import { adminApi } from "@agri-scan/shared"; // Kiểm tra lại đường dẫn này
 import { IUser, SubscriptionPlan, UserRole } from "@agri-scan/shared";
-import {
-  IAdminUser,
-  IAdminUsersResponse,
-} from "@agri-scan/shared/dist/types/admin.types";
 
 export default function UsersTab() {
   // --- States ---
@@ -40,7 +36,7 @@ export default function UsersTab() {
 
       const rawData = response.data || [];
 
-      const formattedUsers: IUser[] = rawData.map((u: IAdminUser) => ({
+      const formattedUsers: IUser[] = rawData.map((u: any) => ({
         ...u,
         id: u._id, // Map _id sang id
 

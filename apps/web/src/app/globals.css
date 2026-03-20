@@ -74,3 +74,14 @@ html {
 .floating-animation:nth-child(3) {
   animation-delay: -4s;
 }
+
+/* Ẩn thanh cuộn cho Chrome, Safari và Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ẩn thanh cuộn cho IE, Edge và Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

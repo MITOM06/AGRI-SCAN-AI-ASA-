@@ -20,11 +20,9 @@ def load_knowledge(kb_path: Path = KB_PATH):
 
 # create embeddings & vector DB (cached)
 _vectorstore = None
+# ai/rag.py (Sửa lại hàm init_vector_db)
+
 def init_vector_db(emb_model_name: str = None, force: bool = False):
-    """
-    Build a Chroma vectorstore from the JSON knowledge base.
-    Returns the vectorstore object.
-    """
     global _vectorstore
     if _vectorstore is not None and not force:
         return _vectorstore
@@ -34,21 +32,24 @@ def init_vector_db(emb_model_name: str = None, force: bool = False):
 
     kb = load_knowledge()
     docs = []
+
+    # KIỂM TRA VÀ XỬ LÝ THEO KIỂU DỮ LIỆU CỦA JSON
     if isinstance(kb, list):
-        for item in kb:
-            if item.get("Status") != "Normal":
+        # Nếu JSON là dạng List: [ {...}, {...} ]
+        for data in kb:
+            if data.get("Status") != "Normal":
                 content = (
-                    f"Bệnh: {item.get('LOAI_BENH')}. "
-                    f"Triệu chứng: {item.get('DAC_DIEM')}. "
-                    f"Cách trị: {item.get('GIAI_PHAP')}. "
-                    f"Thuốc: {item.get('LIEU_TRINH_VA_THUOC', {}).get('Hoat_chat_dac_tri', '')}"
+                    f"Bệnh: {data.get('LOAI_BENH')}. "
+                    f"Triệu chứng: {data.get('DAC_DIEM')}. "
+                    f"Cách trị: {data.get('GIAI_PHAP')}. "
+                    f"Thuốc: {data.get('LIEU_TRINH_VA_THUOC', {}).get('Hoat_chat_dac_tri', '')}"
                 )
-                # Vì là List nên không có 'key', ta dùng 'LOAI_BENH' hoặc ID làm class_name
-                meta = {"class_name": item.get("LOAI_BENH"), "ten_cay": item.get("TEN_CAY")}
+                # Dùng LOAI_BENH làm class_name để lọc sau này
+                meta = {"class_name": data.get("LOAI_BENH"), "ten_cay": data.get("TEN_CAY")}
                 docs.append(Document(page_content=content, metadata=meta))
     
-    # Nếu kb là Dictionary (Đối tượng)
     elif isinstance(kb, dict):
+        # Nếu JSON là dạng Dictionary: { "key": {...} } (Code cũ của bạn)
         for key, data in kb.items():
             if data.get("Status") != "Normal":
                 content = (
@@ -59,12 +60,10 @@ def init_vector_db(emb_model_name: str = None, force: bool = False):
                 )
                 meta = {"class_name": key, "ten_cay": data.get("TEN_CAY")}
                 docs.append(Document(page_content=content, metadata=meta))
-    # --- ĐOẠN SỬA ĐỔI KẾT THÚC ---
 
     if not docs:
         print("[rag.py] Warning: no docs created from KB.")
-        # Trả về None hoặc xử lý tùy ý để không crash Chroma
-        return None 
+        return None
 
     vs = Chroma.from_documents(docs, embeddings)
     _vectorstore = vs

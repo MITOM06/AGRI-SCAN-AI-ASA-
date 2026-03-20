@@ -16,6 +16,7 @@ import {
   Settings,
   Store,
   Package,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@agri-scan/shared";
 import { useAuth } from "../../hooks/useAuth";
@@ -303,19 +304,20 @@ export function Navbar() {
                         href="/profile"
                         className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
                       >
-                        <User size={16} /> Hồ sơ của tôi
+                        <User size={16} className="text-gray-400"/> Hồ sơ của tôi
                       </Link>
                       <Link
                         href="/shop/orders"
                         className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
                       >
-                        <Package size={16} /> Đơn hàng của tôi
+                        <Package size={16} className="text-gray-400"/> Đơn hàng của tôi
                       </Link>
                       <Link
-                        href="/settings"
+                        href="/feedback"
                         className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
                       >
-                        <Settings size={16} /> Cài đặt
+                        <MessageSquare size={20} className="text-gray-400" />
+                        Góp ý & Phản hồi
                       </Link>
                       <div className="border-t border-gray-50 mt-1.5 pt-1.5">
                         <button
