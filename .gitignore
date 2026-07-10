@@ -25,18 +25,27 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/extensions.json
 .idea/
+.ServiceHub/
 
 # --- Build & Temp ---
 dist/
 build/
+.next/
 .temp/
 .tmp/
 coverage/
+*.tsbuildinfo
 
-# Log files
-*.log
-.ServiceHub/
-node_modules/
-dist/
+# --- Framework / Tooling caches ---
 .expo/
-npm-debug.log*
+.turbo/
+.vercel/
+
+# --- Python (ai-service) ---
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# --- Generated / snapshot artifacts ---
+project_tree.txt

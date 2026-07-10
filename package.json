@@ -1,8 +1,28 @@
 {
   "name": "agri-scan-ai",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AGRI-SCAN-AI — nền tảng quét ảnh cây trồng bằng AI: nhận diện bệnh/loài, wiki, chatbot RAG, thời tiết, my-garden, shop. Monorepo pnpm workspace.",
+  "private": true,
+  "license": "MIT",
+  "author": "AGRI-SCAN-AI Team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MITOM06/AGRI-SCAN-AI-ASA-.git"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "ai",
+    "agriculture",
+    "plant-disease-detection",
+    "nestjs",
+    "nextjs",
+    "expo",
+    "monorepo",
+    "pnpm-workspace"
+  ],
   "scripts": {
     "test": "pnpm -r run test",
     "dev:web": "pnpm --filter web dev",
@@ -12,16 +32,5 @@
     "build:backend": "pnpm run build:packages && pnpm --filter backend run build",
     "build:web": "pnpm run build:packages && pnpm --filter web run build",
     "build": "pnpm run build:packages && pnpm --filter backend run build && pnpm --filter web run build"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/multer": "^2.0.0"
-  },
-  "dependencies": {
-    "expo": "~54.0.33",
-    "lucide-react-native": "^0.576.0",
-    "react-native-svg": "15.12.1"
   }
 }

@@ -16,6 +16,7 @@
     "zod": "3.24.1"
   },
   "devDependencies": {
+    "@types/node": "^20",
     "@types/react": "^19",
     "typescript": "^5.0.0"
   }
