@@ -78,7 +78,7 @@ async def predict_endpoint(file: UploadFile = File(...)):
         if confidence < 0.7:
             return {
                 "success": False,
-                "_label": yolo_label,
+                "yolo_label": yolo_label,
                 "confidence": confidence,
                 "error": f"Độ tin cậy thấp ({confidence:.2f}). Vui lòng chụp rõ hơn."
             }
