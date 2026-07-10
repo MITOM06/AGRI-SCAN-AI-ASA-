@@ -3,16 +3,12 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import {
-  WeatherRule,
-  WeatherRuleSchema,
-} from '@agri-scan/database';
+import { WeatherRule, WeatherRuleSchema } from '@agri-scan/database';
 import { WeatherController } from './Weather.controller';
-import { WeatherService } from './Weather.service'
+import { WeatherService } from './Weather.service';
 
 @Module({
   imports: [
-    
     HttpModule.register({
       timeout: 10000,
       maxRedirects: 3,

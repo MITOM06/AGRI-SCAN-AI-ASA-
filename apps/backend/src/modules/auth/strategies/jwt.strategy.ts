@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/users.service';
+import type { JwtPayload } from '../../../common/types/authenticated-request';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -19,12 +20,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   // Hàm này tự động chạy nếu Token hợp lệ và chưa hết hạn
-  async validate(payload: any) {
+  async validate(payload: JwtPayload) {
     // payload chính là dữ liệu { sub: userId, email } ta đã mã hóa lúc login
     const user = await this.usersService.findByEmail(payload.email);
-    
+
     if (!user) {
-      throw new UnauthorizedException('Người dùng không còn tồn tại trong hệ thống!');
+      throw new UnauthorizedException(
+        'Người dùng không còn tồn tại trong hệ thống!',
+      );
     }
 
     // Kết quả return ở đây sẽ tự động được NestJS gán vào biến `req.user`

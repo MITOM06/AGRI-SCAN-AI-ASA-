@@ -17,6 +17,7 @@ import {
   GetProductsQueryDto,
 } from './dto/product.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Controller('products')
 export class ProductsController {
@@ -25,7 +26,10 @@ export class ProductsController {
   // Yêu cầu đăng nhập để đăng bán
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Req() req: any, @Body() createProductDto: CreateProductDto) {
+  create(
+    @Req() req: AuthenticatedRequest,
+    @Body() createProductDto: CreateProductDto,
+  ) {
     // req.user.userId lấy từ token giải mã
     return this.productsService.create(req.user.userId, createProductDto);
   }
@@ -45,7 +49,7 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
   ) {
@@ -59,7 +63,7 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  remove(@Req() req: any, @Param('id') id: string) {
+  remove(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.productsService.remove(id, req.user.userId, req.user.role);
   }
 }

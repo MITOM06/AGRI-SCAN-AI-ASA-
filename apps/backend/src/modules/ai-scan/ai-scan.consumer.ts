@@ -3,6 +3,7 @@ import { EventPattern, Payload, Ctx, RmqContext } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
+import type { Channel, Message } from 'amqplib';
 import axios from 'axios';
 // ═══════════════════════════════════════════════════════════════
 // BUG #8 FIX: Chuyển từ dynamic import sang static import.
@@ -13,6 +14,18 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { ScanHistory, ChatHistory } from '@agri-scan/database';
 import { PlantsService } from '../plants/plants.service';
+import { getErrorStack } from '../../common/utils/error.util';
+
+// Shape phản hồi từ ai-service (FastAPI)
+interface PredictResult {
+  success: boolean;
+  yolo_label?: string;
+  confidence?: number;
+  error?: string;
+}
+interface ChatResult {
+  answer?: string;
+}
 
 @Controller()
 export class AiScanConsumer {
@@ -26,7 +39,10 @@ export class AiScanConsumer {
   ) {}
 
   private get aiServiceUrl(): string {
-    return this.configService.get<string>('AI_SERVICE_URL', 'http://localhost:8000');
+    return this.configService.get<string>(
+      'AI_SERVICE_URL',
+      'http://localhost:8000',
+    );
   }
 
   // --------------------------------------------------
@@ -37,8 +53,8 @@ export class AiScanConsumer {
     @Payload() data: { scanId: string; userId: string; imageUrl: string },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef();
-    const originalMsg = context.getMessage();
+    const channel = context.getChannelRef() as Channel;
+    const originalMsg = context.getMessage() as Message;
     this.logger.log(`[SCAN] Nhận scanId: ${data.scanId}`);
 
     try {
@@ -47,7 +63,7 @@ export class AiScanConsumer {
       });
 
       // Tải ảnh từ URL về buffer
-      const imgRes = await axios.get(data.imageUrl, {
+      const imgRes = await axios.get<ArrayBuffer>(data.imageUrl, {
         responseType: 'arraybuffer',
         timeout: 15000,
       });
@@ -60,10 +76,14 @@ export class AiScanConsumer {
         contentType: 'image/jpeg',
       });
 
-      const aiRes = await axios.post(`${this.aiServiceUrl}/predict`, form, {
-        headers: form.getHeaders(),
-        timeout: 60000,
-      });
+      const aiRes = await axios.post<PredictResult>(
+        `${this.aiServiceUrl}/predict`,
+        form,
+        {
+          headers: form.getHeaders(),
+          timeout: 60000,
+        },
+      );
 
       const result = aiRes.data;
 
@@ -71,14 +91,19 @@ export class AiScanConsumer {
         await this.scanHistoryModel.findByIdAndUpdate(data.scanId, {
           $set: {
             status: 'FAILED',
-            errorMessage: result.error || 'Không nhận diện được, vui lòng chụp rõ hơn.',
+            errorMessage:
+              result.error || 'Không nhận diện được, vui lòng chụp rõ hơn.',
           },
         });
       } else {
-        const disease = await this.plantsService.findDiseaseByLabel(result.yolo_label);
+        const disease = await this.plantsService.findDiseaseByLabel(
+          result.yolo_label ?? '',
+        );
 
         if (!disease) {
-          this.logger.warn(`[SCAN] Không tìm thấy disease cho label: ${result.yolo_label}`);
+          this.logger.warn(
+            `[SCAN] Không tìm thấy disease cho label: ${result.yolo_label}`,
+          );
           await this.scanHistoryModel.findByIdAndUpdate(data.scanId, {
             $set: {
               status: 'COMPLETED',
@@ -89,22 +114,34 @@ export class AiScanConsumer {
           await this.scanHistoryModel.findByIdAndUpdate(data.scanId, {
             $set: {
               status: 'COMPLETED',
-              aiPredictions: [{
-                diseaseId: disease._id,
-                confidence: result.confidence,
-              }],
+              aiPredictions: [
+                {
+                  diseaseId: disease._id,
+                  confidence: result.confidence,
+                },
+              ],
             },
           });
-          this.logger.log(`[SCAN] Xong ${data.scanId} → ${disease.name} (${result.confidence})`);
+          this.logger.log(
+            `[SCAN] Xong ${data.scanId} → ${disease.name} (${result.confidence})`,
+          );
         }
       }
 
       channel.ack(originalMsg);
     } catch (err) {
-      this.logger.error(`[SCAN] Lỗi scanId: ${data.scanId}`, err.stack);
-      await this.scanHistoryModel.findByIdAndUpdate(data.scanId, {
-        $set: { status: 'FAILED', errorMessage: 'Hệ thống AI đang bận, vui lòng thử lại.' },
-      }).catch(() => {});
+      this.logger.error(
+        `[SCAN] Lỗi scanId: ${data.scanId}`,
+        getErrorStack(err),
+      );
+      await this.scanHistoryModel
+        .findByIdAndUpdate(data.scanId, {
+          $set: {
+            status: 'FAILED',
+            errorMessage: 'Hệ thống AI đang bận, vui lòng thử lại.',
+          },
+        })
+        .catch(() => {});
       channel.nack(originalMsg, false, false);
     }
   }
@@ -114,7 +151,8 @@ export class AiScanConsumer {
   // --------------------------------------------------
   @EventPattern('chat.message.requested')
   async handleChatMessage(
-    @Payload() data: {
+    @Payload()
+    data: {
       sessionId: string;
       userId: string;
       label: string;
@@ -123,19 +161,19 @@ export class AiScanConsumer {
     },
     @Ctx() context: RmqContext,
   ) {
-    const channel = context.getChannelRef();
-    const originalMsg = context.getMessage();
+    const channel = context.getChannelRef() as Channel;
+    const originalMsg = context.getMessage() as Message;
     this.logger.log(`[CHAT] Nhận sessionId: ${data.sessionId}`);
 
     try {
-      const aiRes = await axios.post(
+      const aiRes = await axios.post<ChatResult>(
         `${this.aiServiceUrl}/chat`,
         { label: data.label, prompt: data.question },
         { timeout: 60000 },
       );
 
       const answerText = aiRes.data.answer
-        ? String(aiRes.data.answer)
+        ? aiRes.data.answer
         : JSON.stringify(aiRes.data);
 
       const field = `messages.${data.pendingMessageIndex}`;
@@ -149,14 +187,19 @@ export class AiScanConsumer {
       this.logger.log(`[CHAT] Xong sessionId: ${data.sessionId}`);
       channel.ack(originalMsg);
     } catch (err) {
-      this.logger.error(`[CHAT] Lỗi sessionId: ${data.sessionId}`, err.stack);
+      this.logger.error(
+        `[CHAT] Lỗi sessionId: ${data.sessionId}`,
+        getErrorStack(err),
+      );
       const field = `messages.${data.pendingMessageIndex}`;
-      await this.chatHistoryModel.findByIdAndUpdate(data.sessionId, {
-        $set: {
-          [`${field}.content`]: 'Xin lỗi, trợ lý đang bận. Vui lòng thử lại!',
-          [`${field}.status`]: 'FAILED',
-        },
-      }).catch(() => {});
+      await this.chatHistoryModel
+        .findByIdAndUpdate(data.sessionId, {
+          $set: {
+            [`${field}.content`]: 'Xin lỗi, trợ lý đang bận. Vui lòng thử lại!',
+            [`${field}.status`]: 'FAILED',
+          },
+        })
+        .catch(() => {});
       channel.nack(originalMsg, false, false);
     }
   }

@@ -17,7 +17,7 @@ export class GetWeatherDto {
   @IsNumber()
   @Min(-90)
   @Max(90)
-  @Transform(({ value }) => parseFloat(value)) // Query param đến dưới dạng string, cần parse
+  @Transform(({ value }) => parseFloat(String(value))) // Query param đến dưới dạng string, cần parse
   lat: number;
 
   /**
@@ -28,7 +28,7 @@ export class GetWeatherDto {
   @IsNumber()
   @Min(-180)
   @Max(180)
-  @Transform(({ value }) => parseFloat(value))
+  @Transform(({ value }) => parseFloat(String(value)))
   lon: number;
 
   /**

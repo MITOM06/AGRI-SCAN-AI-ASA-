@@ -13,12 +13,25 @@ import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
 import { MailerService } from '@nestjs-modules/mailer';
 import axios from 'axios'; // Nhớ import cái này ở đầu file
+import type { UserDocument } from '@agri-scan/database';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import type { JwtPayload } from '../../common/types/authenticated-request';
+import { getErrorMessage } from '../../common/utils/error.util';
+
 // Kiểu dữ liệu nhận từ Google/Facebook Strategy
 interface OAuthUserProfile {
   email: string;
   fullName: string;
   providerId: string;
   provider: 'google' | 'facebook';
+}
+
+// Kết quả từ endpoint tokeninfo của Google (đăng nhập mobile)
+interface GoogleTokenInfo {
+  email: string;
+  name?: string;
+  sub: string;
 }
 
 @Injectable()
@@ -28,12 +41,12 @@ export class AuthService {
     private jwtService: JwtService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private mailerService: MailerService,
-  ) { }
+  ) {}
 
   // ════════════════════════════════════════════════════════════
   // 1. ĐĂNG KÝ BẰNG EMAIL + MẬT KHẨU
   // ════════════════════════════════════════════════════════════
-  async register(data: any) {
+  async register(data: RegisterDto) {
     const existingUser = await this.usersService.findByEmail(data.email);
 
     if (existingUser) {
@@ -45,8 +58,8 @@ export class AuthService {
           .join(', ');
         throw new BadRequestException(
           `Email này đã được đăng ký qua ${providers || 'mạng xã hội'}. ` +
-          `Vui lòng đăng nhập bằng ${providers || 'tài khoản mạng xã hội'} ` +
-          `và thiết lập mật khẩu trong mục Cài đặt tài khoản.`,
+            `Vui lòng đăng nhập bằng ${providers || 'tài khoản mạng xã hội'} ` +
+            `và thiết lập mật khẩu trong mục Cài đặt tài khoản.`,
         );
       }
       throw new BadRequestException('Email này đã được sử dụng!');
@@ -73,7 +86,7 @@ export class AuthService {
   // ════════════════════════════════════════════════════════════
   // 2. ĐĂNG NHẬP BẰNG EMAIL + MẬT KHẨU
   // ════════════════════════════════════════════════════════════
-  async login(data: any) {
+  async login(data: LoginDto) {
     const user = await this.usersService.findByEmail(data.email);
     if (!user) throw new UnauthorizedException('Sai email hoặc mật khẩu!');
 
@@ -86,8 +99,8 @@ export class AuthService {
 
       throw new UnauthorizedException(
         `Tài khoản này chưa có mật khẩu. ` +
-        `Vui lòng đăng nhập bằng ${providers || 'mạng xã hội'} ` +
-        `và thiết lập mật khẩu trong Cài đặt tài khoản.`,
+          `Vui lòng đăng nhập bằng ${providers || 'mạng xã hội'} ` +
+          `và thiết lập mật khẩu trong Cài đặt tài khoản.`,
       );
     }
 
@@ -143,7 +156,7 @@ export class AuthService {
   // 4. XỬ LÝ SAU KHI OAUTH CALLBACK THÀNH CÔNG
   //    Được gọi từ Controller sau khi Passport xác thực xong
   // ════════════════════════════════════════════════════════════
-  async handleOAuthCallback(user: any) {
+  async handleOAuthCallback(user: UserDocument) {
     return this.generateTokens(
       user._id.toString(),
       user.email,
@@ -196,7 +209,7 @@ export class AuthService {
   // ════════════════════════════════════════════════════════════
   async refreshToken(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken);
+      const payload = this.jwtService.verify<JwtPayload>(refreshToken);
       const userId = payload.sub;
 
       const cachedToken = await this.cacheManager.get(
@@ -244,7 +257,7 @@ export class AuthService {
     if (!user.isPasswordSet) {
       throw new BadRequestException(
         'Tài khoản này chưa thiết lập mật khẩu. ' +
-        'Vui lòng đăng nhập bằng Google/Facebook và dùng chức năng Thiết lập mật khẩu.',
+          'Vui lòng đăng nhập bằng Google/Facebook và dùng chức năng Thiết lập mật khẩu.',
       );
     }
 
@@ -380,7 +393,7 @@ export class AuthService {
     fullName?: string,
     plan?: string,
     isPasswordSet?: boolean,
-    role?: string,             // ← THÊM
+    role?: string, // ← THÊM
   ) {
     const payload = { sub: userId, email, role };
 
@@ -403,7 +416,7 @@ export class AuthService {
   async verifyGoogleTokenForMobile(idToken: string) {
     try {
       // 1. Gọi thẳng lên API của Google để xác minh idToken
-      const verifyRes = await axios.get(
+      const verifyRes = await axios.get<GoogleTokenInfo>(
         `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`,
       );
       const payload = verifyRes.data;
@@ -456,7 +469,7 @@ export class AuthService {
         user.role,
       );
     } catch (error) {
-      console.error('Lỗi Google Auth:', error?.response?.data || error.message);
+      console.error('Lỗi Google Auth:', getErrorMessage(error));
       throw new UnauthorizedException(
         'Xác thực Google thất bại. Vui lòng thử lại!',
       );

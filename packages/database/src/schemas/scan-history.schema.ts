@@ -39,6 +39,10 @@ export class ScanHistory {
 
   @Prop({ default: () => new Date() })
   scannedAt: Date;
+
+  // Do `timestamps: true` — Mongoose tự thêm khi lưu; khai báo để có kiểu.
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const ScanHistorySchema = SchemaFactory.createForClass(ScanHistory);

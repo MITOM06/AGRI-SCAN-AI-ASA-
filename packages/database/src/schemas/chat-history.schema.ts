@@ -44,6 +44,10 @@ export class ChatHistory  {
     default: []
   })
   messages: IChatMessage[];
+
+  // Do `timestamps: true` — Mongoose tự thêm khi lưu; khai báo để có kiểu.
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const ChatHistorySchema = SchemaFactory.createForClass(ChatHistory);

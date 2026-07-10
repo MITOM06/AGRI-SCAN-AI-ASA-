@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
+import { Strategy, VerifyCallback, Profile } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth.service';
 
@@ -21,7 +21,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     _accessToken: string,
     _refreshToken: string,
-    profile: any,
+    profile: Profile,
     done: VerifyCallback,
   ): Promise<void> {
     try {
@@ -29,21 +29,23 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
       if (!emails || emails.length === 0) {
         return done(
-          new Error('Tài khoản Google không có email. Vui lòng dùng phương thức khác.'),
+          new Error(
+            'Tài khoản Google không có email. Vui lòng dùng phương thức khác.',
+          ),
           false,
         );
       }
 
       const user = await this.authService.validateOAuthUser({
         email: emails[0].value,
-        fullName: `${name.givenName ?? ''} ${name.familyName ?? ''}`.trim(),
+        fullName: `${name?.givenName ?? ''} ${name?.familyName ?? ''}`.trim(),
         providerId: id,
         provider: 'google',
       });
 
-      done(null, user as any);
+      done(null, user ?? false);
     } catch (error) {
-      done(error, false);
+      done(error instanceof Error ? error : new Error(String(error)), false);
     }
   }
 }

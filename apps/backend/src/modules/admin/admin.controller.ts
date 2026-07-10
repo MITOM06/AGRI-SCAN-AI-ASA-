@@ -24,6 +24,7 @@ import {
   GetUsersQueryDto,
   SubmitFeedbackDto,
 } from './dto/Admin user.dto';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 // ── Guard dùng chung cho toàn bộ Admin routes ──────────────────
 const AdminGuards = [JwtAuthGuard, RolesGuard];
@@ -171,7 +172,10 @@ export class AdminController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   @Post('feedback')
-  submitFeedback(@Req() req: any, @Body() body: SubmitFeedbackDto) {
+  submitFeedback(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: SubmitFeedbackDto,
+  ) {
     return this.adminService.submitFeedback(req.user.userId, body);
   }
 
@@ -200,7 +204,7 @@ export class AdminController {
   @Post('admin/feedbacks/:id/reply')
   replyFeedback(
     @Param('id') id: string,
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Body() body: ReplyFeedbackDto,
   ) {
     return this.adminService.replyFeedback(id, req.user.userId, body.reply);
@@ -213,7 +217,7 @@ export class AdminController {
   @UseGuards(JwtAuthGuard)
   @Get('feedback')
   getUserFeedbacks(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Query('page') page = 1,
     @Query('limit') limit = 20,
   ) {

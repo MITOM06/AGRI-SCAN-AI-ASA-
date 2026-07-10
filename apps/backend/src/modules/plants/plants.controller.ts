@@ -1,4 +1,5 @@
-import { Controller, Get, Param, UseGuards, Post, Body, UnauthorizedException, Req } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Post, Body } from '@nestjs/common';
+import { Plant } from '@agri-scan/database';
 import { PlantsService } from './plants.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -7,7 +8,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 // @UseGuards(JwtAuthGuard, RolesGuard)
 // @Roles('ADMIN')
 export class PlantsController {
-  constructor(private readonly plantsService: PlantsService) { }
+  constructor(private readonly plantsService: PlantsService) {}
 
   @Get()
   @Roles('USER', 'ADMIN')
@@ -22,8 +23,8 @@ export class PlantsController {
   }
 
   @Post('seed')
-  @UseGuards(JwtAuthGuard, RolesGuard) 
-  @Roles('ADMIN')  
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   async seedPlantData() {
     return this.plantsService.seedData();
   }
@@ -32,7 +33,8 @@ export class PlantsController {
   @Post('contribute')
   @UseGuards(JwtAuthGuard)
   @Roles('USER', 'ADMIN')
-  async contributePlant(@Body() plantData: any) { // Có thể tạo DTO sau để validate chặt chẽ hơn
+  async contributePlant(@Body() plantData: Partial<Plant>) {
+    // Có thể tạo DTO sau để validate chặt chẽ hơn
     return this.plantsService.contributePlant(plantData);
   }
 }

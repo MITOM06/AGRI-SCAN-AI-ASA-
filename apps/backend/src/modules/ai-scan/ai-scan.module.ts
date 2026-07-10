@@ -6,9 +6,12 @@ import { AiScanController } from './ai-scan.controller';
 import { AiScanService } from './ai-scan.service';
 import { AiScanConsumer } from './ai-scan.consumer';
 import {
-  ScanHistory, ScanHistorySchema,
-  User, UserSchema,
-  ChatHistory, ChatHistorySchema,
+  ScanHistory,
+  ScanHistorySchema,
+  User,
+  UserSchema,
+  ChatHistory,
+  ChatHistorySchema,
 } from '@agri-scan/database';
 import { PlantsModule } from '../plants/plants.module';
 
@@ -67,11 +70,9 @@ import { PlantsModule } from '../plants/plants.module';
   // không dùng cho message handler.
   // ═══════════════════════════════════════════════════════════════
   controllers: [
-    AiScanController,  // HTTP routes: POST /scan/analyze, GET /scan/history...
-    AiScanConsumer,    // RabbitMQ handlers: @EventPattern('scan.image.requested'), @EventPattern('chat.message.requested')
+    AiScanController, // HTTP routes: POST /scan/analyze, GET /scan/history...
+    AiScanConsumer, // RabbitMQ handlers: @EventPattern('scan.image.requested'), @EventPattern('chat.message.requested')
   ],
-  providers: [
-    AiScanService,
-  ],
+  providers: [AiScanService],
 })
 export class AiScanModule {}

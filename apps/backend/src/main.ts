@@ -8,15 +8,14 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {
       urls: [configService.getOrThrow<string>('RABBITMQ_URL')],
       queue: 'scan_queue',
       queueOptions: { durable: true },
-      noAck: false,       // Bắt buộc false để manual ack/nack hoạt động
-      prefetchCount: 1,   // AI nặng — xử lý tuần tự từng ảnh
+      noAck: false, // Bắt buộc false để manual ack/nack hoạt động
+      prefetchCount: 1, // AI nặng — xử lý tuần tự từng ảnh
     },
   });
 
@@ -35,8 +34,8 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
-      'http://localhost:8081',  // Expo Web
-      'http://localhost:3000',  // Next.js dev
+      'http://localhost:8081', // Expo Web
+      'http://localhost:3000', // Next.js dev
       // Thêm domain production sau khi deploy
       // 'https://agriscan.ai',
     ],
@@ -59,7 +58,9 @@ async function bootstrap() {
 
   const port = configService.get<number>('PORT', 4000);
   await app.listen(port);
-  console.log(`🚀 Backend Agri-Scan AI đang chạy tại: http://localhost:${port}`);
+  console.log(
+    `🚀 Backend Agri-Scan AI đang chạy tại: http://localhost:${port}`,
+  );
   console.log(`📨 RabbitMQ consumers đã sẵn sàng: scan_queue | chat_queue`);
 }
-bootstrap();
+void bootstrap();
