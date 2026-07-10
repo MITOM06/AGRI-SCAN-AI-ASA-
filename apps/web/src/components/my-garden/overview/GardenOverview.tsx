@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 // THAY BẰNG:
 import type { IMyGardenPlant } from "@agri-scan/shared";
-import { MOCK_PLANTS } from "../../data/gardenData";
+import { MOCK_PLANTS } from "../gardenData";
 
 interface GardenOverviewProps {
   activeTab: "TRACKING" | "FRUIT" | "FLOWER" | "ORNAMENTAL";
