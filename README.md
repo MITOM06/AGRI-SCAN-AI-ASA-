@@ -7,7 +7,7 @@
 > **Trạng thái:** Đang phát triển
 
 <p align="center">
-<a href="https://www.google.com/search?q=LICENSE">
+<a href="./LICENSE">
 <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License MIT">
 </a>
 <img src="https://img.shields.io/badge/Open%20Source-Community-orange?style=for-the-badge" alt="Open Source">
@@ -27,8 +27,8 @@
 * [III. Giải pháp AI (AI Solutions)](#iii-giải-pháp-ai-ai-solutions)
 * [IV. Kiến trúc hệ thống & Công nghệ](#iv-kiến-trúc-hệ-thống--công-nghệ)
 * [V. Hạn chế hiện tại và định hướng phát triển](#v-hạn-chế-hiện-tại-và-định-hướng-phát-triển)
-* [VI. Hướng dẫn cài đặt](#vi-hướng-dẫn-cài-đặt-update-later)
-* [VII. Project Management & OSS](#vii-project-management--oss-update-later)
+* [VI. Hướng dẫn cài đặt](#vi-hướng-dẫn-cài-đặt)
+* [VII. Project Management & OSS](#vii-project-management--oss)
 * [VIII. Thiết kế cơ sở dữ liệu](#viii-thiết-kế-cơ-sở-dữ-liệu)
 
 ## I. TỔNG QUAN DỰ ÁN (PROJECT OVERVIEW)
@@ -159,10 +159,18 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
 <img src="img/thoitiet1.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
 </p>
 
-### 2.2. Các tính năng KHÔNG LÀM trong giai đoạn này (Out of Scope):
-* *Sàn thương mại điện tử:* Không tích hợp chức năng mua bán vật tư nông nghiệp/thuốc trừ sâu.
-* *Cộng đồng/Mạng xã hội:* Chưa làm tính năng đăng bài, bình luận, chia sẻ phức tạp.
-*(Lý do: Tập trung toàn lực vào độ mượt mà của hệ thống AI và trải nghiệm UI/UX).*
+#### 2.1.5. **Shop nông sản:**
+* Sàn thương mại điện tử vật tư nông nghiệp: danh sách sản phẩm, chi tiết sản phẩm, giỏ hàng, đặt hàng và quản lý đơn hàng (`/shop`, `/shop/cart`, `/shop/checkout`, `/shop/orders`).
+* Tích hợp luồng thanh toán/nâng cấp gói dịch vụ (`/payment`, `/upgrade`).
+
+#### 2.1.6. **Cộng đồng (Community):**
+* Không gian chia sẻ kiến thức & kinh nghiệm canh tác giữa người dùng (`/community`).
+
+### 2.2. Ngoài phạm vi / định hướng mở rộng (Out of Scope):
+* *Mạng xã hội đầy đủ:* Chưa làm hệ thống bình luận lồng nhau, follow, feed cá nhân hoá phức tạp — cộng đồng hiện ở mức chia sẻ cơ bản.
+* *Thanh toán thật (production):* Luồng thanh toán đang ở mức demo/tích hợp cơ bản, chưa kết nối cổng thanh toán thương mại chính thức.
+
+> **Ghi chú:** So với kế hoạch MVP ban đầu (chỉ tập trung AI), dự án đã mở rộng thêm **Shop** và **Cộng đồng**. Xem mô hình kinh doanh & lộ trình tại [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ### 2.3 Giá trị khác biệt (Cập nhật sau)
 
@@ -216,7 +224,7 @@ Dự án cung cấp 3 dịch vụ API độc lập, đảm bảo khả năng m�
 Quy trình xử lý dữ liệu được thiết kế khép kín nhằm tối ưu hóa trải nghiệm người dùng:
 1.  **Tiền xử lý:** Hình ảnh đầu vào được Resize, Normalization và Augmentation (trong quá trình train) để tăng độ bền vững cho mô hình.
 2.  **Inference:** ViT-MoE trích xuất đặc trưng và đưa ra kết quả phân loại.
-3.  **Tối ưu hóa phản hồi:** Kết quả chẩn đoán được đưa vào hệ thống RAG để LLM (Llama-2-70B) tạo ra lộ trình chăm sóc cá nhân hóa (Personalized Calendar).
+3.  **Tối ưu hóa phản hồi:** Kết quả chẩn đoán được đưa vào hệ thống RAG để LLM (Gemini) tạo ra lộ trình chăm sóc cá nhân hóa (Personalized Calendar).
 
 <p align="center">
 <img src="img/gemini_last.jpg" alt="AI Architechture" height="400px" style="border-radius: 10px;">
@@ -272,14 +280,38 @@ Dự án áp dụng kiến trúc **Monolithic (Nguyên khối)** để tối ưu
 ## V. Hạn chế hiện tại và định hướng phát triển
 
 ### 5.1 Hạn chế
+Xem mục "Nợ kỹ thuật" trong [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
 ### 5.2 Định hướng phát triển
-
+Mô hình kinh doanh & lộ trình chi tiết: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
-## VI. Hướng dẫn cài đặt (Update Later)
+## VI. Hướng dẫn cài đặt
+
+```bash
+pnpm install                 # cài đặt toàn workspace (chạy từ gốc repo)
+
+# Hạ tầng dev (mongodb, redis, rabbitmq, ai-service, backend, web)
+docker compose -f infra/docker-compose/docker-compose.yml up -d
+
+# Chạy từng app
+pnpm dev:web                 # web (Next.js)
+pnpm dev:mobile              # mobile (Expo)
+pnpm --filter backend start:dev
+# ai-service: cd apps/ai-service && uvicorn ai.main:app --reload
+
+# Build (LUÔN build packages trước — backend/web phụ thuộc @agri-scan/*)
+pnpm build
+```
+
+Chi tiết kiến trúc: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
 ---
 
-## VII. Project Management & OSS (Update Later)
+## VII. Project Management & OSS
+
+Quy tắc làm việc nhóm, Git workflow và chuẩn Conventional Commits: [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
+
 ---
 
 ## VIII. THIẾT KẾ CƠ SỞ DỮ LIỆU
