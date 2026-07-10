@@ -84,7 +84,10 @@ export class ProductsService {
     if (!product) throw new NotFoundException('Sản phẩm không tồn tại!');
 
     // Chỉ chủ món hàng hoặc Admin mới được sửa
-    if (product.sellerId.toString() !== userId && userRole !== 'ADMIN') {
+    if (
+      (product.sellerId as Types.ObjectId).toString() !== userId &&
+      userRole !== 'ADMIN'
+    ) {
       throw new ForbiddenException(
         'Bạn không có quyền chỉnh sửa sản phẩm của người khác!',
       );
@@ -98,7 +101,10 @@ export class ProductsService {
     const product = await this.productModel.findById(id);
     if (!product) throw new NotFoundException('Sản phẩm không tồn tại!');
 
-    if (product.sellerId.toString() !== userId && userRole !== 'ADMIN') {
+    if (
+      (product.sellerId as Types.ObjectId).toString() !== userId &&
+      userRole !== 'ADMIN'
+    ) {
       throw new ForbiddenException(
         'Bạn không có quyền xóa sản phẩm của người khác!',
       );

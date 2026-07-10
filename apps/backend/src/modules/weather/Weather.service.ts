@@ -10,6 +10,7 @@ import { Model } from 'mongoose';
 import { firstValueFrom } from 'rxjs';
 
 import { WeatherRule, WeatherRuleDocument } from '@agri-scan/database';
+import { getErrorMessage, getErrorStack } from '../../common/utils/error.util';
 // =============================================
 // INTERFACES: Định nghĩa shape của dữ liệu OWM
 // =============================================
@@ -150,7 +151,7 @@ export class WeatherService {
     private readonly configService: ConfigService,
     @InjectModel(WeatherRule.name)
     private readonly weatherRuleModel: Model<WeatherRuleDocument>,
-  ) { }
+  ) {}
 
   /**
    * Hàm chính: Lấy dữ liệu thời tiết từ OWM và tạo lời khuyên nông nghiệp
@@ -223,8 +224,8 @@ export class WeatherService {
       return data;
     } catch (error) {
       this.logger.error(
-        `Lỗi khi gọi OpenWeatherMap API: ${error.message}`,
-        error.stack,
+        `Lỗi khi gọi OpenWeatherMap API: ${getErrorMessage(error)}`,
+        getErrorStack(error),
       );
       throw new InternalServerErrorException(
         'Không thể kết nối đến dịch vụ thời tiết. Vui lòng thử lại.',
@@ -250,7 +251,9 @@ export class WeatherService {
         .lean()
         .exec();
     } catch (error) {
-      this.logger.error(`Lỗi khi truy vấn WeatherRule: ${error.message}`);
+      this.logger.error(
+        `Lỗi khi truy vấn WeatherRule: ${getErrorMessage(error)}`,
+      );
       return []; // Trả về mảng rỗng thay vì crash - vẫn trả được dữ liệu thời tiết
     }
   }
@@ -380,13 +383,13 @@ export class WeatherService {
     const todayDailyData = owmData.daily[0];
     const dailyDataPoint = todayDailyData
       ? {
-        temp: todayDailyData.temp.day,
-        humidity: todayDailyData.humidity,
-        windSpeed: todayDailyData.wind_speed,
-        uvi: todayDailyData.uvi,
-        pop: todayDailyData.pop,
-        weatherMain: todayDailyData.weather[0]?.main ?? '',
-      }
+          temp: todayDailyData.temp.day,
+          humidity: todayDailyData.humidity,
+          windSpeed: todayDailyData.wind_speed,
+          uvi: todayDailyData.uvi,
+          pop: todayDailyData.pop,
+          weatherMain: todayDailyData.weather[0]?.main ?? '',
+        }
       : null;
 
     // --- Duyệt qua từng Rule và kiểm tra điều kiện ---
@@ -465,7 +468,8 @@ export class WeatherService {
     if (c.maxWindSpeed !== undefined && dataPoint.windSpeed > c.maxWindSpeed)
       return false;
 
-    if (c.minWindSpeed !== undefined && dataPoint.windSpeed < c.minWindSpeed) return false;
+    if (c.minWindSpeed !== undefined && dataPoint.windSpeed < c.minWindSpeed)
+      return false;
     // Loại thời tiết chính (so sánh case-insensitive)
     if (
       c.weatherMain !== undefined &&

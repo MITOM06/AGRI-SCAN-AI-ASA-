@@ -1,42 +1,62 @@
-import { Controller, Post, Get, Delete, Body, Param, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Body,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { MyGardenService } from './my-garden.service';
 import { AddPlantToGardenDto, DailyCheckInDto } from './dto/my-garden.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Controller('my-garden')
 @UseGuards(JwtAuthGuard) // Bắt buộc user phải đăng nhập mới được dùng
 export class MyGardenController {
-    constructor(private readonly myGardenService: MyGardenService) { }
+  constructor(private readonly myGardenService: MyGardenService) {}
 
-    @Get()
-    async getUserGarden(@Req() req) {
-        const userId = req.user.userId; 
-        return this.myGardenService.getUserGarden(userId);
-    }
+  @Get()
+  async getUserGarden(@Req() req: AuthenticatedRequest) {
+    const userId = req.user.userId;
+    return this.myGardenService.getUserGarden(userId);
+  }
 
-    @Post()
-    async addPlantToGarden(@Req() req, @Body() dto: AddPlantToGardenDto) {
-        const userId = req.user.userId;
-        return this.myGardenService.addPlantToGarden({ userId, ...dto });
-    }
+  @Post()
+  async addPlantToGarden(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: AddPlantToGardenDto,
+  ) {
+    const userId = req.user.userId;
+    return this.myGardenService.addPlantToGarden({ userId, ...dto });
+  }
 
-    @Post(':id/check-in')
-    async dailyCheckIn(@Req() req, @Param('id') gardenId: string, @Body() dto: DailyCheckInDto) {
-        const userId = req.user.userId;
-        // BUG 6 FIX: truyền đủ imageUrl, lat, lon xuống service
-        return this.myGardenService.dailyCheckIn(
-            gardenId,
-            userId,
-            dto.currentDay,
-            dto.imageUrl,
-            dto.lat,
-            dto.lon,
-        );
-    }
+  @Post(':id/check-in')
+  async dailyCheckIn(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') gardenId: string,
+    @Body() dto: DailyCheckInDto,
+  ) {
+    const userId = req.user.userId;
+    // BUG 6 FIX: truyền đủ imageUrl, lat, lon xuống service
+    return this.myGardenService.dailyCheckIn(
+      gardenId,
+      userId,
+      dto.currentDay,
+      dto.imageUrl,
+      dto.lat,
+      dto.lon,
+    );
+  }
 
-    @Delete(':id')
-    async removePlant(@Req() req, @Param('id') gardenId: string) {
-        const userId = req.user.userId; 
-        return this.myGardenService.removePlantFromGarden(gardenId, userId);
-    }
+  @Delete(':id')
+  async removePlant(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') gardenId: string,
+  ) {
+    const userId = req.user.userId;
+    return this.myGardenService.removePlantFromGarden(gardenId, userId);
+  }
 }

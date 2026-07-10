@@ -23,64 +23,60 @@ export class OrdersService {
 
   // 🔥 ĐÃ GỠ BỎ TRANSACTION ĐỂ CHẠY ĐƯỢC TRÊN MONGODB LOCAL
   async createOrder(buyerId: string, dto: CreateOrderDto) {
-    try {
-      let totalAmount = 0;
-      const orderItems: {
-        productId: Types.ObjectId;
-        quantity: number;
-        priceAtPurchase: number;
-      }[] = [];
+    let totalAmount = 0;
+    const orderItems: {
+      productId: Types.ObjectId;
+      quantity: number;
+      priceAtPurchase: number;
+    }[] = [];
 
-      for (const item of dto.items) {
-        // Tìm sản phẩm bình thường không cần .session()
-        const product = await this.productModel.findById(item.productId);
+    for (const item of dto.items) {
+      // Tìm sản phẩm bình thường không cần .session()
+      const product = await this.productModel.findById(item.productId);
 
-        if (!product || !product.isActive || product.status !== 'APPROVED') {
-          throw new BadRequestException(
-            `Sản phẩm ${item.productId} không tồn tại hoặc đã ngừng bán!`,
-          );
-        }
-        if (product.sellerId.toString() !== dto.sellerId) {
-          throw new BadRequestException(
-            `Sản phẩm ${product.name} không thuộc về gian hàng này!`,
-          );
-        }
-        if (product.stock < item.quantity) {
-          throw new BadRequestException(
-            `Sản phẩm ${product.name} chỉ còn ${product.stock} sản phẩm!`,
-          );
-        }
-
-        totalAmount += product.price * item.quantity;
-        orderItems.push({
-          productId: product._id,
-          quantity: item.quantity,
-          priceAtPurchase: product.price,
-        });
-
-        // Trừ stock trực tiếp vào DB
-        await this.productModel.findByIdAndUpdate(product._id, {
-          $inc: { stock: -item.quantity, sold: item.quantity },
-        });
+      if (!product || !product.isActive || product.status !== 'APPROVED') {
+        throw new BadRequestException(
+          `Sản phẩm ${item.productId} không tồn tại hoặc đã ngừng bán!`,
+        );
+      }
+      if ((product.sellerId as Types.ObjectId).toString() !== dto.sellerId) {
+        throw new BadRequestException(
+          `Sản phẩm ${product.name} không thuộc về gian hàng này!`,
+        );
+      }
+      if (product.stock < item.quantity) {
+        throw new BadRequestException(
+          `Sản phẩm ${product.name} chỉ còn ${product.stock} sản phẩm!`,
+        );
       }
 
-      // Tạo đơn hàng trực tiếp
-      const newOrder = await this.orderModel.create({
-        buyerId: new Types.ObjectId(buyerId),
-        sellerId: new Types.ObjectId(dto.sellerId),
-        items: orderItems,
-        totalAmount,
-        shippingAddress: dto.shippingAddress,
-        phoneNumber: dto.phoneNumber,
-        paymentMethod: dto.paymentMethod,
-        orderStatus: 'PENDING',
-        paymentStatus: 'UNPAID',
+      totalAmount += product.price * item.quantity;
+      orderItems.push({
+        productId: product._id,
+        quantity: item.quantity,
+        priceAtPurchase: product.price,
       });
 
-      return newOrder;
-    } catch (error) {
-      throw error;
+      // Trừ stock trực tiếp vào DB
+      await this.productModel.findByIdAndUpdate(product._id, {
+        $inc: { stock: -item.quantity, sold: item.quantity },
+      });
     }
+
+    // Tạo đơn hàng trực tiếp
+    const newOrder = await this.orderModel.create({
+      buyerId: new Types.ObjectId(buyerId),
+      sellerId: new Types.ObjectId(dto.sellerId),
+      items: orderItems,
+      totalAmount,
+      shippingAddress: dto.shippingAddress,
+      phoneNumber: dto.phoneNumber,
+      paymentMethod: dto.paymentMethod,
+      orderStatus: 'PENDING',
+      paymentStatus: 'UNPAID',
+    });
+
+    return newOrder;
   }
 
   // 2. NGƯỜI MUA: Xem lịch sử đơn hàng của mình
@@ -137,8 +133,8 @@ export class OrdersService {
     const order = await this.orderModel.findById(orderId);
     if (!order) throw new NotFoundException('Không tìm thấy hóa đơn này!');
 
-    const isSeller = order.sellerId.toString() === userId;
-    const isBuyer = order.buyerId.toString() === userId;
+    const isSeller = (order.sellerId as Types.ObjectId).toString() === userId;
+    const isBuyer = (order.buyerId as Types.ObjectId).toString() === userId;
     const isAdmin = userRole === 'ADMIN';
 
     // Chỉ Chủ Shop hoặc Admin mới có quyền đổi trạng thái đơn

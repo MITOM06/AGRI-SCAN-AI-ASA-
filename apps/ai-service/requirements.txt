@@ -1,15 +1,22 @@
+# --- Web framework ---
 fastapi
 uvicorn
 python-multipart
-gradio
-ultralytics
-langchain-core
-langchain-ollama
+
+# --- LLM (Gemini) ---
+google-genai
+python-dotenv
+
+# --- Model inference (ViT-MoE) ---
+torch
+torchvision
+numpy
+timm
 Pillow
+
+# --- RAG (Chroma + embeddings) ---
+langchain-core
+langchain-community
 langchain-huggingface
 sentence-transformers
 chromadb
-langchain_community
-python-dotenv
-pika
-timm

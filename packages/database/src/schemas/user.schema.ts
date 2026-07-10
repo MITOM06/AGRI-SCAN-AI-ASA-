@@ -54,6 +54,10 @@ export class User {
 
   @Prop({ type: Date, default: Date.now })
   lastResetDate: Date;
+
+  // Do `timestamps: true` — Mongoose tự thêm khi lưu; khai báo để có kiểu.
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

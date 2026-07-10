@@ -4,8 +4,10 @@ import { MyGardenController } from './my-garden.controller';
 import { MyGardenService } from './my-garden.service';
 import { WeatherModule } from '../weather/Weather.module';
 import {
-  MyGarden, MyGardenSchema,
-  User, UserSchema,
+  MyGarden,
+  MyGardenSchema,
+  User,
+  UserSchema,
   // BUG 7 FIX: Bỏ Plant + PlantSchema — service không còn populate 'plantId' nữa
   // Nếu để lại sẽ bị lỗi "Nest can't resolve dependencies" hoặc inject thừa
 } from '@agri-scan/database';

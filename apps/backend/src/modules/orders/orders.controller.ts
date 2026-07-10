@@ -12,6 +12,7 @@ import {
 import { OrdersService } from './orders.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/order.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @UseGuards(JwtAuthGuard) // Toàn bộ API đơn hàng đều bắt buộc phải đăng nhập
 @Controller('orders')
@@ -20,14 +21,17 @@ export class OrdersController {
 
   // 1. Khách hàng bấm Đặt hàng
   @Post()
-  create(@Req() req: any, @Body() createOrderDto: CreateOrderDto) {
+  create(
+    @Req() req: AuthenticatedRequest,
+    @Body() createOrderDto: CreateOrderDto,
+  ) {
     return this.ordersService.createOrder(req.user.userId, createOrderDto);
   }
 
   // 2. Khách hàng xem lịch sử đơn của mình
   @Get('my-orders')
   getBuyerOrders(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Query('page') page = 1,
     @Query('limit') limit = 10,
   ) {
@@ -37,7 +41,7 @@ export class OrdersController {
   // 3. Người bán xem danh sách khách đặt hàng
   @Get('shop-orders')
   getSellerOrders(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Query('page') page = 1,
     @Query('limit') limit = 10,
   ) {
@@ -47,7 +51,7 @@ export class OrdersController {
   // 4. Người bán duyệt đơn / Hủy đơn
   @Patch(':id/status')
   updateStatus(
-    @Req() req: any,
+    @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() updateOrderStatusDto: UpdateOrderStatusDto,
   ) {

@@ -24,7 +24,7 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     _accessToken: string,
     _refreshToken: string,
     profile: Profile,
-    done: Function,
+    done: (error: Error | null, user?: Express.User | false) => void,
   ): Promise<void> {
     try {
       const { id, displayName, emails } = profile;
@@ -46,9 +46,9 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
         provider: 'facebook',
       });
 
-      done(null, user);
+      done(null, user ?? false);
     } catch (error) {
-      done(error, false);
+      done(error instanceof Error ? error : new Error(String(error)), false);
     }
   }
 }

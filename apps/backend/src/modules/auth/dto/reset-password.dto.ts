@@ -1,4 +1,9 @@
-import { IsEmail, IsNotEmpty, IsString, IsStrongPassword } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  IsStrongPassword,
+} from 'class-validator';
 
 export class ForgotPasswordDto {
   @IsNotEmpty()
@@ -15,8 +20,18 @@ export class ResetPasswordDto {
   @IsString()
   resetToken: string;
 
-  @IsStrongPassword({ minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1 }, {
-    message: 'Mật khẩu phải từ 8 ký tự, gồm hoa, thường, số và ký tự đặc biệt.'
-  })
+  @IsStrongPassword(
+    {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    },
+    {
+      message:
+        'Mật khẩu phải từ 8 ký tự, gồm hoa, thường, số và ký tự đặc biệt.',
+    },
+  )
   newPassword: string;
 }

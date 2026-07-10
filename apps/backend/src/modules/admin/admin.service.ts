@@ -19,6 +19,22 @@ import {
 import { GetReportDto, GroupBy } from './dto/get-report.dto';
 import { GetUsersQueryDto } from './dto/Admin user.dto';
 
+// Shape kết quả các aggregate
+export interface RevenueSumRow {
+  total: number;
+  count?: number;
+}
+export interface RevenueReportRow {
+  _id: string;
+  totalRevenue: number;
+  totalTransactions: number;
+  byPlan: { plan: string; revenue: number; count: number }[];
+}
+export interface TimeSeriesRow {
+  date: string;
+  count: number;
+}
+
 @Injectable()
 export class AdminService {
   constructor(
@@ -63,11 +79,11 @@ export class AdminService {
       this.userModel.countDocuments({ plan: 'VIP' }),
       this.userModel.countDocuments({ plan: 'FREE', role: { $ne: 'ADMIN' } }),
       this.feedbackModel.countDocuments({ status: 'PENDING' }),
-      this.paymentModel.aggregate([
+      this.paymentModel.aggregate<RevenueSumRow>([
         { $match: { status: 'SUCCESS' } },
         { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
-      this.paymentModel.aggregate([
+      this.paymentModel.aggregate<RevenueSumRow>([
         {
           $match: {
             status: 'SUCCESS',
@@ -170,15 +186,11 @@ export class AdminService {
   // ════════════════════════════════════════════════════════════
   async getNewUsersReport(dto: GetReportDto) {
     const { from, to, groupBy = GroupBy.DAY } = dto;
-    const pipeline = this._buildTimeSeriesPipeline(
-      this.userModel,
-      from,
-      to,
-      groupBy,
-      { role: { $ne: 'ADMIN' } },
-    );
+    const pipeline = this._buildTimeSeriesPipeline(from, to, groupBy, {
+      role: { $ne: 'ADMIN' },
+    });
 
-    const result = await this.userModel.aggregate(pipeline);
+    const result = await this.userModel.aggregate<TimeSeriesRow>(pipeline);
     return this._fillMissingDates(result, from, to, groupBy);
   }
 
@@ -229,7 +241,8 @@ export class AdminService {
       { $sort: { _id: 1 } },
     ];
 
-    const result = await this.paymentModel.aggregate(pipeline);
+    const result =
+      await this.paymentModel.aggregate<RevenueReportRow>(pipeline);
 
     // Tính tổng cộng
     const summary = result.reduce(
@@ -265,7 +278,7 @@ export class AdminService {
             role: { $ne: 'ADMIN' },
             createdAt: { $gte: start, $lte: end },
           }),
-          this.paymentModel.aggregate([
+          this.paymentModel.aggregate<RevenueSumRow>([
             {
               $match: {
                 status: 'SUCCESS',
@@ -372,7 +385,7 @@ export class AdminService {
     }
 
     feedback.adminReply = reply;
-    feedback.repliedBy = new Types.ObjectId(adminId) as any;
+    feedback.repliedBy = new Types.ObjectId(adminId);
     feedback.repliedAt = new Date();
     feedback.status = 'REPLIED';
 
@@ -390,13 +403,13 @@ export class AdminService {
       groupBy: GroupBy.DAY,
     });
 
-    const rows = [
+    const rows: (string | number)[][] = [
       ['Ngày', 'Tổng doanh thu (VND)', 'Số giao dịch', 'PREMIUM', 'VIP'],
     ];
 
     for (const item of data) {
-      const premiumRow = item.byPlan.find((p: any) => p.plan === 'PREMIUM');
-      const vipRow = item.byPlan.find((p: any) => p.plan === 'VIP');
+      const premiumRow = item.byPlan.find((p) => p.plan === 'PREMIUM');
+      const vipRow = item.byPlan.find((p) => p.plan === 'VIP');
       rows.push([
         item._id,
         item.totalRevenue,
@@ -428,7 +441,7 @@ export class AdminService {
         u.email,
         u.fullName,
         u.plan,
-        new Date((u as any).createdAt).toLocaleDateString('vi-VN'),
+        u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '',
       ]);
     }
 
@@ -439,11 +452,10 @@ export class AdminService {
   // PRIVATE HELPERS
   // ════════════════════════════════════════════════════════════
   private _buildTimeSeriesPipeline(
-    _model: any,
     from: string,
     to: string,
     groupBy: GroupBy,
-    extraMatch: Record<string, any> = {},
+    extraMatch: Record<string, unknown> = {},
   ): PipelineStage[] {
     const groupFormat = groupBy === GroupBy.MONTH ? '%Y-%m' : '%Y-%m-%d';
 

@@ -8,7 +8,7 @@ export class UsersService {
   constructor(
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-  ) { }
+  ) {}
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).exec();
   }
@@ -19,7 +19,8 @@ export class UsersService {
     provider: 'google' | 'facebook';
     providerId: string;
   }): Promise<UserDocument> {
-    const providerIdField = data.provider === 'google' ? 'googleId' : 'facebookId';
+    const providerIdField =
+      data.provider === 'google' ? 'googleId' : 'facebookId';
 
     const newUser = new this.userModel({
       email: data.email,
@@ -60,7 +61,6 @@ export class UsersService {
     return this.userModel.findById(userId).exec();
   }
 
-
   async create(userData: Partial<User>): Promise<UserDocument> {
     const createdUser = new this.userModel(userData);
     return createdUser.save();
@@ -70,7 +70,10 @@ export class UsersService {
     await this.userModel.updateOne({ email }, { password: newPassword }).exec();
   }
   // 🔥 THÊM MỚI: Hàm Mock Payment Nâng cấp gói
-  async upgradePlan(userId: string, plan: 'PREMIUM' | 'VIP'): Promise<UserDocument> {
+  async upgradePlan(
+    userId: string,
+    plan: 'PREMIUM' | 'VIP',
+  ): Promise<UserDocument> {
     const user = await this.userModel.findById(userId);
     if (!user) throw new Error('User not found');
 

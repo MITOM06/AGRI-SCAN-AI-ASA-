@@ -20,7 +20,7 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: { expiresIn: '15m' },
       }),
@@ -29,7 +29,7 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         transport: {
           host: 'smtp.gmail.com',
           port: 587,
@@ -49,8 +49,8 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
   providers: [
     AuthService,
     JwtStrategy,
-    GoogleStrategy,    // ✅ THÊM MỚI
-    FacebookStrategy,  // ✅ THÊM MỚI
+    GoogleStrategy, // ✅ THÊM MỚI
+    FacebookStrategy, // ✅ THÊM MỚI
   ],
 })
 export class AuthModule {}

@@ -23,7 +23,7 @@ import { MyGardenModule } from './modules/my-garden/my-garden.module';
     // 2. Kết nối MongoDB
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.getOrThrow<string>('DB_URI'),
       }),
       inject: [ConfigService],

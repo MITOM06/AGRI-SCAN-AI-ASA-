@@ -6,12 +6,14 @@ import { UsersController } from './users.controller';
 import { Payment, PaymentSchema } from '@agri-scan/database';
 
 @Module({
-  imports: [MongooseModule.forFeature([
-    { name: User.name, schema: UserSchema },
-    { name: Payment.name, schema: PaymentSchema },
-  ])],
+  imports: [
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Payment.name, schema: PaymentSchema },
+    ]),
+  ],
   controllers: [UsersController], // THÊM DÒNG NÀY
   providers: [UsersService],
   exports: [UsersService],
 })
-export class UsersModule { }
+export class UsersModule {}

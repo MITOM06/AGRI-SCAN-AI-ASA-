@@ -10,8 +10,14 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ScanHistory, ChatHistory, User } from '@agri-scan/database';
+import {
+  ScanHistory,
+  ChatHistory,
+  ChatHistoryDocument,
+  User,
+} from '@agri-scan/database';
 import { PlantsService } from '../plants/plants.service';
+import { getErrorMessage } from '../../common/utils/error.util';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { ConfigService } from '@nestjs/config';
@@ -87,14 +93,20 @@ export class AiScanService implements OnModuleInit {
       await this.scanClient.connect();
       this.logger.log('[RabbitMQ] scanClient (scan_queue) connected');
     } catch (err) {
-      this.logger.error('[RabbitMQ] scanClient connect failed:', err.message);
+      this.logger.error(
+        '[RabbitMQ] scanClient connect failed:',
+        getErrorMessage(err),
+      );
     }
 
     try {
       await this.chatClient.connect();
       this.logger.log('[RabbitMQ] chatClient (chat_queue) connected');
     } catch (err) {
-      this.logger.error('[RabbitMQ] chatClient connect failed:', err.message);
+      this.logger.error(
+        '[RabbitMQ] chatClient connect failed:',
+        getErrorMessage(err),
+      );
     }
   }
 
@@ -181,7 +193,10 @@ export class AiScanService implements OnModuleInit {
           'Ảnh đang được hệ thống phân tích, kết quả sẽ cập nhật sau giây lát...',
       };
     } catch (error) {
-      this.logger.error('Lỗi khi đẩy task scan vào queue:', error.message);
+      this.logger.error(
+        'Lỗi khi đẩy task scan vào queue:',
+        getErrorMessage(error),
+      );
       if (
         !(error instanceof BadRequestException) &&
         !(error instanceof UnauthorizedException)
@@ -205,15 +220,12 @@ export class AiScanService implements OnModuleInit {
 
     if (!scan) throw new NotFoundException('Không tìm thấy lịch sử quét này!');
 
-    if (
-      (scan as any).status === 'PENDING' ||
-      (scan as any).status === 'PROCESSING'
-    ) {
+    if (scan.status === 'PENDING' || scan.status === 'PROCESSING') {
       return { status: 'PROCESSING', message: 'Đang phân tích...' };
     }
 
-    if ((scan as any).status === 'FAILED') {
-      return { status: 'FAILED', message: (scan as any).errorMessage };
+    if (scan.status === 'FAILED') {
+      return { status: 'FAILED', message: scan.errorMessage };
     }
 
     return {
@@ -239,20 +251,26 @@ export class AiScanService implements OnModuleInit {
     // Khách vãng lai → gọi thẳng HTTP, không qua queue
     if (!userId) {
       try {
-        const aiResponse = await axios.post(`${this.aiServiceUrl}/chat`, {
-          label: finalLabel,
-          prompt: question,
-        });
+        const aiResponse = await axios.post<{ answer?: string }>(
+          `${this.aiServiceUrl}/chat`,
+          {
+            label: finalLabel,
+            prompt: question,
+          },
+        );
         return {
           sessionId: 'guest_session',
           question,
           answer: aiResponse.data.answer
-            ? String(aiResponse.data.answer)
+            ? aiResponse.data.answer
             : JSON.stringify(aiResponse.data),
           status: 'COMPLETED',
         };
       } catch (error) {
-        this.logger.error('[GUEST CHAT] AI Service error:', error.message);
+        this.logger.error(
+          '[GUEST CHAT] AI Service error:',
+          getErrorMessage(error),
+        );
         throw new InternalServerErrorException(
           'Trợ lý ảo đang bận, vui lòng thử lại!',
         );
@@ -263,7 +281,7 @@ export class AiScanService implements OnModuleInit {
     await this.checkAndIncrementQuota(userId, 'PROMPT');
 
     try {
-      let chatDoc: any;
+      let chatDoc: ChatHistoryDocument | null = null;
       if (sessionId) {
         chatDoc = await this.chatHistoryModel.findOne({
           _id: sessionId,
@@ -323,7 +341,7 @@ export class AiScanService implements OnModuleInit {
         !(error instanceof UnauthorizedException)
       ) {
         this.logger.error(
-          `[CHAT] Lỗi hệ thống, hoàn lại lượt prompt cho user ${userId}: ${error.message}`,
+          `[CHAT] Lỗi hệ thống, hoàn lại lượt prompt cho user ${userId}: ${getErrorMessage(error)}`,
         );
         await this.userModel.findByIdAndUpdate(userId, {
           $inc: { dailyPromptCount: -1 },
@@ -371,7 +389,7 @@ export class AiScanService implements OnModuleInit {
       IMAGE: { FREE: 3, PREMIUM: 10, VIP: Infinity },
       PROMPT: { FREE: 10, PREMIUM: 50, VIP: Infinity },
     };
-    const maxCount = limits[type][user.plan] ?? 3;
+    const maxCount = limits[type][user.plan as 'FREE' | 'PREMIUM' | 'VIP'] ?? 3;
     const countField =
       type === 'IMAGE' ? 'dailyImageCount' : 'dailyPromptCount';
 
@@ -403,10 +421,7 @@ export class AiScanService implements OnModuleInit {
     const lastMessage = chatDoc.messages[chatDoc.messages.length - 1];
     if (!lastMessage) return { status: 'EMPTY' };
 
-    if (
-      lastMessage.role === 'ai' &&
-      (lastMessage as any).status === 'PENDING'
-    ) {
+    if (lastMessage.role === 'ai' && lastMessage.status === 'PENDING') {
       return {
         status: 'PROCESSING',
         message: 'Trợ lý đang soạn câu trả lời...',
@@ -439,10 +454,10 @@ export class AiScanService implements OnModuleInit {
       .sort({ createdAt: -1 })
       .exec();
     return sessions.map((s) => ({
-      sessionId: (s._id as any).toString(),
+      sessionId: String(s._id),
       title: s.title,
-      createdAt: (s as any).createdAt,
-      updatedAt: (s as any).updatedAt,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
     }));
   }
 
