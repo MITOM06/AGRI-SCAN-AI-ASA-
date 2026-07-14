@@ -3,8 +3,8 @@ fastapi
 uvicorn
 python-multipart
 
-# --- LLM (Gemini) ---
-google-genai
+# --- LLM (Claude / Anthropic) ---
+anthropic
 python-dotenv
 
 # --- Model inference (ViT-MoE) ---

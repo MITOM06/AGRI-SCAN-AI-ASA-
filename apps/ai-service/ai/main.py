@@ -9,6 +9,7 @@ from PIL import Image
 from ai.model import predict_pil_image, load_yolo
 from ai.rag import init_vector_db, query_vectorstore, load_knowledge
 from ai.llm import get_llm
+from ai.router import pick_model, Tier
 
 app = FastAPI(title="Agri-Scan AI Service")
 
@@ -128,8 +129,10 @@ async def chat_endpoint(req: ChatRequest):
             f"\nHãy trả lời chi tiết bằng tiếng Việt, định dạng Markdown rõ ràng."
         )
 
-        # 5. Gọi LLM
-        llm = get_llm()
+        # 5. Gọi LLM — định tuyến model theo độ khó câu hỏi để tối ưu chi phí.
+        model_name, tier = pick_model(question)
+        print(f"[/chat] tier={tier.value} model={model_name}")
+        llm = get_llm(model_name)
         try:
             # Ưu tiên dùng .invoke (chuẩn mới) hoặc fallback về gọi trực tiếp
             if hasattr(llm, "invoke"):
@@ -260,8 +263,10 @@ Cấu trúc:
 (Hãy tạo đủ 7 ngày trong daily_tasks)
 """
 
-        # 3. Gọi LLM
-        llm = get_llm()
+        # 3. Gọi LLM — sinh JSON lộ trình là tác vụ phức tạp -> luôn HARD (Opus).
+        model_name, tier = pick_model(force_tier=Tier.HARD)
+        print(f"[/plant_garden] tier={tier.value} model={model_name}")
+        llm = get_llm(model_name)
         res = llm.invoke(prompt_llm) if hasattr(llm, "invoke") else llm(prompt_llm)
         raw_answer = getattr(res, "content", str(res))
 
