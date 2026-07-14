@@ -22,6 +22,8 @@ interface AuthContextType {
     fullName: string,
     password: string,
   ) => Promise<void>;
+  verifyRegister: (email: string, otp: string) => Promise<void>;
+  resendRegisterOtp: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   handleOAuthSuccess: (
@@ -106,6 +108,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  // ── XÁC THỰC OTP ĐĂNG KÝ ─────────────────────────────────────────────────────
+  // Nhập đúng OTP → BE tạo tài khoản thật. KHÔNG auto-login → user tự đăng nhập.
+  const verifyRegister = useCallback(async (email: string, otp: string) => {
+    await authApi.verifyRegister(email, otp);
+  }, []);
+
+  const resendRegisterOtp = useCallback(async (email: string) => {
+    await authApi.resendRegisterOtp(email);
+  }, []);
+
   // ── REFRESH USER ─────────────────────────────────────────────────────────────
   // Gọi lại /auth/profile để đồng bộ user state sau khi nâng cấp gói
   const refreshUser = useCallback(async () => {
@@ -169,6 +181,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         login,
         register,
+        verifyRegister,
+        resendRegisterOtp,
         logout,
         refreshUser,
         handleOAuthSuccess,

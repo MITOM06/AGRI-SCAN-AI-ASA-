@@ -46,10 +46,10 @@ export default function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      // BUG FIX: trước chỉ gọi registerApi(data.email, data.fullName) → password không được gửi lên BE
+      // Bước 1: gửi thông tin đăng ký → BE gửi OTP về email (chưa tạo tài khoản)
       await registerApi(data.email, data.fullName, data.password);
-      // Đăng ký xong chuyển về login với thông báo thành công
-      router.push("/login?message=registration_success");
+      // Chuyển sang trang nhập OTP để hoàn tất đăng ký
+      router.push(`/register/verify?email=${encodeURIComponent(data.email)}`);
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||

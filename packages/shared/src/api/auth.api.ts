@@ -17,6 +17,24 @@ export const authApi = {
     return response.data;
   },
 
+  // Xác thực OTP để hoàn tất đăng ký (tạo tài khoản thật)
+  verifyRegister: async (email: string, otp: string) => {
+    const response = await axiosClient.post(
+      API_ENDPOINTS.AUTH.REGISTER_VERIFY,
+      { email, otp },
+    );
+    return response.data;
+  },
+
+  // Gửi lại OTP đăng ký
+  resendRegisterOtp: async (email: string) => {
+    const response = await axiosClient.post(
+      API_ENDPOINTS.AUTH.REGISTER_RESEND,
+      { email },
+    );
+    return response.data;
+  },
+
   forgotPassword: async (email: string) => {
     const response = await axiosClient.post(
       API_ENDPOINTS.AUTH.FORGOT_PASSWORD,

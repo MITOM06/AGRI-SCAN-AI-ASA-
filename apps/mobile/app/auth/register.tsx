@@ -76,15 +76,18 @@ export default function RegisterScreen() {
     setApiError("");
 
     try {
-      // Gọi API đăng ký
+      // Bước 1: gửi thông tin đăng ký -> BE gửi OTP về email (chưa tạo tài khoản)
       await authApi.register({
         fullName: data.fullName,
         email: data.email,
         password: data.password,
       });
 
-      // Đăng ký thành công -> Đẩy về trang Login kèm tham số báo thành công
-      router.replace("/auth/login?registered=true");
+      // Chuyển sang màn nhập OTP để hoàn tất đăng ký
+      router.push({
+        pathname: "/auth/otp-verification",
+        params: { email: data.email, mode: "register" },
+      });
     } catch (error: any) {
       setApiError(
         error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!",

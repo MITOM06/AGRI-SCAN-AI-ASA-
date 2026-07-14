@@ -21,6 +21,8 @@ export default function OTPVerificationScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const email = (params.email as string) || "";
+  // mode = "register" → xác thực đăng ký; mặc định → quên mật khẩu
+  const isRegister = params.mode === "register";
 
   const [otp, setOtp] = useState("");
   const [seconds, setSeconds] = useState(60);
@@ -34,22 +36,26 @@ export default function OTPVerificationScreen() {
     return () => clearInterval(interval);
   }, [seconds]);
 
-  // BUG FIX: trước đây không gọi API, luôn chuyển trang với dummy_token
   const handleVerify = async () => {
     if (otp.length < 6) return;
     setIsSubmitting(true);
     setApiError("");
     try {
-      const res = await authApi.verifyOtp(email, otp);
-      console.log("VERIFY OTP RESULT:", res);
-      // BE trả về resetToken sau khi OTP đúng
-      router.push({
-        pathname: "/auth/reset-password",
-        params: {
-          token: res.resetToken,
-          email,
-        },
-      });
+      if (isRegister) {
+        // Luồng đăng ký: OTP đúng → BE tạo tài khoản → về trang đăng nhập
+        await authApi.verifyRegister(email, otp);
+        router.replace("/auth/login?registered=true");
+      } else {
+        // Luồng quên mật khẩu: BE trả resetToken sau khi OTP đúng
+        const res = await authApi.verifyOtp(email, otp);
+        router.push({
+          pathname: "/auth/reset-password",
+          params: {
+            token: res.resetToken,
+            email,
+          },
+        });
+      }
     } catch (error: any) {
       setApiError(
         error.response?.data?.message || "Mã OTP không hợp lệ hoặc đã hết hạn.",
@@ -64,8 +70,12 @@ export default function OTPVerificationScreen() {
     setOtp("");
     setApiError("");
     try {
-      // BUG FIX: trước đây chỉ Alert, không gọi API gửi lại OTP
-      await authApi.forgotPassword(email);
+      // Gửi lại OTP theo đúng luồng hiện tại (đăng ký / quên mật khẩu)
+      if (isRegister) {
+        await authApi.resendRegisterOtp(email);
+      } else {
+        await authApi.forgotPassword(email);
+      }
       Alert.alert("Thông báo", "Mã OTP mới đã được gửi vào email của bạn.");
     } catch (error: any) {
       Alert.alert(

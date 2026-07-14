@@ -23,6 +23,8 @@ export type {
 export {
   forgotPasswordSchema,
   type ForgotPasswordFormData,
+  otpSchema,
+  type OtpFormData,
 } from "./schemas/auth.schema";
 
 // APIs
