@@ -70,7 +70,7 @@ axiosClient.interceptors.response.use(
         const refreshToken = await storage?.getRefreshToken();
         if (!refreshToken) throw new Error("Không có Refresh Token");
 
-        const res = await axios.post(`${BASE_URL}/auth/refresh`, {
+        const res = await axios.post(`${BASE_URL}/api/auth/refresh`, {
           refreshToken,
         });
         const { accessToken, refreshToken: newRefreshToken } = res.data;

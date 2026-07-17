@@ -34,6 +34,16 @@ interface GoogleTokenInfo {
   sub: string;
 }
 
+// Dữ liệu đăng ký tạm giữ trong Redis chờ xác thực OTP (chưa tạo user)
+interface PendingRegistration {
+  fullName: string;
+  hashedPassword: string;
+  otp: string;
+}
+
+// OTP xác thực đăng ký sống 5 phút (rộng rãi hơn OTP quên mật khẩu 60s)
+const REGISTER_PENDING_TTL_MS = 5 * 60 * 1000;
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -44,7 +54,9 @@ export class AuthService {
   ) {}
 
   // ════════════════════════════════════════════════════════════
-  // 1. ĐĂNG KÝ BẰNG EMAIL + MẬT KHẨU
+  // 1. ĐĂNG KÝ BẰNG EMAIL + MẬT KHẨU — BƯỚC 1: GỬI OTP
+  //    Chưa tạo user; chỉ giữ tạm dữ liệu + OTP trong Redis (5 phút).
+  //    User phải nhập đúng OTP (bước 2) thì tài khoản mới được tạo.
   // ════════════════════════════════════════════════════════════
   async register(data: RegisterDto) {
     const existingUser = await this.usersService.findByEmail(data.email);
@@ -65,22 +77,135 @@ export class AuthService {
       throw new BadRequestException('Email này đã được sử dụng!');
     }
 
+    const isLocked = await this.cacheManager.get(`lockout:${data.email}`);
+    if (isLocked) {
+      throw new BadRequestException(
+        'Email đang bị tạm khóa 30 phút do nhập sai OTP quá nhiều lần.',
+      );
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    const newUser = await this.usersService.create({
-      ...data,
-      password: hashedPassword,
+    const otp = this.generateOtp();
+
+    const pending: PendingRegistration = {
+      fullName: data.fullName,
+      hashedPassword,
+      otp,
+    };
+    await this.cacheManager.set(
+      `register_pending:${data.email}`,
+      pending,
+      REGISTER_PENDING_TTL_MS,
+    );
+
+    await this.sendOtpEmail(data.email, data.fullName, otp, 'register');
+
+    return {
+      message: 'Mã OTP xác thực đã được gửi đến email của bạn!',
+      email: data.email,
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // 1b. ĐĂNG KÝ — BƯỚC 2: XÁC THỰC OTP → TẠO TÀI KHOẢN
+  // ════════════════════════════════════════════════════════════
+  async verifyRegisterOtp(email: string, otp: string) {
+    const isLocked = await this.cacheManager.get(`lockout:${email}`);
+    if (isLocked) {
+      throw new BadRequestException(
+        'Email đang bị tạm khóa 30 phút do nhập sai OTP quá nhiều lần.',
+      );
+    }
+
+    const pending = await this.cacheManager.get<PendingRegistration>(
+      `register_pending:${email}`,
+    );
+    if (!pending) {
+      throw new BadRequestException(
+        'Phiên đăng ký đã hết hạn hoặc không tồn tại. Vui lòng đăng ký lại.',
+      );
+    }
+
+    if (pending.otp !== otp) {
+      let attempts =
+        (await this.cacheManager.get<number>(`register_attempts:${email}`)) ||
+        0;
+      attempts += 1;
+
+      if (attempts >= 5) {
+        await this.cacheManager.set(`lockout:${email}`, true, 30 * 60 * 1000);
+        await this.cacheManager.del(`register_attempts:${email}`);
+        await this.cacheManager.del(`register_pending:${email}`);
+        throw new BadRequestException(
+          'Bạn đã nhập sai 5 lần. Vui lòng đăng ký lại sau 30 phút!',
+        );
+      }
+
+      await this.cacheManager.set(
+        `register_attempts:${email}`,
+        attempts,
+        10 * 60 * 1000,
+      );
+      throw new BadRequestException(
+        `Mã OTP không chính xác! Bạn còn ${5 - attempts} lần thử.`,
+      );
+    }
+
+    // OTP đúng → kiểm tra lại email chưa bị chiếm (tránh race giữa 2 phiên)
+    const existingUser = await this.usersService.findByEmail(email);
+    if (existingUser) {
+      await this.cacheManager.del(`register_pending:${email}`);
+      await this.cacheManager.del(`register_attempts:${email}`);
+      throw new BadRequestException('Email này đã được sử dụng!');
+    }
+
+    await this.usersService.create({
+      fullName: pending.fullName,
+      email,
+      password: pending.hashedPassword,
       isPasswordSet: true,
       authProviders: ['local'],
     });
 
-    return this.generateTokens(
-      newUser._id.toString(),
-      newUser.email,
-      newUser.fullName,
-      newUser.plan,
-      true,
-      newUser.role,
+    await this.cacheManager.del(`register_pending:${email}`);
+    await this.cacheManager.del(`register_attempts:${email}`);
+
+    return {
+      message:
+        'Xác thực thành công! Tài khoản đã được tạo, vui lòng đăng nhập.',
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // 1c. ĐĂNG KÝ — GỬI LẠI OTP (dùng lại pending đang giữ trong Redis)
+  // ════════════════════════════════════════════════════════════
+  async resendRegisterOtp(email: string) {
+    const isLocked = await this.cacheManager.get(`lockout:${email}`);
+    if (isLocked) {
+      throw new BadRequestException(
+        'Email đang bị tạm khóa 30 phút do nhập sai OTP quá nhiều lần.',
+      );
+    }
+
+    const pending = await this.cacheManager.get<PendingRegistration>(
+      `register_pending:${email}`,
     );
+    if (!pending) {
+      throw new BadRequestException(
+        'Không tìm thấy phiên đăng ký. Vui lòng đăng ký lại.',
+      );
+    }
+
+    const otp = this.generateOtp();
+    await this.cacheManager.set(
+      `register_pending:${email}`,
+      { ...pending, otp },
+      REGISTER_PENDING_TTL_MS,
+    );
+
+    await this.sendOtpEmail(email, pending.fullName, otp, 'register');
+
+    return { message: 'Mã OTP mới đã được gửi đến email của bạn!' };
   }
 
   // ════════════════════════════════════════════════════════════
@@ -261,29 +386,10 @@ export class AuthService {
       );
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = this.generateOtp();
     await this.cacheManager.set(`otp:${email}`, otp, 60 * 1000);
 
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-        <h2 style="color: #2e7d32; text-align: center;">Agri-Scan AI</h2>
-        <p>Xin chào <strong>${user.fullName}</strong>,</p>
-        <p>Chúng tôi nhận được yêu cầu khôi phục mật khẩu. Vui lòng dùng mã OTP dưới đây:</p>
-        <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;">
-          <h1 style="color: #333; letter-spacing: 5px; margin: 0;">${otp}</h1>
-        </div>
-        <p style="color: red; font-size: 14px;"><em>* Mã OTP chỉ có hiệu lực trong 60 giây.</em></p>
-        <p>Nếu bạn không yêu cầu thay đổi mật khẩu, hãy bỏ qua email này.</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-        <p style="font-size: 12px; color: #888; text-align: center;">Đội ngũ Agri-Scan AI - HUTECH</p>
-      </div>
-    `;
-
-    await this.mailerService.sendMail({
-      to: email,
-      subject: '🔑 Khôi phục mật khẩu - Agri-Scan AI',
-      html: emailHtml,
-    });
+    await this.sendOtpEmail(email, user.fullName, otp, 'reset');
 
     return { message: 'Mã OTP đã được gửi đến email của bạn!' };
   }
@@ -382,6 +488,62 @@ export class AuthService {
       isGoogleLinked: !!user.googleId,
       isFacebookLinked: !!user.facebookId,
     };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // PRIVATE: OTP — sinh mã & gửi email (dùng chung register + reset)
+  // ════════════════════════════════════════════════════════════
+  private generateOtp(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  private buildOtpEmailHtml(
+    fullName: string,
+    otp: string,
+    purpose: 'register' | 'reset',
+  ): string {
+    const intro =
+      purpose === 'register'
+        ? 'Cảm ơn bạn đã đăng ký Agri-Scan AI. Vui lòng dùng mã OTP dưới đây để hoàn tất đăng ký:'
+        : 'Chúng tôi nhận được yêu cầu khôi phục mật khẩu. Vui lòng dùng mã OTP dưới đây:';
+    const validity = purpose === 'register' ? '5 phút' : '60 giây';
+    const footerNote =
+      purpose === 'register'
+        ? 'Nếu bạn không thực hiện đăng ký này, hãy bỏ qua email này.'
+        : 'Nếu bạn không yêu cầu thay đổi mật khẩu, hãy bỏ qua email này.';
+
+    return `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #2e7d32; text-align: center;">Agri-Scan AI</h2>
+        <p>Xin chào <strong>${fullName}</strong>,</p>
+        <p>${intro}</p>
+        <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;">
+          <h1 style="color: #333; letter-spacing: 5px; margin: 0;">${otp}</h1>
+        </div>
+        <p style="color: red; font-size: 14px;"><em>* Mã OTP chỉ có hiệu lực trong ${validity}.</em></p>
+        <p>${footerNote}</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="font-size: 12px; color: #888; text-align: center;">Đội ngũ Agri-Scan AI - HUTECH</p>
+      </div>
+    `;
+  }
+
+  private async sendOtpEmail(
+    to: string,
+    fullName: string,
+    otp: string,
+    purpose: 'register' | 'reset',
+  ) {
+    const subject =
+      purpose === 'register'
+        ? '✅ Xác thực đăng ký tài khoản - Agri-Scan AI'
+        : '🔑 Khôi phục mật khẩu - Agri-Scan AI';
+
+    await this.mailerService.sendMail({
+      to,
+      subject,
+      html: this.buildOtpEmailHtml(fullName, otp, purpose),
+    });
   }
 
   // ════════════════════════════════════════════════════════════

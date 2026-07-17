@@ -1,45 +1,45 @@
-# Đóng góp & Quy tắc làm việc nhóm — AGRI-SCAN-AI
+# Contributing & Team Workflow — AGRI-SCAN-AI
 
-> ⚠️ **Quan trọng:** Dự án tuân thủ tiêu chí chấm điểm Mã nguồn mở (Open Source). Mọi thành viên **bắt buộc** tuân thủ Git Workflow dưới đây để minh chứng kỹ năng quản lý dự án với Ban giám khảo.
+> ⚠️ **Important:** This project follows Open Source grading criteria. Every member **must** follow the Git workflow below to demonstrate project-management skills to the judging panel.
 
-Xem thêm: [kiến trúc tổng thể](ARCHITECTURE.md) · [lộ trình & mô hình kinh doanh](ROADMAP.md).
+See also: [overall architecture](ARCHITECTURE.md) · [roadmap & business model](ROADMAP.md).
 
-## 1. Phân nhánh Git (Branching Strategy)
+## 1. Branching Strategy
 
-Sử dụng mô hình Git Flow cơ bản để tránh xung đột (conflict) code:
+Use a basic Git Flow model to avoid code conflicts:
 
-| Nhánh | Vai trò |
-|-------|---------|
-| `main` | Source code hoàn chỉnh, ổn định nhất. Dùng cho CI/CD & Deploy. **TUYỆT ĐỐI KHÔNG PUSH TRỰC TIẾP.** |
-| `dev` | Nhánh trung tâm để tích hợp code từ các thành viên trong quá trình phát triển. |
-| `feature/<tên-tính-năng>` | Nhánh làm tính năng mới (VD: `feature/ai-scan-ui`). |
-| `fix/<tên-lỗi>` | Nhánh sửa bug (VD: `fix/camera-crash`). |
-| `refactor/<phạm-vi>` | Nhánh tối ưu/dọn dẹp không đổi hành vi (VD: `refactor/harness-docs`). |
+| Branch | Role |
+|--------|------|
+| `main` | The complete, most stable source code. Used for CI/CD & deployment. **NEVER PUSH DIRECTLY.** |
+| `dev` | The central branch for integrating members' code during development. |
+| `feature/<feature-name>` | Branch for building a new feature (e.g. `feature/ai-scan-ui`). |
+| `fix/<bug-name>` | Branch for fixing a bug (e.g. `fix/camera-crash`). |
+| `refactor/<scope>` | Branch for optimization/cleanup with no behavior change (e.g. `refactor/harness-docs`). |
 
-## 2. Quy trình nộp code (Pull Request)
+## 2. Pull Request Process
 
-1. Code xong tính năng ở nhánh `feature/...` của mình.
-2. Push nhánh lên GitHub và tạo Pull Request (PR) yêu cầu gộp vào nhánh `dev`.
-3. Phải có **ít nhất 1 thành viên khác** review code, báo cáo chạy thử không lỗi mới được Approve & Merge.
+1. Finish the feature on your own `feature/...` branch.
+2. Push the branch to GitHub and open a Pull Request (PR) to merge into the `dev` branch.
+3. At least **one other member** must review the code and confirm it runs without errors before it can be approved & merged.
 
-## 3. Chuẩn viết Commit (Conventional Commits)
+## 3. Commit Convention (Conventional Commits)
 
-| Prefix | Khi nào dùng |
-|--------|--------------|
-| `feat:` | Thêm một tính năng mới. |
-| `fix:` | Sửa một lỗi hệ thống. |
-| `docs:` | Cập nhật tài liệu (README, API Swagger, docs/). |
-| `chore:` | Cấu hình linh tinh, thêm thư viện. |
-| `refactor:` | Tối ưu hóa lại code nhưng không thay đổi tính năng. |
+| Prefix | When to use |
+|--------|-------------|
+| `feat:` | Adding a new feature. |
+| `fix:` | Fixing a system bug. |
+| `docs:` | Updating documentation (README, API Swagger, docs/). |
+| `chore:` | Miscellaneous configuration, adding a library. |
+| `refactor:` | Re-optimizing code without changing behavior. |
 
-## 4. Cổng chất lượng trước khi mở PR
+## 4. Quality Gate Before Opening a PR
 
-Trước khi tuyên bố "xong", **chạy thật** lệnh liên quan và đọc output (chi tiết trong [`CLAUDE.md`](../CLAUDE.md) mục 6):
+Before declaring "done", **actually run** the relevant commands and read the output (details in [`CLAUDE.md`](../CLAUDE.md), section 6):
 
 ```bash
-pnpm build                    # packages → backend → web (đúng thứ tự)
+pnpm build                    # packages → backend → web (in order)
 pnpm --filter backend lint
 pnpm --filter backend test
 ```
 
-> Không sửa test cho khớp code sai; sửa code cho khớp hành vi đúng.
+> Do not change tests to match wrong code; fix the code to match the correct behavior.

@@ -147,44 +147,6 @@ export default function LoginForm() {
 
 
 
-          <div className="flex items-start">
-            <div className="flex items-center h-5">
-              <input
-                id="terms"
-                type="checkbox"
-                className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-2 focus:ring-primary/30 text-primary cursor-pointer  accent-primary "
-                appearance-none="true"
-                {...register("terms")}
-              />
-            </div>
-
-            <div className="ml-3 text-sm">
-              <label
-                htmlFor="terms"
-                className="font-medium text-gray-600 cursor-pointer"
-              >
-                Tôi đồng ý với{" "}
-                <Link
-                  href="/terms"
-                  className="text-primary hover:text-primary-dark hover:underline"
-                >
-                  Điều khoản dịch vụ
-                </Link>{" "}
-                và{" "}
-                <Link
-                  href="/privacy"
-                  className="text-primary hover:text-primary-dark hover:underline"
-                >
-                  Chính sách bảo mật
-                </Link>
-              </label>
-            </div>
-          </div>
-
-          {errors.terms && (
-            <p className="mt-1 text-sm text-red-500">{errors.terms.message}</p>
-          )}
-
           {/* Lỗi từ backend */}
           {errors.root && (
             <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center border border-red-100">

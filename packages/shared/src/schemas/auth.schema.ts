@@ -6,7 +6,6 @@ export const loginSchema = z.object({
     .email({ message: "Email không hợp lệ" }),
   password: z.string()
     .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự" }),
-  terms: z.boolean().refine(val => val === true, { message: "Bạn phải đồng ý với Điều khoản và Chính sách bảo mật" })
 });
 
 export const registerSchema = z.object({
@@ -30,6 +29,13 @@ export const registerSchema = z.object({
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Mật khẩu xác nhận không khớp",
   path: ["confirmPassword"],
+});
+
+// Schema cho ô nhập OTP 6 chữ số (xác thực đăng ký)
+export const otpSchema = z.object({
+  otp: z.string()
+    .length(6, { message: "Mã OTP phải có đúng 6 chữ số" })
+    .regex(/^\d{6}$/, { message: "Mã OTP chỉ gồm 6 chữ số" }),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -70,6 +76,7 @@ export const setPasswordSchema = z.object({
 // Export types
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
+export type OtpFormData = z.infer<typeof otpSchema>;
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type SetPasswordFormData = z.infer<typeof setPasswordSchema>;

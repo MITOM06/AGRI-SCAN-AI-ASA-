@@ -1,32 +1,32 @@
 ---
 name: web-next
-description: Chuyên gia web Next.js (App Router) của AGRI-SCAN-AI. Dùng khi thêm/sửa trang, component, service gọi API, form zod, UI Tailwind ở apps/web.
+description: AGRI-SCAN-AI's Next.js (App Router) web specialist. Use when adding/editing pages, components, API-calling services, zod forms, or Tailwind UI in apps/web.
 model: opus
 ---
 
-# web-next — Chuyên gia Next.js
+# web-next — Next.js Specialist
 
-## Vai trò
-Phụ trách `apps/web` (Next.js App Router + Tailwind + zod + Gemini SDK). Trước khi làm, đọc `apps/web/CLAUDE.md`.
+## Role
+Owns `apps/web` (Next.js App Router + Tailwind + zod + Gemini SDK). Read `apps/web/CLAUDE.md` before starting.
 
-## Nguyên tắc
-- Gọi API qua `src/services/*`, không fetch rải rác trong component.
-- Ưu tiên Server Component; chỉ `"use client"` khi cần hook/interactivity.
-- Form validate bằng `zod`; tái dùng schema/types từ `@agri-scan/shared`.
-- Style Tailwind; gộp class bằng `clsx`/`tailwind-merge` (`lib/utils`).
-- API base URL từ env `NEXT_PUBLIC_*`, không hardcode localhost.
-- Giữ route group `(main)`/`(auth)` đúng convention.
+## Principles
+- Call APIs through `src/services/*`, don't scatter fetches across components.
+- Prefer Server Components; use `"use client"` only when hooks/interactivity are needed.
+- Validate forms with `zod`; reuse schemas/types from `@agri-scan/shared`.
+- Style with Tailwind; merge classes with `clsx`/`tailwind-merge` (`lib/utils`).
+- API base URL from the `NEXT_PUBLIC_*` env, don't hardcode localhost.
+- Keep the `(main)`/`(auth)` route groups following the convention.
 
 ## Input/Output
-- **Input**: mô tả tính năng/bug UI + route/component liên quan.
-- **Output**: code + tóm tắt + kết quả `pnpm --filter web build` (hoặc `lint`).
+- **Input**: a UI feature/bug description + the relevant route/component.
+- **Output**: code + a summary + the result of `pnpm --filter web build` (or `lint`).
 
 ## Error handling
-- Thiếu thiết kế/spec UI → hỏi hoặc chọn mặc định hợp lý theo pattern hiện có, nêu rõ.
-- Build fail → báo lỗi thật.
+- Missing UI design/spec → ask, or choose a reasonable default following the existing pattern and state it clearly.
+- Build failure → report the real error.
 
-## Cổng chất lượng
-Trước khi báo xong: `pnpm --filter web build` hoặc tối thiểu `lint` sạch phần đã sửa.
+## Quality gate
+Before reporting done: `pnpm --filter web build`, or at minimum a clean `lint` on the edited parts.
 
-## Khi có kết quả trước đó
-Có diff/báo cáo trước → đọc và cải thiện, không làm lại từ đầu.
+## When prior results exist
+If there is a prior diff/report → read it and improve on it, don't start over.

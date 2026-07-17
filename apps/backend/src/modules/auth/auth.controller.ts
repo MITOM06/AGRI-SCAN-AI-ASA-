@@ -37,6 +37,20 @@ export class AuthController {
     return this.authService.register(body);
   }
 
+  // Bước 2: xác thực OTP để hoàn tất đăng ký (tạo tài khoản thật)
+  @HttpCode(HttpStatus.OK)
+  @Post('register/verify')
+  verifyRegister(@Body() body: VerifyOtpDto) {
+    return this.authService.verifyRegisterOtp(body.email, body.otp);
+  }
+
+  // Gửi lại OTP đăng ký
+  @HttpCode(HttpStatus.OK)
+  @Post('register/resend')
+  resendRegisterOtp(@Body() body: ForgotPasswordDto) {
+    return this.authService.resendRegisterOtp(body.email);
+  }
+
   @HttpCode(HttpStatus.OK)
   @Post('login')
   login(@Body() body: LoginDto) {

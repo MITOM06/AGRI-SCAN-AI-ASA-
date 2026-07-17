@@ -1,10 +1,10 @@
-# AGRI-SCAN AI | BÁC SĨ CÂY TRỒNG THÔNG MINH
+# AGRI-SCAN AI | THE SMART PLANT DOCTOR
 
-> **Dự án tham gia:** Website & AI Innovation Contest 2026
+> **Competition entry:** Website & AI Innovation Contest 2026
 
-> **Hạng mục:** Bảng A - Foundation Track
+> **Category:** Track A - Foundation Track
 
-> **Trạng thái:** Đang phát triển
+> **Status:** In development
 
 <p align="center">
 <a href="./LICENSE">
@@ -19,42 +19,42 @@
 * **Website:** [agri-scan-ai](https://agriscan.duckdns.org/) 
 * **Source Code:** [GitHub](https://github.com/MITOM06/AGRI-SCAN-AI-ASA-)
 * **Dataset:** [Rice Leaf Diseases Detection - Kaggle](https://www.kaggle.com/datasets/loki4514/rice-leaf-diseases-detection)
-* **Dữ liệu đã chia (Train/Val/Test):** [Google Drive](https://drive.google.com/drive/folders/1Ebmeq0fpYecxsK6QEL-sqtjTGGQbUFB6?usp=sharing)
+* **Split data (Train/Val/Test):** [Google Drive](https://drive.google.com/drive/folders/1Ebmeq0fpYecxsK6QEL-sqtjTGGQbUFB6?usp=sharing)
 
-## Mục lục 
-* [I. Tổng quan dự án (Project Overview)](#i-tổng-quan-dự-án-project-overview)
-* [II. Tính năng của sản phẩm](#ii-tính-năng-của-sản-phẩm)
-* [III. Giải pháp AI (AI Solutions)](#iii-giải-pháp-ai-ai-solutions)
-* [IV. Kiến trúc hệ thống & Công nghệ](#iv-kiến-trúc-hệ-thống--công-nghệ)
-* [V. Hạn chế hiện tại và định hướng phát triển](#v-hạn-chế-hiện-tại-và-định-hướng-phát-triển)
-* [VI. Hướng dẫn cài đặt](#vi-hướng-dẫn-cài-đặt)
+## Table of Contents 
+* [I. Project Overview](#i-project-overview)
+* [II. Product Features](#ii-product-features)
+* [III. AI Solutions](#iii-ai-solutions)
+* [IV. System Architecture & Technology](#iv-system-architecture--technology)
+* [V. Current Limitations & Roadmap](#v-current-limitations--roadmap)
+* [VI. Installation Guide](#vi-installation-guide)
 * [VII. Project Management & OSS](#vii-project-management--oss)
-* [VIII. Thiết kế cơ sở dữ liệu](#viii-thiết-kế-cơ-sở-dữ-liệu)
+* [VIII. Database Design](#viii-database-design)
 
-## I. TỔNG QUAN DỰ ÁN (PROJECT OVERVIEW)
+## I. PROJECT OVERVIEW
 
-### 1.1. Giới thiệu dự án
-**Agri-Scan AI** là hệ thống đa nền tảng (Web & Mobile App) ứng dụng trí tuệ nhân tạo nhằm hỗ trợ nông dân và người yêu cây cảnh trong việc quản lý sức khỏe cây trồng. Hệ thống đóng vai trò như một "trợ lý nông nghiệp ảo", giúp chẩn đoán bệnh nhanh chóng và đưa ra giải pháp chăm sóc khoa học.
+### 1.1. Introduction
+**Agri-Scan AI** is a multi-platform system (Web & Mobile App) that applies artificial intelligence to help farmers and plant lovers manage crop health. The system acts as a "virtual agriculture assistant", enabling fast disease diagnosis and providing science-based care solutions.
 
-### 1.2. Bối cảnh & Vấn đề (The Problem)
-Hiện nay, ngành nông nghiệp đang đối mặt với nhiều thách thức:
-* **Nhận diện sai lệch:** Nông dân thường nhầm lẫn giữa các loại bệnh có triệu chứng giống nhau, dẫn đến dùng sai thuốc, gây lãng phí và ô nhiễm.
-* **Tiếp cận thông tin chậm:** Việc chờ đợi chuyên gia xuống thực địa mất nhiều thời gian, khiến dịch bệnh lây lan nhanh.
-* **Thiếu lộ trình chăm sóc:** Người trồng cây đô thị (Home-farming) thường thiếu kiến thức về quy trình bón phân, tưới nước đúng cách.
+### 1.2. Context & The Problem
+Agriculture today faces many challenges:
+* **Misidentification:** Farmers often confuse diseases with similar symptoms, leading to the wrong pesticide, waste, and pollution.
+* **Slow access to information:** Waiting for an expert to visit the field takes a long time, allowing diseases to spread quickly.
+* **No care roadmap:** Urban home-farmers often lack knowledge of proper fertilizing and watering routines.
 
-### 1.3. Giải pháp (The Solution)
-Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
-1. **AI Diagnosis:** Nhận diện bệnh cây qua ảnh chụp tức thời với độ chính xác cao.
-2. **Smart Treatment:** Đưa ra phác đồ điều trị chi tiết (nguyên nhân, cách xử lý, loại phân bón/thuốc khuyến nghị).
-3. **Care Roadmap:** Xây dựng lộ trình chăm sóc định kỳ cho từng giai đoạn phát triển của cây.
-4. **Community Knowledge:** Thư viện mở về các kỹ thuật canh tác nông nghiệp bền vững.
+### 1.3. The Solution
+Agri-Scan AI provides a comprehensive set of solutions:
+1. **AI Diagnosis:** Recognize plant diseases from instant photos with high accuracy.
+2. **Smart Treatment:** Provide a detailed treatment plan (cause, handling, recommended fertilizer/pesticide).
+3. **Care Roadmap:** Build a periodic care roadmap for each growth stage of the plant.
+4. **Community Knowledge:** An open library of sustainable farming techniques.
 
-### 1.4. Giá trị cốt lõi (Core Values)
-* **Chính xác:** Tận dụng sức mạnh của các mô hình Computer Vision tiên tiến.
-* **Kịp thời:** Chẩn đoán ngay tại đồng ruộng chỉ với một chiếc smartphone.
-* **Bền vững:** Ưu tiên các giải pháp sinh học và quy trình chăm sóc thân thiện môi trường.
+### 1.4. Core Values
+* **Accurate:** Leveraging the power of advanced Computer Vision models.
+* **Timely:** Diagnose right in the field with just a smartphone.
+* **Sustainable:** Prioritizing biological solutions and eco-friendly care routines.
 
-### 1.5 Thành viên nhóm
+### 1.5 Team Members
 
 <table align="center">
   <tr>
@@ -106,134 +106,134 @@ Hệ thống Agri-Scan AI cung cấp bộ giải pháp toàn diện:
   </tr>
 </table>
 
-| Thành viên | Vai trò | Trách nhiệm chính | University |
+| Member | Role | Key responsibilities | University |
 | :--- | :--- | :--- | :--- |
-| **Bùi Huỳnh Tây** | **Team Leader & AI Architect** | Quản lý dự án, Data Engineering, thiết kế kiến trúc AI, triển khai LLM. | Trường ĐH CNTT - ĐHQG-HCM |
-| **Hà Lê Thành Nhân** | **AI Engineer** | Nghiên cứu & huấn luyện Computer Vision Model (ViT + MoE), tiền xử lý Dataset. | Đại học FPT |
-| **Trần Phúc Khang** | **Backend & DevOps** | Phát triển Core API (NestJS), thiết kế Database (MongoDB), đóng gói Docker & CI/CD. | FPT Aptech |
-| **Châu Băng Sơn** | **UI/UX & Web Dev** | Thiết kế giao diện Figma, phát triển Dashboard Admin & Landing Page (React/NextJS). | Đại học FPT |
-| **Lê Thanh Tùng** | **Mobile App Dev** | Phát triển ứng dụng Mobile (React Native), xử lý Camera AI & đồng bộ hóa dữ liệu. | Đại học FPT |
+| **Bùi Huỳnh Tây** | **Team Leader & AI Architect** | Project management, data engineering, AI architecture design, LLM deployment. | University of Information Technology - VNU-HCM |
+| **Hà Lê Thành Nhân** | **AI Engineer** | Research & training of the Computer Vision model (ViT + MoE), dataset preprocessing. | FPT University |
+| **Trần Phúc Khang** | **Backend & DevOps** | Core API development (NestJS), database design (MongoDB), Docker packaging & CI/CD. | FPT Aptech |
+| **Châu Băng Sơn** | **UI/UX & Web Dev** | Figma UI design, admin dashboard & landing page development (React/NextJS). | FPT University |
+| **Lê Thanh Tùng** | **Mobile App Dev** | Mobile app development (React Native), camera AI handling & data synchronization. | FPT University |
 
-## II. Tính năng của sản phẩm
+## II. Product Features
 
-Để đảm bảo tiến độ cuộc thi và tập trung vào tính năng cốt lõi có ứng dụng AI (tiêu chí ăn điểm nhất), phiên bản MVP (Minimum Viable Product) của Agri-Scan AI sẽ được giới hạn nghiêm ngặt như sau:
+To meet the competition timeline and focus on the core AI-powered features (the highest-scoring criteria), the MVP (Minimum Viable Product) of Agri-Scan AI is strictly scoped as follows:
 
-### 2.1. Tính năng cốt lõi BẮT BUỘC HOÀN THIỆN:
-#### 2.1.1. **Chatbot AI:**
-   * Người dùng tải lên hoặc chụp trực tiếp ảnh lá cây/thân cây bị bệnh.
-   * Hệ thống xử lý ảnh và trả về kết quả: Tên bệnh, Độ tin cậy (%).
-   * Lưu lại các phiên chẩn đoán và lịch sử chat với AI để người dùng theo dõi tiến triển của cây.
+### 2.1. Core features that MUST be completed:
+#### 2.1.1. **AI Chatbot:**
+   * The user uploads or directly captures a photo of a diseased leaf/stem.
+   * The system processes the image and returns the result: disease name, confidence (%).
+   * Save diagnosis sessions and chat history with the AI so the user can track the plant's progress.
 
 <p align="center">
 <img src="img/chatbot.png" alt="Plant Wiki Demo" width="800px" style="border-radius: 10px;">
 </p>
 
 #### 2.1.2. **Plant Wiki:**
-* Dữ liệu chuyên sâu: Cung cấp thông tin chi tiết về đặc điểm sinh học, môi trường sống, và các bệnh lý đặc trưng của loài cây trồng tại Việt Nam.
-* Bộ lọc thông minh: Cho phép người dùng phân loại nhanh theo: Loại cây (Cây ăn quả, cây công nghiệp, cây cảnh...), Tốc độ sinh trưởng, và Nhu cầu ánh sáng/nước.
-* Thông tin bệnh lý tích hợp: Mỗi loài cây đi kèm với danh sách các loại nấm, vi khuẩn và sâu bệnh thường gặp, giúp người dùng có cái nhìn tổng quan trước khi canh tác.
+* In-depth data: detailed information on the biological characteristics, habitat, and typical diseases of plant species grown in Vietnam.
+* Smart filters: let users quickly categorize by plant type (fruit trees, industrial crops, ornamentals...), growth rate, and light/water needs.
+* Integrated disease info: each species comes with a list of common fungi, bacteria, and pests, giving users an overview before planting.
 
 <p align="center">
 <img src="img/wiki.png" alt="Plant Wiki Demo" width="500px" style="border-radius: 10px;">
 <img src="img/wiki1.png" alt="Plant Wiki Demo" width="500px" style="border-radius: 10px;">
 </p>
 
-#### 2.1.3. **Vườn của tôi:**
-- Dashboard theo dõi sinh trưởng: Hiển thị lộ trình phát triển của cây qua từng giai đoạn (Cây non -> Phát triển -> Ra hoa -> Đậu quả -> Thu hoạch).
-- Phân tích chỉ số lý tưởng: Cung cấp thông tin về Độ ẩm đất, Ánh sáng, Dinh dưỡng và Tỷ lệ đậu quả phù hợp nhất cho từng loại cây cụ thể đang trồng.
-- Chẩn đoán & Giải pháp (Smart Diagnosis):
-   * Tự động hiển thị chi tiết loại bệnh vừa nhận diện từ AI Chatbot.
-   * Đề xuất Bí quyết chăm sóc chuyên sâu: Ví dụ như siết nước, bón phân Kali cao, hay kỹ thuật thụ phấn nhân tạo để tăng năng suất.
-   * Gợi ý lộ trình phục hồi cây bị bệnh theo từng bước (Step-by-step).
+#### 2.1.3. **My Garden:**
+- Growth-tracking dashboard: shows the plant's development roadmap through each stage (Seedling -> Growth -> Flowering -> Fruiting -> Harvest).
+- Ideal-metric analysis: information on the most suitable soil moisture, light, nutrients, and fruit-set rate for each specific plant being grown.
+- Diagnosis & Solutions (Smart Diagnosis):
+   * Automatically shows details of the disease just recognized by the AI Chatbot.
+   * Recommends in-depth care tips: for example, water stress, high-potassium fertilizing, or artificial pollination techniques to boost yield.
+   * Suggests a step-by-step recovery roadmap for a diseased plant.
 <p align="center">
 <img src="img/mygarden.png" alt="Plant Wiki Demo" height="410px" style="border-radius: 10px;">
 <img src="img/mygarden1.png" alt="Plant Wiki Demo" height="410px" style="border-radius: 10px;">
 </p>
 
-#### 2.1.4. **Thời tiết:**
-* Cảnh báo rủi ro (Risk Alert): Tự động đưa ra cảnh báo về Sốc nhiệt hoặc biến động nhiệt độ ngày đêm lớn (>15°C), giúp người nông dân chủ động phòng tránh tình trạng cây bị stress.
-* Dự báo chi tiết 24h & 8 ngày: Hiển thị nhiệt độ, độ ẩm, tốc độ gió và chỉ số UV theo thời gian thực tại vị trí người dùng.
-* Bác sĩ cây trồng khuyến nghị: Dựa trên thời tiết (ví dụ: độ ẩm cao), hệ thống sẽ đưa ra lời khuyên canh tác phù hợp như: "Hạn chế bón phân hữu cơ trong thời tiết nồm ẩm để tránh nấm bệnh".
+#### 2.1.4. **Weather:**
+* Risk Alert: automatically warns about heat shock or large day-night temperature swings (>15°C), helping farmers proactively prevent plant stress.
+* Detailed 24h & 8-day forecast: shows temperature, humidity, wind speed, and UV index in real time at the user's location.
+* Plant-doctor recommendations: based on the weather (e.g. high humidity), the system gives suitable farming advice such as: "Limit organic fertilizing in humid, muggy weather to avoid fungal disease".
 <p align="center">
 <img src="img/thoitiet.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
 <img src="img/thoitiet1.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
 </p>
 
-#### 2.1.5. **Shop nông sản:**
-* Sàn thương mại điện tử vật tư nông nghiệp: danh sách sản phẩm, chi tiết sản phẩm, giỏ hàng, đặt hàng và quản lý đơn hàng (`/shop`, `/shop/cart`, `/shop/checkout`, `/shop/orders`).
-* Tích hợp luồng thanh toán/nâng cấp gói dịch vụ (`/payment`, `/upgrade`).
+#### 2.1.5. **Agriculture Shop:**
+* An e-commerce marketplace for agricultural supplies: product list, product detail, cart, ordering, and order management (`/shop`, `/shop/cart`, `/shop/checkout`, `/shop/orders`).
+* Integrated payment/plan-upgrade flow (`/payment`, `/upgrade`).
 
-#### 2.1.6. **Cộng đồng (Community):**
-* Không gian chia sẻ kiến thức & kinh nghiệm canh tác giữa người dùng (`/community`).
+#### 2.1.6. **Community:**
+* A space for users to share farming knowledge & experience (`/community`).
 
-### 2.2. Ngoài phạm vi / định hướng mở rộng (Out of Scope):
-* *Mạng xã hội đầy đủ:* Chưa làm hệ thống bình luận lồng nhau, follow, feed cá nhân hoá phức tạp — cộng đồng hiện ở mức chia sẻ cơ bản.
-* *Thanh toán thật (production):* Luồng thanh toán đang ở mức demo/tích hợp cơ bản, chưa kết nối cổng thanh toán thương mại chính thức.
+### 2.2. Out of scope / expansion directions:
+* *Full social network:* No nested comments, follow, or complex personalized feed yet — the community is currently at a basic sharing level.
+* *Real (production) payments:* The payment flow is at a demo/basic-integration level, not yet connected to an official commercial payment gateway.
 
-> **Ghi chú:** So với kế hoạch MVP ban đầu (chỉ tập trung AI), dự án đã mở rộng thêm **Shop** và **Cộng đồng**. Xem mô hình kinh doanh & lộ trình tại [`docs/ROADMAP.md`](docs/ROADMAP.md).
+> **Note:** Compared to the original MVP plan (AI-only focus), the project has expanded to add the **Shop** and **Community**. See the business model & roadmap in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
-### 2.3 Giá trị khác biệt (Cập nhật sau)
+### 2.3 Differentiators (to be updated)
 
 ---
 
-## III. GIẢI PHÁP AI (AI SOLUTIONS)
+## III. AI SOLUTIONS
 
-Hệ thống ứng dụng những kỹ thuật tiên tiến trong lĩnh vực Học máy (Machine Learning) và Xử lý ngôn ngữ tự nhiên (NLP) để tạo ra một "Bác sĩ cây trồng" kỹ thuật số có độ chính xác vượt trội.
+The system applies advanced techniques in Machine Learning and Natural Language Processing (NLP) to create a digital "plant doctor" with superior accuracy.
 
-### 3.1. Kiến trúc cốt lõi (Core Backbone)
-Agri-Scan AI xây dựng trên nền tảng mạng nơ-ron sâu hiện đại kết hợp giữa **Vision Transformer (ViT)** và cơ chế **Mixture of Experts (MoE)**.
-* **Transformer Encoder:** Thực hiện chia cắt hình ảnh thành các "patch", giúp mô hình hiểu được ngữ cảnh không gian và mối liên hệ giữa các vùng bị bệnh trên lá lúa.
-* **Mixture of Experts (MoE):** Sử dụng mạng Gating thông minh để điều hướng dữ liệu đến các "Expert" chuyên biệt, giúp phân biệt chính xác các loại bệnh có triệu chứng tương đồng.
-* **Regularization:** Áp dụng các kỹ thuật Orthogonal, Entropy và Usage Regularization nhằm tối ưu hóa hiệu suất và tính đa dạng của các Expert.
+### 3.1. Core Backbone
+Agri-Scan AI is built on a modern deep neural network combining a **Vision Transformer (ViT)** and a **Mixture of Experts (MoE)** mechanism.
+* **Transformer Encoder:** Splits the image into "patches", helping the model understand spatial context and the relationships between diseased regions on the rice leaf.
+* **Mixture of Experts (MoE):** Uses a smart gating network to route data to specialized "Experts", accurately distinguishing diseases with similar symptoms.
+* **Regularization:** Applies Orthogonal, Entropy, and Usage Regularization techniques to optimize the performance and diversity of the Experts.
 
-### 3.2. Dữ liệu huấn luyện 
-Mô hình được huấn luyện trên tập dữ liệu hình ảnh thực tế từ [rice-leaf-diseases-detection](https://www.kaggle.com/datasets/loki4514/rice-leaf-diseases-detection), bao gồm lá lúa khỏe mạnh và các loại bệnh hại phổ biến nhất. Hệ thống có khả năng phân loại chính xác **9 lớp (classes)** sau:
+### 3.2. Training Data 
+The model is trained on a real-world image dataset from [rice-leaf-diseases-detection](https://www.kaggle.com/datasets/loki4514/rice-leaf-diseases-detection), including healthy rice leaves and the most common diseases. The system can accurately classify the following **9 classes**:
 
 
-| STT | Tên bệnh | Class Name | Hình ảnh mẫu | Train | Val | Test | Đặc điểm nhận dạng |
+| No. | Disease | Class Name | Sample image | Train | Val | Test | Identifying features |
 | :--: | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| 1 | **Bạc lá** | Bacterial Leaf Blight | <img src="./img/1.jpg" width="80"> | 957 | 119 | 121 | Các vết sọc dài vàng nhạt/trắng dọc rìa lá |
-| 2 | **Tiêm lửa** | Brown Spot | <img src="./img/2.jpg" width="80"> | 1229 | 153 | 155 | Các đốm tròn/bầu dục nâu nhỏ rải rác |
-| 3 | **Đạo ôn lá** | Leaf Blast | <img src="./img/3.jpg" width="80"> | 1370 | 171 | 172 | Vết hình thoi, tâm xám trắng, viền nâu đậm |
-| 4 | **Cháy lá** | Leaf Scald | <img src="./img/4.jpg" width="80"> | 1065 | 133 | 134 | Vết cháy loang lổ từ chóp lá, vân gợn sóng |
-| 5 | **Đốm nâu hẹp** | Narrow Brown | <img src="./img/5.jpg" width="80"> | 763 | 95 | 96 | Vết đốm nâu hẹp, dài mảnh song song gân lá |
-| 6 | **Đạo ôn cổ bông**| Neck Blast | <img src="./img/6.jpg" width="80"> | 800 | 100 | 100 | Thắt cổ bông, làm hạt lép hoặc gãy gục |
-| 7 | **Bọ gai** | Rice Hispa | <img src="./img/7.jpg" width="80"> | 1039 | 129 | 131 | Vết trắng dài do sâu ăn tạo đường rãnh |
-| 8 | **Khô vằn** | Sheath Blight | <img src="./img/8.jpg" width="80"> | 1300 | 162 | 163 | Vết đốm vằn da hổ ở bẹ lá sát mặt nước |
-| 9 | **Lá khỏe mạnh** | Healthy Rice Leaf | <img src="./img/9.jpg" width="80"> | 865 | 108 | 109 | Lá xanh mướt, không có dấu hiệu tổn thương |
-| | **TỔNG CỘNG** | | | **9,388** | **1,170** | **1,181** | **Tổng cộng: 11,739 file** |
+| 1 | **Bacterial Leaf Blight** | Bacterial Leaf Blight | <img src="./img/1.jpg" width="80"> | 957 | 119 | 121 | Long pale-yellow/white streaks along the leaf margins |
+| 2 | **Brown Spot** | Brown Spot | <img src="./img/2.jpg" width="80"> | 1229 | 153 | 155 | Small scattered round/oval brown spots |
+| 3 | **Leaf Blast** | Leaf Blast | <img src="./img/3.jpg" width="80"> | 1370 | 171 | 172 | Diamond-shaped lesions with a gray-white center and dark brown border |
+| 4 | **Leaf Scald** | Leaf Scald | <img src="./img/4.jpg" width="80"> | 1065 | 133 | 134 | Blotchy scald spreading from the leaf tip, with wavy bands |
+| 5 | **Narrow Brown Spot** | Narrow Brown | <img src="./img/5.jpg" width="80"> | 763 | 95 | 96 | Narrow, thin, long brown spots parallel to the leaf veins |
+| 6 | **Neck Blast** | Neck Blast | <img src="./img/6.jpg" width="80"> | 800 | 100 | 100 | Constriction at the panicle neck, causing empty grains or lodging |
+| 7 | **Rice Hispa** | Rice Hispa | <img src="./img/7.jpg" width="80"> | 1039 | 129 | 131 | Long white streaks left as feeding trails by the insect |
+| 8 | **Sheath Blight** | Sheath Blight | <img src="./img/8.jpg" width="80"> | 1300 | 162 | 163 | Tiger-stripe blotches on the leaf sheath near the water line |
+| 9 | **Healthy Rice Leaf** | Healthy Rice Leaf | <img src="./img/9.jpg" width="80"> | 865 | 108 | 109 | Lush green leaf with no signs of damage |
+| | **TOTAL** | | | **9,388** | **1,170** | **1,181** | **Total: 11,739 files** |
 
-### 3.3. Các Endpoints API chính
-Dự án cung cấp 3 dịch vụ API độc lập, đảm bảo khả năng mở rộng và tích hợp linh hoạt:
+### 3.3. Main API Endpoints
+The project provides 3 independent API services, ensuring scalability and flexible integration:
 
-#### 3.3.1. Vision Model - Phân loại bệnh (`/predict`)
-* **Chức năng:** Chẩn đoán tình trạng bệnh lý qua hình ảnh.
-* **Công nghệ:** ViT + MoE Backbone.
-* **Input/Output:** Nhận file ảnh (jpg, png) và trả về nhãn bệnh kèm độ tự tin (Confidence score).
+#### 3.3.1. Vision Model - Disease Classification (`/predict`)
+* **Function:** Diagnose the disease status from an image.
+* **Technology:** ViT + MoE backbone.
+* **Input/Output:** Takes an image file (jpg, png) and returns the disease label with a confidence score.
 
-#### 3.3.2. LLM Model - Trợ lý kỹ thuật (`/chat`)
-* **Chức năng:** Tư vấn kỹ thuật canh tác và chăm sóc cây trồng.
-* **Công nghệ:** LLM (gemini-3-flash-preview) kết hợp với kỹ thuật **RAG (Retrieval-Augmented Generation)**.
-* **Đặc điểm:** Truy xuất dữ liệu từ cơ sở tri thức nông nghiệp tin cậy, giúp chatbot đưa ra câu trả lời chính xác và hạn chế tối đa hiện tượng "ảo giác" (hallucination) của AI.
+#### 3.3.2. LLM Model - Technical Assistant (`/chat`)
+* **Function:** Advise on farming techniques and plant care.
+* **Technology:** An LLM (gemini-3-flash-preview) combined with **RAG (Retrieval-Augmented Generation)**.
+* **Highlight:** Retrieves data from a trusted agricultural knowledge base, helping the chatbot give accurate answers and minimize AI "hallucination".
 
-#### 3.3.3. Giải pháp My Garden (`/my_garden`)
-* **Chức năng:** Cung cấp phác đồ điều trị chi tiết sau khi chẩn đoán.
-* **Output:** Hướng dẫn sử dụng thuốc BVTV, điều chỉnh phân bón và quy trình tưới nước cụ thể cho từng loại bệnh.
+#### 3.3.3. My Garden Solution (`/my_garden`)
+* **Function:** Provide a detailed treatment plan after diagnosis.
+* **Output:** Guidance on pesticide use, fertilizer adjustment, and a specific watering routine for each disease.
 
-### 3.4. Kiến trúc hệ thống AI 
-Quy trình xử lý dữ liệu được thiết kế khép kín nhằm tối ưu hóa trải nghiệm người dùng:
-1.  **Tiền xử lý:** Hình ảnh đầu vào được Resize, Normalization và Augmentation (trong quá trình train) để tăng độ bền vững cho mô hình.
-2.  **Inference:** ViT-MoE trích xuất đặc trưng và đưa ra kết quả phân loại.
-3.  **Tối ưu hóa phản hồi:** Kết quả chẩn đoán được đưa vào hệ thống RAG để LLM (Gemini) tạo ra lộ trình chăm sóc cá nhân hóa (Personalized Calendar).
+### 3.4. AI System Architecture 
+The data-processing pipeline is designed end-to-end to optimize the user experience:
+1.  **Preprocessing:** Input images are resized, normalized, and augmented (during training) to make the model more robust.
+2.  **Inference:** ViT-MoE extracts features and produces the classification result.
+3.  **Response optimization:** The diagnosis result is fed into the RAG system so the LLM (Gemini) generates a personalized care calendar.
 
 <p align="center">
 <img src="img/gemini_last.jpg" alt="AI Architechture" height="400px" style="border-radius: 10px;">
 </p>
 
-### 3.5. Kết quả thực nghiệm 
-Dựa trên báo cáo kiểm thử, mô hình đạt được hiệu suất cực kỳ ấn tượng với **Độ chính xác tổng thể (Overall Accuracy) đạt 99.49%**.
+### 3.5. Experimental Results 
+Based on the test report, the model achieves extremely impressive performance with an **Overall Accuracy of 99.49%**.
 
-| Tên lớp bệnh | Độ chính xác (%) | Số mẫu kiểm thử |
+| Disease class | Accuracy (%) | Test samples |
 | :--- | :--- | :--- |
 | **Bacterial Leaf Blight** | 97.52% | 118/121 |
 | **Brown Spot** | 100.00% | 155/155 |
@@ -244,82 +244,82 @@ Dựa trên báo cáo kiểm thử, mô hình đạt được hiệu suất cự
 | **Rice Hispa** | 100.00% | 131/131 |
 | **Sheath Blight** | 100.00% | 163/163 |
 
-Data đã được chia thành 3 tập train/val/test: tại [data_splited](https://drive.google.com/drive/folders/1Ebmeq0fpYecxsK6QEL-sqtjTGGQbUFB6?usp=sharing)
+The data has been split into 3 train/val/test sets: at [data_splited](https://drive.google.com/drive/folders/1Ebmeq0fpYecxsK6QEL-sqtjTGGQbUFB6?usp=sharing)
 
 ---
 
-## IV. KIẾN TRÚC HỆ THỐNG & CÔNG NGHỆ 
+## IV. SYSTEM ARCHITECTURE & TECHNOLOGY 
 
-### 4.1 Công nghệ sử dụng
-Dự án áp dụng kiến trúc **Monolithic (Nguyên khối)** để tối ưu thời gian phát triển, dễ dàng đóng gói, nhưng vẫn giữ cấu trúc code phân mô-đun (Modular) rõ ràng để dễ bảo trì. Toàn bộ hệ thống sử dụng ngôn ngữ **TypeScript** nhằm đảm bảo tính đồng nhất.
+### 4.1 Technologies used
+The project adopts a **Monolithic** architecture to optimize development time and ease packaging, while keeping a clearly modular code structure for maintainability. The entire system uses **TypeScript** to ensure consistency.
 
-#### 4.1.1 Hệ thống Backend
-* **Framework:** **NestJS (Node.js).** * *Lý do:* Cấu trúc chặt chẽ, dễ dàng phân chia các module trong cùng một khối Monolithic. Xử lý tốt việc nhận file ảnh từ client, gọi AI APIs bên thứ ba, phân tích kết quả và trả về.
-* **Cơ sở dữ liệu (Database):** **MongoDB.**
-  * *Lý do:* Cơ sở dữ liệu NoSQL cực kỳ linh hoạt để lưu trữ các tài liệu. Thông tin về đặc điểm sinh học, triệu chứng bệnh rất đa dạng, dùng MongoDB dễ mở rộng trường dữ liệu hơn SQL.
-* **Bộ nhớ đệm (Caching):** **Redis.**
-  * *Lý do:* Tăng tốc độ phản hồi và tiết kiệm chi phí gọi AI API. Các yêu cầu quét bệnh phổ biến sẽ được cache lại để trả về ngay lập tức.
+#### 4.1.1 Backend system
+* **Framework:** **NestJS (Node.js).** * *Reason:* A strict structure that makes it easy to split modules within a single monolithic block. Handles receiving image files from clients, calling third-party AI APIs, parsing results, and returning them.
+* **Database:** **MongoDB.**
+  * *Reason:* An extremely flexible NoSQL database for storing documents. Biological characteristics and disease symptoms are very diverse; MongoDB makes it easier to extend fields than SQL.
+* **Caching:** **Redis.**
+  * *Reason:* Speeds up responses and saves AI-API costs. Common disease-scan requests are cached to be returned instantly.
 
-#### 4.1.2. Hệ thống Frontend 
-* **Mobile App (iOS & Android):** **React Native (với Expo).**
-  * *Lý do:* Code một lần, build ra cả ứng dụng iOS và Android. Tốc độ làm UI nhanh, dễ dàng tích hợp Camera để chụp ảnh lá cây.
-* **Web Interface:** **React (Vite) hoặc Next.js.**
-  * *Lý do:* Dùng chung hệ sinh thái React với Mobile App, tái sử dụng logic/component. Làm Landing Page và trang Admin quản lý dữ liệu.
+#### 4.1.2. Frontend system 
+* **Mobile App (iOS & Android):** **React Native (with Expo).**
+  * *Reason:* Write once, build for both iOS and Android. Fast UI development, easy Camera integration for capturing leaf photos.
+* **Web Interface:** **React (Vite) or Next.js.**
+  * *Reason:* Shares the React ecosystem with the mobile app, reusing logic/components. Builds the landing page and the admin data-management page.
 
-#### 4.1.3. Hạ tầng & Triển khai 
-* **Đóng gói (Containerization):** **Docker & Docker Compose.**
-  * Toàn bộ backend, MongoDB và Redis được đóng gói. Dựng môi trường nhanh chóng chỉ với `docker-compose up -d`.
-* **Triển khai Cloud (Hosting):**
-  * Backend & Database: Deploy lên Google Cloud Platform (GCP).
-  * Web Frontend: Deploy qua Vercel hoặc Firebase Hosting.
+#### 4.1.3. Infrastructure & Deployment 
+* **Containerization:** **Docker & Docker Compose.**
+  * The entire backend, MongoDB, and Redis are containerized. Spin up the environment quickly with just `docker-compose up -d`.
+* **Cloud deployment (Hosting):**
+  * Backend & Database: deployed to Google Cloud Platform (GCP).
+  * Web Frontend: deployed via Vercel or Firebase Hosting.
 
-### 4.2 Kiến trúc hệ thống
+### 4.2 System architecture
 ---
 
 
-## V. Hạn chế hiện tại và định hướng phát triển
+## V. Current Limitations & Roadmap
 
-### 5.1 Hạn chế
-Xem mục "Nợ kỹ thuật" trong [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+### 5.1 Limitations
+See the "Technical debt" section in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-### 5.2 Định hướng phát triển
-Mô hình kinh doanh & lộ trình chi tiết: [`docs/ROADMAP.md`](docs/ROADMAP.md).
+### 5.2 Development roadmap
+Business model & detailed roadmap: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ---
-## VI. Hướng dẫn cài đặt
+## VI. Installation Guide
 
 ```bash
-pnpm install                 # cài đặt toàn workspace (chạy từ gốc repo)
+pnpm install                 # install the whole workspace (run from the repo root)
 
-# Hạ tầng dev (mongodb, redis, rabbitmq, ai-service, backend, web)
+# Dev infrastructure (mongodb, redis, rabbitmq, ai-service, backend, web)
 docker compose -f infra/docker-compose/docker-compose.yml up -d
 
-# Chạy từng app
+# Run each app
 pnpm dev:web                 # web (Next.js)
 pnpm dev:mobile              # mobile (Expo)
 pnpm --filter backend start:dev
 # ai-service: cd apps/ai-service && uvicorn ai.main:app --reload
 
-# Build (LUÔN build packages trước — backend/web phụ thuộc @agri-scan/*)
+# Build (ALWAYS build packages first — backend/web depend on @agri-scan/*)
 pnpm build
 ```
 
-Chi tiết kiến trúc: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Architecture details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ---
 
 ## VII. Project Management & OSS
 
-Quy tắc làm việc nhóm, Git workflow và chuẩn Conventional Commits: [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
+Team workflow rules, Git workflow, and Conventional Commits standard: [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
 
 ---
 
-## VIII. THIẾT KẾ CƠ SỞ DỮ LIỆU
+## VIII. DATABASE DESIGN
 
-Dự án sử dụng **MongoDB**, áp dụng nguyên tắc thiết kế NoSQL: Hạn chế join phức tạp, ưu tiên tốc độ đọc. Hệ thống quản lý chặt chẽ hạn mức sử dụng của người dùng (Rate Limiting cho AI Scan & Prompt).
+The project uses **MongoDB**, applying NoSQL design principles: minimize complex joins, prioritize read speed. The system tightly manages user usage quotas (rate limiting for AI scan & prompts).
 
 ### 8.1. Collection: `users`
-Lưu trữ thông tin người dùng, phân quyền và quản lý gói cước dịch vụ.
+Stores user information, authorization, and service-plan management.
 
 ```typescript
 export declare class User {
@@ -336,7 +336,7 @@ export declare class User {
 ```
 
 ### 8.2. Collection: `plants`
-Khớp với dữ liệu phân loại thực vật học, lưu trữ thông số sinh trưởng chi tiết.
+Matches the botanical classification data, storing detailed growth parameters.
 
 ```typescript
 export declare class Plant {
@@ -361,7 +361,7 @@ export declare class Plant {
 ```
 
 ### 8.3. Collection: `diseases`
-Từ điển bệnh lý chi tiết, nguyên nhân và phác đồ điều trị đa phương pháp.
+A detailed disease dictionary with causes and multi-method treatment plans.
 
 ```typescript
 export declare class Disease {
@@ -375,10 +375,10 @@ export declare class Disease {
 ```
 
 ### 8.4. Collection: `scan_histories` & `chat_histories`
-Lưu vết quá trình tương tác của người dùng với hệ thống AI để theo dõi sự cải thiện của cây trồng.
+Track the user's interactions with the AI system to monitor the plant's improvement.
 
 ```typescript
-// Lịch sử nhận diện bệnh qua ảnh
+// History of disease recognition from images
 declare class AIPrediction {
     diseaseId: Disease;
     confidence: number;
@@ -392,7 +392,7 @@ export declare class ScanHistory {
     scannedAt: Date;
 }
 
-// Lịch sử tư vấn với trợ lý AI
+// History of consultations with the AI assistant
 export interface IChatMessage {
     role: 'user' | 'ai';
     content: string;

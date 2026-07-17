@@ -24,6 +24,7 @@
     "pnpm-workspace"
   ],
   "scripts": {
+    
     "test": "pnpm -r run test",
     "dev:web": "pnpm --filter web dev",
     "dev:mobile": "pnpm --filter mobile start",
