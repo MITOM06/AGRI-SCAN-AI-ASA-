@@ -17,7 +17,11 @@ import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { GetReportDto, CompareMonthDto } from './dto/get-report.dto';
+import {
+  GetReportDto,
+  CompareMonthDto,
+  SeriesQueryDto,
+} from './dto/get-report.dto';
 import { ReplyFeedbackDto } from './dto/reply-feedback.dto';
 import {
   UpdateUserPlanDto,
@@ -100,6 +104,32 @@ export class AdminController {
   @Get('admin/reports/revenue')
   getRevenueReport(@Query() query: GetReportDto) {
     return this.adminService.getRevenueReport(query);
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // TIME-SERIES CHO BIỂU ĐỒ DASHBOARD (Reports.tsx)
+  // ════════════════════════════════════════════════════════════
+
+  /**
+   * GET /admin/reports/revenue-series?days=7
+   * Doanh thu theo ngày (breakdown PREMIUM/VIP) cho biểu đồ cột.
+   */
+  @UseGuards(...AdminGuards)
+  @Roles('ADMIN')
+  @Get('admin/reports/revenue-series')
+  getRevenueSeries(@Query() query: SeriesQueryDto) {
+    return this.adminService.getRevenueSeries(query.days);
+  }
+
+  /**
+   * GET /admin/reports/usage-series?days=7
+   * Lượt quét ảnh + lượt chat AI theo ngày cho biểu đồ vùng.
+   */
+  @UseGuards(...AdminGuards)
+  @Roles('ADMIN')
+  @Get('admin/reports/usage-series')
+  getUsageSeries(@Query() query: SeriesQueryDto) {
+    return this.adminService.getUsageSeries(query.days);
   }
 
   // ════════════════════════════════════════════════════════════

@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
@@ -11,10 +13,22 @@ import {
   AlertCircle,
   Droplets,
   Trash2,
+  Loader2,
 } from "lucide-react";
-// THAY BẰNG:
-import type { IMyGardenPlant } from "@agri-scan/shared";
-import { MOCK_PLANTS } from "../gardenData";
+import { plantApi } from "@agri-scan/shared";
+import type { IMyGardenPlant, IPlantListItem } from "@agri-scan/shared";
+
+// Danh mục "Cây hỗ trợ" (tabs FRUIT/FLOWER/ORNAMENTAL) lấy từ API cây thật.
+// Cây thật chỉ có `category` (tiếng Việt), nên suy ra nhóm hiển thị từ đó.
+type CatalogGroup = "FRUIT" | "FLOWER" | "ORNAMENTAL";
+
+function classifyPlantGroup(plant: IPlantListItem): CatalogGroup {
+  const cats = (plant.category ?? []).join(" ").toLowerCase();
+  const name = plant.commonName.toLowerCase();
+  if (cats.includes("ăn quả") || cats.includes("an qua")) return "FRUIT";
+  if (cats.includes("hoa") || name.includes("hoa")) return "FLOWER";
+  return "ORNAMENTAL";
+}
 
 interface GardenOverviewProps {
   activeTab: "TRACKING" | "FRUIT" | "FLOWER" | "ORNAMENTAL";
@@ -51,6 +65,61 @@ export function GardenOverview({
   ).length;
 
   const attentionPlants = totalPlants - healthyPlants;
+
+  // ── Danh mục cây hỗ trợ (dữ liệu thật từ plantApi) ───────────────────────
+  const [catalogPlants, setCatalogPlants] = useState<IPlantListItem[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      try {
+        setCatalogLoading(true);
+        setCatalogError(null);
+        const data = await plantApi.getAllPlants();
+        setCatalogPlants(data);
+      } catch {
+        setCatalogError("Không thể tải danh mục cây. Vui lòng thử lại.");
+      } finally {
+        setCatalogLoading(false);
+      }
+    };
+    void fetchCatalog();
+  }, []);
+
+  const catalogForTab =
+    activeTab === "TRACKING"
+      ? []
+      : catalogPlants.filter((p) => classifyPlantGroup(p) === activeTab);
+
+  // Mở xem chi tiết mẫu: dựng tối thiểu IMyGardenPlant từ cây thật.
+  const handleViewCatalogPlant = (plant: IPlantListItem) => {
+    const preview: IMyGardenPlant = {
+      _id: plant.id,
+      userId: "",
+      aiLabel: plant.commonName,
+      imageUrl: plant.images?.[0],
+      plantInfo: {
+        commonName: plant.commonName,
+        scientificName: plant.scientificName,
+        family: plant.family,
+        category: plant.category,
+        images: plant.images,
+      },
+      customName: plant.commonName,
+      userGoal: "MAINTAIN",
+      currentCondition: "",
+      growthStages: [],
+      currentStageIndex: 0,
+      progressPercentage: 0,
+      lastInteractionDate: new Date().toISOString(),
+      careRoadmap: [],
+      status: "IN_PROGRESS",
+    };
+    setSelectedPlant(preview);
+    setIsViewingTracked(false);
+    setStep("RESULT");
+  };
 
   return (
     <motion.div
@@ -376,10 +445,28 @@ export function GardenOverview({
                   : "Danh sách Cây kiểng hỗ trợ"}
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(MOCK_PLANTS as any[])
-              .filter((p) => p.group === activeTab)
-              .map((plant) => (
+          {catalogLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+              <Loader2 size={32} className="animate-spin text-emerald-500 mb-3" />
+              <span className="font-medium">Đang tải danh mục cây...</span>
+            </div>
+          ) : catalogError ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <AlertCircle size={32} className="text-red-500 mb-3" />
+              <p className="text-gray-600 font-medium">{catalogError}</p>
+            </div>
+          ) : catalogForTab.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4">
+                <Leaf size={28} className="text-emerald-400" />
+              </div>
+              <p className="text-gray-600 font-medium">
+                Chưa có cây nào trong danh mục này.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {catalogForTab.map((plant) => (
                 <motion.div
                   key={plant.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -388,24 +475,20 @@ export function GardenOverview({
                 >
                   <div className="w-full h-48 rounded-2xl overflow-hidden relative">
                     <img
-                      src={plant.image}
-                      alt={plant.name}
+                      src={plant.images?.[0] ?? "/placeholder-plant.png"}
+                      alt={plant.commonName}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="px-2 pb-2">
                     <h3 className="font-bold text-lg text-gray-900 mb-1">
-                      {plant.name}
+                      {plant.commonName}
                     </h3>
                     <p className="text-sm text-gray-500 italic mb-3">
-                      {plant.species}
+                      {plant.scientificName}
                     </p>
                     <button
-                      onClick={() => {
-                        setSelectedPlant(plant);
-                        setIsViewingTracked(false);
-                        setStep("RESULT");
-                      }}
+                      onClick={() => handleViewCatalogPlant(plant)}
                       className="w-full py-2.5 bg-gray-50 text-emerald-600 font-bold rounded-xl hover:bg-emerald-50 transition-colors text-sm"
                     >
                       Xem chi tiết mẫu
@@ -413,7 +496,8 @@ export function GardenOverview({
                   </div>
                 </motion.div>
               ))}
-          </div>
+            </div>
+          )}
         </>
       )}
     </motion.div>

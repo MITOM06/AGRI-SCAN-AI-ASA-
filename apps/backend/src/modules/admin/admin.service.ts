@@ -15,6 +15,8 @@ import {
   PaymentDocument,
   ScanHistory,
   ScanHistoryDocument,
+  ChatHistory,
+  ChatHistoryDocument,
 } from '@agri-scan/database';
 import { GetReportDto, GroupBy } from './dto/get-report.dto';
 import { GetUsersQueryDto } from './dto/Admin user.dto';
@@ -35,6 +37,32 @@ export interface TimeSeriesRow {
   count: number;
 }
 
+// Time-series doanh thu theo gói (dùng cho biểu đồ Reports.tsx)
+export interface RevenueSeriesPoint {
+  date: string; // 'YYYY-MM-DD'
+  revenue: number; // tổng doanh thu trong ngày (VND)
+  PREMIUM: number; // doanh thu gói PREMIUM
+  VIP: number; // doanh thu gói VIP
+}
+
+// Time-series lượt dùng hệ thống
+export interface UsageSeriesPoint {
+  date: string; // 'YYYY-MM-DD'
+  images: number; // số lượt quét ảnh trong ngày
+  prompts: number; // số câu hỏi chat AI trong ngày
+}
+
+// Shape trung gian của aggregate
+interface RevenueDayPlanRow {
+  date: string;
+  plan: string;
+  revenue: number;
+}
+interface CountByDateRow {
+  date: string;
+  count: number;
+}
+
 @Injectable()
 export class AdminService {
   constructor(
@@ -43,6 +71,8 @@ export class AdminService {
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(ScanHistory.name)
     private scanHistoryModel: Model<ScanHistoryDocument>,
+    @InjectModel(ChatHistory.name)
+    private chatHistoryModel: Model<ChatHistoryDocument>,
   ) {}
 
   // ════════════════════════════════════════════════════════════
@@ -258,6 +288,113 @@ export class AdminService {
   }
 
   // ════════════════════════════════════════════════════════════
+  // 4b. TIME-SERIES DOANH THU (biểu đồ "Doanh thu theo gói")
+  //     Nguồn: Payment (status=SUCCESS), gộp theo ngày + breakdown gói.
+  // ════════════════════════════════════════════════════════════
+  async getRevenueSeries(days = 7): Promise<RevenueSeriesPoint[]> {
+    const { startDate, dayKeys } = this._buildDayKeys(days);
+
+    const rows = await this.paymentModel.aggregate<RevenueDayPlanRow>([
+      { $match: { status: 'SUCCESS', createdAt: { $gte: startDate } } },
+      {
+        $group: {
+          _id: {
+            date: {
+              $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+            },
+            plan: '$plan',
+          },
+          revenue: { $sum: '$amount' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: '$_id.date',
+          plan: '$_id.plan',
+          revenue: 1,
+        },
+      },
+    ]);
+
+    // Gom về map: date -> { PREMIUM, VIP }
+    const map = new Map<string, { PREMIUM: number; VIP: number }>();
+    for (const r of rows) {
+      const entry = map.get(r.date) ?? { PREMIUM: 0, VIP: 0 };
+      if (r.plan === 'PREMIUM') entry.PREMIUM += r.revenue;
+      else if (r.plan === 'VIP') entry.VIP += r.revenue;
+      map.set(r.date, entry);
+    }
+
+    return dayKeys.map((date) => {
+      const e = map.get(date) ?? { PREMIUM: 0, VIP: 0 };
+      return {
+        date,
+        revenue: e.PREMIUM + e.VIP,
+        PREMIUM: e.PREMIUM,
+        VIP: e.VIP,
+      };
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // 4c. TIME-SERIES LƯỢT DÙNG (biểu đồ "Tần suất sử dụng hệ thống")
+  //     images  = số ScanHistory / ngày.
+  //     prompts = số tin nhắn role='user' trong ChatHistory / ngày.
+  // ════════════════════════════════════════════════════════════
+  async getUsageSeries(days = 7): Promise<UsageSeriesPoint[]> {
+    const { startDate, dayKeys } = this._buildDayKeys(days);
+
+    const [imageRows, promptRows] = await Promise.all([
+      // Lượt quét ảnh — gộp theo ngày tạo bản ghi ScanHistory
+      this.scanHistoryModel.aggregate<CountByDateRow>([
+        { $match: { createdAt: { $gte: startDate } } },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, date: '$_id', count: 1 } },
+      ]),
+      // Lượt chat — bung mảng messages, chỉ đếm tin nhắn của người dùng
+      this.chatHistoryModel.aggregate<CountByDateRow>([
+        { $match: { updatedAt: { $gte: startDate } } },
+        { $unwind: '$messages' },
+        {
+          $match: {
+            'messages.role': 'user',
+            'messages.timestamp': { $gte: startDate },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: '$messages.timestamp',
+              },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        { $project: { _id: 0, date: '$_id', count: 1 } },
+      ]),
+    ]);
+
+    const imageMap = new Map(imageRows.map((r) => [r.date, r.count]));
+    const promptMap = new Map(promptRows.map((r) => [r.date, r.count]));
+
+    return dayKeys.map((date) => ({
+      date,
+      images: imageMap.get(date) ?? 0,
+      prompts: promptMap.get(date) ?? 0,
+    }));
+  }
+
+  // ════════════════════════════════════════════════════════════
   // 5. SO SÁNH 2 THÁNG
   // ════════════════════════════════════════════════════════════
   async compareMonths(month1: string, month2: string) {
@@ -451,6 +588,30 @@ export class AdminService {
   // ════════════════════════════════════════════════════════════
   // PRIVATE HELPERS
   // ════════════════════════════════════════════════════════════
+
+  /**
+   * Sinh danh sách khoá ngày 'YYYY-MM-DD' (UTC) cho N ngày gần nhất,
+   * kèm mốc bắt đầu (00:00 UTC của ngày đầu tiên) để dùng cho $match.
+   */
+  private _buildDayKeys(days: number): {
+    startDate: Date;
+    dayKeys: string[];
+  } {
+    const safeDays = Math.max(1, Math.floor(days));
+    const cursor = new Date();
+    cursor.setUTCHours(0, 0, 0, 0);
+    cursor.setUTCDate(cursor.getUTCDate() - (safeDays - 1));
+
+    const startDate = new Date(cursor);
+    const dayKeys: string[] = [];
+    for (let i = 0; i < safeDays; i++) {
+      dayKeys.push(cursor.toISOString().slice(0, 10));
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+
+    return { startDate, dayKeys };
+  }
+
   private _buildTimeSeriesPipeline(
     from: string,
     to: string,

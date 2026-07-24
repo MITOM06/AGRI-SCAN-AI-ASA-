@@ -12,6 +12,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { MyGardenModule } from './modules/my-garden/my-garden.module';
+import { UploadModule } from './modules/upload/upload.module';
 @Module({
   imports: [
     // 1. Load .env toàn cục
@@ -53,6 +54,7 @@ import { MyGardenModule } from './modules/my-garden/my-garden.module';
     ProductsModule,
     OrdersModule,
     MyGardenModule,
+    UploadModule,
   ],
   controllers: [],
   providers: [],

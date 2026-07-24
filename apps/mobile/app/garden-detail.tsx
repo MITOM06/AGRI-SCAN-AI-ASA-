@@ -29,7 +29,7 @@ import {
   Sparkles,
 } from "lucide-react-native";
 
-import { myGardenApi } from "@agri-scan/shared";
+import { myGardenApi, uploadApi } from "@agri-scan/shared";
 
 type TabType = "ROADMAP" | "CHECKIN";
 
@@ -114,9 +114,13 @@ export default function GardenDetailScreen() {
       if (!result.canceled && result.assets && result.assets[0].uri) {
         setIsCheckingIn(true);
 
-        // Cần tích hợp API upload ảnh lên Cloudinary ở đây nếu có
-        const uploadedImageUrl =
-          "https://res.cloudinary.com/demo/image/upload/v1/sample.jpg";
+        // Upload ảnh check-in lên GCS qua API chung, lấy URL thật
+        const asset = result.assets[0];
+        const { url: uploadedImageUrl } = await uploadApi.uploadImage({
+          uri: asset.uri,
+          name: asset.fileName ?? "checkin.jpg",
+          type: asset.mimeType ?? "image/jpeg",
+        });
 
         const todayStr = new Date().toDateString();
         const todayTask = plant?.careRoadmap?.find(

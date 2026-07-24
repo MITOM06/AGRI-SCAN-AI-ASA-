@@ -8,6 +8,8 @@ import type {
   IGetReportQuery,
   ITimeSeriesPoint,
   IRevenueReport,
+  IRevenueSeriesPoint,
+  IUsageSeriesPoint,
   ICompareMonthsResponse,
   IFeedbacksResponse,
   ISubmitFeedbackPayload,
@@ -96,6 +98,36 @@ export const adminApi = {
     const res = await axiosClient.get(API_ENDPOINTS.ADMIN.REPORTS.COMPARE, {
       params: { month1, month2 },
     });
+    return res.data;
+  },
+
+  // ════════════════════════════════════════════════════════════
+  // TIME-SERIES CHO BIỂU ĐỒ DASHBOARD (Reports.tsx)
+  // ════════════════════════════════════════════════════════════
+
+  /**
+   * Doanh thu theo ngày (breakdown PREMIUM/VIP) cho biểu đồ cột.
+   * GET /admin/reports/revenue-series?days=7
+   * @param days Số ngày gần nhất (mặc định 7). Backend giới hạn 1..365.
+   */
+  getRevenueSeries: async (days = 7): Promise<IRevenueSeriesPoint[]> => {
+    const res = await axiosClient.get(
+      API_ENDPOINTS.ADMIN.REPORTS.REVENUE_SERIES,
+      { params: { days } },
+    );
+    return res.data;
+  },
+
+  /**
+   * Lượt quét ảnh + lượt chat AI theo ngày cho biểu đồ vùng.
+   * GET /admin/reports/usage-series?days=7
+   * @param days Số ngày gần nhất (mặc định 7). Backend giới hạn 1..365.
+   */
+  getUsageSeries: async (days = 7): Promise<IUsageSeriesPoint[]> => {
+    const res = await axiosClient.get(
+      API_ENDPOINTS.ADMIN.REPORTS.USAGE_SERIES,
+      { params: { days } },
+    );
     return res.data;
   },
 

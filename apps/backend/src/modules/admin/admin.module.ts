@@ -9,6 +9,8 @@ import {
   PaymentSchema,
   ScanHistory,
   ScanHistorySchema,
+  ChatHistory,
+  ChatHistorySchema,
 } from '@agri-scan/database';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
@@ -20,6 +22,7 @@ import { AdminController } from './admin.controller';
       { name: Feedback.name, schema: FeedbackSchema },
       { name: Payment.name, schema: PaymentSchema },
       { name: ScanHistory.name, schema: ScanHistorySchema },
+      { name: ChatHistory.name, schema: ChatHistorySchema },
     ]),
   ],
   controllers: [AdminController],

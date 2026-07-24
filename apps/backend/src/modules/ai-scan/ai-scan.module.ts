@@ -14,6 +14,7 @@ import {
   ChatHistorySchema,
 } from '@agri-scan/database';
 import { PlantsModule } from '../plants/plants.module';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { PlantsModule } from '../plants/plants.module';
 
     ConfigModule,
     PlantsModule,
+    UploadModule,
   ],
 
   // ═══════════════════════════════════════════════════════════════

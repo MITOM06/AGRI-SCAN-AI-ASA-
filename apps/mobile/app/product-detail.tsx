@@ -20,6 +20,8 @@ import {
   Store,
   ShieldCheck,
   ShoppingCart,
+  PackageX,
+  RefreshCw,
 } from "lucide-react-native";
 
 import { productApi } from "@agri-scan/shared";
@@ -31,6 +33,7 @@ export default function ProductDetailScreen() {
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (id) fetchProductDetail();
@@ -38,24 +41,14 @@ export default function ProductDetailScreen() {
 
   const fetchProductDetail = async () => {
     try {
+      setLoading(true);
+      setError(false);
       const res = await productApi.getProductById(id as string);
       setProduct(res);
-    } catch (error) {
-      console.error("Lỗi tải chi tiết sản phẩm:", error);
-      // Dữ liệu giả lập phòng trường hợp API lỗi
-      setProduct({
-        _id: "mock-1",
-        name: "Phân bón hữu cơ sinh học cao cấp",
-        price: 150000,
-        sold: 120,
-        rating: 4.8,
-        image: "https://placehold.co/600x600.png?text=Agri+Product",
-        sellerId: { shopName: "AgriShop Official" },
-        description:
-          "Sản phẩm cung cấp dinh dưỡng thiết yếu cho cây trồng phát triển mạnh mẽ, thân thiện với môi trường.",
-        usageInstruction:
-          "Pha 1 nắp với 2 lít nước, tưới đều quanh gốc 1 tuần 1 lần.",
-      });
+    } catch (err) {
+      console.error("Lỗi tải chi tiết sản phẩm:", err);
+      setProduct(null);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -124,6 +117,41 @@ export default function ProductDetailScreen() {
         <Text style={{ marginTop: 12, color: "#64748b" }}>
           Đang tải sản phẩm...
         </Text>
+      </View>
+    );
+  }
+
+  // Không tải được / không tìm thấy sản phẩm → hiển thị trạng thái lỗi + nút thử lại
+  if (error || !product) {
+    return (
+      <View style={styles.container}>
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor="transparent"
+          translucent
+        />
+        <View
+          style={[styles.header, { paddingTop: Math.max(insets.top, 10) + 10 }]}
+        >
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <ArrowLeft size={24} color="#111827" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.centerBox, { flex: 1, paddingHorizontal: 32 }]}>
+          <PackageX size={64} color="#94a3b8" />
+          <Text style={styles.errorTitle}>Không tải được sản phẩm</Text>
+          <Text style={styles.errorDesc}>
+            Sản phẩm không tồn tại hoặc đã có lỗi kết nối. Vui lòng thử lại.
+          </Text>
+          <TouchableOpacity
+            style={styles.retryBtn}
+            onPress={fetchProductDetail}
+          >
+            <RefreshCw size={18} color="#fff" />
+            <Text style={styles.retryText}>Thử lại</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -240,6 +268,30 @@ export default function ProductDetailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8fafc" },
   centerBox: { justifyContent: "center", alignItems: "center" },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#0f172a",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorDesc: {
+    fontSize: 14,
+    color: "#64748b",
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  retryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#16a34a",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  retryText: { color: "#fff", fontSize: 15, fontWeight: "bold" },
   scrollContent: { paddingBottom: 100 },
   header: {
     position: "absolute",

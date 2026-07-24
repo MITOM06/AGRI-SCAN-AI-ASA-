@@ -29,34 +29,47 @@ import {
   Area,
 } from "recharts";
 import { formatCurrency, formatDate, pageVariants } from "./utils";
-import { MOCK_REVENUE_DATA, MOCK_USAGE_DATA } from "./mockData";
 import { adminApi } from "@agri-scan/shared";
-import type { IDashboard } from "@agri-scan/shared";
+import type {
+  IDashboard,
+  IRevenueSeriesPoint,
+  IUsageSeriesPoint,
+} from "@agri-scan/shared";
 
 export default function ReportsTab() {
   const [dashboardData, setDashboardData] = useState<IDashboard | null>(null);
+  const [revenueSeries, setRevenueSeries] = useState<IRevenueSeriesPoint[]>([]);
+  const [usageSeries, setUsageSeries] = useState<IUsageSeriesPoint[]>([]);
+  const [days, setDays] = useState<number>(7);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadDashboard = async () => {
+    const loadReports = async () => {
       try {
         setLoading(true);
         setError("");
-        const data = await adminApi.getDashboard();
-        setDashboardData(data);
-      } catch (err: any) {
-        console.error("Load reports dashboard failed:", err);
-        setError(
-          err?.response?.data?.message || "Không tải được dữ liệu báo cáo."
-        );
+        const [dashboard, revenue, usage] = await Promise.all([
+          adminApi.getDashboard(),
+          adminApi.getRevenueSeries(days),
+          adminApi.getUsageSeries(days),
+        ]);
+        setDashboardData(dashboard);
+        setRevenueSeries(revenue);
+        setUsageSeries(usage);
+      } catch (err) {
+        console.error("Load reports failed:", err);
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message || "Không tải được dữ liệu báo cáo.";
+        setError(message);
       } finally {
         setLoading(false);
       }
     };
 
-    void loadDashboard();
-  }, []);
+    void loadReports();
+  }, [days]);
 
   const pieData = useMemo(() => {
     if (!dashboardData) return [];
@@ -95,12 +108,12 @@ export default function ReportsTab() {
       : 0;
 
   const avgDailyUsage =
-    MOCK_USAGE_DATA.length > 0
+    usageSeries.length > 0
       ? Math.round(
-          MOCK_USAGE_DATA.reduce(
+          usageSeries.reduce(
             (sum, item) => sum + item.images + item.prompts,
             0
-          ) / MOCK_USAGE_DATA.length
+          ) / usageSeries.length
         )
       : 0;
 
@@ -137,10 +150,14 @@ export default function ReportsTab() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-slate-800">Báo cáo & Thống kê</h2>
         <div className="flex gap-3">
-          <select className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-sm font-medium text-slate-700">
-            <option>7 ngày qua</option>
-            <option>30 ngày qua</option>
-            <option>Năm nay</option>
+          <select
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+            className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-sm font-medium text-slate-700"
+          >
+            <option value={7}>7 ngày qua</option>
+            <option value={30}>30 ngày qua</option>
+            <option value={365}>Năm nay</option>
           </select>
           <button className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-500/20 text-sm font-bold">
             <Download size={16} />
@@ -215,7 +232,7 @@ export default function ReportsTab() {
             </div>
           </div>
           <p className="text-sm text-slate-500 font-medium mt-4">
-            Dựa trên dữ liệu mock usage hiện tại
+            Trung bình {days} ngày gần nhất
           </p>
         </motion.div>
       </div>
@@ -232,7 +249,7 @@ export default function ReportsTab() {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={MOCK_REVENUE_DATA}
+                data={revenueSeries}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
                 <CartesianGrid
@@ -359,7 +376,7 @@ export default function ReportsTab() {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
-                data={MOCK_USAGE_DATA}
+                data={usageSeries}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
                 <defs>
