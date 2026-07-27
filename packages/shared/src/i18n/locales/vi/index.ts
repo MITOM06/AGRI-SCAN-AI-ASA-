@@ -8,6 +8,7 @@ import { nav, footer } from "./nav";
 import { auth } from "./auth";
 import { landing } from "./landing";
 import { scan } from "./scan";
+import { encyclopedia } from "./encyclopedia";
 
 export const vi = {
   common,
@@ -16,4 +17,5 @@ export const vi = {
   auth,
   landing,
   scan,
+  encyclopedia,
 } as const;

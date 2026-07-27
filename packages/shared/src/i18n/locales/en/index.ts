@@ -8,6 +8,7 @@ import { nav, footer } from "./nav";
 import { auth } from "./auth";
 import { landing } from "./landing";
 import { scan } from "./scan";
+import { encyclopedia } from "./encyclopedia";
 
 export const en: Dictionary = {
   common,
@@ -16,4 +17,5 @@ export const en: Dictionary = {
   auth,
   landing,
   scan,
+  encyclopedia,
 };
