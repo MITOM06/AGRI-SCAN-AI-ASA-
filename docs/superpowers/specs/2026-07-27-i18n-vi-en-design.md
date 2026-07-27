@@ -152,7 +152,49 @@ Dự án hiện không có test cho web/mobile, nên xác minh bằng:
 `eslint.ignoreDuringBuilds: true` → `next build` **sẽ không** bắt lỗi kiểu. Phải chạy
 `npx tsc --noEmit` riêng cho web thì ràng buộc ở 4.1 mới có tác dụng.
 
-## 7. Rủi ro
+## 6b. Tiến độ thực tế (cập nhật 2026-07-27)
+
+**Hạ tầng: xong và đã xác minh.**
+
+- `packages/shared/src/i18n/**` — types, `translate()`, từ điển vi/en theo namespace.
+- Ràng buộc key đã **kiểm chứng**: xoá thử `common.copied` khỏi `en` → `tsc` báo
+  `TS2741: Property 'copied' is missing`. Đã khôi phục.
+- `apps/web`: `I18nProvider` (localStorage) + `LanguageSwitcher` (VI|EN) ở Navbar,
+  hiển thị cả desktop lẫn mobile → **nút chuyển ngôn ngữ có mặt trên mọi trang**.
+- `pnpm build:packages` và `pnpm --filter web build` đều xanh.
+
+**Đã chuyển sang `t()`:** layout (Navbar, Header, Footer), auth (Login, Register,
+ForgotPassword, RegisterOtp, Callback), landing (Hero, Features, FloatingCards),
+scan (Scanner), encyclopedia (TreeDictionary), weather (WeatherPage),
+shop (ShopPage, ProductDetailPage), constants/shop.
+
+**Còn lại (~33 file web + 43 file mobile):** admin (4), billing (2), community,
+feedback, my-garden (6), profile, shop cart/checkout/orders (3), static (3),
+app pages (8), hooks (3), CartContext — và **toàn bộ `apps/mobile`** (chưa có
+`I18nContext` lẫn `LanguageSwitcher`).
+
+Cách làm cho phần còn lại đã thành khuôn mẫu, lặp lại đúng 3 bước:
+1. `grep` chuỗi tiếng Việt bằng `scripts/find-vietnamese-ui-text.sh`;
+2. thêm namespace vào `locales/vi/<ns>.ts` **và** `locales/en/<ns>.ts`, khai báo ở
+   cả hai `index.ts`;
+3. thay chuỗi trong component bằng `t("<ns>.<key>")`.
+
+## 7. Vấn đề phát hiện thêm (có sẵn, không do i18n)
+
+**`tsc` trên toàn bộ `apps/web` hết bộ nhớ**, kể cả với heap 8 GB.
+Đã khoanh vùng: `src/components/auth/RegisterForm.tsx` **một mình** cũng OOM —
+nguyên nhân là `zodResolver` + zod 3.24 + react-hook-form, không liên quan i18n
+(bỏ cast `Zod.ZodType` không giải quyết được, đã khôi phục nguyên trạng).
+
+Điều này giải thích vì sao `next.config.ts` đặt `typescript.ignoreBuildErrors: true`.
+Hệ quả: **ràng buộc "thiếu key → lỗi biên dịch" chỉ được kiểm ở tầng
+`packages/shared`** (nơi `tsc` chạy tốt), chưa kiểm được ở tầng app.
+Đây là một dự án con riêng cần xử lý — đề xuất nâng zod/RHF hoặc tách schema.
+
+`apps/web/tsconfig.check.json` + script `pnpm --filter web typecheck` đã được thêm
+sẵn để dùng ngay khi vấn đề trên được khắc phục.
+
+## 8. Rủi ro
 
 | Rủi ro | Xử lý |
 |--------|-------|
