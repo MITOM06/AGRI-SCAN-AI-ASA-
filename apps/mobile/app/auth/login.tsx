@@ -18,8 +18,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
 
 import { authApi } from "@agri-scan/shared";
+import { useT } from "../../context/I18nContext";
 
 export default function LoginScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
@@ -71,7 +73,7 @@ export default function LoginScreen() {
           }
         } catch (error) {
           console.error("Lỗi xử lý đăng nhập Mạng xã hội:", error);
-          Alert.alert("Lỗi", "Quá trình đồng bộ tài khoản thất bại.");
+          Alert.alert(t("common.error"), t("auth.mSyncFailed"));
           setIsOAuthLoading(false);
         }
       }
@@ -86,21 +88,16 @@ export default function LoginScreen() {
   const handleEmailLogin = async () => {
     if (!email || !password) {
       Platform.OS === "web"
-        ? window.alert("Vui lòng nhập đầy đủ email và mật khẩu.")
-        : Alert.alert("Lỗi", "Vui lòng nhập đầy đủ email và mật khẩu.");
+        ? window.alert(t("auth.mFillEmailPassword"))
+        : Alert.alert(t("common.error"), t("auth.mFillEmailPassword"));
       return;
     }
 
     // Kiểm tra xem đã đồng ý điều khoản chưa
     if (!isAgreed) {
       Platform.OS === "web"
-        ? window.alert(
-            "Vui lòng đọc và đồng ý với Điều khoản sử dụng của Agri-Scan.",
-          )
-        : Alert.alert(
-            "Điều khoản sử dụng",
-            "Vui lòng đọc và đồng ý với Điều khoản sử dụng của Agri-Scan.",
-          );
+        ? window.alert(t("auth.mMustAgreeTerms"))
+        : Alert.alert(t("auth.termsOfService"), t("auth.mMustAgreeTerms"));
       return;
     }
 
@@ -123,10 +120,13 @@ export default function LoginScreen() {
     } catch (error: any) {
       const msg =
         error.response?.data?.message ||
-        "Đăng nhập thất bại.Sai email hoặc mật khẩu.";
+        t("auth.mLoginFailedWrongCreds");
       Platform.OS === "web"
         ? window.alert(Array.isArray(msg) ? msg.join("\n") : msg)
-        : Alert.alert("Lỗi", Array.isArray(msg) ? msg.join("\n") : msg);
+        : Alert.alert(
+            t("common.error"),
+            Array.isArray(msg) ? msg.join("\n") : msg,
+          );
     } finally {
       setIsSubmitting(false);
     }
@@ -143,7 +143,7 @@ export default function LoginScreen() {
       >
         <ActivityIndicator size="large" color="#16a34a" />
         <Text style={{ marginTop: 16, color: "#4b5563", fontWeight: "bold" }}>
-          Đang đồng bộ tài khoản...
+          {t("auth.mSyncingAccount")}
         </Text>
       </View>
     );
@@ -172,21 +172,21 @@ export default function LoginScreen() {
           <View style={styles.logoIconBox}>
             <Leaf size={28} color="#fff" />
           </View>
-          <Text style={styles.title}>Chào mừng trở lại!</Text>
+          <Text style={styles.title}>{t("auth.mLoginTitle")}</Text>
           <Text style={styles.subtitle}>
-            Đăng nhập để tiếp tục chăm sóc khu vườn của bạn.
+            {t("auth.mLoginSubtitle")}
           </Text>
         </View>
 
         <View style={styles.form}>
           {/* Email Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email của bạn</Text>
+            <Text style={styles.label}>{t("auth.mEmailLabel")}</Text>
             <View style={styles.inputWrapper}>
               <Mail size={20} color="#64748b" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Ví dụ: agriscan@gmail.com"
+                placeholder={t("auth.mEmailPlaceholder")}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
@@ -197,12 +197,12 @@ export default function LoginScreen() {
 
           {/* Password Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Mật khẩu</Text>
+            <Text style={styles.label}>{t("auth.password")}</Text>
             <View style={styles.inputWrapper}>
               <Lock size={20} color="#64748b" style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Nhập mật khẩu của bạn"
+                placeholder={t("auth.mPasswordPlaceholder")}
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={setPassword}
@@ -221,7 +221,9 @@ export default function LoginScreen() {
             style={styles.forgotPassBtn}
             onPress={() => router.push("/auth/forgot-password" as any)}
           >
-            <Text style={styles.forgotPassText}>Quên mật khẩu?</Text>
+            <Text style={styles.forgotPassText}>
+              {t("auth.forgotPasswordLink")}
+            </Text>
           </TouchableOpacity>
 
           {/* 🔥 Ô xác nhận đồng ý điều khoản (Đã sửa lỗi chữ nhấp nhô) */}
@@ -238,15 +240,15 @@ export default function LoginScreen() {
               />
             </TouchableOpacity>
             <Text style={styles.agreementText}>
-              Tôi đồng ý với{" "}
+              {t("auth.mAgreePrefix")}{" "}
               <Link href={"/auth/terms" as any} asChild>
-                <Text style={styles.linkText}>Điều khoản sử dụng</Text>
+                <Text style={styles.linkText}>{t("footer.terms")}</Text>
               </Link>{" "}
-              và{" "}
+              {t("auth.mAgreeMiddle")}{" "}
               <Link href={"/auth/privacy" as any} asChild>
-                <Text style={styles.linkText}>Chính sách bảo mật</Text>
+                <Text style={styles.linkText}>{t("auth.privacyPolicy")}</Text>
               </Link>{" "}
-              của Agri-Scan.
+              {t("auth.mAgreeSuffix")}
             </Text>
           </View>
 
@@ -259,13 +261,13 @@ export default function LoginScreen() {
             {isSubmitting ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitBtnText}>Đăng nhập ngay</Text>
+              <Text style={styles.submitBtnText}>{t("auth.mLoginButton")}</Text>
             )}
           </TouchableOpacity>
 
           <View style={styles.dividerContainer}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>Hoặc đăng nhập bằng</Text>
+            <Text style={styles.dividerText}>{t("auth.mOrLoginWith")}</Text>
             <View style={styles.dividerLine} />
           </View>
 
@@ -303,10 +305,12 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.registerContainer}>
-            <Text style={styles.registerText}>Bạn chưa có tài khoản? </Text>
+            <Text style={styles.registerText}>{t("auth.mNoAccount")}</Text>
             <Link href="/auth/register" asChild>
               <TouchableOpacity>
-                <Text style={styles.registerLink}>Đăng ký ngay</Text>
+                <Text style={styles.registerLink}>
+                  {t("auth.registerNow")}
+                </Text>
               </TouchableOpacity>
             </Link>
           </View>

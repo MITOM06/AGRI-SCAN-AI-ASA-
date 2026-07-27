@@ -17,8 +17,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { type RegisterFormData, authApi } from "@agri-scan/shared";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { useT } from "../../context/I18nContext";
 
 export default function RegisterScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -49,26 +51,26 @@ export default function RegisterScreen() {
       !data.password ||
       !data.confirmPassword
     ) {
-      setApiError("Vui lòng nhập đầy đủ thông tin!");
+      setApiError(t("auth.mFillAllFields"));
       return;
     }
 
     // 2. Kiểm tra định dạng Email cơ bản
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
-      setApiError("Email không hợp lệ!");
+      setApiError(t("auth.mInvalidEmail"));
       return;
     }
 
     // 3. Kiểm tra mật khẩu khớp nhau
     if (data.password !== data.confirmPassword) {
-      setApiError("Mật khẩu xác nhận không khớp!");
+      setApiError(t("auth.mPasswordMismatch"));
       return;
     }
 
     // 4. Kiểm tra điều khoản
     if (!agreeTerms) {
-      setApiError("Vui lòng đồng ý với Điều khoản và Chính sách bảo mật!");
+      setApiError(t("auth.mMustAgreeTermsPrivacy"));
       return;
     }
 
@@ -90,7 +92,7 @@ export default function RegisterScreen() {
       });
     } catch (error: any) {
       setApiError(
-        error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!",
+        error.response?.data?.message || t("auth.mRegisterFailed"),
       );
     } finally {
       setIsSubmitting(false);
@@ -123,9 +125,9 @@ export default function RegisterScreen() {
             <View style={styles.iconContainer}>
               <Leaf size={32} color="#16a34a" />
             </View>
-            <Text style={styles.title}>Tạo tài khoản mới</Text>
+            <Text style={styles.title}>{t("auth.registerTitle")}</Text>
             <Text style={styles.subtitle}>
-              Bắt đầu hành trình chăm sóc cây trồng thông minh
+              {t("auth.mRegisterSubtitle")}
             </Text>
           </View>
 
@@ -143,8 +145,8 @@ export default function RegisterScreen() {
                 name="fullName"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
-                    label="Họ và tên"
-                    placeholder="Nhập họ và tên của bạn"
+                    label={t("auth.fullName")}
+                    placeholder={t("auth.mFullNamePlaceholder")}
                     onBlur={onBlur}
                     onChangeText={(text) => {
                       onChange(text);
@@ -164,7 +166,7 @@ export default function RegisterScreen() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <Input
                     label="Email"
-                    placeholder="Nhập địa chỉ email"
+                    placeholder={t("auth.mEmailInputPlaceholder")}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     onBlur={onBlur}
@@ -180,14 +182,14 @@ export default function RegisterScreen() {
 
             {/* MẬT KHẨU */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Mật khẩu</Text>
+              <Text style={styles.inputLabel}>{t("auth.password")}</Text>
               <View style={styles.passwordWrapper}>
                 <Controller
                   control={control}
                   name="password"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
-                      placeholder="Tạo mật khẩu (ít nhất 6 ký tự)"
+                      placeholder={t("auth.mCreatePasswordPlaceholder")}
                       secureTextEntry={!showPassword}
                       onBlur={onBlur}
                       onChangeText={(text) => {
@@ -213,14 +215,16 @@ export default function RegisterScreen() {
 
             {/* XÁC NHẬN MẬT KHẨU */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Xác nhận mật khẩu</Text>
+              <Text style={styles.inputLabel}>
+                {t("auth.confirmPassword")}
+              </Text>
               <View style={styles.passwordWrapper}>
                 <Controller
                   control={control}
                   name="confirmPassword"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
-                      placeholder="Nhập lại mật khẩu"
+                      placeholder={t("auth.mRepeatPasswordPlaceholder")}
                       secureTextEntry={!showConfirmPassword}
                       onBlur={onBlur}
                       onChangeText={(text) => {
@@ -259,23 +263,25 @@ export default function RegisterScreen() {
                 {agreeTerms && <Check size={14} color="#fff" strokeWidth={3} />}
               </View>
               <Text style={styles.checkboxText}>
-                Tôi đồng ý với <Text style={styles.linkText}>Điều khoản</Text>{" "}
-                và <Text style={styles.linkText}>CSBM</Text>
+                {t("auth.mAgreeShortPrefix")}{" "}
+                <Text style={styles.linkText}>{t("auth.mTermsShort")}</Text>{" "}
+                {t("auth.mAgreeMiddle")}{" "}
+                <Text style={styles.linkText}>{t("auth.mPrivacyShort")}</Text>
               </Text>
             </TouchableOpacity>
 
             <Button
-              title="Đăng ký"
+              title={t("nav.register")}
               onPress={onManualSubmit} // 🔥 GỌI HÀM CHUẨN XÁC
               isLoading={isSubmitting}
               style={{ marginTop: 8 }}
             />
 
             <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>Đã có tài khoản? </Text>
+              <Text style={styles.registerText}>{t("auth.mHaveAccount")}</Text>
               <Link href="/auth/login" asChild>
                 <TouchableOpacity>
-                  <Text style={styles.registerLink}>Đăng nhập</Text>
+                  <Text style={styles.registerLink}>{t("nav.login")}</Text>
                 </TouchableOpacity>
               </Link>
             </View>

@@ -140,4 +140,96 @@ export const auth = {
     otpDigits: "Mã OTP chỉ gồm 6 chữ số",
     tokenInvalid: "Token không hợp lệ",
   },
+
+  // ── Mobile ────────────────────────────────────────────────────────────
+  // Đăng nhập
+  mLoginTitle: "Chào mừng trở lại!",
+  mLoginSubtitle: "Đăng nhập để tiếp tục chăm sóc khu vườn của bạn.",
+  mEmailLabel: "Email của bạn",
+  mEmailPlaceholder: "Ví dụ: agriscan@gmail.com",
+  mPasswordPlaceholder: "Nhập mật khẩu của bạn",
+  mLoginButton: "Đăng nhập ngay",
+  mOrLoginWith: "Hoặc đăng nhập bằng",
+  mNoAccount: "Bạn chưa có tài khoản? ",
+  mSyncingAccount: "Đang đồng bộ tài khoản...",
+  mSyncFailed: "Quá trình đồng bộ tài khoản thất bại.",
+  mFillEmailPassword: "Vui lòng nhập đầy đủ email và mật khẩu.",
+  mMustAgreeTerms:
+    "Vui lòng đọc và đồng ý với Điều khoản sử dụng của Agri-Scan.",
+  mLoginFailedWrongCreds: "Đăng nhập thất bại. Sai email hoặc mật khẩu.",
+  mAgreePrefix: "Tôi đồng ý với",
+  mAgreeMiddle: "và",
+  mAgreeSuffix: "của Agri-Scan.",
+
+  // Đăng ký
+  mRegisterSubtitle: "Bắt đầu hành trình chăm sóc cây trồng thông minh",
+  mFullNamePlaceholder: "Nhập họ và tên của bạn",
+  mEmailInputPlaceholder: "Nhập địa chỉ email",
+  mCreatePasswordPlaceholder: "Tạo mật khẩu (ít nhất 6 ký tự)",
+  mRepeatPasswordPlaceholder: "Nhập lại mật khẩu",
+  mAgreeShortPrefix: "Tôi đồng ý với",
+  mTermsShort: "Điều khoản",
+  mPrivacyShort: "CSBM",
+  mHaveAccount: "Đã có tài khoản? ",
+  mFillAllFields: "Vui lòng nhập đầy đủ thông tin!",
+  mInvalidEmail: "Email không hợp lệ!",
+  mPasswordMismatch: "Mật khẩu xác nhận không khớp!",
+  mMustAgreeTermsPrivacy:
+    "Vui lòng đồng ý với Điều khoản và Chính sách bảo mật!",
+  mRegisterFailed: "Đăng ký thất bại. Vui lòng thử lại!",
+
+  // OTP
+  mOtpTitle: "Xác thực OTP",
+  mOtpSubtitle: "Vui lòng nhập mã 6 số được gửi đến:",
+  mOtpResendIn: " Gửi lại sau {seconds}s",
+  mOtpExpired: " Mã đã hết hạn",
+  mOtpConfirm: "Xác nhận mã",
+  mOtpResendNew: "Gửi lại mã mới",
+  mOtpResentNotice: "Mã OTP mới đã được gửi vào email của bạn.",
+  mOtpResendFailed: "Không thể gửi lại OTP. Thử lại sau.",
+  mNoticeTitle: "Thông báo",
+
+  // Quên mật khẩu
+  mForgotTitle: "Quên mật khẩu?",
+  mForgotSubtitle:
+    "Đừng lo lắng! Nhập email đã đăng ký, chúng tôi sẽ gửi mã OTP để đặt lại mật khẩu.",
+  mSendOtp: "Gửi mã OTP",
+  mBackToLogin: "Quay lại đăng nhập",
+  mSendEmailFailed: "Không thể gửi email. Vui lòng thử lại.",
+
+  // Đặt lại mật khẩu
+  mResetTitle: "Mật khẩu mới",
+  mResetSubtitle:
+    "Vui lòng nhập mật khẩu mới để hoàn tất việc khôi phục tài khoản",
+  mNewPasswordLabel: "Mật khẩu mới",
+  mConfirmPasswordLabel: "Xác nhận mật khẩu",
+  mUpdatePassword: "Cập nhật mật khẩu",
+  mRuleMinLength8: "Ít nhất 8 ký tự",
+  mRuleUpper: "Ít nhất 1 chữ hoa",
+  mRuleLower: "Ít nhất 1 chữ thường",
+  mRuleNumber: "Ít nhất 1 số",
+  mRuleSpecial: "Ít nhất 1 ký tự đặc biệt",
+  mDataErrorTitle: "Lỗi dữ liệu",
+  mIncompleteSession:
+    "Thông tin phiên bản cập nhật không đầy đủ, vui lòng thử lại OTP.",
+  mResetSuccessTitle: "Thành công",
+  mResetSuccessWeb: "Thành công! Mật khẩu của bạn đã được cập nhật.",
+  mResetSuccessMessage: "Mật khẩu của bạn đã được cập nhật!",
+  mResetFailed: "Đổi mật khẩu thất bại. Phiên có thể đã hết hạn.",
+
+  // Tạo mật khẩu (sau đăng nhập mạng xã hội)
+  mSetPasswordTitle: "Bảo mật tài khoản",
+  mSetPasswordSubtitle:
+    "Bạn vừa đăng nhập bằng Mạng xã hội. Vui lòng tạo mật khẩu để có thể đăng nhập bằng Email cho các lần sau.",
+  mSetPasswordPlaceholder: "Nhập mật khẩu (Tối thiểu 6 ký tự)",
+  mRepeatNewPasswordPlaceholder: "Nhập lại mật khẩu mới",
+  mSetPasswordSubmit: "Hoàn tất & Đăng nhập",
+  mFillAllInfo: "Vui lòng nhập đầy đủ thông tin.",
+  mPasswordMin6: "Mật khẩu phải có ít nhất 6 ký tự.",
+  mPasswordRepeatMismatch: "Mật khẩu nhập lại không khớp.",
+  mSetPasswordSuccessTitle: "Thành công",
+  mSetPasswordSuccessMessage:
+    "Tạo mật khẩu thành công! Chào mừng bạn đến với Agri-Scan.",
+  mExploreNow: "Khám phá ngay",
+  mSetPasswordFailed: "Không thể tạo mật khẩu lúc này.",
 } as const;

@@ -133,4 +133,95 @@ export const auth = {
     otpDigits: "The OTP must contain only 6 digits",
     tokenInvalid: "Invalid token",
   },
+
+  // ── Mobile ────────────────────────────────────────────────────────────
+  // Sign in
+  mLoginTitle: "Welcome back!",
+  mLoginSubtitle: "Sign in to keep caring for your garden.",
+  mEmailLabel: "Your email",
+  mEmailPlaceholder: "e.g. agriscan@gmail.com",
+  mPasswordPlaceholder: "Enter your password",
+  mLoginButton: "Sign in",
+  mOrLoginWith: "Or sign in with",
+  mNoAccount: "Don't have an account? ",
+  mSyncingAccount: "Syncing your account...",
+  mSyncFailed: "Account sync failed.",
+  mFillEmailPassword: "Please enter both your email and password.",
+  mMustAgreeTerms:
+    "Please read and accept Agri-Scan's Terms of Use.",
+  mLoginFailedWrongCreds: "Sign-in failed. Wrong email or password.",
+  mAgreePrefix: "I agree to the",
+  mAgreeMiddle: "and",
+  mAgreeSuffix: "of Agri-Scan.",
+
+  // Sign up
+  mRegisterSubtitle: "Start your smart plant-care journey",
+  mFullNamePlaceholder: "Enter your full name",
+  mEmailInputPlaceholder: "Enter your email address",
+  mCreatePasswordPlaceholder: "Create a password (at least 6 characters)",
+  mRepeatPasswordPlaceholder: "Re-enter your password",
+  mAgreeShortPrefix: "I agree to the",
+  mTermsShort: "Terms",
+  mPrivacyShort: "Privacy Policy",
+  mHaveAccount: "Already have an account? ",
+  mFillAllFields: "Please fill in all fields.",
+  mInvalidEmail: "Invalid email address.",
+  mPasswordMismatch: "Passwords do not match.",
+  mMustAgreeTermsPrivacy:
+    "Please accept the Terms and Privacy Policy.",
+  mRegisterFailed: "Registration failed. Please try again.",
+
+  // OTP
+  mOtpTitle: "Verify OTP",
+  mOtpSubtitle: "Enter the 6-digit code we sent to:",
+  mOtpResendIn: " Resend in {seconds}s",
+  mOtpExpired: " Code expired",
+  mOtpConfirm: "Confirm code",
+  mOtpResendNew: "Send a new code",
+  mOtpResentNotice: "A new OTP has been sent to your email.",
+  mOtpResendFailed: "Could not resend the OTP. Try again later.",
+  mNoticeTitle: "Notice",
+
+  // Forgot password
+  mForgotTitle: "Forgot password?",
+  mForgotSubtitle:
+    "Don't worry — enter your registered email and we'll send an OTP to reset your password.",
+  mSendOtp: "Send OTP",
+  mBackToLogin: "Back to sign in",
+  mSendEmailFailed: "Could not send the email. Please try again.",
+
+  // Reset password
+  mResetTitle: "New password",
+  mResetSubtitle: "Enter a new password to finish recovering your account",
+  mNewPasswordLabel: "New password",
+  mConfirmPasswordLabel: "Confirm password",
+  mUpdatePassword: "Update password",
+  mRuleMinLength8: "At least 8 characters",
+  mRuleUpper: "At least 1 upper case letter",
+  mRuleLower: "At least 1 lower case letter",
+  mRuleNumber: "At least 1 number",
+  mRuleSpecial: "At least 1 special character",
+  mDataErrorTitle: "Data error",
+  mIncompleteSession:
+    "The session details are incomplete — please request a new OTP.",
+  mResetSuccessTitle: "Done",
+  mResetSuccessWeb: "Success! Your password has been updated.",
+  mResetSuccessMessage: "Your password has been updated!",
+  mResetFailed: "Password change failed. Your session may have expired.",
+
+  // Set password (after social sign-in)
+  mSetPasswordTitle: "Secure your account",
+  mSetPasswordSubtitle:
+    "You signed in with a social account. Create a password so you can also sign in with your email in future.",
+  mSetPasswordPlaceholder: "Enter a password (at least 6 characters)",
+  mRepeatNewPasswordPlaceholder: "Re-enter the new password",
+  mSetPasswordSubmit: "Finish & sign in",
+  mFillAllInfo: "Please fill in all fields.",
+  mPasswordMin6: "Password must be at least 6 characters.",
+  mPasswordRepeatMismatch: "The passwords don't match.",
+  mSetPasswordSuccessTitle: "Done",
+  mSetPasswordSuccessMessage:
+    "Password created! Welcome to Agri-Scan.",
+  mExploreNow: "Start exploring",
+  mSetPasswordFailed: "Could not create the password right now.",
 } as const;

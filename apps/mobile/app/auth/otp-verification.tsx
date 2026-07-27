@@ -16,8 +16,10 @@ import { Timer, Smartphone } from "lucide-react-native";
 import { authApi } from "@agri-scan/shared";
 import { Button } from "../../components/ui/Button";
 import { AuthHeader } from "../../components/auth/AuthHeader";
+import { useT } from "../../context/I18nContext";
 
 export default function OTPVerificationScreen() {
+  const t = useT();
   const router = useRouter();
   const params = useLocalSearchParams();
   const email = (params.email as string) || "";
@@ -58,7 +60,7 @@ export default function OTPVerificationScreen() {
       }
     } catch (error: any) {
       setApiError(
-        error.response?.data?.message || "Mã OTP không hợp lệ hoặc đã hết hạn.",
+        error.response?.data?.message || t("auth.otpFailed"),
       );
     } finally {
       setIsSubmitting(false);
@@ -76,11 +78,11 @@ export default function OTPVerificationScreen() {
       } else {
         await authApi.forgotPassword(email);
       }
-      Alert.alert("Thông báo", "Mã OTP mới đã được gửi vào email của bạn.");
+      Alert.alert(t("auth.mNoticeTitle"), t("auth.mOtpResentNotice"));
     } catch (error: any) {
       Alert.alert(
-        "Lỗi",
-        error.response?.data?.message || "Không thể gửi lại OTP. Thử lại sau.",
+        t("common.error"),
+        error.response?.data?.message || t("auth.mOtpResendFailed"),
       );
     }
   };
@@ -103,9 +105,9 @@ export default function OTPVerificationScreen() {
               <View style={styles.iconContainer}>
                 <Smartphone size={28} color="#16a34a" />
               </View>
-              <Text style={styles.title}>Xác thực OTP</Text>
+              <Text style={styles.title}>{t("auth.mOtpTitle")}</Text>
               <Text style={styles.subtitle}>
-                Vui lòng nhập mã 6 số được gửi đến:{"\n"}
+                {t("auth.mOtpSubtitle")}{"\n"}
                 <Text style={styles.emailText}>{email}</Text>
               </Text>
             </View>
@@ -135,12 +137,14 @@ export default function OTPVerificationScreen() {
                   seconds === 0 && styles.timerTextExpired,
                 ]}
               >
-                {seconds > 0 ? ` Gửi lại sau ${seconds}s` : " Mã đã hết hạn"}
+                {seconds > 0
+                  ? t("auth.mOtpResendIn", { seconds })
+                  : t("auth.mOtpExpired")}
               </Text>
             </View>
 
             <Button
-              title="Xác nhận mã"
+              title={t("auth.mOtpConfirm")}
               variant="primary"
               size="lg"
               isLoading={isSubmitting}
@@ -154,7 +158,7 @@ export default function OTPVerificationScreen() {
                 style={styles.resendBtn}
                 activeOpacity={0.7}
               >
-                <Text style={styles.resendText}>Gửi lại mã mới</Text>
+                <Text style={styles.resendText}>{t("auth.mOtpResendNew")}</Text>
               </TouchableOpacity>
             )}
           </View>
