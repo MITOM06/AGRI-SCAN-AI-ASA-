@@ -10,9 +10,11 @@ import { landing } from "./landing";
 import { scan } from "./scan";
 import { encyclopedia } from "./encyclopedia";
 import { weather } from "./weather";
+import { shop } from "./shop";
 
 export const en: Dictionary = {
   weather,
+  shop,
   common,
   nav,
   footer,
