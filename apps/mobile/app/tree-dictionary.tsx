@@ -28,21 +28,38 @@ import {
 
 // 🔥 IMPORT API THẬT
 import { plantApi } from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
 import { styles } from "../styles/tree-dictionary.styles";
+// `value` là DỮ LIỆU thật trong MongoDB (plant.growthRate, plant.light, ...) nên
+// PHẢI giữ nguyên tiếng Việt — bộ lọc so khớp bằng chuỗi này. Chỉ `labelKey`
+// được dịch. Giống hệt cách làm ở web (TreeDictionary.tsx).
 const CATEGORIES = [
-  "Cây bóng mát",
-  "Cây cảnh quan",
-  "Cây lấy gỗ",
-  "Cây ăn quả",
-  "Cây tâm linh",
-  "Cây phong thủy",
+  { value: "Cây bóng mát", labelKey: "encyclopedia.typeShade" },
+  { value: "Cây cảnh quan", labelKey: "encyclopedia.typeLandscape" },
+  { value: "Cây lấy gỗ", labelKey: "encyclopedia.typeTimber" },
+  { value: "Cây ăn quả", labelKey: "encyclopedia.typeFruit" },
+  { value: "Cây tâm linh", labelKey: "encyclopedia.typeSpiritual" },
+  { value: "Cây phong thủy", labelKey: "encyclopedia.typeFengShui" },
 ];
-const GROWTH_RATES = ["Nhanh", "Trung bình", "Chậm"];
-const LIGHTS = ["Ưa sáng", "Ưa bóng", "Bán phần"];
-const WATERS = ["Ít", "Trung bình", "Nhiều"];
+const GROWTH_RATES = [
+  { value: "Nhanh", labelKey: "encyclopedia.growthFast" },
+  { value: "Trung bình", labelKey: "encyclopedia.growthMedium" },
+  { value: "Chậm", labelKey: "encyclopedia.growthSlow" },
+];
+const LIGHTS = [
+  { value: "Ưa sáng", labelKey: "encyclopedia.lightFull" },
+  { value: "Ưa bóng", labelKey: "encyclopedia.lightShade" },
+  { value: "Bán phần", labelKey: "encyclopedia.lightPartial" },
+];
+const WATERS = [
+  { value: "Ít", labelKey: "encyclopedia.waterLow" },
+  { value: "Trung bình", labelKey: "encyclopedia.waterMedium" },
+  { value: "Nhiều", labelKey: "encyclopedia.waterHigh" },
+];
 
 export default function TreeDictionaryScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -139,7 +156,10 @@ export default function TreeDictionaryScreen() {
       setSelectedTree(detail);
     } catch (error) {
       console.log("Lỗi khi tải chi tiết:", error);
-      Alert.alert("Lỗi", "Không thể tải chi tiết cây. Vui lòng thử lại!");
+      Alert.alert(
+        t("common.error"),
+        t("encyclopedia.loadDetailFailedShort"),
+      );
     } finally {
       setIsLoadingDetail(false);
     }
@@ -162,7 +182,7 @@ export default function TreeDictionaryScreen() {
         <View style={styles.cardBadgeContainer}>
           <View style={styles.cardBadge}>
             <Text style={styles.cardBadgeText}>
-              {item.family || "Thực vật"}
+              {item.family || t("encyclopedia.familyFallback")}
             </Text>
           </View>
         </View>
@@ -191,7 +211,9 @@ export default function TreeDictionaryScreen() {
                 { color: item.status === "APPROVED" ? "#16a34a" : "#ca8a04" },
               ]}
             >
-              {item.status === "APPROVED" ? "Đã duyệt" : "Chờ duyệt"}
+              {item.status === "APPROVED"
+                ? t("encyclopedia.approved")
+                : t("encyclopedia.pending")}
             </Text>
           </View>
         </View>
@@ -211,7 +233,7 @@ export default function TreeDictionaryScreen() {
           <ChevronLeft size={28} color="#111827" />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Từ Điển Cây Trồng</Text>
+          <Text style={styles.headerTitle}>{t("encyclopedia.title")}</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>
@@ -222,7 +244,7 @@ export default function TreeDictionaryScreen() {
           <Search size={20} color="#9ca3af" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm theo tên cây..."
+            placeholder={t("encyclopedia.searchPlaceholderShort")}
             placeholderTextColor="#9ca3af"
             value={searchTerm}
             onChangeText={setSearchTerm}
@@ -246,7 +268,7 @@ export default function TreeDictionaryScreen() {
 
       {/* SỐ LƯỢNG KẾT QUẢ */}
       <Text style={styles.resultCount}>
-        Tìm thấy {filteredTrees.length} kết quả
+        {t("encyclopedia.resultCount", { count: filteredTrees.length })}
       </Text>
 
       {/* DANH SÁCH CÂY */}
@@ -254,7 +276,7 @@ export default function TreeDictionaryScreen() {
         <View style={styles.emptyContainer}>
           <ActivityIndicator size="large" color="#16a34a" />
           <Text style={[styles.emptyText, { marginTop: 8 }]}>
-            Đang tải dữ liệu...
+            {t("encyclopedia.loadingData")}
           </Text>
         </View>
       ) : (
@@ -269,7 +291,7 @@ export default function TreeDictionaryScreen() {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>
-                Không tìm thấy cây nào phù hợp.
+                {t("encyclopedia.noResults")}
               </Text>
             </View>
           }
@@ -280,7 +302,9 @@ export default function TreeDictionaryScreen() {
       {isLoadingDetail && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#16a34a" />
-          <Text style={styles.loadingText}>Đang lấy thông tin...</Text>
+          <Text style={styles.loadingText}>
+            {t("encyclopedia.loadingDetail")}
+          </Text>
         </View>
       )}
 
@@ -300,7 +324,9 @@ export default function TreeDictionaryScreen() {
             ]}
           >
             <View style={styles.filterHeader}>
-              <Text style={styles.filterHeaderTitle}>Bộ lọc tìm kiếm</Text>
+              <Text style={styles.filterHeaderTitle}>
+                {t("encyclopedia.filterSheetTitle")}
+              </Text>
               <TouchableOpacity onPress={() => setIsFilterModalOpen(false)}>
                 <X size={24} color="#374151" />
               </TouchableOpacity>
@@ -308,15 +334,17 @@ export default function TreeDictionaryScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.filterGroup}>
-                <Text style={styles.filterGroupTitle}>Loại cây</Text>
+                <Text style={styles.filterGroupTitle}>
+                  {t("encyclopedia.filterType")}
+                </Text>
                 {CATEGORIES.map((cat) => (
                   <CustomCheckbox
-                    key={cat}
-                    label={cat}
-                    isSelected={selectedCategories.includes(cat)}
+                    key={cat.value}
+                    label={t(cat.labelKey)}
+                    isSelected={selectedCategories.includes(cat.value)}
                     onPress={() =>
                       toggleFilter(
-                        cat,
+                        cat.value,
                         selectedCategories,
                         setSelectedCategories,
                       )
@@ -326,18 +354,21 @@ export default function TreeDictionaryScreen() {
               </View>
 
               <View style={styles.filterGroup}>
-                <Text style={styles.filterGroupTitle}>Tốc độ sinh trưởng</Text>
+                <Text style={styles.filterGroupTitle}>
+                  {t("encyclopedia.filterGrowth")}
+                </Text>
                 <View style={styles.chipRow}>
                   {GROWTH_RATES.map((rate) => (
                     <TouchableOpacity
-                      key={rate}
+                      key={rate.value}
                       style={[
                         styles.chip,
-                        selectedGrowthRates.includes(rate) && styles.chipActive,
+                        selectedGrowthRates.includes(rate.value) &&
+                          styles.chipActive,
                       ]}
                       onPress={() =>
                         toggleFilter(
-                          rate,
+                          rate.value,
                           selectedGrowthRates,
                           setSelectedGrowthRates,
                         )
@@ -346,11 +377,11 @@ export default function TreeDictionaryScreen() {
                       <Text
                         style={[
                           styles.chipText,
-                          selectedGrowthRates.includes(rate) &&
+                          selectedGrowthRates.includes(rate.value) &&
                             styles.chipTextActive,
                         ]}
                       >
-                        {rate}
+                        {t(rate.labelKey)}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -358,27 +389,34 @@ export default function TreeDictionaryScreen() {
               </View>
 
               <View style={styles.filterGroup}>
-                <Text style={styles.filterGroupTitle}>Nhu cầu ánh sáng</Text>
+                <Text style={styles.filterGroupTitle}>
+                  {t("encyclopedia.filterLight")}
+                </Text>
                 <View style={styles.chipRow}>
                   {LIGHTS.map((light) => (
                     <TouchableOpacity
-                      key={light}
+                      key={light.value}
                       style={[
                         styles.chip,
-                        selectedLights.includes(light) && styles.chipActive,
+                        selectedLights.includes(light.value) &&
+                          styles.chipActive,
                       ]}
                       onPress={() =>
-                        toggleFilter(light, selectedLights, setSelectedLights)
+                        toggleFilter(
+                          light.value,
+                          selectedLights,
+                          setSelectedLights,
+                        )
                       }
                     >
                       <Text
                         style={[
                           styles.chipText,
-                          selectedLights.includes(light) &&
+                          selectedLights.includes(light.value) &&
                             styles.chipTextActive,
                         ]}
                       >
-                        {light}
+                        {t(light.labelKey)}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -386,27 +424,34 @@ export default function TreeDictionaryScreen() {
               </View>
 
               <View style={styles.filterGroup}>
-                <Text style={styles.filterGroupTitle}>Nhu cầu nước</Text>
+                <Text style={styles.filterGroupTitle}>
+                  {t("encyclopedia.filterWater")}
+                </Text>
                 <View style={styles.chipRow}>
                   {WATERS.map((water) => (
                     <TouchableOpacity
-                      key={water}
+                      key={water.value}
                       style={[
                         styles.chip,
-                        selectedWaters.includes(water) && styles.chipActive,
+                        selectedWaters.includes(water.value) &&
+                          styles.chipActive,
                       ]}
                       onPress={() =>
-                        toggleFilter(water, selectedWaters, setSelectedWaters)
+                        toggleFilter(
+                          water.value,
+                          selectedWaters,
+                          setSelectedWaters,
+                        )
                       }
                     >
                       <Text
                         style={[
                           styles.chipText,
-                          selectedWaters.includes(water) &&
+                          selectedWaters.includes(water.value) &&
                             styles.chipTextActive,
                         ]}
                       >
-                        {water}
+                        {t(water.labelKey)}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -424,13 +469,17 @@ export default function TreeDictionaryScreen() {
                   setSelectedWaters([]);
                 }}
               >
-                <Text style={styles.clearFilterText}>Xóa bộ lọc</Text>
+                <Text style={styles.clearFilterText}>
+                  {t("encyclopedia.clearFilters")}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.applyFilterBtn}
                 onPress={() => setIsFilterModalOpen(false)}
               >
-                <Text style={styles.applyFilterText}>Áp dụng</Text>
+                <Text style={styles.applyFilterText}>
+                  {t("encyclopedia.applyFilters")}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -488,36 +537,44 @@ export default function TreeDictionaryScreen() {
                   <View style={styles.propBox}>
                     <TrendingUp size={18} color="#16a34a" />
                     <View style={styles.propTexts}>
-                      <Text style={styles.propLabel}>Sinh trưởng</Text>
+                      <Text style={styles.propLabel}>
+                        {t("encyclopedia.labelGrowthShort")}
+                      </Text>
                       <Text style={styles.propVal}>
-                        {selectedTree.growthRate || "Chưa rõ"}
+                        {selectedTree.growthRate || t("encyclopedia.valueUnknown")}
                       </Text>
                     </View>
                   </View>
                   <View style={styles.propBox}>
                     <Sun size={18} color="#eab308" />
                     <View style={styles.propTexts}>
-                      <Text style={styles.propLabel}>Ánh sáng</Text>
+                      <Text style={styles.propLabel}>
+                        {t("encyclopedia.labelLight")}
+                      </Text>
                       <Text style={styles.propVal}>
-                        {selectedTree.light || "Chưa rõ"}
+                        {selectedTree.light || t("encyclopedia.valueUnknown")}
                       </Text>
                     </View>
                   </View>
                   <View style={styles.propBox}>
                     <Droplet size={18} color="#3b82f6" />
                     <View style={styles.propTexts}>
-                      <Text style={styles.propLabel}>Nước</Text>
+                      <Text style={styles.propLabel}>
+                        {t("encyclopedia.labelWater")}
+                      </Text>
                       <Text style={styles.propVal}>
-                        {selectedTree.water || "Chưa rõ"}
+                        {selectedTree.water || t("encyclopedia.valueUnknown")}
                       </Text>
                     </View>
                   </View>
                   <View style={styles.propBox}>
                     <Leaf size={18} color="#16a34a" />
                     <View style={styles.propTexts}>
-                      <Text style={styles.propLabel}>Họ</Text>
+                      <Text style={styles.propLabel}>
+                        {t("encyclopedia.labelFamily")}
+                      </Text>
                       <Text style={styles.propVal} numberOfLines={1}>
-                        {selectedTree.family?.split(" ")[0] || "Thực vật"}
+                        {selectedTree.family?.split(" ")[0] || t("encyclopedia.familyFallback")}
                       </Text>
                     </View>
                   </View>
@@ -525,23 +582,29 @@ export default function TreeDictionaryScreen() {
 
                 {/* Các phần text mô tả */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Mô tả</Text>
+                  <Text style={styles.sectionTitle}>
+                    {t("encyclopedia.labelDescription")}
+                  </Text>
                   <Text style={styles.sectionText}>
-                    {selectedTree.description || "Đang cập nhật..."}
+                    {selectedTree.description || t("encyclopedia.valueUpdating")}
                   </Text>
                 </View>
 
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Công dụng</Text>
+                  <Text style={styles.sectionTitle}>
+                    {t("encyclopedia.labelUses")}
+                  </Text>
                   <Text style={styles.sectionText}>
-                    {selectedTree.uses || "Đang cập nhật..."}
+                    {selectedTree.uses || t("encyclopedia.valueUpdating")}
                   </Text>
                 </View>
 
                 <View style={[styles.section, styles.careSection]}>
-                  <Text style={styles.sectionTitle}>Cách chăm sóc</Text>
+                  <Text style={styles.sectionTitle}>
+                    {t("encyclopedia.labelCare")}
+                  </Text>
                   <Text style={styles.careText}>
-                    {selectedTree.care || "Đang cập nhật..."}
+                    {selectedTree.care || t("encyclopedia.valueUpdating")}
                   </Text>
                 </View>
 
@@ -553,13 +616,17 @@ export default function TreeDictionaryScreen() {
                   <View style={styles.extraInfoBox}>
                     {selectedTree.height && (
                       <Text style={styles.extraText}>
-                        <Text style={styles.extraBold}>Chiều cao: </Text>
+                        <Text style={styles.extraBold}>
+                          {t("encyclopedia.labelHeightInline")}
+                        </Text>
                         {selectedTree.height}
                       </Text>
                     )}
                     {selectedTree.soil && (
                       <Text style={styles.extraText}>
-                        <Text style={styles.extraBold}>Đất trồng: </Text>
+                        <Text style={styles.extraBold}>
+                          {t("encyclopedia.labelSoilInline")}
+                        </Text>
                         {selectedTree.soil}
                       </Text>
                     )}
@@ -567,7 +634,7 @@ export default function TreeDictionaryScreen() {
                       selectedTree.diseasesInfo.length > 0 && (
                         <Text style={styles.extraText}>
                           <Text style={styles.extraBold}>
-                            Bệnh thường gặp:{" "}
+                            {t("encyclopedia.labelDiseasesInline")}{" "}
                           </Text>
                           <Text style={{ color: "#dc2626" }}>
                             {selectedTree.diseasesInfo

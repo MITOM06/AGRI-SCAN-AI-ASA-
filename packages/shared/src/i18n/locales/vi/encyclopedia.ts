@@ -54,4 +54,20 @@ export const encyclopedia = {
   labelDescription: "Mô tả",
   labelUses: "Công dụng",
   labelCare: "Cách chăm sóc",
+
+  // ── Mobile ────────────────────────────────────────────────────────────
+  loadDetailFailedShort: "Không thể tải chi tiết cây. Vui lòng thử lại!",
+  familyFallback: "Thực vật",
+  searchPlaceholderShort: "Tìm theo tên cây...",
+  resultCount: "Tìm thấy {count} kết quả",
+  loadingData: "Đang tải dữ liệu...",
+  loadingDetail: "Đang lấy thông tin...",
+  filterSheetTitle: "Bộ lọc tìm kiếm",
+  applyFilters: "Áp dụng",
+  labelGrowthShort: "Sinh trưởng",
+  valueUnknown: "Chưa rõ",
+  valueUpdating: "Đang cập nhật...",
+  labelHeightInline: "Chiều cao: ",
+  labelSoilInline: "Đất trồng: ",
+  labelDiseasesInline: "Bệnh thường gặp:",
 } as const;

@@ -54,4 +54,20 @@ export const encyclopedia = {
   labelDescription: "Description",
   labelUses: "Uses",
   labelCare: "Care instructions",
+
+  // ── Mobile ────────────────────────────────────────────────────────────
+  loadDetailFailedShort: "Could not load the plant details. Please try again.",
+  familyFallback: "Plant",
+  searchPlaceholderShort: "Search by plant name...",
+  resultCount: "{count} results found",
+  loadingData: "Loading data...",
+  loadingDetail: "Loading details...",
+  filterSheetTitle: "Search filters",
+  applyFilters: "Apply",
+  labelGrowthShort: "Growth",
+  valueUnknown: "Unknown",
+  valueUpdating: "Coming soon...",
+  labelHeightInline: "Height: ",
+  labelSoilInline: "Soil: ",
+  labelDiseasesInline: "Common diseases:",
 } as const;
