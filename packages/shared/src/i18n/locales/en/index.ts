@@ -16,10 +16,12 @@ import { community } from "./community";
 import { profile } from "./profile";
 import { admin } from "./admin";
 import { feedback } from "./feedback";
+import { billing } from "./billing";
 
 export const en: Dictionary = {
   admin,
   feedback,
+  billing,
   weather,
   shop,
   myGarden,

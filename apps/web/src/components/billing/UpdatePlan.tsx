@@ -14,11 +14,13 @@ import {
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/context/I18nContext";
 
 // Sau khi đăng nhập/đăng ký xong sẽ quay lại đúng trang nâng cấp gói
 const UPGRADE_REDIRECT = encodeURIComponent("/upgrade");
 
 export function UpdatePlan() {
+  const t = useT();
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
@@ -35,19 +37,19 @@ export function UpdatePlan() {
       name: "Free",
       planKey: "FREE",
       price: "0",
-      period: "tháng",
-      description: "Khám phá sức mạnh của AI",
+      period: t("billing.period"),
+      description: t("billing.freeDescription"),
       features: [
-        "3 ảnh/ngày (tải lên hoặc chụp)",
-        "10 tin nhắn (prompts)/ngày",
-        "Mô hình AI chẩn đoán cơ bản",
-        "Hỗ trợ từ cộng đồng",
+        t("billing.freeFeature1"),
+        t("billing.freeFeature2"),
+        t("billing.freeFeature3"),
+        t("billing.freeFeature4"),
       ],
       buttonText: isGuest
-        ? "Đăng ký miễn phí"
+        ? t("billing.freeCtaGuest")
         : currentPlan === "FREE"
-          ? "Gói hiện tại"
-          : "Hạ xuống Free",
+          ? t("billing.currentPlan")
+          : t("billing.freeCtaDowngrade"),
       current: !isGuest && currentPlan === "FREE",
       highlight: false,
       tag: undefined as string | undefined,
@@ -58,21 +60,21 @@ export function UpdatePlan() {
       name: "Premium",
       planKey: "PREMIUM",
       price: "129,000",
-      period: "tháng",
-      description: "Mở khóa trải nghiệm đầy đủ",
+      period: t("billing.period"),
+      description: t("billing.premiumDescription"),
       features: [
-        "10 ảnh/ngày (tải lên hoặc chụp)",
-        "50 tin nhắn (prompts)/ngày",
-        "Mô hình AI nông nghiệp nâng cao",
-        "Thời hạn sử dụng: 30 ngày",
+        t("billing.premiumFeature1"),
+        t("billing.premiumFeature2"),
+        t("billing.premiumFeature3"),
+        t("billing.premiumFeature4"),
       ],
       buttonText:
         !isGuest && currentPlan === "PREMIUM"
-          ? "Gói hiện tại"
-          : "Nâng cấp lên Plus",
+          ? t("billing.currentPlan")
+          : t("billing.premiumCta"),
       current: !isGuest && currentPlan === "PREMIUM",
       highlight: true,
-      tag: "PHỔ BIẾN",
+      tag: t("billing.tagPopular"),
       theme: "purple" as const,
       icon: <Star className="w-6 h-6" />,
     },
@@ -80,16 +82,18 @@ export function UpdatePlan() {
       name: "Vip",
       planKey: "VIP",
       price: "499,000",
-      period: "tháng",
-      description: "Tối đa hóa năng suất của bạn",
+      period: t("billing.period"),
+      description: t("billing.vipDescription"),
       features: [
-        "20 ảnh/ngày (tải lên hoặc chụp)",
-        "Vô hạn tin nhắn (prompts)/ngày",
-        "Mô hình AI chuyên gia",
-        "Thời hạn sử dụng: 30 ngày",
+        t("billing.vipFeature1"),
+        t("billing.vipFeature2"),
+        t("billing.vipFeature3"),
+        t("billing.vipFeature4"),
       ],
       buttonText:
-        !isGuest && currentPlan === "VIP" ? "Gói hiện tại" : "Nâng cấp lên Pro",
+        !isGuest && currentPlan === "VIP"
+          ? t("billing.currentPlan")
+          : t("billing.vipCta"),
       current: !isGuest && currentPlan === "VIP",
       highlight: false,
       tag: undefined as string | undefined,
@@ -146,9 +150,9 @@ export function UpdatePlan() {
     const priceNumber = parseInt(plan.price.replace(/,/g, ""));
     const vat = Math.round(priceNumber * 0.1);
     const subtotal = priceNumber - vat;
-    const features = plan.features
-      .filter((f) => !f.startsWith("Tất cả tính năng"))
-      .slice(0, 4);
+    // Bỏ filter startsWith("Tất cả tính năng"): không feature nào bắt đầu bằng
+    // chuỗi đó nên filter luôn là no-op, và sau khi i18n hóa thì càng không khớp.
+    const features = plan.features.slice(0, 4);
     const params = new URLSearchParams({
       name: plan.name,
       price: plan.price,
@@ -210,12 +214,10 @@ export function UpdatePlan() {
             <div className="flex items-center gap-2 mb-1">
               <Sparkles size={20} className="text-emerald-500" />
               <h1 className="text-3xl font-bold text-gray-900">
-                Nâng cấp gói dịch vụ
+                {t("billing.title")}
               </h1>
             </div>
-            <p className="text-gray-500">
-              Chọn gói phù hợp với nhu cầu canh tác của bạn
-            </p>
+            <p className="text-gray-500">{t("billing.subtitle")}</p>
           </div>
         </motion.div>
 
@@ -232,10 +234,10 @@ export function UpdatePlan() {
                 <Lock size={18} />
               </div>
               <p className="text-sm text-amber-900 leading-relaxed">
-                Bạn đang xem với tư cách khách. Vui lòng{" "}
-                <span className="font-semibold">đăng nhập</span> hoặc{" "}
-                <span className="font-semibold">đăng ký</span> tài khoản để có
-                thể nâng cấp gói dịch vụ.
+                {t("billing.guestBanner", {
+                  login: t("billing.guestBannerLogin"),
+                  register: t("billing.guestBannerRegister"),
+                })}
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
@@ -243,7 +245,7 @@ export function UpdatePlan() {
                 onClick={() => router.push(`/login?redirect=${UPGRADE_REDIRECT}`)}
                 className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
               >
-                Đăng nhập
+                {t("nav.login")}
               </button>
               <button
                 onClick={() =>
@@ -251,7 +253,7 @@ export function UpdatePlan() {
                 }
                 className="px-4 py-2 rounded-xl bg-white border border-amber-300 text-amber-800 text-sm font-bold hover:bg-amber-100 transition-colors"
               >
-                Đăng ký
+                {t("nav.register")}
               </button>
             </div>
           </motion.div>
@@ -366,12 +368,11 @@ export function UpdatePlan() {
                 <div className="flex-1 border-t border-gray-100 pt-6 relative z-10">
                   {plan.name === "Pro" && (
                     <p className="text-sm font-bold mb-4 text-gray-900">
-                      Bao gồm mọi thứ của Plus và:
+                      {t("billing.includesPlus")}
                     </p>
                   )}
                   <ul className="space-y-3.5">
-                    {plan.features.map((feature, i) =>
-                      feature.startsWith("Tất cả tính năng") ? null : (
+                    {plan.features.map((feature, i) => (
                         <motion.li
                           key={i}
                           initial={{ opacity: 0, x: -10 }}
@@ -396,8 +397,7 @@ export function UpdatePlan() {
                           </motion.div>
                           <span className="leading-relaxed">{feature}</span>
                         </motion.li>
-                      ),
-                    )}
+                    ))}
                   </ul>
                 </div>
               </motion.div>
@@ -413,13 +413,13 @@ export function UpdatePlan() {
           className="mt-16 text-center"
         >
           <p className="text-gray-500 text-sm">
-            Bạn cần gói doanh nghiệp tùy chỉnh?{" "}
+            {t("billing.enterpriseQuestion")}{" "}
             <motion.a
               href="#"
               whileHover={{ scale: 1.05 }}
               className="text-emerald-600 font-medium hover:underline inline-block"
             >
-              Liên hệ với chúng tôi
+              {t("billing.contactUs")}
             </motion.a>
           </p>
         </motion.div>
@@ -445,7 +445,7 @@ export function UpdatePlan() {
             >
               <button
                 onClick={() => setShowAuthModal(false)}
-                aria-label="Đóng"
+                aria-label={t("common.close")}
                 className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 <X size={18} />
@@ -456,11 +456,10 @@ export function UpdatePlan() {
               </div>
 
               <h2 className="mb-3 text-2xl font-extrabold text-gray-900">
-                Vui lòng đăng nhập
+                {t("billing.loginRequiredTitle")}
               </h2>
               <p className="mb-8 leading-relaxed text-gray-500">
-                Bạn cần đăng nhập hoặc đăng ký tài khoản để nâng cấp gói dịch
-                vụ. Sau khi đăng nhập, bạn sẽ được đưa trở lại trang này.
+                {t("billing.loginRequiredDesc")}
               </p>
 
               <div className="flex flex-col gap-3">
@@ -470,7 +469,7 @@ export function UpdatePlan() {
                   }
                   className="w-full rounded-xl bg-emerald-600 py-3.5 font-bold text-white shadow-lg shadow-emerald-200 transition-colors hover:bg-emerald-700"
                 >
-                  Đăng nhập ngay
+                  {t("billing.loginNow")}
                 </button>
                 <button
                   onClick={() =>
@@ -478,7 +477,7 @@ export function UpdatePlan() {
                   }
                   className="w-full rounded-xl border border-gray-300 bg-white py-3.5 font-bold text-gray-700 transition-colors hover:bg-gray-50"
                 >
-                  Tạo tài khoản mới
+                  {t("billing.createAccount")}
                 </button>
               </div>
             </motion.div>
