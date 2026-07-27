@@ -1,18 +1,14 @@
 import { Suspense } from "react";
 import RegisterForm from "@/components/auth/RegisterForm";
-
+import { LoadingFallback } from "@/components/common";
 
 export default function RegisterPage() {
- return (
+  return (
     <div className="pt-24">
       <Suspense
-        fallback={
-          <div className="min-h-screen flex items-center justify-center text-gray-400">
-            Đang tải form đăng ký...
-          </div>
-        }
+        fallback={<LoadingFallback messageKey="common.loadingRegisterForm" />}
       >
-        <RegisterForm/>
+        <RegisterForm />
       </Suspense>
     </div>
   );

@@ -14,8 +14,10 @@ import { shop } from "./shop";
 import { myGarden } from "./my-garden";
 import { community } from "./community";
 import { profile } from "./profile";
+import { admin } from "./admin";
 
 export const vi = {
+  admin,
   weather,
   shop,
   myGarden,

@@ -30,6 +30,12 @@ export const common = {
 
   // Trạng thái
   loading: "Đang tải...",
+  loadingLoginForm: "Đang tải form đăng nhập...",
+  loadingRegisterForm: "Đang tải form đăng ký...",
+  loadingVerifyPage: "Đang tải trang xác thực...",
+  loadingProfileForm: "Đang tải form hồ sơ...",
+  loadingForgotPasswordForm: "Đang tải form quên mật khẩu...",
+  loggingOut: "Đang đăng xuất...",
   processing: "Đang xử lý...",
   saving: "Đang lưu...",
   sending: "Đang gửi...",

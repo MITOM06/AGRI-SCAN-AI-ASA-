@@ -30,6 +30,12 @@ export const common = {
 
   // States
   loading: "Loading...",
+  loadingLoginForm: "Loading the sign-in form...",
+  loadingRegisterForm: "Loading the sign-up form...",
+  loadingVerifyPage: "Loading the verification page...",
+  loadingProfileForm: "Loading the profile form...",
+  loadingForgotPasswordForm: "Loading the password reset form...",
+  loggingOut: "Signing out...",
   processing: "Processing...",
   saving: "Saving...",
   sending: "Sending...",

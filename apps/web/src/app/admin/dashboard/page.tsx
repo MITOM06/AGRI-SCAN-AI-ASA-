@@ -16,10 +16,13 @@ import UsersTab from "../../../components/admin/Users";
 import ReportsTab from "../../../components/admin/Reports";
 import FeedbacksTab from "../../../components/admin/Feedbacks";
 import { adminApi } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
+import { LanguageSwitcher } from "@/components/common";
 
 type AdminTabKey = "dashboard" | "users" | "reports" | "feedbacks";
 
 export default function AdminDashboardPage() {
+  const t = useT();
   const router = useRouter();
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<AdminTabKey>("dashboard");
@@ -58,27 +61,27 @@ export default function AdminDashboardPage() {
     () => [
       {
         key: "dashboard" as const,
-        label: "Tổng quan",
+        label: t("admin.menuDashboard"),
         icon: LayoutDashboard,
       },
       {
         key: "users" as const,
-        label: "Người dùng",
+        label: t("admin.menuUsers"),
         icon: Users,
       },
       {
         key: "reports" as const,
-        label: "Báo cáo",
+        label: t("admin.menuReports"),
         icon: ShieldAlert,
       },
       {
         key: "feedbacks" as const,
-        label: "Phản hồi",
+        label: t("admin.menuFeedbacks"),
         icon: MessageSquare,
         badge: pendingFeedbackCount,
       },
     ],
-    [pendingFeedbackCount]
+    [pendingFeedbackCount, t]
   );
 
   const renderContent = () => {
@@ -196,14 +199,17 @@ export default function AdminDashboardPage() {
             })}
           </nav>
 
-          <div className="p-4 border-t border-slate-100">
+          <div className="p-4 border-t border-slate-100 space-y-3">
+            {/* Khu admin không dùng Navbar nên nút chuyển ngôn ngữ đặt ở đây */}
+            <LanguageSwitcher className="w-full justify-center" />
+
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <LogOut size={18} />
-              {isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}
+              {isLoggingOut ? t("common.loggingOut") : t("nav.logout")}
             </button>
           </div>
         </aside>
