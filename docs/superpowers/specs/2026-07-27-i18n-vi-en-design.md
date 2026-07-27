@@ -195,10 +195,10 @@ dữ liệu demo điền sẵn form ở `CheckoutPage`, và comment tiếng Vi�
 - **`npx tsc --noEmit` trên `apps/mobile` sạch** — khác web, mobile typecheck được,
   nên đây là cửa kiểm tra thật cho phần còn lại.
 
-Đã chuyển thêm: `app/scan.tsx`, `app/tree-dictionary.tsx`.
+Đã chuyển thêm: `app/scan.tsx`, `app/tree-dictionary.tsx`, `app/garden-setup.tsx`,
+`app/my-garden.tsx`.
 
-**Còn lại 36 file** (~620 dòng), sắp theo khối lượng giảm dần:
-`garden-setup`(40) `my-garden`(37)
+**Còn lại 34 file** (~545 dòng), sắp theo khối lượng giảm dần:
 `upgrade`(35) `garden-detail`(35) `user`(30) `payment`(29) `add-product`(29)
 `profile`(27) `feedback`(26) `auth/login`(25) `admin`(24) `buy-detail`(23)
 `checkout`(20) `auth/register`(20) `product-detail`(19) `my-orders`(17)
