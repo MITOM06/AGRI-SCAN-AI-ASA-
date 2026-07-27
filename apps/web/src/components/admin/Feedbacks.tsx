@@ -15,10 +15,12 @@ import { formatDateShortTimeVN as formatDate } from "@agri-scan/shared";
 import { pageVariants } from "@/utils/animation";
 import { adminApi } from "@agri-scan/shared";
 import type { IFeedback } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 
 type FeedbackStatusFilter = "ALL" | "PENDING" | "REPLIED";
 
 export default function FeedbacksTab() {
+  const t = useT();
   const [feedbacks, setFeedbacks] = useState<IFeedback[]>([]);
   const [feedbackStatus, setFeedbackStatus] =
     useState<FeedbackStatusFilter>("ALL");
@@ -46,7 +48,7 @@ export default function FeedbacksTab() {
     } catch (err: any) {
       console.error("Failed to fetch admin feedbacks:", err);
       setError(
-        err?.response?.data?.message || "Không thể tải danh sách phản hồi."
+        err?.response?.data?.message || t("admin.feedbacksLoadFailed")
       );
     } finally {
       setLoading(false);
@@ -94,7 +96,7 @@ export default function FeedbacksTab() {
     } catch (err: any) {
       console.error("Failed to reply feedback:", err);
       alert(
-        err?.response?.data?.message || "Không thể gửi phản hồi cho người dùng."
+        err?.response?.data?.message || t("admin.feedbacksReplyFailed")
       );
     } finally {
       setSubmittingReply(false);
@@ -117,12 +119,12 @@ export default function FeedbacksTab() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">
-            Quản lý Phản hồi
+            {t("admin.feedbacksTitle")}
           </h2>
           <p className="text-sm text-slate-500 mt-1">
             {pendingCount > 0
-              ? `Hiện có ${pendingCount} phản hồi đang chờ xử lý`
-              : "Không có phản hồi chờ xử lý"}
+              ? t("admin.feedbacksPendingCount", { count: pendingCount })
+              : t("admin.feedbacksNoPending")}
           </p>
         </div>
 
@@ -133,9 +135,9 @@ export default function FeedbacksTab() {
             setFeedbackStatus(e.target.value as FeedbackStatusFilter)
           }
         >
-          <option value="ALL">Tất cả trạng thái</option>
-          <option value="PENDING">Chờ xử lý</option>
-          <option value="REPLIED">Đã trả lời</option>
+          <option value="ALL">{t("admin.feedbacksFilterAll")}</option>
+          <option value="PENDING">{t("admin.feedbacksStatusPending")}</option>
+          <option value="REPLIED">{t("admin.feedbacksStatusReplied")}</option>
         </select>
       </div>
 
@@ -151,7 +153,7 @@ export default function FeedbacksTab() {
           <div className="bg-white p-12 rounded-2xl shadow-sm border border-slate-100 text-center">
             <Loader2 size={28} className="mx-auto text-emerald-600 animate-spin mb-3" />
             <p className="text-slate-600 font-medium">
-              Đang tải danh sách phản hồi...
+              {t("admin.feedbacksLoading")}
             </p>
           </div>
         ) : feedbacks.length === 0 ? (
@@ -164,10 +166,10 @@ export default function FeedbacksTab() {
               <MessageSquare size={32} className="text-slate-300" />
             </div>
             <h3 className="text-lg font-bold text-slate-700 mb-1">
-              Không có phản hồi nào
+              {t("admin.feedbacksEmpty")}
             </h3>
             <p className="text-slate-500">
-              Không có dữ liệu phù hợp với bộ lọc hiện tại.
+              {t("admin.feedbacksEmptyHint")}
             </p>
           </motion.div>
         ) : (
@@ -202,11 +204,12 @@ export default function FeedbacksTab() {
 
                     {fb.status === "PENDING" ? (
                       <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200/50">
-                        Chờ xử lý
+                        {t("admin.feedbacksStatusPending")}
                       </span>
                     ) : (
                       <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200/50 flex items-center gap-1">
-                        <CheckCircle size={14} /> Đã trả lời
+                        <CheckCircle size={14} />{" "}
+                        {t("admin.feedbacksStatusReplied")}
                       </span>
                     )}
                   </div>
@@ -220,7 +223,7 @@ export default function FeedbacksTab() {
                       {fb.userId?.fullName?.charAt(0) || "U"}
                     </div>
                     <span className="font-medium text-slate-700">
-                      {fb.userId?.fullName || "Người dùng"}
+                      {fb.userId?.fullName || t("admin.anonymousUser")}
                     </span>
                     {fb.userId?.email && <span>({fb.userId.email})</span>}
                   </div>
@@ -228,7 +231,7 @@ export default function FeedbacksTab() {
                   {fb.status === "REPLIED" && fb.adminReply && (
                     <div className="mt-4 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100/50">
                       <p className="text-xs font-bold text-emerald-600 mb-2 uppercase tracking-wider flex items-center gap-1.5">
-                        <CheckCircle size={14} /> Phản hồi từ Admin:
+                        <CheckCircle size={14} /> {t("admin.adminReplyLabel")}
                       </p>
                       <p className="text-sm text-slate-800 font-medium leading-relaxed">
                         {fb.adminReply}
@@ -243,7 +246,7 @@ export default function FeedbacksTab() {
                     className="flex items-center gap-2 px-5 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-xl transition-all duration-300 text-sm font-bold whitespace-nowrap shadow-sm"
                   >
                     <Edit2 size={16} />
-                    Trả lời ngay
+                    {t("admin.replyNow")}
                   </button>
                 )}
               </motion.div>
@@ -272,7 +275,7 @@ export default function FeedbacksTab() {
               <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                   <Edit2 size={20} className="text-emerald-600" />
-                  Trả lời phản hồi
+                  {t("admin.replyModalTitle")}
                 </h3>
                 <button
                   onClick={handleCloseReplyModal}
@@ -289,7 +292,7 @@ export default function FeedbacksTab() {
                       {selectedFeedback.userId?.fullName?.charAt(0) || "U"}
                     </div>
                     <p className="text-sm font-semibold text-slate-700">
-                      {selectedFeedback.userId?.fullName || "Người dùng"}
+                      {selectedFeedback.userId?.fullName || t("admin.anonymousUser")}
                     </p>
                   </div>
                   <p className="text-slate-800 font-medium leading-relaxed">
@@ -299,12 +302,12 @@ export default function FeedbacksTab() {
 
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">
-                    Nội dung trả lời của bạn
+                    {t("admin.replyContentLabel")}
                   </label>
                   <textarea
                     className="w-full border border-slate-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all resize-none shadow-sm"
                     rows={4}
-                    placeholder="Nhập câu trả lời chi tiết..."
+                    placeholder={t("admin.replyPlaceholder")}
                     value={replyContent}
                     onChange={(e) => setReplyContent(e.target.value)}
                   />
@@ -315,7 +318,7 @@ export default function FeedbacksTab() {
                     onClick={handleCloseReplyModal}
                     className="px-5 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors"
                   >
-                    Hủy bỏ
+                    {t("admin.replyCancel")}
                   </button>
                   <button
                     onClick={handleReplyFeedback}
@@ -325,7 +328,7 @@ export default function FeedbacksTab() {
                     {submittingReply && (
                       <Loader2 size={16} className="animate-spin" />
                     )}
-                    Gửi phản hồi
+                    {t("admin.replySubmit")}
                   </button>
                 </div>
               </div>

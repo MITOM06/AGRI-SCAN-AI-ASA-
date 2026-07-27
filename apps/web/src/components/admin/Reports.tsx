@@ -36,8 +36,10 @@ import type {
   IRevenueSeriesPoint,
   IUsageSeriesPoint,
 } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 
 export default function ReportsTab() {
+  const t = useT();
   const [dashboardData, setDashboardData] = useState<IDashboard | null>(null);
   const [revenueSeries, setRevenueSeries] = useState<IRevenueSeriesPoint[]>([]);
   const [usageSeries, setUsageSeries] = useState<IUsageSeriesPoint[]>([]);
@@ -62,7 +64,7 @@ export default function ReportsTab() {
         console.error("Load reports failed:", err);
         const message =
           (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message || "Không tải được dữ liệu báo cáo.";
+            ?.data?.message || t("admin.reportsLoadFailed");
         setError(message);
       } finally {
         setLoading(false);
@@ -76,17 +78,17 @@ export default function ReportsTab() {
     if (!dashboardData) return [];
     return [
       {
-        name: "Gói FREE",
+        name: t("admin.planFree"),
         value: dashboardData.users.byPlan.FREE,
         color: "#cbd5e1",
       },
       {
-        name: "Gói PREMIUM",
+        name: t("admin.planPremium"),
         value: dashboardData.users.byPlan.PREMIUM,
         color: "#3b82f6",
       },
       {
-        name: "Gói VIP",
+        name: t("admin.planVip"),
         value: dashboardData.users.byPlan.VIP,
         color: "#f59e0b",
       },
@@ -122,7 +124,9 @@ export default function ReportsTab() {
     return (
       <div className="bg-white p-12 rounded-2xl shadow-sm border border-slate-100 text-center">
         <Loader2 size={28} className="mx-auto text-emerald-600 animate-spin mb-3" />
-        <p className="text-slate-600 font-medium">Đang tải báo cáo...</p>
+        <p className="text-slate-600 font-medium">
+          {t("admin.reportsLoading")}
+        </p>
       </div>
     );
   }
@@ -137,7 +141,7 @@ export default function ReportsTab() {
   }
 
   if (!dashboardData) {
-    return <div className="p-6">Không có dữ liệu báo cáo.</div>;
+    return <div className="p-6">{t("admin.reportsNoData")}</div>;
   }
 
   return (
@@ -149,20 +153,22 @@ export default function ReportsTab() {
       className="space-y-6"
     >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-slate-800">Báo cáo & Thống kê</h2>
+        <h2 className="text-2xl font-bold text-slate-800">
+          {t("admin.reportsTitle")}
+        </h2>
         <div className="flex gap-3">
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
             className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 shadow-sm font-medium text-slate-700"
           >
-            <option value={7}>7 ngày qua</option>
-            <option value={30}>30 ngày qua</option>
-            <option value={365}>Năm nay</option>
+            <option value={7}>{t("admin.rangeLast7Days")}</option>
+            <option value={30}>{t("admin.rangeLast30Days")}</option>
+            <option value={365}>{t("admin.rangeThisYear")}</option>
           </select>
           <button className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-500/20 text-sm font-bold">
             <Download size={16} />
-            Xuất Báo Cáo
+            {t("admin.exportReport")}
           </button>
         </div>
       </div>
@@ -175,7 +181,7 @@ export default function ReportsTab() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-slate-500 mb-1">
-                Doanh thu trung bình / User
+                {t("admin.avgRevenuePerUser")}
               </p>
               <h3 className="text-2xl font-bold text-slate-900">
                 {formatCurrency(avgRevenuePerUser)}
@@ -186,7 +192,9 @@ export default function ReportsTab() {
             </div>
           </div>
           <p className="text-sm text-slate-500 font-medium mt-4">
-            Tổng doanh thu: {formatCurrency(dashboardData.revenue.total)}
+            {t("admin.totalRevenue", {
+              amount: formatCurrency(dashboardData.revenue.total),
+            })}
           </p>
         </motion.div>
 
@@ -197,7 +205,7 @@ export default function ReportsTab() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-slate-500 mb-1">
-                Tỷ lệ chuyển đổi (Free {">"} Paid)
+                {t("admin.conversionRate")}
               </p>
               <h3 className="text-2xl font-bold text-slate-900">
                 {conversionRate.toFixed(1)}%
@@ -208,7 +216,8 @@ export default function ReportsTab() {
             </div>
           </div>
           <p className="text-sm text-slate-500 font-medium mt-4 flex items-center gap-1">
-            <TrendingUp size={14} /> {paidUsers.toLocaleString()} người dùng trả phí
+            <TrendingUp size={14} />{" "}
+            {t("admin.paidUsers", { count: paidUsers.toLocaleString() })}
           </p>
         </motion.div>
 
@@ -219,12 +228,12 @@ export default function ReportsTab() {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-slate-500 mb-1">
-                Lượt dùng trung bình
+                {t("admin.avgUsage")}
               </p>
               <h3 className="text-2xl font-bold text-slate-900">
                 {avgDailyUsage.toLocaleString()}{" "}
                 <span className="text-sm font-medium text-slate-500">
-                  lượt/ngày
+                  {t("admin.perDay")}
                 </span>
               </h3>
             </div>
@@ -233,7 +242,7 @@ export default function ReportsTab() {
             </div>
           </div>
           <p className="text-sm text-slate-500 font-medium mt-4">
-            Trung bình {days} ngày gần nhất
+            {t("admin.avgOverLastDays", { days })}
           </p>
         </motion.div>
       </div>
@@ -245,7 +254,7 @@ export default function ReportsTab() {
         >
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <DollarSign size={20} className="text-emerald-600" />
-            Doanh thu theo gói
+            {t("admin.revenueByPlan")}
           </h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -292,7 +301,7 @@ export default function ReportsTab() {
                   dataKey="PREMIUM"
                   stackId="a"
                   fill="#3b82f6"
-                  name="Gói PREMIUM"
+                  name={t("admin.planPremium")}
                   radius={[0, 0, 4, 4]}
                   maxBarSize={40}
                 />
@@ -300,7 +309,7 @@ export default function ReportsTab() {
                   dataKey="VIP"
                   stackId="a"
                   fill="#f59e0b"
-                  name="Gói VIP"
+                  name={t("admin.planVip")}
                   radius={[4, 4, 0, 0]}
                   maxBarSize={40}
                 />
@@ -315,7 +324,7 @@ export default function ReportsTab() {
         >
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <PieChartIcon size={20} className="text-blue-600" />
-            Phân bổ người dùng
+            {t("admin.userDistribution")}
           </h3>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -372,7 +381,7 @@ export default function ReportsTab() {
         >
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <Activity size={20} className="text-purple-600" />
-            Tần suất sử dụng hệ thống (Lượt quét & Chat)
+            {t("admin.usageFrequency")}
           </h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -425,7 +434,7 @@ export default function ReportsTab() {
                 <Area
                   type="monotone"
                   dataKey="images"
-                  name="Lượt quét ảnh"
+                  name={t("admin.seriesImageScans")}
                   stroke="#10b981"
                   strokeWidth={3}
                   fillOpacity={1}
@@ -434,7 +443,7 @@ export default function ReportsTab() {
                 <Area
                   type="monotone"
                   dataKey="prompts"
-                  name="Lượt chat AI"
+                  name={t("admin.seriesAiChats")}
                   stroke="#8b5cf6"
                   strokeWidth={3}
                   fillOpacity={1}
