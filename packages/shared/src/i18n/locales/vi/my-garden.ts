@@ -288,4 +288,43 @@ export const myGarden = {
     "Máy ảnh không hỗ trợ trên trình duyệt, vui lòng dùng nút Tải ảnh lên.",
   permissionTitle: "Cấp quyền",
   permissionCameraScan: "Cần quyền máy ảnh để quét cây.",
+
+  // ── Mobile: chi tiết cây trong vườn (garden-detail) ────────────────────
+  detailLoading: "Đang tải thông tin cây...",
+  detailNotFound: "Không tìm thấy cây này.",
+  detailLoadFailed: "Không thể tải thông tin.",
+
+  // Xóa cây
+  deleteConfirmTitle: "Xóa cây khỏi vườn?",
+  deleteConfirmMessage:
+    "Bạn có chắc chắn muốn ngừng chăm sóc cây này không? Bạn sẽ nhận lại 1 vị trí trống trong vườn.",
+  deleteConfirmYes: "Xóa bỏ",
+  deleteSuccessTitle: "Thành công",
+  deleteSuccessMessage: "Đã xóa cây khỏi vườn.",
+  deleteFailedShort: "Không thể xóa cây lúc này.",
+
+  // Check-in
+  checkInWebOnly: "Tính năng chụp ảnh check-in đang hoạt động ở chế độ Mobile.",
+  checkInWarningTitle: "⚠️ Cảnh báo từ AI",
+  checkInCreateNewRoadmap: "Tạo lộ trình mới",
+  checkInSuccessTitle: "🎉 Thành công!",
+  checkInFailedMessage: "Có lỗi xảy ra khi chụp ảnh check-in.",
+  checkInToday: "Check-in hôm nay",
+  checkInTimeTitle: "Đến lúc chăm cây rồi!",
+  checkInTimeDesc:
+    "Hãy chụp một bức ảnh cập nhật tình trạng mới nhất của cây để AI đánh giá xem bạn có đang làm đúng theo lộ trình không nhé.",
+  checkInOpenCamera: "Mở Camera Check-in",
+  checkInWarningNote:
+    "Lưu ý: Nếu bạn quên check-in quá 3 ngày, lộ trình cũ sẽ bị hủy và phải nhờ AI tạo lại từ đầu!",
+
+  // Thông tin cây
+  conditionLabel: "Tình trạng:",
+  conditionLoading: "Đang tải",
+  aiEvaluation: "Đánh giá của AI",
+  completionProgress: "Tiến độ hoàn thành",
+  roadmapAi: "Lộ trình (AI)",
+  nextTasks: "Các việc cần làm tiếp theo",
+  taskWaterInline: "Nước:",
+  taskFertilizerInline: "Phân bón:",
+  taskCareInline: "Chăm sóc:",
 } as const;

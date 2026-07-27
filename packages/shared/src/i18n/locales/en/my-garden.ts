@@ -283,4 +283,43 @@ export const myGarden = {
     "The camera isn't supported in the browser — please use the upload button.",
   permissionTitle: "Permission needed",
   permissionCameraScan: "Camera access is required to scan plants.",
+
+  // ── Mobile: plant detail (garden-detail) ───────────────────────────────
+  detailLoading: "Loading plant details...",
+  detailNotFound: "This plant could not be found.",
+  detailLoadFailed: "Could not load the details.",
+
+  // Delete plant
+  deleteConfirmTitle: "Remove this plant?",
+  deleteConfirmMessage:
+    "Are you sure you want to stop caring for this plant? You'll get one growing slot back.",
+  deleteConfirmYes: "Remove",
+  deleteSuccessTitle: "Done",
+  deleteSuccessMessage: "The plant has been removed from your garden.",
+  deleteFailedShort: "Could not delete the plant right now.",
+
+  // Check-in
+  checkInWebOnly: "Photo check-in is only available on mobile.",
+  checkInWarningTitle: "⚠️ AI warning",
+  checkInCreateNewRoadmap: "Create a new roadmap",
+  checkInSuccessTitle: "🎉 Done!",
+  checkInFailedMessage: "Something went wrong during photo check-in.",
+  checkInToday: "Check in today",
+  checkInTimeTitle: "Time to tend your plant!",
+  checkInTimeDesc:
+    "Take a photo of your plant's current state so the AI can assess whether you're following the roadmap.",
+  checkInOpenCamera: "Open check-in camera",
+  checkInWarningNote:
+    "Note: if you skip check-in for more than 3 days, the old roadmap is cancelled and the AI has to rebuild it from scratch.",
+
+  // Plant info
+  conditionLabel: "Condition:",
+  conditionLoading: "Loading",
+  aiEvaluation: "AI assessment",
+  completionProgress: "Completion progress",
+  roadmapAi: "Roadmap (AI)",
+  nextTasks: "What to do next",
+  taskWaterInline: "Water:",
+  taskFertilizerInline: "Fertiliser:",
+  taskCareInline: "Care:",
 } as const;
