@@ -121,4 +121,12 @@ export const billing = {
   mProFeature3: "In-depth plant disease image analysis",
   mProFeature4: "Detailed report generation",
   mProFeature5: "API access for developers",
+
+  // Mobile checkout screen
+  mErrorIncompleteCard: "Please fill in all card details.",
+  mSubscribeSuccess: "You've subscribed to the {name} plan!",
+  mSecurityCodeLabel: "Security code (CVC)",
+  mHighlightFeatures: "Key features",
+  mAutoRenewNote:
+    "This plan renews automatically each month. You'll be charged ₫{price}/month. You can cancel anytime in Settings. By subscribing you agree to our Terms of Use.",
 } as const;

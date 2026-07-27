@@ -25,16 +25,19 @@ import {
 } from "lucide-react-native";
 
 import { productApi } from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
+// `id` là mã gửi lên API — không dịch. Nhãn dùng chung key với web & màn shop.
 const CATEGORIES = [
-  { id: "FERTILIZER", label: "Phân bón" },
-  { id: "PESTICIDE", label: "Thuốc BVTV" },
-  { id: "SEED", label: "Hạt giống" },
-  { id: "TOOL", label: "Dụng cụ" },
-  { id: "OTHER", label: "Khác" },
+  { id: "FERTILIZER", labelKey: "shop.categoryFertilizer" },
+  { id: "PESTICIDE", labelKey: "shop.categoryPesticide" },
+  { id: "SEED", labelKey: "shop.categorySeed" },
+  { id: "TOOL", labelKey: "shop.categoryTool" },
+  { id: "OTHER", labelKey: "shop.categoryOther" },
 ];
 
 export default function AddProductScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -50,12 +53,12 @@ export default function AddProductScreen() {
 
   const handleAddProduct = async () => {
     // 1. Kiểm tra Validate cơ bản
-    if (!name.trim()) return alert("Vui lòng nhập tên sản phẩm!");
+    if (!name.trim()) return alert(t("shop.mErrorNoName"));
     if (!price.trim() || isNaN(Number(price)))
-      return alert("Vui lòng nhập giá bán hợp lệ!");
+      return alert(t("shop.mErrorInvalidPrice"));
     if (!stock.trim() || isNaN(Number(stock)))
-      return alert("Vui lòng nhập số lượng kho hợp lệ!");
-    if (!description.trim()) return alert("Vui lòng nhập mô tả sản phẩm!");
+      return alert(t("shop.mErrorInvalidStock"));
+    if (!description.trim()) return alert(t("shop.mErrorNoDescription"));
 
     try {
       setIsSubmitting(true);
@@ -67,6 +70,7 @@ export default function AddProductScreen() {
         stock: Number(stock),
         category: category,
         description: description.trim(),
+        // Giá trị này được LƯU vào DB (product.brand) → là dữ liệu, không dịch
         brand: brand.trim() || "Đang cập nhật",
         usageInstructions: usageInstructions.trim(),
         images: imageUrl.trim()
@@ -78,11 +82,11 @@ export default function AddProductScreen() {
       await productApi.createProduct(payload as any);
 
       // 4. Thành công thì báo và quay về trang Gian hàng
-      alert("🎉 Đăng bán sản phẩm thành công!");
+      alert(t("shop.mProductCreated"));
       router.back();
     } catch (error: any) {
       const errorMsg =
-        error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại sau.";
+        error.response?.data?.message || t("shop.mProductCreateFailed");
       alert(
         "LỖI ĐĂNG BÁN: " +
           (Array.isArray(errorMsg) ? errorMsg.join(", ") : errorMsg),
@@ -104,7 +108,7 @@ export default function AddProductScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thêm Sản Phẩm Mới</Text>
+        <Text style={styles.headerTitle}>{t("shop.mAddProductTitle")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -114,12 +118,12 @@ export default function AddProductScreen() {
       >
         {/* Ảnh sản phẩm (Dùng URL) */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Link ảnh sản phẩm (Tùy chọn)</Text>
+          <Text style={styles.label}>{t("shop.mImageUrlLabel")}</Text>
           <View style={styles.inputWrapper}>
             <UploadCloud size={20} color="#64748b" style={styles.icon} />
             <TextInput
               style={styles.input}
-              placeholder="Dán đường dẫn ảnh (http://...)"
+              placeholder={t("shop.mImageUrlPlaceholder")}
               value={imageUrl}
               onChangeText={setImageUrl}
             />
@@ -128,12 +132,12 @@ export default function AddProductScreen() {
 
         {/* Tên sản phẩm */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Tên sản phẩm *</Text>
+          <Text style={styles.label}>{t("shop.mProductNameLabel")}</Text>
           <View style={styles.inputWrapper}>
             <Tag size={20} color="#64748b" style={styles.icon} />
             <TextInput
               style={styles.input}
-              placeholder="VD: Phân bón NPK 20-20-15"
+              placeholder={t("shop.mProductNamePlaceholder")}
               value={name}
               onChangeText={setName}
             />
@@ -143,7 +147,7 @@ export default function AddProductScreen() {
         {/* Giá & Kho */}
         <View style={styles.row}>
           <View style={[styles.inputGroup, { flex: 1 }]}>
-            <Text style={styles.label}>Giá bán (VNĐ) *</Text>
+            <Text style={styles.label}>{t("shop.mPriceLabel")}</Text>
             <View style={styles.inputWrapper}>
               <DollarSign size={20} color="#64748b" style={styles.icon} />
               <TextInput
@@ -156,7 +160,7 @@ export default function AddProductScreen() {
             </View>
           </View>
           <View style={[styles.inputGroup, { flex: 1 }]}>
-            <Text style={styles.label}>Số lượng kho *</Text>
+            <Text style={styles.label}>{t("shop.mStockLabel")}</Text>
             <View style={styles.inputWrapper}>
               <Package size={20} color="#64748b" style={styles.icon} />
               <TextInput
@@ -172,7 +176,7 @@ export default function AddProductScreen() {
 
         {/* Danh mục */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Danh mục *</Text>
+          <Text style={styles.label}>{t("shop.mCategoryLabel")}</Text>
           <View style={styles.categoryContainer}>
             {CATEGORIES.map((cat) => (
               <TouchableOpacity
@@ -189,7 +193,7 @@ export default function AddProductScreen() {
                     category === cat.id && styles.catTextActive,
                   ]}
                 >
-                  {cat.label}
+                  {t(cat.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -198,7 +202,7 @@ export default function AddProductScreen() {
 
         {/* Mô tả */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Mô tả chi tiết *</Text>
+          <Text style={styles.label}>{t("shop.mDescriptionLabel")}</Text>
           <View
             style={[
               styles.inputWrapper,
@@ -212,7 +216,7 @@ export default function AddProductScreen() {
             />
             <TextInput
               style={[styles.input, { height: 80 }]}
-              placeholder="Nhập công dụng, xuất xứ..."
+              placeholder={t("shop.mDescriptionPlaceholder")}
               multiline
               textAlignVertical="top"
               value={description}
@@ -223,12 +227,12 @@ export default function AddProductScreen() {
 
         {/* Thương hiệu */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Thương hiệu (Tùy chọn)</Text>
+          <Text style={styles.label}>{t("shop.mBrandLabel")}</Text>
           <View style={styles.inputWrapper}>
             <Info size={20} color="#64748b" style={styles.icon} />
             <TextInput
               style={styles.input}
-              placeholder="VD: Bình Điền"
+              placeholder={t("shop.mBrandPlaceholder")}
               value={brand}
               onChangeText={setBrand}
             />
@@ -237,7 +241,7 @@ export default function AddProductScreen() {
 
         {/* Hướng dẫn sử dụng */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Hướng dẫn sử dụng (Tùy chọn)</Text>
+          <Text style={styles.label}>{t("shop.mUsageLabel")}</Text>
           <View
             style={[
               styles.inputWrapper,
@@ -251,7 +255,7 @@ export default function AddProductScreen() {
             />
             <TextInput
               style={[styles.input, { height: 60 }]}
-              placeholder="VD: Pha 1 nắp với 2 lít nước..."
+              placeholder={t("shop.mUsagePlaceholder")}
               multiline
               textAlignVertical="top"
               value={usageInstructions}
@@ -276,7 +280,9 @@ export default function AddProductScreen() {
           {isSubmitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitBtnText}>Đăng Bán Sản Phẩm</Text>
+            <Text style={styles.submitBtnText}>
+              {t("shop.mSubmitProduct")}
+            </Text>
           )}
         </TouchableOpacity>
       </View>

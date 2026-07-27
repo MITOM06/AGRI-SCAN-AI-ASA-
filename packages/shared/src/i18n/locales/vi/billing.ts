@@ -121,4 +121,12 @@ export const billing = {
   mProFeature3: "Phân tích hình ảnh bệnh cây chuyên sâu",
   mProFeature4: "Tạo báo cáo chi tiết",
   mProFeature5: "API truy cập cho nhà phát triển",
+
+  // Màn thanh toán trên mobile
+  mErrorIncompleteCard: "Vui lòng điền đầy đủ thông tin thẻ.",
+  mSubscribeSuccess: "Bạn đã đăng ký gói {name} thành công!",
+  mSecurityCodeLabel: "Mã bảo mật (CVC)",
+  mHighlightFeatures: "Tính năng nổi bật",
+  mAutoRenewNote:
+    "Gói sẽ tự động gia hạn hàng tháng. Bạn sẽ bị tính phí ₫{price}/tháng. Bạn có thể hủy bất kỳ lúc nào trong Cài đặt. Bằng việc đăng ký, bạn đồng ý với Điều khoản sử dụng của chúng tôi.",
 } as const;

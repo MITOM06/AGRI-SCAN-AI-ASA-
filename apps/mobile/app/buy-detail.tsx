@@ -17,16 +17,23 @@ import {
   Receipt,
   Truck,
 } from "lucide-react-native";
+import { useT } from "../context/I18nContext";
 
 export default function BuyDetailScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const handlePlaceOrder = () => {
     Alert.alert(
-      "Đặt hàng thành công! 🎉",
-      "Đơn hàng của bạn đã được ghi nhận và đang chờ xử lý.",
-      [{ text: "Quay về Cửa hàng", onPress: () => router.replace("/shop") }],
+      t("shop.mOrderPlacedTitle"),
+      t("shop.mOrderPlacedMessage"),
+      [
+        {
+          text: t("shop.mBackToShop"),
+          onPress: () => router.replace("/shop"),
+        },
+      ],
     );
   };
 
@@ -37,7 +44,9 @@ export default function BuyDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Xác nhận đơn hàng</Text>
+        <Text style={styles.headerTitle}>
+          {t("shop.mConfirmOrderTitleShort")}
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -49,7 +58,9 @@ export default function BuyDetailScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <MapPin size={20} color="#16a34a" />
-            <Text style={styles.sectionTitle}>Địa chỉ nhận hàng</Text>
+            <Text style={styles.sectionTitle}>
+              {t("shop.shippingAddress")}
+            </Text>
           </View>
           <Text style={styles.customerName}>Trần Văn Nông | 0987.654.321</Text>
           <Text style={styles.addressText}>
@@ -61,7 +72,7 @@ export default function BuyDetailScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Receipt size={20} color="#f59e0b" />
-            <Text style={styles.sectionTitle}>Tóm tắt đơn hàng</Text>
+            <Text style={styles.sectionTitle}>{t("shop.mOrderSummary")}</Text>
           </View>
           <View style={styles.orderRow}>
             <Text style={styles.orderItem}>Nấm đối kháng Trichoderma (x2)</Text>
@@ -77,20 +88,20 @@ export default function BuyDetailScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <CreditCard size={20} color="#3b82f6" />
-            <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+            <Text style={styles.sectionTitle}>{t("shop.mPaymentMethod")}</Text>
           </View>
           <View style={styles.methodBox}>
             <Text style={styles.methodText}>
-              Thanh toán khi nhận hàng (COD)
+              {t("shop.mCod")}
             </Text>
           </View>
 
           <View style={[styles.sectionHeader, { marginTop: 16 }]}>
             <Truck size={20} color="#6366f1" />
-            <Text style={styles.sectionTitle}>Đơn vị vận chuyển</Text>
+            <Text style={styles.sectionTitle}>{t("shop.mCarrier")}</Text>
           </View>
           <View style={styles.methodBox}>
-            <Text style={styles.methodText}>Giao hàng nhanh (2-3 ngày)</Text>
+            <Text style={styles.methodText}>{t("shop.mCarrierFast")}</Text>
           </View>
         </View>
       </ScrollView>
@@ -103,15 +114,17 @@ export default function BuyDetailScreen() {
         ]}
       >
         <View style={styles.calcRow}>
-          <Text style={styles.calcLabel}>Tạm tính:</Text>
+          <Text style={styles.calcLabel}>{t("shop.mSubtotalLabel")}</Text>
           <Text style={styles.calcValue}>170.000đ</Text>
         </View>
         <View style={styles.calcRow}>
-          <Text style={styles.calcLabel}>Phí vận chuyển:</Text>
+          <Text style={styles.calcLabel}>{t("shop.mShippingFeeLabel")}</Text>
           <Text style={styles.calcValue}>30.000đ</Text>
         </View>
         <View style={[styles.calcRow, styles.calcTotalRow]}>
-          <Text style={styles.calcTotalLabel}>Tổng thanh toán:</Text>
+          <Text style={styles.calcTotalLabel}>
+            {t("shop.mGrandTotalLabel")}
+          </Text>
           <Text style={styles.calcTotalPrice}>200.000đ</Text>
         </View>
 
@@ -119,7 +132,9 @@ export default function BuyDetailScreen() {
           style={styles.placeOrderBtn}
           onPress={handlePlaceOrder}
         >
-          <Text style={styles.placeOrderText}>Tiến hành đặt hàng</Text>
+          <Text style={styles.placeOrderText}>
+            {t("shop.mPlaceOrderLong")}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
