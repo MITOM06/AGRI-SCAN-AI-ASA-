@@ -1,0 +1,15 @@
+{
+  // Cấu hình chỉ dùng để chạy `npx tsc -p tsconfig.check.json --noEmit`.
+  //
+  // tsconfig.json chính include cả ".next/**" nên tsc phải nạp toàn bộ type sinh
+  // ra lúc build và hết bộ nhớ. File này thu hẹp về đúng mã nguồn.
+  //
+  // Cần thiết vì next.config.ts đặt typescript.ignoreBuildErrors: true —
+  // `next build` sẽ KHÔNG báo lỗi kiểu, nên đây là cửa duy nhất bắt được chúng.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", ".next"]
+}
