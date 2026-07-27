@@ -17,11 +17,15 @@ import { profile } from "./profile";
 import { admin } from "./admin";
 import { feedback } from "./feedback";
 import { billing } from "./billing";
+import { privacy, terms, about } from "./static-pages";
 
 export const en: Dictionary = {
   admin,
   feedback,
   billing,
+  privacy,
+  terms,
+  about,
   weather,
   shop,
   myGarden,

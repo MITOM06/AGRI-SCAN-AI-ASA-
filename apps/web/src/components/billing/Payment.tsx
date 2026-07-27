@@ -14,17 +14,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { userApi } from "@agri-scan/shared";
 import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/context/I18nContext";
 
+// `features` giữ KEY i18n vì đây là hằng số cấp module (không gọi được hook)
 const DEFAULT_PLAN = {
   name: "Plus",
   price: "129,000",
   subtotal: "117.273",
   vat: "11.727",
   features: [
-    "Mô hình AI nâng cao",
-    "Tăng giới hạn tin nhắn & tải ảnh",
-    "Tạo hình ảnh chất lượng cao",
-    "Bộ nhớ mở rộng",
+    "billing.benefit1",
+    "billing.benefit2",
+    "billing.benefit3",
+    "billing.benefit4",
   ],
 };
 
@@ -43,6 +45,7 @@ function formatExpiry(value: string) {
 }
 
 export function Payment() {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshUser, isAuthenticated, isLoading: isAuthLoading } = useAuth();
@@ -60,6 +63,8 @@ export function Payment() {
   const subtotal = searchParams.get("subtotal") || DEFAULT_PLAN.subtotal;
   const vat = searchParams.get("vat") || DEFAULT_PLAN.vat;
   const featuresRaw = searchParams.get("features");
+  // Từ URL: UpdatePlan đã dịch sẵn (chuỗi hoàn chỉnh). Fallback: KEY i18n.
+  // t() xử lý được cả hai — key thì dịch, chuỗi lạ thì trả nguyên văn.
   const features: string[] = featuresRaw
     ? JSON.parse(featuresRaw)
     : DEFAULT_PLAN.features;
@@ -87,7 +92,7 @@ export function Payment() {
         VIP: 'VIP',
       };
       const planKey = PLAN_MAP[plan.name.toUpperCase()];
-      if (!planKey) throw new Error('Gói không hợp lệ');
+      if (!planKey) throw new Error(t('billing.invalidPlan'));
 
       // Gọi lại /auth/profile để đồng bộ user state trong context
       await refreshUser();
@@ -96,7 +101,7 @@ export function Payment() {
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
-        "Thanh toán thất bại. Vui lòng thử lại.";
+        t("billing.paymentFailed");
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -111,8 +116,8 @@ export function Payment() {
           <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-600 font-medium">
             {isGuest
-              ? "Bạn cần đăng nhập để nâng cấp gói. Đang chuyển tới trang đăng nhập..."
-              : "Đang kiểm tra tài khoản..."}
+              ? t("billing.redirectingToLogin")
+              : t("billing.checkingAccount")}
           </p>
         </div>
       </div>
@@ -145,7 +150,7 @@ export function Payment() {
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors font-medium bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm"
           >
             <ArrowLeft size={18} />
-            Quay lại chọn gói
+            {t("billing.backToPlans")}
           </motion.button>
         </motion.div>
 
@@ -173,14 +178,14 @@ export function Payment() {
                   <CheckCircle2 size={40} className="text-emerald-600" />
                 </motion.div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Thanh toán thành công!
+                  {t("billing.paymentSuccess")}
                 </h2>
                 <p className="text-gray-500 text-sm mb-7">
-                  Gói{" "}
+                  {t("billing.planActivatedPrefix")}{" "}
                   <span className="text-emerald-600 font-semibold">
                     {plan.name}
                   </span>{" "}
-                  đã được kích hoạt cho tài khoản của bạn.
+                  {t("billing.planActivatedSuffix")}
                 </p>
                 <motion.button
                   whileHover={{ scale: 1.03 }}
@@ -188,7 +193,7 @@ export function Payment() {
                   onClick={() => router.push("/scan")}
                   className="w-full bg-linear-to-r from-emerald-500 to-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-emerald-200"
                 >
-                  Bắt đầu sử dụng
+                  {t("billing.startUsing")}
                 </motion.button>
               </motion.div>
             </motion.div>
@@ -204,7 +209,7 @@ export function Payment() {
             className="lg:col-span-7 space-y-6"
           >
             <h2 className="text-2xl font-bold text-gray-900">
-              Thông tin thanh toán
+              {t("billing.paymentInfo")}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -212,7 +217,7 @@ export function Payment() {
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-5">
                   <h3 className="font-semibold text-gray-900">
-                    Phương thức thanh toán
+                    {t("billing.paymentMethod")}
                   </h3>
                   <div className="flex gap-2">
                     <div className="h-6 w-10 bg-blue-600 rounded flex items-center justify-center text-white text-[8px] font-bold italic">
@@ -230,7 +235,7 @@ export function Payment() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Số thẻ
+                      {t("billing.cardNumber")}
                     </label>
                     <div className="relative">
                       <input
@@ -253,7 +258,7 @@ export function Payment() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Ngày hết hạn
+                        {t("billing.expiryDate")}
                       </label>
                       <input
                         type="text"
@@ -268,7 +273,7 @@ export function Payment() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Mã CVC
+                        {t("billing.cvc")}
                       </label>
                       <div className="relative">
                         <input
@@ -297,16 +302,16 @@ export function Payment() {
               {/* Billing address */}
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <h3 className="font-semibold text-gray-900 mb-5">
-                  Địa chỉ thanh toán
+                  {t("billing.billingAddress")}
                 </h3>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Họ và tên
+                      {t("billing.fullName")}
                     </label>
                     <input
                       type="text"
-                      placeholder="Nguyễn Văn A"
+                      placeholder={t("billing.fullNamePlaceholder")}
                       required
                       value={holderName}
                       onChange={(e) => setHolderName(e.target.value)}
@@ -316,11 +321,11 @@ export function Payment() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Quốc gia / Khu vực
+                      {t("billing.country")}
                     </label>
                     <div className="relative">
                       <select className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition-all appearance-none bg-white text-sm">
-                        <option>Việt Nam</option>
+                        <option>{t("billing.countryVietnam")}</option>
                         <option>United States</option>
                         <option>Singapore</option>
                       </select>
@@ -333,11 +338,11 @@ export function Payment() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Địa chỉ
+                      {t("billing.address")}
                     </label>
                     <input
                       type="text"
-                      placeholder="Số nhà, tên đường..."
+                      placeholder={t("billing.addressPlaceholder")}
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition-all text-sm"
@@ -361,7 +366,9 @@ export function Payment() {
                 whileTap={!isLoading ? { scale: 0.98 } : {}}
                 className="w-full lg:hidden bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {isLoading ? "Đang xử lý..." : `Đăng ký ngay — ₫${plan.price}`}
+                {isLoading
+                  ? t("common.processing")
+                  : t("billing.subscribeNowWithPrice", { price: plan.price })}
               </motion.button>
             </form>
           </motion.div>
@@ -380,9 +387,11 @@ export function Payment() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">
-                    Gói {plan.name}
+                    {t("billing.planNamed", { name: plan.name })}
                   </h3>
-                  <p className="text-xs text-gray-400">Thanh toán hàng tháng</p>
+                  <p className="text-xs text-gray-400">
+                    {t("billing.billedMonthly")}
+                  </p>
                 </div>
               </div>
 
@@ -399,7 +408,7 @@ export function Payment() {
                     <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
                       <Zap size={11} className="text-emerald-600" />
                     </div>
-                    {f}
+                    {t(f)}
                   </motion.li>
                 ))}
               </ul>
@@ -407,7 +416,7 @@ export function Payment() {
               {/* Price breakdown */}
               <div className="border-t border-gray-100 pt-5 space-y-3 mb-7">
                 <div className="flex justify-between text-sm text-gray-500">
-                  <span>Giá gói hàng tháng</span>
+                  <span>{t("billing.monthlyPrice")}</span>
                   <span>₫{plan.subtotal}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-500">
@@ -415,7 +424,7 @@ export function Payment() {
                   <span>₫{plan.vat}</span>
                 </div>
                 <div className="flex justify-between text-base font-bold text-gray-900 pt-3 border-t border-gray-100">
-                  <span>Thanh toán hôm nay</span>
+                  <span>{t("billing.dueToday")}</span>
                   <span className="text-emerald-600">₫{plan.price}</span>
                 </div>
               </div>
@@ -428,24 +437,24 @@ export function Payment() {
                 whileTap={!isLoading ? { scale: 0.97 } : {}}
                 className="hidden lg:block w-full bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {isLoading ? "Đang xử lý..." : "Đăng ký ngay"}
+                {isLoading ? t("common.processing") : t("billing.subscribeNow")}
               </motion.button>
 
               <p className="text-xs text-gray-400 mt-5 text-center leading-relaxed">
-                Tự động gia hạn ₫{plan.price}/tháng.{" "}
+                {t("billing.autoRenewPrefix", { price: plan.price })}{" "}
                 <span className="text-emerald-600 cursor-pointer hover:underline">
-                  Hủy bất kỳ lúc nào
+                  {t("billing.cancelAnytime")}
                 </span>{" "}
-                trong Cài đặt. Bằng việc đăng ký, bạn đồng ý với{" "}
+                {t("billing.autoRenewSuffix")}{" "}
                 <span className="text-emerald-600 cursor-pointer hover:underline">
-                  Điều khoản sử dụng
+                  {t("billing.termsOfUse")}
                 </span>
                 .
               </p>
 
               <div className="flex items-center justify-center gap-1.5 mt-4 text-xs text-gray-400">
                 <Shield size={12} />
-                <span>Thanh toán bảo mật & mã hóa SSL</span>
+                <span>{t("billing.securePayment")}</span>
               </div>
             </motion.div>
           </div>

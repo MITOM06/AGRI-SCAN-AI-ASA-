@@ -48,4 +48,56 @@ export const billing = {
     "You need to sign in or create an account to upgrade. We'll bring you straight back to this page afterwards.",
   loginNow: "Sign in now",
   createAccount: "Create an account",
+
+  // ── Checkout page ─────────────────────────────────────────────────────
+  // Benefits listed in the right-hand column
+  benefit1: "Advanced AI model",
+  benefit2: "Higher message & upload limits",
+  benefit3: "High-quality image generation",
+  benefit4: "Extended memory",
+
+  // Waiting / redirecting states
+  redirectingToLogin:
+    "You need to sign in to upgrade. Redirecting to the sign-in page...",
+  checkingAccount: "Checking your account...",
+  backToPlans: "Back to plans",
+
+  // Success
+  paymentSuccess: "Payment successful!",
+  planActivatedPrefix: "The",
+  planActivatedSuffix: "plan is now active on your account.",
+  startUsing: "Start using it",
+
+  // Card form
+  paymentInfo: "Payment details",
+  paymentMethod: "Payment method",
+  cardNumber: "Card number",
+  expiryDate: "Expiry date",
+  cvc: "CVC",
+
+  // Billing address
+  billingAddress: "Billing address",
+  fullName: "Full name",
+  fullNamePlaceholder: "John Smith",
+  country: "Country / Region",
+  countryVietnam: "Vietnam",
+  address: "Address",
+  addressPlaceholder: "House number, street...",
+
+  // Summary & CTA
+  subscribeNowWithPrice: "Subscribe now — ₫{price}",
+  subscribeNow: "Subscribe now",
+  planNamed: "{name} plan",
+  billedMonthly: "Billed monthly",
+  monthlyPrice: "Monthly plan price",
+  dueToday: "Due today",
+  autoRenewPrefix: "Renews automatically at ₫{price}/month.",
+  cancelAnytime: "Cancel anytime",
+  autoRenewSuffix: "in Settings. By subscribing you agree to the",
+  termsOfUse: "Terms of Use",
+  securePayment: "Secure payment with SSL encryption",
+
+  // Errors
+  invalidPlan: "Invalid plan",
+  paymentFailed: "Payment failed. Please try again.",
 } as const;
