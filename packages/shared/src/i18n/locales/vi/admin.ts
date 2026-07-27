@@ -91,4 +91,65 @@ export const admin = {
   replyPlaceholder: "Nhập câu trả lời chi tiết...",
   replyCancel: "Hủy bỏ",
   replySubmit: "Gửi phản hồi",
+
+  // ── Mobile ────────────────────────────────────────────────────────────
+  // Lời chào theo giờ
+  greetingMorning: "Chào buổi sáng",
+  greetingAfternoon: "Chào buổi chiều",
+  greetingEvening: "Chào buổi tối",
+  adminFallbackName: "Quản trị viên",
+
+  // Tab dưới
+  mTabOverview: "Tổng quan",
+  mTabAccounts: "Tài khoản",
+  mTabReports: "Báo cáo",
+  mTabFeedbacks: "Phản hồi",
+
+  // Lỗi tải dữ liệu
+  mLoadOverviewFailed: "Không thể tải Tổng quan.",
+  mLoadUsersFailed: "Không thể tải danh sách Người dùng.",
+  mLoadRevenueFailed: "Không thể tải Báo cáo doanh thu.",
+  mLoadFeedbacksFailed: "Không thể tải danh sách Phản hồi.",
+
+  // Trả lời phản hồi
+  mErrorEmptyReply: "Vui lòng nhập nội dung trả lời!",
+  mReplySent: "Đã gửi câu trả lời cho người dùng!",
+  mReplySendFailed: "Không thể gửi câu trả lời.",
+
+  // Đăng xuất
+  mLogoutConfirm: "Bạn có chắc chắn muốn đăng xuất khỏi quyền quản trị?",
+
+  // Tab Tổng quan
+  mTotalRevenue: "Tổng Doanh Thu",
+  mRevenueThisMonth: "+ {amount} tháng này",
+  mUsers: "Người dùng",
+  mNewThisMonth: "+ {count} mới",
+  mAiScans: "Lượt quét AI",
+  mAnalyzed: "Đã phân tích",
+  mPlanRatio: "Tỉ lệ gói thành viên",
+  mPlanFreeLabel: "Gói Cơ bản (Free)",
+
+  // Tab Tài khoản
+  mSearchPlaceholder: "Tìm email hoặc tên...",
+  mNoNameYet: "Chưa cập nhật tên",
+
+  // Tab Báo cáo
+  mYearSummary: "Tổng Kết Năm Nay",
+  mTransactions: "Giao Dịch",
+  mMonthlyDetail: "Chi tiết theo tháng",
+  mMonthN: "Tháng {n}",
+  mTransactionCount: "Số giao dịch:",
+  mPlanNamed: "Gói {plan}:",
+
+  // Tab Phản hồi
+  mFilterPending: "Chờ xử lý",
+  mFilterReplied: "Đã trả lời",
+  mNoFeedbackInSection: "Không có phản hồi nào trong mục này.",
+  mAnonymousUser: "Người dùng ẩn danh",
+  mCreatedAtPrefix: "{date} lúc",
+  mReplyPlaceholder: "Nhập câu trả lời của Admin...",
+  mSendReply: "Gửi trả lời",
+  mOpenReply: "Trả lời phản hồi này",
+  mAdminReplied: "Admin đã trả lời:",
+  mRepliedAtPrefix: "Trả lời lúc:",
 } as const;

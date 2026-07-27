@@ -91,4 +91,65 @@ export const admin = {
   replyPlaceholder: "Write a detailed reply...",
   replyCancel: "Cancel",
   replySubmit: "Send reply",
+
+  // ── Mobile ────────────────────────────────────────────────────────────
+  // Time-based greeting
+  greetingMorning: "Good morning",
+  greetingAfternoon: "Good afternoon",
+  greetingEvening: "Good evening",
+  adminFallbackName: "Administrator",
+
+  // Bottom tabs
+  mTabOverview: "Overview",
+  mTabAccounts: "Accounts",
+  mTabReports: "Reports",
+  mTabFeedbacks: "Feedback",
+
+  // Data loading errors
+  mLoadOverviewFailed: "Could not load the overview.",
+  mLoadUsersFailed: "Could not load the user list.",
+  mLoadRevenueFailed: "Could not load the revenue report.",
+  mLoadFeedbacksFailed: "Could not load the feedback list.",
+
+  // Replying to feedback
+  mErrorEmptyReply: "Please enter a reply.",
+  mReplySent: "Your reply has been sent to the user.",
+  mReplySendFailed: "Could not send the reply.",
+
+  // Sign out
+  mLogoutConfirm: "Are you sure you want to sign out of the admin area?",
+
+  // Overview tab
+  mTotalRevenue: "Total revenue",
+  mRevenueThisMonth: "+ {amount} this month",
+  mUsers: "Users",
+  mNewThisMonth: "+ {count} new",
+  mAiScans: "AI scans",
+  mAnalyzed: "Analysed",
+  mPlanRatio: "Membership mix",
+  mPlanFreeLabel: "Basic plan (Free)",
+
+  // Accounts tab
+  mSearchPlaceholder: "Search email or name...",
+  mNoNameYet: "No name set",
+
+  // Reports tab
+  mYearSummary: "This year's summary",
+  mTransactions: "Transactions",
+  mMonthlyDetail: "Monthly breakdown",
+  mMonthN: "Month {n}",
+  mTransactionCount: "Transactions:",
+  mPlanNamed: "{plan} plan:",
+
+  // Feedback tab
+  mFilterPending: "Awaiting reply",
+  mFilterReplied: "Replied",
+  mNoFeedbackInSection: "No feedback in this section.",
+  mAnonymousUser: "Anonymous user",
+  mCreatedAtPrefix: "{date} at",
+  mReplyPlaceholder: "Write the admin's reply...",
+  mSendReply: "Send reply",
+  mOpenReply: "Reply to this feedback",
+  mAdminReplied: "Admin replied:",
+  mRepliedAtPrefix: "Replied at:",
 } as const;

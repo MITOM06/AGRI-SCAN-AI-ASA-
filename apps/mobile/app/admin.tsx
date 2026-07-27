@@ -27,8 +27,10 @@ import { UsersTab } from "../components/admin/UsersTab";
 import { ReportTab } from "../components/admin/ReportTab";
 import { FeedbackTab } from "../components/admin/FeedbackTab";
 import type { TabType, FeedbackStatus } from "../components/admin/admin.types";
+import { useT } from "../context/I18nContext";
 
 export default function AdminMobileScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -105,7 +107,7 @@ export default function AdminMobileScreen() {
       const res = await adminApi.getDashboard();
       setDashboardData(res);
     } catch (error) {
-      setErrorMsg("Không thể tải Tổng quan.");
+      setErrorMsg(t("admin.mLoadOverviewFailed"));
     } finally {
       setLoadingDashboard(false);
     }
@@ -121,7 +123,7 @@ export default function AdminMobileScreen() {
       });
       setUsersData(res.data);
     } catch (error) {
-      setErrorMsg("Không thể tải danh sách Người dùng.");
+      setErrorMsg(t("admin.mLoadUsersFailed"));
     } finally {
       setLoadingUsers(false);
     }
@@ -143,7 +145,7 @@ export default function AdminMobileScreen() {
       });
       setReportData(res);
     } catch (error) {
-      setErrorMsg("Không thể tải Báo cáo doanh thu.");
+      setErrorMsg(t("admin.mLoadRevenueFailed"));
     } finally {
       setLoadingReport(false);
     }
@@ -155,7 +157,7 @@ export default function AdminMobileScreen() {
       const res = await adminApi.getFeedbacks(feedbackStatus, 1, 50);
       setFeedbacks(res.data);
     } catch (error) {
-      setErrorMsg("Không thể tải danh sách Phản hồi.");
+      setErrorMsg(t("admin.mLoadFeedbacksFailed"));
     } finally {
       setLoadingFeedback(false);
     }
@@ -177,24 +179,27 @@ export default function AdminMobileScreen() {
 
   const handleReplySubmit = async (feedbackId: string) => {
     if (!replyContent.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập nội dung trả lời!");
+      Alert.alert(t("common.error"), t("admin.mErrorEmptyReply"));
       return;
     }
     try {
       setIsSubmittingReply(true);
       await adminApi.replyFeedback(feedbackId, replyContent);
       if (Platform.OS === "web") {
-        window.alert("Đã gửi câu trả lời cho người dùng!");
+        window.alert(t("admin.mReplySent"));
       } else {
-        Alert.alert("Thành công", "Đã gửi câu trả lời cho người dùng!");
+        Alert.alert(t("common.success"), t("admin.mReplySent"));
       }
       setReplyContent("");
       setReplyingId(null);
       fetchFeedbacksData();
       fetchPendingFeedbackCount(); // Cập nhật lại số đếm sau khi trả lời
     } catch (error: any) {
-      const msg = error.response?.data?.message || "Không thể gửi câu trả lời.";
-      Platform.OS === "web" ? window.alert(msg) : Alert.alert("Lỗi", msg);
+      const msg =
+        error.response?.data?.message || t("admin.mReplySendFailed");
+      Platform.OS === "web"
+        ? window.alert(msg)
+        : Alert.alert(t("common.error"), msg);
     } finally {
       setIsSubmittingReply(false);
     }
@@ -202,9 +207,7 @@ export default function AdminMobileScreen() {
 
   const handleLogout = async () => {
     if (Platform.OS === "web") {
-      const confirmLogout = window.confirm(
-        "Bạn có chắc chắn muốn đăng xuất khỏi quyền quản trị?",
-      );
+      const confirmLogout = window.confirm(t("admin.mLogoutConfirm"));
       if (confirmLogout) {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
@@ -213,12 +216,12 @@ export default function AdminMobileScreen() {
       }
     } else {
       Alert.alert(
-        "Đăng xuất",
-        "Bạn có chắc chắn muốn đăng xuất khỏi quyền quản trị?",
+        t("nav.logout"),
+        t("admin.mLogoutConfirm"),
         [
-          { text: "Hủy", style: "cancel" },
+          { text: t("common.cancel"), style: "cancel" },
           {
-            text: "Đăng xuất",
+            text: t("nav.logout"),
             style: "destructive",
             onPress: async () => {
               await SecureStore.deleteItemAsync("accessToken");
@@ -236,9 +239,9 @@ export default function AdminMobileScreen() {
   // Lời chào theo thời gian thực
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Chào buổi sáng";
-    if (hour < 18) return "Chào buổi chiều";
-    return "Chào buổi tối";
+    if (hour < 12) return t("admin.greetingMorning");
+    if (hour < 18) return t("admin.greetingAfternoon");
+    return t("admin.greetingEvening");
   };
 
   return (
@@ -258,7 +261,7 @@ export default function AdminMobileScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.greetingText}>{getGreeting()},</Text>
             <Text style={styles.adminName} numberOfLines={1}>
-              {adminInfo?.fullName || "Quản trị viên"}
+              {adminInfo?.fullName || t("admin.adminFallbackName")}
             </Text>
             <Text style={styles.adminEmail} numberOfLines={1}>
               {adminInfo?.email || "admin@agri-scan.com"}
@@ -352,7 +355,7 @@ export default function AdminMobileScreen() {
               activeTab === "DASHBOARD" && styles.bottomTabTextActive,
             ]}
           >
-            Tổng quan
+            {t("admin.mTabOverview")}
           </Text>
         </TouchableOpacity>
 
@@ -370,7 +373,7 @@ export default function AdminMobileScreen() {
               activeTab === "USERS" && styles.bottomTabTextActive,
             ]}
           >
-            Tài khoản
+            {t("admin.mTabAccounts")}
           </Text>
         </TouchableOpacity>
 
@@ -388,7 +391,7 @@ export default function AdminMobileScreen() {
               activeTab === "REPORT" && styles.bottomTabTextActive,
             ]}
           >
-            Báo cáo
+            {t("admin.mTabReports")}
           </Text>
         </TouchableOpacity>
 
@@ -416,7 +419,7 @@ export default function AdminMobileScreen() {
               activeTab === "FEEDBACK" && styles.bottomTabTextActive,
             ]}
           >
-            Phản hồi
+            {t("admin.mTabFeedbacks")}
           </Text>
         </TouchableOpacity>
       </View>

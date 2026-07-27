@@ -7,6 +7,7 @@ import {
 } from "@agri-scan/shared";
 
 import { styles } from "../../styles/admin.styles";
+import { useT } from "../../context/I18nContext";
 
 interface DashboardTabProps {
   loading: boolean;
@@ -15,6 +16,7 @@ interface DashboardTabProps {
 }
 
 export function DashboardTab({ loading, refreshing, data }: DashboardTabProps) {
+  const t = useT();
   return (
     <View style={styles.tabContent}>
       {loading && !refreshing ? (
@@ -34,7 +36,7 @@ export function DashboardTab({ loading, refreshing, data }: DashboardTabProps) {
             >
               <View style={styles.statCardHeader}>
                 <Text style={[styles.statTitle, { color: "#94a3b8" }]}>
-                  Tổng Doanh Thu
+                  {t("admin.mTotalRevenue")}
                 </Text>
                 <View
                   style={[
@@ -49,46 +51,50 @@ export function DashboardTab({ loading, refreshing, data }: DashboardTabProps) {
                 {formatCurrency(data.revenue.total)}
               </Text>
               <Text style={[styles.statTrend, { color: "#4ade80" }]}>
-                + {formatCurrency(data.revenue.thisMonth)} tháng này
+                {t("admin.mRevenueThisMonth", {
+                  amount: formatCurrency(data.revenue.thisMonth),
+                })}
               </Text>
             </View>
 
             <View style={styles.halfCard}>
               <View style={styles.statCardHeader}>
-                <Text style={styles.statTitle}>Người dùng</Text>
+                <Text style={styles.statTitle}>{t("admin.mUsers")}</Text>
                 <Users size={18} color="#3b82f6" />
               </View>
               <Text style={styles.statValue}>
                 {formatNumber(data.users.total)}
               </Text>
               <Text style={styles.statTrend}>
-                + {data.users.newThisMonth} mới
+                {t("admin.mNewThisMonth", { count: data.users.newThisMonth })}
               </Text>
             </View>
 
             <View style={styles.halfCard}>
               <View style={styles.statCardHeader}>
-                <Text style={styles.statTitle}>Lượt quét AI</Text>
+                <Text style={styles.statTitle}>{t("admin.mAiScans")}</Text>
                 <ScanFace size={18} color="#a855f7" />
               </View>
               <Text style={styles.statValue}>
                 {formatNumber(data.totalScans)}
               </Text>
               <Text style={[styles.statTrend, { color: "#64748b" }]}>
-                Đã phân tích
+                {t("admin.mAnalyzed")}
               </Text>
             </View>
           </View>
 
           <View style={styles.cardContainer}>
-            <Text style={styles.cardTitle}>Tỉ lệ gói thành viên</Text>
+            <Text style={styles.cardTitle}>{t("admin.mPlanRatio")}</Text>
 
             <View style={styles.planItem}>
               <View style={styles.planLeft}>
                 <View style={[styles.planIcon, { backgroundColor: "#f1f5f9" }]}>
                   <Users size={16} color="#475569" />
                 </View>
-                <Text style={styles.planText}>Gói Cơ bản (Free)</Text>
+                <Text style={styles.planText}>
+                  {t("admin.mPlanFreeLabel")}
+                </Text>
               </View>
               <Text style={styles.planValue}>
                 {formatNumber(data.users.byPlan.FREE)}
@@ -100,7 +106,7 @@ export function DashboardTab({ loading, refreshing, data }: DashboardTabProps) {
                 <View style={[styles.planIcon, { backgroundColor: "#dcfce3" }]}>
                   <Star size={16} color="#16a34a" />
                 </View>
-                <Text style={styles.planText}>Gói PREMIUM</Text>
+                <Text style={styles.planText}>{t("admin.planPremium")}</Text>
               </View>
               <Text style={styles.planValue}>
                 {formatNumber(data.users.byPlan.PREMIUM)}
@@ -112,7 +118,7 @@ export function DashboardTab({ loading, refreshing, data }: DashboardTabProps) {
                 <View style={[styles.planIcon, { backgroundColor: "#fef3c7" }]}>
                   <Crown size={16} color="#d97706" />
                 </View>
-                <Text style={styles.planText}>Gói VIP</Text>
+                <Text style={styles.planText}>{t("admin.planVip")}</Text>
               </View>
               <Text style={styles.planValue}>
                 {formatNumber(data.users.byPlan.VIP)}
