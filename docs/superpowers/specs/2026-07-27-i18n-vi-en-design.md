@@ -163,15 +163,26 @@ Dự án hiện không có test cho web/mobile, nên xác minh bằng:
   hiển thị cả desktop lẫn mobile → **nút chuyển ngôn ngữ có mặt trên mọi trang**.
 - `pnpm build:packages` và `pnpm --filter web build` đều xanh.
 
-**Đã chuyển sang `t()`:** layout (Navbar, Header, Footer), auth (Login, Register,
-ForgotPassword, RegisterOtp, Callback), landing (Hero, Features, FloatingCards),
-scan (Scanner), encyclopedia (TreeDictionary), weather (WeatherPage),
-shop (ShopPage, ProductDetailPage), constants/shop.
+**Đã chuyển sang `t()` — 14/17 cụm của web:** layout, auth, landing, scan,
+encyclopedia, weather, shop (toàn bộ: danh sách, chi tiết, giỏ, thanh toán, đơn
+hàng), my-garden (toàn bộ 6 file), community, profile, feedback, billing/UpdatePlan,
+app pages, shell admin, hooks (useScan, useMyGarden), CartContext, constants/shop.
 
-**Còn lại (~33 file web + 43 file mobile):** admin (4), billing (2), community,
-feedback, my-garden (6), profile, shop cart/checkout/orders (3), static (3),
-app pages (8), hooks (3), CartContext — và **toàn bộ `apps/mobile`** (chưa có
-`I18nContext` lẫn `LanguageSwitcher`).
+**Còn lại 8 file web:**
+`components/billing/Payment.tsx`, `components/static/{AboutPage,Terms,Privacy}.tsx`,
+`components/admin/{Dashboard,Reports,Users,Feedbacks}.tsx`.
+
+**Còn lại toàn bộ `apps/mobile` (43 file)** — chưa có `I18nContext` lẫn
+`LanguageSwitcher`; lõi trong `@agri-scan/shared` đã sẵn sàng dùng lại.
+
+### Hai giới hạn đã biết
+
+1. **`metadata` của Next.js không dịch được** (`app/(main)/encyclopedia/page.tsx`
+   title/description). `metadata` được tính ở server, còn locale nằm ở client —
+   đây là hệ quả trực tiếp của việc chọn toggle client thay vì prefix URL (§3.2).
+   Muốn dịch phần này thì phải chuyển sang `/vi` `/en`.
+2. **Giá tiền luôn định dạng `vi-VN` + "đ"** ở cả hai ngôn ngữ. Đúng theo §7:
+   sản phẩm bán bằng VNĐ nên không đổi theo ngôn ngữ giao diện.
 
 Cách làm cho phần còn lại đã thành khuôn mẫu, lặp lại đúng 3 bước:
 1. `grep` chuỗi tiếng Việt bằng `scripts/find-vietnamese-ui-text.sh`;
