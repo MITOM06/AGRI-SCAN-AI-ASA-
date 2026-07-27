@@ -6,16 +6,69 @@ Overall architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ---
 
-## 1. Rule #1 — Authority & Autonomy
+## 1. Rule #1 — Full Authority & Autonomy (STANDING GRANT)
 
-The project owner has granted Claude **full authority** over this codebase:
+The project owner (MITOM06) grants Claude a **standing, blanket authorization** over this
+repository. This grant does not expire, does not need re-confirming per task, per session,
+or per file, and applies to every agent/subagent spawned in this repo.
 
-- ✅ May **edit / create / delete / refactor** any file/code as needed.
-- ✅ May run build/test/lint and normal git operations while working.
-- ✅ **Be proactive**: act when you have enough information; do not re-ask for anything you can infer or reasonably default.
-- ❓ **Only ask** at **direction decisions**: major architecture changes, choosing between design directions you cannot decide yourself, changing the scope of work, or hard-to-reverse/outward-facing operations (deploy, delete data, public push).
+### 1.1 What Claude MAY do without asking
 
-> **Act by default, ask only at forks.**
+Everything below is **pre-approved**. Do it and report afterwards — never ask "có nên… không?" first:
+
+- **Files** — create, edit, rename, move, refactor, split, merge, or delete any file anywhere
+  in the repo, including `apps/**`, `packages/**`, `infra/**`, `docs/**`, `.claude/**`,
+  config files (`tsconfig`, `eslint`, `tailwind`, `package.json`, `docker-compose.yml`), and
+  this `CLAUDE.md` itself.
+- **Code** — rewrite modules, change internal APIs, restructure folders, rename symbols across
+  the monorepo, remove dead code, upgrade/add/remove dependencies.
+- **Commands** — run any build / lint / test / typecheck / codegen / seed / dev-server /
+  `docker compose up` command; read logs; inspect the local DB.
+- **Git (local)** — `status`, `diff`, `log`, `add`, `commit`, `branch`, `checkout`, `stash`,
+  `merge`, `rebase` on feature branches.
+- **Decisions inside a chosen direction** — naming, file layout, error handling, DTO shape,
+  which helper to extract, test strategy, how to break a task into steps. These are Claude's
+  call, not the owner's.
+
+### 1.2 The ONLY things Claude must ask about
+
+Ask **only** when the answer is a *direction* the owner alone owns, or when the action is
+hard to undo / reaches outside this machine:
+
+1. **Major architecture forks** — replacing a database, splitting/merging a service, changing
+   the auth model, changing the monorepo layout.
+2. **Technology choices** — adopting a new framework/library/paid service where two or more
+   sensible options exist and the trade-off is a matter of taste or budget, not correctness.
+3. **Scope changes** — the task turns out to be much larger or different from what was asked
+   (e.g. "fix this bug" actually requires rewriting a whole module).
+4. **Irreversible / outward-facing actions** — `git push`, force-push, opening a PR, merging to
+   `main`, deploying, dropping a production DB or collection, deleting user data, publishing a
+   package, rotating/committing secrets, any spend of money.
+5. **Genuine 50/50 ambiguity** — two readings of the request lead to materially different work
+   and there is no defensible default.
+
+Anything not on this list of 5: **just do it.**
+
+### 1.3 How to ask, when asking is required
+
+Do not stop work to ask. Finish every part that does not depend on the answer, then ask **one**
+consolidated question with a **recommended option** ("Tôi đề xuất A vì…"), and state the
+assumption you would proceed under if the owner doesn't reply.
+
+### 1.4 What this rule does NOT waive
+
+- **Quality Gate (§6)** stays mandatory. Full authority means "don't ask permission", *not*
+  "skip verification". Never claim done/fixed/passing without running the command and reading
+  the output.
+- **No secrets in git.** `.env` values stay out of commits.
+- Destructive shell commands outside the repo (`rm -rf /`, `sudo`, touching other projects)
+  remain off-limits — the grant covers *this* codebase.
+
+> **Act by default. Ask only at the 5 forks in §1.2. Verify before claiming done.**
+
+Machine-enforced counterpart: [`.claude/settings.json`](.claude/settings.json) sets
+`permissions.defaultMode: "dontAsk"` so the yes/no prompts don't appear; its `deny` / `ask`
+lists mirror §1.2 and §1.4.
 
 ## 2. Language
 
@@ -102,3 +155,4 @@ Definitions live in `.claude/agents/` and `.claude/skills/`. See [`.claude/READM
 | Date | Change | Target | Reason |
 |------|--------|--------|--------|
 | 2026-07-10 | Bootstrap the harness (5 agents + orchestrator + verify) | all of `.claude/` | Initial setup |
+| 2026-07-26 | Expand Rule #1 into a standing full-authority grant + machine enforcement | `CLAUDE.md` §1, `.claude/settings.json` | Owner wants no yes/no approval prompts; only direction/tech/scope/irreversible decisions escalate |
