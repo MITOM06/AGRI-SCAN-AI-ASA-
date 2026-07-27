@@ -150,4 +150,20 @@ export const about = {
   ctaDesc:
     "Trải nghiệm sức mạnh của AI trong việc chẩn đoán và điều trị bệnh cây trồng ngay hôm nay. Hoàn toàn miễn phí cho các tính năng cơ bản.",
   ctaButton: "Bắt đầu quét ảnh ngay",
+
+  // ─── Màn "Về chúng tôi" trên mobile (app/about.tsx), tiền tố `m` ───
+  mTitle: "Về chúng tôi",
+  mVersion: "Phiên bản {version}",
+  mIntroTitle: "Giới thiệu",
+  mIntroPara1:
+    "Agri-Scan AI là trợ lý nông nghiệp thông minh, ứng dụng công nghệ Trí Tuệ Nhân Tạo (AI) tiên tiến nhất để giúp nhà nông chẩn đoán bệnh cây trồng qua hình ảnh nhanh chóng và chính xác.",
+  mIntroPara2:
+    "Sứ mệnh của chúng tôi là bảo vệ mùa màng, tối ưu hóa năng suất và hướng tới một nền nông nghiệp xanh, bền vững.",
+
+  mSectionSupport: "Hỗ trợ & Liên hệ",
+  mLinkWebsite: "Trang web chính thức",
+  mLinkEmail: "Liên hệ hỗ trợ",
+  mSectionLegal: "Pháp lý",
+
+  mDevelopedBy: "Phát triển bởi đội ngũ Agri-Scan.",
 } as const;

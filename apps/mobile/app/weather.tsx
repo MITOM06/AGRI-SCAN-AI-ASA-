@@ -120,7 +120,7 @@ export default function WeatherScreen() {
       setErrorMsg("");
       let lat = 10.8231;
       let lon = 106.6297;
-      let cName = "TP.Hồ Chí Minh";
+      let cName = t("weather.defaultCity");
 
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();

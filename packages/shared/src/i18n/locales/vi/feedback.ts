@@ -34,4 +34,34 @@ export const feedback = {
   errorEmptyContent: "Vui lòng nhập nội dung phản hồi.",
   submitSuccess: "Phản hồi đã được gửi thành công!",
   submitFailed: "Có lỗi xảy ra khi gửi phản hồi.",
+
+  // ─── Màn phản hồi trên mobile (app/feedback.tsx), tiền tố `m` ───
+  mTitle: "Hỗ Trợ & Phản Hồi",
+  mTabSend: "Gửi góp ý",
+  mTabHistory: "Lịch sử của tôi",
+
+  // Nhãn chủ đề — `id` (GENERAL, BUG, ...) là mã gửi lên API, không dịch
+  mCatGeneral: "Hỗ trợ chung",
+  mCatBug: "Báo lỗi ứng dụng",
+  mCatFeature: "Góp ý tính năng",
+  mCatComplaint: "Khiếu nại",
+
+  mIntro:
+    "Bạn đang gặp vấn đề hay có ý tưởng hay? Hãy chia sẻ cùng Agri-Scan để chúng tôi cải thiện ứng dụng nhé!",
+  mLabelCategory: "Chủ đề phản hồi:",
+  mLabelContent: "Nội dung chi tiết:",
+  mContentPlaceholder: "Mô tả chi tiết vấn đề bạn đang gặp phải...",
+  mSubmit: "Gửi cho Ban Quản Trị",
+
+  mErrorTooShort:
+    "Vui lòng nhập nội dung phản hồi ít nhất 10 ký tự để Admin hiểu rõ vấn đề nhé!",
+  mSubmitSuccessWebAlert: "🎉 Gửi thành công! Cảm ơn bạn đã gửi phản hồi.",
+  mSubmitSuccessTitle: "Gửi thành công!",
+  mSubmitSuccessBody:
+    "Cảm ơn bạn đã gửi phản hồi. Ban quản trị sẽ xem xét sớm nhất.",
+  mSubmitFailed: "Không thể gửi phản hồi lúc này.",
+
+  mHistoryEmpty: "Bạn chưa gửi phản hồi nào.",
+  mAdminReplied: "Ban Quản Trị đã trả lời:",
+  mPending: "Đang chờ Admin xử lý...",
 } as const;

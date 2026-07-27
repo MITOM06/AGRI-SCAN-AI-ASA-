@@ -21,8 +21,11 @@ import { privacy, terms, about } from "./static-pages";
 import { settings } from "./settings";
 import { home } from "./home";
 import { notifications } from "./notifications";
+import { tips, onboarding } from "./guides";
 
 export const vi = {
+  tips,
+  onboarding,
   notifications,
   settings,
   home,

@@ -34,4 +34,34 @@ export const feedback = {
   errorEmptyContent: "Please enter your feedback.",
   submitSuccess: "Your feedback has been sent!",
   submitFailed: "Something went wrong while sending your feedback.",
+
+  // ─── Mobile feedback screen (app/feedback.tsx), `m` prefix ───
+  mTitle: "Support & Feedback",
+  mTabSend: "Send feedback",
+  mTabHistory: "My history",
+
+  // Topic labels — `id` (GENERAL, BUG, ...) is the API code, never translated
+  mCatGeneral: "General support",
+  mCatBug: "Report a bug",
+  mCatFeature: "Feature suggestion",
+  mCatComplaint: "Complaint",
+
+  mIntro:
+    "Run into a problem, or have a good idea? Share it with Agri-Scan so we can improve the app!",
+  mLabelCategory: "Feedback topic:",
+  mLabelContent: "Details:",
+  mContentPlaceholder: "Describe the problem you are running into...",
+  mSubmit: "Send to the team",
+
+  mErrorTooShort:
+    "Please write at least 10 characters so the admins understand the issue.",
+  mSubmitSuccessWebAlert: "🎉 Sent! Thanks for your feedback.",
+  mSubmitSuccessTitle: "Sent!",
+  mSubmitSuccessBody:
+    "Thanks for your feedback. The team will review it as soon as possible.",
+  mSubmitFailed: "Cannot send feedback right now.",
+
+  mHistoryEmpty: "You have not sent any feedback yet.",
+  mAdminReplied: "The team replied:",
+  mPending: "Waiting for an admin...",
 } as const;

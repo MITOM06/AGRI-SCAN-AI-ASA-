@@ -227,4 +227,5 @@ export const shop = {
   mErrorNoDescription: "Vui lòng nhập mô tả sản phẩm!",
   mProductCreated: "🎉 Đăng bán sản phẩm thành công!",
   mProductCreateFailed: "Có lỗi xảy ra, vui lòng thử lại sau.",
+  mProductCreateErrorPrefix: "LỖI ĐĂNG BÁN: {message}",
 } as const;

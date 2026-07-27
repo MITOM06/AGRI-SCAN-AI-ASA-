@@ -148,4 +148,20 @@ export const about = {
   ctaDesc:
     "Experience the power of AI for diagnosing and treating crop disease today. Core features are completely free.",
   ctaButton: "Start scanning now",
+
+  // ─── Mobile "About us" screen (app/about.tsx), `m` prefix ───
+  mTitle: "About us",
+  mVersion: "Version {version}",
+  mIntroTitle: "Introduction",
+  mIntroPara1:
+    "Agri-Scan AI is a smart farming assistant that uses state-of-the-art artificial intelligence to help farmers diagnose crop disease from a photo, quickly and accurately.",
+  mIntroPara2:
+    "Our mission is to protect harvests, improve yields and work towards green, sustainable agriculture.",
+
+  mSectionSupport: "Support & contact",
+  mLinkWebsite: "Official website",
+  mLinkEmail: "Contact support",
+  mSectionLegal: "Legal",
+
+  mDevelopedBy: "Built by the Agri-Scan team.",
 } as const;

@@ -58,6 +58,8 @@ export const weather = {
   locating: "Finding your location...",
   yourLocation: "Your location",
   currentLocationWeb: "Current location (web)",
+  /** Display name of the fallback location used before location access. */
+  defaultCity: "Ho Chi Minh City",
   loadFailed: "Could not load weather data.",
   loadingStation: "Fetching weather station data...",
 

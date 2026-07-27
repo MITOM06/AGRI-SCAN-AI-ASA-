@@ -88,8 +88,9 @@ export default function AddProductScreen() {
       const errorMsg =
         error.response?.data?.message || t("shop.mProductCreateFailed");
       alert(
-        "LỖI ĐĂNG BÁN: " +
-          (Array.isArray(errorMsg) ? errorMsg.join(", ") : errorMsg),
+        t("shop.mProductCreateErrorPrefix", {
+          message: Array.isArray(errorMsg) ? errorMsg.join(", ") : errorMsg,
+        }),
       );
     } finally {
       setIsSubmitting(false);

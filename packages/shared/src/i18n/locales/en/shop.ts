@@ -225,4 +225,5 @@ export const shop = {
   mErrorNoDescription: "Please enter a product description.",
   mProductCreated: "🎉 Your product is now listed!",
   mProductCreateFailed: "Something went wrong, please try again later.",
+  mProductCreateErrorPrefix: "COULD NOT LIST PRODUCT: {message}",
 } as const;

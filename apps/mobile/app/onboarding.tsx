@@ -12,31 +12,35 @@ import {
 import { useRouter } from "expo-router";
 import { ScanLine, Stethoscope, Users, ArrowRight } from "lucide-react-native";
 
+import { useT } from "../context/I18nContext";
+
 const { width } = Dimensions.get("window");
 
+// Hằng số ở cấp module không gọi được hook → chỉ giữ KEY, dịch lúc render.
 const SLIDES = [
   {
     id: "1",
-    title: "Quét ảnh chuẩn xác",
-    desc: "Chỉ với 1 thao tác chụp ảnh, AI sẽ lập tức nhận diện hơn 500 loại bệnh trên cây trồng.",
+    titleKey: "onboarding.slide1Title",
+    descKey: "onboarding.slide1Desc",
     icon: <ScanLine size={80} color="#16a34a" />,
   },
   {
     id: "2",
-    title: "Bác sĩ thực vật 24/7",
-    desc: "Trợ lý ảo AI sẵn sàng giải đáp mọi thắc mắc và đưa ra phác đồ điều trị sinh học an toàn.",
+    titleKey: "onboarding.slide2Title",
+    descKey: "onboarding.slide2Desc",
     icon: <Stethoscope size={80} color="#3b82f6" />,
   },
   {
     id: "3",
-    title: "Cộng đồng nhà nông",
-    desc: "Kết nối, chia sẻ kinh nghiệm và học hỏi kỹ thuật canh tác từ hàng ngàn chuyên gia.",
+    titleKey: "onboarding.slide3Title",
+    descKey: "onboarding.slide3Desc",
     icon: <Users size={80} color="#f59e0b" />,
   },
 ];
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const t = useT();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
@@ -54,8 +58,8 @@ export default function OnboardingScreen() {
   const renderItem = ({ item }: any) => (
     <View style={styles.slide}>
       <View style={styles.iconCircle}>{item.icon}</View>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.desc}>{item.desc}</Text>
+      <Text style={styles.title}>{t(item.titleKey)}</Text>
+      <Text style={styles.desc}>{t(item.descKey)}</Text>
     </View>
   );
 
@@ -66,7 +70,7 @@ export default function OnboardingScreen() {
         style={styles.skipBtn}
         onPress={() => router.replace("/auth/login")}
       >
-        <Text style={styles.skipText}>Bỏ qua</Text>
+        <Text style={styles.skipText}>{t("onboarding.skip")}</Text>
       </TouchableOpacity>
 
       <FlatList
@@ -101,7 +105,9 @@ export default function OnboardingScreen() {
           activeOpacity={0.8}
         >
           <Text style={styles.nextText}>
-            {currentIndex === SLIDES.length - 1 ? "Bắt đầu ngay" : "Tiếp tục"}
+            {currentIndex === SLIDES.length - 1
+              ? t("onboarding.start")
+              : t("common.next")}
           </Text>
           <ArrowRight size={20} color="#fff" />
         </TouchableOpacity>

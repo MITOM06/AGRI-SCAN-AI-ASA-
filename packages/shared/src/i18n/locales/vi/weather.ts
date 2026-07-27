@@ -58,6 +58,8 @@ export const weather = {
   locating: "Đang định vị...",
   yourLocation: "Vị trí của bạn",
   currentLocationWeb: "Vị trí hiện tại (Web)",
+  /** Tên hiển thị của vị trí mặc định khi chưa có quyền định vị. */
+  defaultCity: "TP.Hồ Chí Minh",
   loadFailed: "Không thể tải dữ liệu thời tiết.",
   loadingStation: "Đang lấy dữ liệu trạm khí tượng...",
 
