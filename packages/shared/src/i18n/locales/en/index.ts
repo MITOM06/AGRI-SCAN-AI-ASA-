@@ -12,11 +12,15 @@ import { encyclopedia } from "./encyclopedia";
 import { weather } from "./weather";
 import { shop } from "./shop";
 import { myGarden } from "./my-garden";
+import { community } from "./community";
+import { profile } from "./profile";
 
 export const en: Dictionary = {
   weather,
   shop,
   myGarden,
+  community,
+  profile,
   common,
   nav,
   footer,
