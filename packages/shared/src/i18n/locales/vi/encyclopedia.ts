@@ -46,6 +46,7 @@ export const encyclopedia = {
   labelLight: "Ánh sáng",
   labelWater: "Nước",
   labelFamily: "Họ",
+  labelHeight: "Chiều cao",
   labelBloomSeason: "Mùa ra hoa",
   labelPlantingSite: "Vị trí trồng",
   labelSoilType: "Loại đất",

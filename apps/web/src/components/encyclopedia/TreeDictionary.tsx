@@ -481,7 +481,7 @@ export function TreeDictionary() {
                       {selectedPlant.height && (
                         <div>
                           <span className="text-xs text-gray-400 uppercase font-bold block mb-1">
-                            Chiều cao
+                            {t("encyclopedia.labelHeight")}
                           </span>
                           <span className="text-gray-700 text-sm">
                             {selectedPlant.height}

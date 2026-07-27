@@ -46,6 +46,7 @@ export const encyclopedia = {
   labelLight: "Light",
   labelWater: "Water",
   labelFamily: "Family",
+  labelHeight: "Height",
   labelBloomSeason: "Blooming season",
   labelPlantingSite: "Planting site",
   labelSoilType: "Soil type",

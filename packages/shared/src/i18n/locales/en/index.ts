@@ -9,8 +9,10 @@ import { auth } from "./auth";
 import { landing } from "./landing";
 import { scan } from "./scan";
 import { encyclopedia } from "./encyclopedia";
+import { weather } from "./weather";
 
 export const en: Dictionary = {
+  weather,
   common,
   nav,
   footer,

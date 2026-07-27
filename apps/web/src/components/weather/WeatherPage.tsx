@@ -25,16 +25,19 @@ import {
 // Import API và Types từ shared package của bạn
 import { weatherApi } from "@agri-scan/shared";
 import { WeatherCategory } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 
-// Danh sách cây trồng khớp với Database của bạn
+// Danh sách cây trồng khớp với Database của bạn.
+// `id` là giá trị gửi lên API — giữ nguyên. `labelKey` mới là phần được dịch.
 const CROP_CATEGORIES = [
-  { id: "ALL", label: "Tất cả", icon: "🌱" },
-  { id: "VEGETABLE", label: "Rau củ", icon: "🥬" },
-  { id: "FRUIT", label: "Cây quả", icon: "🍎" },
-  { id: "FLOWER", label: "Hoa cảnh", icon: "🌸" },
+  { id: "ALL", labelKey: "weather.cropAll", icon: "🌱" },
+  { id: "VEGETABLE", labelKey: "weather.cropVegetable", icon: "🥬" },
+  { id: "FRUIT", labelKey: "weather.cropFruit", icon: "🍎" },
+  { id: "FLOWER", labelKey: "weather.cropFlower", icon: "🌸" },
 ];
 
 export function WeatherPage() {
+  const t = useT();
   const [activeWeather, setActiveWeather] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState("");
@@ -109,27 +112,27 @@ export function WeatherPage() {
     const v = Math.round(uvi);
     if (v <= 2)
       return {
-        label: "Thấp",
+        label: t("weather.uvLow"),
         text: "text-emerald-600",
         bg: "bg-emerald-50",
         border: "border-emerald-100",
       };
     if (v <= 5)
       return {
-        label: "Vừa",
+        label: t("weather.uvModerate"),
         text: "text-yellow-700",
         bg: "bg-yellow-50",
         border: "border-yellow-100",
       };
     if (v <= 7)
       return {
-        label: "Cao",
+        label: t("weather.uvHigh"),
         text: "text-orange-700",
         bg: "bg-orange-50",
         border: "border-orange-100",
       };
     return {
-      label: "Gắt",
+      label: t("weather.uvExtreme"),
       text: "text-red-700",
       bg: "bg-red-50",
       border: "border-red-100",
@@ -196,7 +199,7 @@ export function WeatherPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
         <Loader2 className="animate-spin text-emerald-500 mb-4" size={48} />
         <p className="text-slate-400 font-black animate-pulse tracking-widest text-xs uppercase">
-          Đang đồng bộ dữ liệu vệ tinh...
+          {t("weather.loading")}
         </p>
       </div>
     );
@@ -216,7 +219,8 @@ export function WeatherPage() {
         >
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-emerald-600 font-bold uppercase text-xs tracking-widest">
-              <Navigation size={14} fill="currentColor" /> Vị trí hiện tại
+              <Navigation size={14} fill="currentColor" />{" "}
+              {t("weather.currentLocation")}
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900">
               {formatLocation(activeWeather.location.timezone)}
@@ -224,8 +228,10 @@ export function WeatherPage() {
             <p className="text-slate-400 font-bold text-sm flex items-center gap-2">
               <Calendar size={18} /> {currentDate} •{" "}
               {isCurrent
-                ? "Cập nhật ngay"
-                : `Dự báo lúc ${formatTime(displayData.timestamp)}`}
+                ? t("weather.updatedNow")
+                : t("weather.forecastAt", {
+                    time: formatTime(displayData.timestamp),
+                  })}
             </p>
           </div>
 
@@ -237,7 +243,7 @@ export function WeatherPage() {
                 onClick={() => setSelectedCrop(crop.id as WeatherCategory)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black transition-all whitespace-nowrap ${selectedCrop === crop.id ? "bg-slate-900 text-white shadow-xl" : "text-slate-400 hover:bg-slate-50"}`}
               >
-                <span>{crop.icon}</span> {crop.label}
+                <span>{crop.icon}</span> {t(crop.labelKey)}
               </button>
             ))}
           </div>
@@ -273,8 +279,8 @@ export function WeatherPage() {
                 animate={{ opacity: 1 }}
                 className="bg-emerald-50/30 border-2 border-dashed border-emerald-100 p-6 rounded-[2.5rem] text-center text-emerald-700 font-bold"
               >
-                <Sun className="inline mr-2 animate-pulse" size={20} /> Không có
-                rủi ro thiên tai trong khung giờ này.
+                <Sun className="inline mr-2 animate-pulse" size={20} />{" "}
+                {t("weather.noRisk")}
               </motion.div>
             )}
           </AnimatePresence>
@@ -297,7 +303,8 @@ export function WeatherPage() {
                   <div className="text-xl text-slate-400 mt-4 font-bold flex items-center gap-3">
                     {isCurrent ? (
                       <>
-                        <Thermometer className="text-emerald-400" /> Cảm giác{" "}
+                        <Thermometer className="text-emerald-400" />{" "}
+                        {t("weather.feelsLike")}{" "}
                         {Math.round(
                           activeWeather.weatherData.current.feelsLike,
                         )}
@@ -305,7 +312,8 @@ export function WeatherPage() {
                       </>
                     ) : (
                       <>
-                        <Umbrella className="text-blue-400" /> Xác suất mưa:{" "}
+                        <Umbrella className="text-blue-400" />{" "}
+                        {t("weather.rainChance")}{" "}
                         {displayData.pop}%
                       </>
                     )}
@@ -349,7 +357,9 @@ export function WeatherPage() {
             </div>
             <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight mb-4 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
               {/* Thêm whitespace-nowrap để ép chữ "Bác sĩ cây trồng" luôn nằm trên 1 dòng */}
-              <span className="whitespace-nowrap">Bác sĩ cây trồng</span>
+              <span className="whitespace-nowrap">
+                {t("weather.plantDoctor")}
+              </span>
 
               {/* Tag loại cây */}
               <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-400 uppercase tracking-widest font-black">
@@ -364,12 +374,12 @@ export function WeatherPage() {
                 exit={{ opacity: 0, y: -10 }}
               >
                 <h4 className="text-emerald-700 font-black text-2xl leading-tight mb-2">
-                  {plantDoctor?.title || "Sức khỏe ổn định"}
+                  {plantDoctor?.title || t("weather.healthyDefault")}
                 </h4>
                 <p className="text-slate-500 font-semibold text-lg leading-relaxed italic border-l-4 border-emerald-100 pl-4 mt-4">
                   "
                   {plantDoctor?.message ||
-                    "Điều kiện thời tiết đang rất tốt cho cây phát triển khỏe mạnh."}
+                    t("weather.healthyDefaultDesc")}
                   "
                 </p>
               </motion.div>
@@ -383,8 +393,8 @@ export function WeatherPage() {
           className="bg-white rounded-[3rem] p-10 shadow-xl border border-slate-100 relative overflow-hidden"
         >
           <h3 className="text-2xl font-black text-slate-800 mb-8 px-2 flex items-center gap-3">
-            <div className="w-2 h-8 bg-emerald-500 rounded-full" /> Diễn biến
-            chi tiết 24 giờ
+            <div className="w-2 h-8 bg-emerald-500 rounded-full" />{" "}
+            {t("weather.hourly24")}
           </h3>
           <div className="relative">
             <div
@@ -403,7 +413,7 @@ export function WeatherPage() {
                 className={`flex-shrink-0 min-w-[125px] p-7 rounded-[2.5rem] border-2 transition-all duration-500 cursor-pointer text-center ${isCurrent ? "bg-emerald-500 border-emerald-500 text-white shadow-xl shadow-emerald-200 scale-105" : "bg-slate-50 border-transparent hover:border-emerald-100"}`}
               >
                 <span className="block text-[10px] font-black uppercase opacity-60 tracking-widest mb-2">
-                  Hiện tại
+                  {t("weather.now")}
                 </span>
                 <img
                   src={`https://openweathermap.org/img/wn/${activeWeather.weatherData.current.weatherIcon}.png`}
@@ -450,13 +460,13 @@ export function WeatherPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <DetailCard
             icon={<Wind className="text-blue-500" />}
-            label="Tốc độ Gió"
+            label={t("weather.windSpeed")}
             value={displayData.windSpeed}
             unit="m/s"
           />
           <DetailCard
             icon={<Droplets className="text-cyan-500" />}
-            label="Độ ẩm khí"
+            label={t("weather.humidity")}
             value={displayData.humidity}
             unit="%"
           />
@@ -470,7 +480,7 @@ export function WeatherPage() {
             return (
               <DetailCard
                 icon={<ThermometerSun className="text-orange-500" />}
-                label="Chỉ số UV"
+                label={t("weather.uvIndex")}
                 value={uvIndex}
                 unit={status.label}
                 className={`${status.bg} ${status.text} border-transparent shadow-none`}
@@ -480,7 +490,7 @@ export function WeatherPage() {
 
           <DetailCard
             icon={<Gauge className="text-purple-500" />}
-            label="Áp suất khí"
+            label={t("weather.pressure")}
             value={displayData.pressure ?? 1012}
             unit="hPa"
           />
@@ -492,8 +502,8 @@ export function WeatherPage() {
           className="bg-white rounded-[3rem] p-10 shadow-xl border border-slate-100"
         >
           <h3 className="text-2xl font-black text-slate-800 mb-8 px-2 flex items-center gap-3">
-            <div className="w-2 h-8 bg-blue-500 rounded-full" /> Chu kỳ 8 ngày
-            tới
+            <div className="w-2 h-8 bg-blue-500 rounded-full" />{" "}
+            {t("weather.eightDayCycle")}
           </h3>
           <div className="divide-y divide-slate-50">
             {activeWeather.weatherData.daily.map((day: any, i: number) => (
@@ -503,7 +513,7 @@ export function WeatherPage() {
               >
                 <span className="w-32 font-black text-slate-700 text-lg">
                   {i === 0
-                    ? "Hôm nay"
+                    ? t("weather.today")
                     : new Date(day.timestamp * 1000).toLocaleDateString(
                         "vi-VN",
                         { weekday: "short" },
@@ -521,7 +531,7 @@ export function WeatherPage() {
                   )}
                 </div>
                 <span className="hidden md:block flex-1 text-slate-400 font-bold capitalize text-center">
-                  {day.summary || "Thời tiết ổn định"}
+                  {day.summary || t("weather.stableWeather")}
                 </span>
                 <div className="flex gap-8 font-black text-2xl w-36 justify-end">
                   <span className="text-slate-900">
@@ -539,7 +549,7 @@ export function WeatherPage() {
         {/* PHẦN XEM THÊM (KHÔNG BỚT ĐI) */}
         <div className="flex flex-col items-center justify-center pt-8 gap-4">
           <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">
-            Bạn muốn khám phá thêm?
+            {t("weather.exploreMore")}
           </p>
           <motion.button
             whileHover={{ y: -3, backgroundColor: "#000" }}
@@ -549,11 +559,11 @@ export function WeatherPage() {
           >
             {showMore ? (
               <>
-                Thu gọn <ChevronUp size={20} />
+                {t("weather.collapse")} <ChevronUp size={20} />
               </>
             ) : (
               <>
-                Mở rộng bản đồ & Vùng <ChevronDown size={20} />
+                {t("weather.expandMap")} <ChevronDown size={20} />
               </>
             )}
           </motion.button>
@@ -570,34 +580,39 @@ export function WeatherPage() {
               <div className="bg-white p-12 rounded-[3rem] shadow-xl border border-slate-100 mt-6 relative">
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
                   <h3 className="text-3xl font-black text-slate-800 tracking-tighter">
-                    Dữ liệu các khu vực
+                    {t("weather.regionalData")}
                   </h3>
                   <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1 border border-slate-200">
-                    {["Tất cả", "Bắc Bộ", "Nam Bộ"].map((r) => (
+                    {(
+                      [
+                        "weather.regionAll",
+                        "weather.regionNorth",
+                        "weather.regionSouth",
+                      ] as const
+                    ).map((regionKey) => (
                       <button
-                        key={r}
-                        className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${r === "Tất cả" ? "bg-white shadow-sm text-emerald-600" : "text-slate-400 hover:text-slate-600"}`}
+                        key={regionKey}
+                        className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${regionKey === "weather.regionAll" ? "bg-white shadow-sm text-emerald-600" : "text-slate-400 hover:text-slate-600"}`}
                       >
-                        {r}
+                        {t(regionKey)}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <RegionCard
-                    city="Hà Nội"
-                    status="Trời quang đãng"
+                    city={t("weather.cityHanoi")}
+                    status={t("weather.cityHanoiStatus")}
                     temp={22}
                   />
                   <RegionCard
-                    city="Đà Lạt"
-                    status="Có sương mù nhẹ"
+                    city={t("weather.cityDalat")}
+                    status={t("weather.cityDalatStatus")}
                     temp={18}
                   />
                 </div>
                 <div className="mt-12 p-6 bg-emerald-50 rounded-[2rem] text-center text-emerald-700 font-bold text-xs tracking-widest uppercase border border-emerald-100">
-                  Dữ liệu vệ tinh các vùng miền khác đang được trích xuất thời
-                  gian thực...
+                  {t("weather.regionalNote")}
                 </div>
               </div>
             </motion.div>
