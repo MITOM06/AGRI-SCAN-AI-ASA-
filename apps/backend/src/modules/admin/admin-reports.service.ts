@@ -1,16 +1,9 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model, PipelineStage } from 'mongoose';
-import { Types } from 'mongoose';
 import {
   User,
   UserDocument,
-  Feedback,
-  FeedbackDocument,
   Payment,
   PaymentDocument,
   ScanHistory,
@@ -19,55 +12,24 @@ import {
   ChatHistoryDocument,
 } from '@agri-scan/database';
 import { GetReportDto, GroupBy } from './dto/get-report.dto';
-import { GetUsersQueryDto } from './dto/Admin user.dto';
+import type {
+  RevenueSumRow,
+  RevenueReportRow,
+  TimeSeriesRow,
+  RevenueSeriesPoint,
+  UsageSeriesPoint,
+  RevenueDayPlanRow,
+  CountByDateRow,
+} from './admin.types';
 
-// Shape kết quả các aggregate
-export interface RevenueSumRow {
-  total: number;
-  count?: number;
-}
-export interface RevenueReportRow {
-  _id: string;
-  totalRevenue: number;
-  totalTransactions: number;
-  byPlan: { plan: string; revenue: number; count: number }[];
-}
-export interface TimeSeriesRow {
-  date: string;
-  count: number;
-}
-
-// Time-series doanh thu theo gói (dùng cho biểu đồ Reports.tsx)
-export interface RevenueSeriesPoint {
-  date: string; // 'YYYY-MM-DD'
-  revenue: number; // tổng doanh thu trong ngày (VND)
-  PREMIUM: number; // doanh thu gói PREMIUM
-  VIP: number; // doanh thu gói VIP
-}
-
-// Time-series lượt dùng hệ thống
-export interface UsageSeriesPoint {
-  date: string; // 'YYYY-MM-DD'
-  images: number; // số lượt quét ảnh trong ngày
-  prompts: number; // số câu hỏi chat AI trong ngày
-}
-
-// Shape trung gian của aggregate
-interface RevenueDayPlanRow {
-  date: string;
-  plan: string;
-  revenue: number;
-}
-interface CountByDateRow {
-  date: string;
-  count: number;
-}
-
+/**
+ * Báo cáo & thống kê admin: user mới, doanh thu, time-series cho biểu đồ,
+ * so sánh 2 tháng và xuất CSV.
+ */
 @Injectable()
-export class AdminService {
+export class AdminReportsService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(Feedback.name) private feedbackModel: Model<FeedbackDocument>,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(ScanHistory.name)
     private scanHistoryModel: Model<ScanHistoryDocument>,
@@ -76,143 +38,7 @@ export class AdminService {
   ) {}
 
   // ════════════════════════════════════════════════════════════
-  // 1. DASHBOARD OVERVIEW
-  // ════════════════════════════════════════════════════════════
-  async getDashboard() {
-    const now = new Date();
-    const todayStart = new Date(now);
-    todayStart.setHours(0, 0, 0, 0); // Mutate bản copy, không mutate now
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const [
-      totalUsers,
-      newUsersToday,
-      newUsersThisMonth,
-      totalPremium,
-      totalVip,
-      totalFree,
-      pendingFeedbacks,
-      totalRevenue,
-      revenueThisMonth,
-      totalScans,
-    ] = await Promise.all([
-      this.userModel.countDocuments({ role: { $ne: 'ADMIN' } }),
-      this.userModel.countDocuments({
-        role: { $ne: 'ADMIN' },
-        createdAt: { $gte: todayStart },
-      }),
-      this.userModel.countDocuments({
-        role: { $ne: 'ADMIN' },
-        createdAt: { $gte: monthStart },
-      }),
-      this.userModel.countDocuments({ plan: 'PREMIUM' }),
-      this.userModel.countDocuments({ plan: 'VIP' }),
-      this.userModel.countDocuments({ plan: 'FREE', role: { $ne: 'ADMIN' } }),
-      this.feedbackModel.countDocuments({ status: 'PENDING' }),
-      this.paymentModel.aggregate<RevenueSumRow>([
-        { $match: { status: 'SUCCESS' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-      ]),
-      this.paymentModel.aggregate<RevenueSumRow>([
-        {
-          $match: {
-            status: 'SUCCESS',
-            createdAt: { $gte: monthStart },
-          },
-        },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-      ]),
-      this.scanHistoryModel.countDocuments(),
-    ]);
-
-    return {
-      users: {
-        total: totalUsers,
-        newToday: newUsersToday,
-        newThisMonth: newUsersThisMonth,
-        byPlan: { FREE: totalFree, PREMIUM: totalPremium, VIP: totalVip },
-      },
-      revenue: {
-        total: totalRevenue[0]?.total ?? 0,
-        thisMonth: revenueThisMonth[0]?.total ?? 0,
-      },
-      pendingFeedbacks,
-      totalScans,
-    };
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // 2. QUẢN LÝ NGƯỜI DÙNG
-  // ════════════════════════════════════════════════════════════
-  async getUsers(query: GetUsersQueryDto) {
-    const { plan, role, search, page = 1, limit = 20 } = query;
-    const skip = (page - 1) * limit;
-
-    const filter: Record<string, any> = { role: { $ne: 'ADMIN' } };
-
-    if (plan) filter.plan = plan;
-    if (role && role !== 'ADMIN') filter.role = role;
-    if (search) {
-      filter.$or = [
-        { email: { $regex: search, $options: 'i' } },
-        { fullName: { $regex: search, $options: 'i' } },
-      ];
-    }
-
-    const [users, total] = await Promise.all([
-      this.userModel
-        .find(filter)
-        .select('-password -googleId -facebookId')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      this.userModel.countDocuments(filter),
-    ]);
-
-    return {
-      data: users,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
-  }
-
-  async updateUserPlan(
-    userId: string,
-    plan: 'FREE' | 'PREMIUM' | 'VIP',
-  ): Promise<UserDocument> {
-    const user = await this.userModel.findById(userId);
-    if (!user) throw new NotFoundException('Người dùng không tồn tại!');
-    if (user.role === 'ADMIN')
-      throw new BadRequestException('Không thể thay đổi gói của Admin!');
-
-    user.plan = plan;
-
-    if (plan === 'FREE') {
-      user.planExpiresAt = null;
-    } else {
-      const expirationDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      user.planExpiresAt = expirationDate;
-
-      // Ghi nhận payment khi admin gán gói thủ công (miễn phí / tặng)
-      await this.paymentModel.create({
-        userId: user._id,
-        plan,
-        amount: 0, // admin tặng → 0 đồng
-        status: 'SUCCESS',
-        method: 'ADMIN_GRANT',
-      });
-    }
-
-    return user.save();
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // 3. BÁO CÁO NGƯỜI DÙNG MỚI
+  // BÁO CÁO NGƯỜI DÙNG MỚI
   // ════════════════════════════════════════════════════════════
   async getNewUsersReport(dto: GetReportDto) {
     const { from, to, groupBy = GroupBy.DAY } = dto;
@@ -225,7 +51,7 @@ export class AdminService {
   }
 
   // ════════════════════════════════════════════════════════════
-  // 4. BÁO CÁO DOANH THU
+  // BÁO CÁO DOANH THU
   // ════════════════════════════════════════════════════════════
   async getRevenueReport(dto: GetReportDto) {
     const { from, to, groupBy = GroupBy.DAY } = dto;
@@ -288,7 +114,7 @@ export class AdminService {
   }
 
   // ════════════════════════════════════════════════════════════
-  // 4b. TIME-SERIES DOANH THU (biểu đồ "Doanh thu theo gói")
+  // TIME-SERIES DOANH THU (biểu đồ "Doanh thu theo gói")
   //     Nguồn: Payment (status=SUCCESS), gộp theo ngày + breakdown gói.
   // ════════════════════════════════════════════════════════════
   async getRevenueSeries(days = 7): Promise<RevenueSeriesPoint[]> {
@@ -338,7 +164,7 @@ export class AdminService {
   }
 
   // ════════════════════════════════════════════════════════════
-  // 4c. TIME-SERIES LƯỢT DÙNG (biểu đồ "Tần suất sử dụng hệ thống")
+  // TIME-SERIES LƯỢT DÙNG (biểu đồ "Tần suất sử dụng hệ thống")
   //     images  = số ScanHistory / ngày.
   //     prompts = số tin nhắn role='user' trong ChatHistory / ngày.
   // ════════════════════════════════════════════════════════════
@@ -395,7 +221,7 @@ export class AdminService {
   }
 
   // ════════════════════════════════════════════════════════════
-  // 5. SO SÁNH 2 THÁNG
+  // SO SÁNH 2 THÁNG
   // ════════════════════════════════════════════════════════════
   async compareMonths(month1: string, month2: string) {
     const getMonthRange = (dateStr: string) => {
@@ -478,60 +304,7 @@ export class AdminService {
   }
 
   // ════════════════════════════════════════════════════════════
-  // 6. QUẢN LÝ FEEDBACK
-  // ════════════════════════════════════════════════════════════
-  async submitFeedback(
-    userId: string,
-    data: { category: string; content: string },
-  ) {
-    const feedback = await this.feedbackModel.create({
-      userId: new Types.ObjectId(userId),
-      ...data,
-    });
-    return { message: 'Cảm ơn bạn đã gửi phản hồi!', id: feedback._id };
-  }
-
-  async getFeedbacks(status?: string, page = 1, limit = 20) {
-    const filter: Record<string, any> = {};
-    if (status) filter.status = status;
-
-    const skip = (page - 1) * limit;
-    const [data, total] = await Promise.all([
-      this.feedbackModel
-        .find(filter)
-        .populate('userId', 'email fullName')
-        .populate('repliedBy', 'email fullName')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      this.feedbackModel.countDocuments(filter),
-    ]);
-
-    return {
-      data,
-      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
-    };
-  }
-
-  async replyFeedback(feedbackId: string, adminId: string, reply: string) {
-    const feedback = await this.feedbackModel.findById(feedbackId);
-    if (!feedback) throw new NotFoundException('Không tìm thấy feedback này!');
-    if (feedback.status === 'REPLIED') {
-      throw new BadRequestException('Feedback này đã được trả lời!');
-    }
-
-    feedback.adminReply = reply;
-    feedback.repliedBy = new Types.ObjectId(adminId);
-    feedback.repliedAt = new Date();
-    feedback.status = 'REPLIED';
-
-    await feedback.save();
-    return { message: 'Đã trả lời feedback thành công!' };
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // 7. XUẤT BÁO CÁO CSV
+  // XUẤT BÁO CÁO CSV
   // ════════════════════════════════════════════════════════════
   async exportRevenueReportCsv(from: string, to: string): Promise<string> {
     const { data } = await this.getRevenueReport({
@@ -672,25 +445,5 @@ export class AdminService {
     }
 
     return result;
-  }
-  // Thêm hàm này để lấy danh sách feedback của riêng 1 User
-  async getUserFeedbacks(userId: string, page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-    const filter = { userId: new Types.ObjectId(userId) };
-
-    const [data, total] = await Promise.all([
-      this.feedbackModel
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      this.feedbackModel.countDocuments(filter),
-    ]);
-
-    return {
-      data,
-      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
-    };
   }
 }

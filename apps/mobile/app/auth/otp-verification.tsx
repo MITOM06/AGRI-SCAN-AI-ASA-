@@ -15,7 +15,7 @@ import { Timer, Smartphone } from "lucide-react-native";
 
 import { authApi } from "@agri-scan/shared";
 import { Button } from "../../components/ui/Button";
-import { AuthHeader } from "./AuthHeader";
+import { AuthHeader } from "../../components/auth/AuthHeader";
 
 export default function OTPVerificationScreen() {
   const router = useRouter();

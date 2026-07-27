@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Payment } from "@/components/Payment";
+import { Payment } from "@/components/billing/Payment";
 
 export default function PaymentPage() {
   return (

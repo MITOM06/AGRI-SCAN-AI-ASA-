@@ -28,7 +28,8 @@ import {
   AreaChart,
   Area,
 } from "recharts";
-import { formatCurrency, formatDate, pageVariants } from "./utils";
+import { formatCurrencyVN as formatCurrency, formatDateShortTimeVN as formatDate } from "@agri-scan/shared";
+import { pageVariants } from "@/utils/animation";
 import { adminApi } from "@agri-scan/shared";
 import type {
   IDashboard,

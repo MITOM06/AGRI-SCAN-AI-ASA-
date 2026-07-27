@@ -11,8 +11,9 @@ import type { Cache } from 'cache-manager';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { UsersService } from '../users/users.service';
-import { MailerService } from '@nestjs-modules/mailer';
-import axios from 'axios'; // Nhớ import cái này ở đầu file
+import { OtpMailService } from './otp-mail.service';
+import { AuthTokenService } from './auth-token.service';
+import axios from 'axios';
 import type { UserDocument } from '@agri-scan/database';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -50,7 +51,8 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-    private mailerService: MailerService,
+    private otpMailService: OtpMailService,
+    private tokenService: AuthTokenService,
   ) {}
 
   // ════════════════════════════════════════════════════════════
@@ -85,7 +87,7 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
-    const otp = this.generateOtp();
+    const otp = this.otpMailService.generateOtp();
 
     const pending: PendingRegistration = {
       fullName: data.fullName,
@@ -98,7 +100,12 @@ export class AuthService {
       REGISTER_PENDING_TTL_MS,
     );
 
-    await this.sendOtpEmail(data.email, data.fullName, otp, 'register');
+    await this.otpMailService.sendOtpEmail(
+      data.email,
+      data.fullName,
+      otp,
+      'register',
+    );
 
     return {
       message: 'Mã OTP xác thực đã được gửi đến email của bạn!',
@@ -196,14 +203,19 @@ export class AuthService {
       );
     }
 
-    const otp = this.generateOtp();
+    const otp = this.otpMailService.generateOtp();
     await this.cacheManager.set(
       `register_pending:${email}`,
       { ...pending, otp },
       REGISTER_PENDING_TTL_MS,
     );
 
-    await this.sendOtpEmail(email, pending.fullName, otp, 'register');
+    await this.otpMailService.sendOtpEmail(
+      email,
+      pending.fullName,
+      otp,
+      'register',
+    );
 
     return { message: 'Mã OTP mới đã được gửi đến email của bạn!' };
   }
@@ -232,7 +244,7 @@ export class AuthService {
     const isMatch = await bcrypt.compare(data.password, user.password);
     if (!isMatch) throw new UnauthorizedException('Sai email hoặc mật khẩu!');
 
-    return this.generateTokens(
+    return this.tokenService.generateTokens(
       user._id.toString(),
       user.email,
       user.fullName,
@@ -282,7 +294,7 @@ export class AuthService {
   //    Được gọi từ Controller sau khi Passport xác thực xong
   // ════════════════════════════════════════════════════════════
   async handleOAuthCallback(user: UserDocument) {
-    return this.generateTokens(
+    return this.tokenService.generateTokens(
       user._id.toString(),
       user.email,
       user.fullName,
@@ -318,14 +330,13 @@ export class AuthService {
   // 6. ĐĂNG XUẤT
   // ════════════════════════════════════════════════════════════
   async logout(userId: string) {
-    const tokenKey = `refresh_token:${userId}`;
-    const existingToken = await this.cacheManager.get(tokenKey);
+    const existingToken = await this.tokenService.getStoredRefreshToken(userId);
 
     if (!existingToken) {
       throw new BadRequestException('Bạn đã đăng xuất trước đó rồi!');
     }
 
-    await this.cacheManager.del(tokenKey);
+    await this.tokenService.revokeRefreshToken(userId);
     return { message: 'Đăng xuất thành công!' };
   }
 
@@ -337,9 +348,7 @@ export class AuthService {
       const payload = this.jwtService.verify<JwtPayload>(refreshToken);
       const userId = payload.sub;
 
-      const cachedToken = await this.cacheManager.get(
-        `refresh_token:${userId}`,
-      );
+      const cachedToken = await this.tokenService.getStoredRefreshToken(userId);
       if (cachedToken !== refreshToken) {
         throw new UnauthorizedException(
           'Token không hợp lệ hoặc bạn đã đăng xuất!',
@@ -348,7 +357,7 @@ export class AuthService {
 
       const user = await this.usersService.findByEmail(payload.email);
 
-      return this.generateTokens(
+      return this.tokenService.generateTokens(
         userId,
         payload.email,
         user?.fullName,
@@ -386,10 +395,10 @@ export class AuthService {
       );
     }
 
-    const otp = this.generateOtp();
+    const otp = this.otpMailService.generateOtp();
     await this.cacheManager.set(`otp:${email}`, otp, 60 * 1000);
 
-    await this.sendOtpEmail(email, user.fullName, otp, 'reset');
+    await this.otpMailService.sendOtpEmail(email, user.fullName, otp, 'reset');
 
     return { message: 'Mã OTP đã được gửi đến email của bạn!' };
   }
@@ -490,90 +499,6 @@ export class AuthService {
     };
   }
 
-  // ════════════════════════════════════════════════════════════
-  // PRIVATE: OTP — sinh mã & gửi email (dùng chung register + reset)
-  // ════════════════════════════════════════════════════════════
-  private generateOtp(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  }
-
-  private buildOtpEmailHtml(
-    fullName: string,
-    otp: string,
-    purpose: 'register' | 'reset',
-  ): string {
-    const intro =
-      purpose === 'register'
-        ? 'Cảm ơn bạn đã đăng ký Agri-Scan AI. Vui lòng dùng mã OTP dưới đây để hoàn tất đăng ký:'
-        : 'Chúng tôi nhận được yêu cầu khôi phục mật khẩu. Vui lòng dùng mã OTP dưới đây:';
-    const validity = purpose === 'register' ? '5 phút' : '60 giây';
-    const footerNote =
-      purpose === 'register'
-        ? 'Nếu bạn không thực hiện đăng ký này, hãy bỏ qua email này.'
-        : 'Nếu bạn không yêu cầu thay đổi mật khẩu, hãy bỏ qua email này.';
-
-    return `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-        <h2 style="color: #2e7d32; text-align: center;">Agri-Scan AI</h2>
-        <p>Xin chào <strong>${fullName}</strong>,</p>
-        <p>${intro}</p>
-        <div style="background-color: #f4f4f4; padding: 15px; text-align: center; border-radius: 5px; margin: 20px 0;">
-          <h1 style="color: #333; letter-spacing: 5px; margin: 0;">${otp}</h1>
-        </div>
-        <p style="color: red; font-size: 14px;"><em>* Mã OTP chỉ có hiệu lực trong ${validity}.</em></p>
-        <p>${footerNote}</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-        <p style="font-size: 12px; color: #888; text-align: center;">Đội ngũ Agri-Scan AI - HUTECH</p>
-      </div>
-    `;
-  }
-
-  private async sendOtpEmail(
-    to: string,
-    fullName: string,
-    otp: string,
-    purpose: 'register' | 'reset',
-  ) {
-    const subject =
-      purpose === 'register'
-        ? '✅ Xác thực đăng ký tài khoản - Agri-Scan AI'
-        : '🔑 Khôi phục mật khẩu - Agri-Scan AI';
-
-    await this.mailerService.sendMail({
-      to,
-      subject,
-      html: this.buildOtpEmailHtml(fullName, otp, purpose),
-    });
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // PRIVATE: TẠO ACCESS TOKEN + REFRESH TOKEN
-  // ════════════════════════════════════════════════════════════
-  async generateTokens(
-    userId: string,
-    email: string,
-    fullName?: string,
-    plan?: string,
-    isPasswordSet?: boolean,
-    role?: string, // ← THÊM
-  ) {
-    const payload = { sub: userId, email, role };
-
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
-    await this.cacheManager.set(
-      `refresh_token:${userId}`,
-      refreshToken,
-      7 * 24 * 60 * 60 * 1000,
-    );
-
-    return {
-      user: { id: userId, email, fullName, plan, isPasswordSet, role },
-      accessToken,
-      refreshToken,
-    };
-  }
   // 🔥 THÊM MỚI: Hàm xử lý Đăng nhập Google cho Mobile
   async verifyGoogleTokenForMobile(idToken: string) {
     try {
@@ -622,7 +547,7 @@ export class AuthService {
       }
 
       // 3. Trả về Token JWT cho Mobile (Dùng lại hàm cũ, không sợ lỗi)
-      return this.generateTokens(
+      return this.tokenService.generateTokens(
         user._id.toString(),
         user.email,
         user.fullName,

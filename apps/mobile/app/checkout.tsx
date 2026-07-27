@@ -20,7 +20,7 @@ import {
   CreditCard,
 } from "lucide-react-native";
 
-import { orderApi } from "@agri-scan/shared";
+import { orderApi, formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
 
 export default function CheckoutScreen() {
   const router = useRouter();
@@ -38,12 +38,6 @@ export default function CheckoutScreen() {
   const shippingFee = 30000; // Phí ship giả định
   const totalAmount = productPrice * quantity + shippingFee;
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount || 0);
-  };
 
   // Tìm hàm này trong file checkout.tsx của bạn
   const handleCreateOrder = async () => {

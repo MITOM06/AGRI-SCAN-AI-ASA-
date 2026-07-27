@@ -1,4 +1,4 @@
-import { Community } from "@/components/CommunityPage";
+import { Community } from "@/components/community/CommunityPage";
 
 
 export default function ConmunityRoute() {

@@ -9,7 +9,8 @@ import {
   MessageSquare,
   TrendingUp,
 } from "lucide-react";
-import { formatCurrency, pageVariants } from "./utils";
+import { formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
+import { pageVariants } from "@/utils/animation";
 import { adminApi, IDashboard } from "@agri-scan/shared";
 
 const EMPTY_DASHBOARD: IDashboard = {

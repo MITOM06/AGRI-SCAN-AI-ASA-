@@ -11,6 +11,39 @@ export const formatConfidence = (confidence: number): string => {
 };
 
 /**
+ * Format số tiền sang VND
+ * VD: 150000 -> "150.000 ₫"
+ */
+export const formatCurrencyVN = (amount: number): string => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(amount || 0);
+};
+
+/**
+ * Format số nguyên theo locale VN (dấu chấm phân cách nghìn)
+ * VD: 1234567 -> "1.234.567"
+ */
+export const formatNumberVN = (num: number): string => {
+  return new Intl.NumberFormat('vi-VN').format(num || 0);
+};
+
+/**
+ * Format ngày ngắn + giờ (dùng cho bảng/chart admin)
+ * VD: "26 thg 7, 2026, 18:30"
+ */
+export const formatDateShortTimeVN = (date: Date | string): string => {
+  return new Date(date).toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+/**
  * Format date to Vietnamese locale
  */
 export const formatDateVN = (date: Date | string): string => {

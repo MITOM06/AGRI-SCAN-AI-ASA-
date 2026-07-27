@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { HeroSection, FeaturesSection } from "./landing";
+import { HeroSection } from "./HeroSection";
+import { FeaturesSection } from "./FeaturesSection";
 
 export function LandingPage() {
   return (

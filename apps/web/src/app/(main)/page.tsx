@@ -1,5 +1,5 @@
 "use client"
-import { LandingPage } from "@/components/LandingPage";
+import { LandingPage } from "@/components/landing/LandingPage";
 import { Footer } from "@/components/layout/Footer";
 import { useEffect } from "react";
 

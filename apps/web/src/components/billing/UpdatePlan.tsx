@@ -1,15 +1,31 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, ArrowLeft, Zap, Star, Crown, Sparkles } from "lucide-react";
+import {
+  Check,
+  ArrowLeft,
+  Zap,
+  Star,
+  Crown,
+  Sparkles,
+  Lock,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 
+// Sau khi đăng nhập/đăng ký xong sẽ quay lại đúng trang nâng cấp gói
+const UPGRADE_REDIRECT = encodeURIComponent("/upgrade");
+
 export function UpdatePlan() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Khách vãng lai (chưa đăng nhập) → không có gói nào là "gói hiện tại"
+  const isGuest = !isLoading && !isAuthenticated;
 
   // Plan của user hiện tại (FREE / PREMIUM / VIP), mặc định FREE nếu chưa đăng nhập
   const currentPlan = user?.plan?.toUpperCase() ?? "FREE";
@@ -27,8 +43,12 @@ export function UpdatePlan() {
         "Mô hình AI chẩn đoán cơ bản",
         "Hỗ trợ từ cộng đồng",
       ],
-      buttonText: currentPlan === "FREE" ? "Gói hiện tại" : "Hạ xuống Free",
-      current: currentPlan === "FREE",
+      buttonText: isGuest
+        ? "Đăng ký miễn phí"
+        : currentPlan === "FREE"
+          ? "Gói hiện tại"
+          : "Hạ xuống Free",
+      current: !isGuest && currentPlan === "FREE",
       highlight: false,
       tag: undefined as string | undefined,
       theme: "gray" as const,
@@ -47,8 +67,10 @@ export function UpdatePlan() {
         "Thời hạn sử dụng: 30 ngày",
       ],
       buttonText:
-        currentPlan === "PREMIUM" ? "Gói hiện tại" : "Nâng cấp lên Plus",
-      current: currentPlan === "PREMIUM",
+        !isGuest && currentPlan === "PREMIUM"
+          ? "Gói hiện tại"
+          : "Nâng cấp lên Plus",
+      current: !isGuest && currentPlan === "PREMIUM",
       highlight: true,
       tag: "PHỔ BIẾN",
       theme: "purple" as const,
@@ -66,8 +88,9 @@ export function UpdatePlan() {
         "Mô hình AI chuyên gia",
         "Thời hạn sử dụng: 30 ngày",
       ],
-      buttonText: currentPlan === "VIP" ? "Gói hiện tại" : "Nâng cấp lên Pro",
-      current: currentPlan === "VIP",
+      buttonText:
+        !isGuest && currentPlan === "VIP" ? "Gói hiện tại" : "Nâng cấp lên Pro",
+      current: !isGuest && currentPlan === "VIP",
       highlight: false,
       tag: undefined as string | undefined,
       theme: "yellow" as const,
@@ -110,6 +133,16 @@ export function UpdatePlan() {
   };
 
   const handleUpgrade = (plan: (typeof plans)[number]) => {
+    // Chưa đăng nhập → không cho vào trang thanh toán, yêu cầu đăng nhập/đăng ký trước
+    if (!isAuthenticated) {
+      if (plan.planKey === "FREE") {
+        router.push(`/register?redirect=${UPGRADE_REDIRECT}`);
+      } else {
+        setShowAuthModal(true);
+      }
+      return;
+    }
+
     const priceNumber = parseInt(plan.price.replace(/,/g, ""));
     const vat = Math.round(priceNumber * 0.1);
     const subtotal = priceNumber - vat;
@@ -185,6 +218,44 @@ export function UpdatePlan() {
             </p>
           </div>
         </motion.div>
+
+        {/* Banner nhắc khách vãng lai phải đăng nhập mới nâng cấp được */}
+        {isGuest && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="mb-10 flex flex-col sm:flex-row sm:items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 px-5 py-4"
+          >
+            <div className="flex items-start gap-3 flex-1">
+              <div className="w-9 h-9 shrink-0 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                <Lock size={18} />
+              </div>
+              <p className="text-sm text-amber-900 leading-relaxed">
+                Bạn đang xem với tư cách khách. Vui lòng{" "}
+                <span className="font-semibold">đăng nhập</span> hoặc{" "}
+                <span className="font-semibold">đăng ký</span> tài khoản để có
+                thể nâng cấp gói dịch vụ.
+              </p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => router.push(`/login?redirect=${UPGRADE_REDIRECT}`)}
+                className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
+              >
+                Đăng nhập
+              </button>
+              <button
+                onClick={() =>
+                  router.push(`/register?redirect=${UPGRADE_REDIRECT}`)
+                }
+                className="px-4 py-2 rounded-xl bg-white border border-amber-300 text-amber-800 text-sm font-bold hover:bg-amber-100 transition-colors"
+              >
+                Đăng ký
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Plans Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
@@ -353,6 +424,67 @@ export function UpdatePlan() {
           </p>
         </motion.div>
       </div>
+
+      {/* Modal: yêu cầu đăng nhập/đăng ký trước khi nâng cấp gói */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowAuthModal(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              transition={{ type: "spring", stiffness: 260, damping: 22 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl border border-gray-100"
+            >
+              <button
+                onClick={() => setShowAuthModal(false)}
+                aria-label="Đóng"
+                className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                <Lock className="h-9 w-9" />
+              </div>
+
+              <h2 className="mb-3 text-2xl font-extrabold text-gray-900">
+                Vui lòng đăng nhập
+              </h2>
+              <p className="mb-8 leading-relaxed text-gray-500">
+                Bạn cần đăng nhập hoặc đăng ký tài khoản để nâng cấp gói dịch
+                vụ. Sau khi đăng nhập, bạn sẽ được đưa trở lại trang này.
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() =>
+                    router.push(`/login?redirect=${UPGRADE_REDIRECT}`)
+                  }
+                  className="w-full rounded-xl bg-emerald-600 py-3.5 font-bold text-white shadow-lg shadow-emerald-200 transition-colors hover:bg-emerald-700"
+                >
+                  Đăng nhập ngay
+                </button>
+                <button
+                  onClick={() =>
+                    router.push(`/register?redirect=${UPGRADE_REDIRECT}`)
+                  }
+                  className="w-full rounded-xl border border-gray-300 bg-white py-3.5 font-bold text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  Tạo tài khoản mới
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

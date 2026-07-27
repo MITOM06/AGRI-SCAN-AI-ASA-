@@ -13,7 +13,10 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { AdminService } from './admin.service';
+import { AdminDashboardService } from './admin-dashboard.service';
+import { AdminUsersService } from './admin-users.service';
+import { AdminReportsService } from './admin-reports.service';
+import { AdminFeedbackService } from './admin-feedback.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -27,7 +30,7 @@ import {
   UpdateUserPlanDto,
   GetUsersQueryDto,
   SubmitFeedbackDto,
-} from './dto/Admin user.dto';
+} from './dto/admin-user.dto';
 import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 // ── Guard dùng chung cho toàn bộ Admin routes ──────────────────
@@ -35,7 +38,12 @@ const AdminGuards = [JwtAuthGuard, RolesGuard];
 
 @Controller()
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly dashboardService: AdminDashboardService,
+    private readonly usersService: AdminUsersService,
+    private readonly reportsService: AdminReportsService,
+    private readonly feedbackService: AdminFeedbackService,
+  ) {}
 
   // ════════════════════════════════════════════════════════════
   // DASHBOARD
@@ -49,7 +57,7 @@ export class AdminController {
   @Roles('ADMIN')
   @Get('admin/dashboard')
   getDashboard() {
-    return this.adminService.getDashboard();
+    return this.dashboardService.getDashboard();
   }
 
   // ════════════════════════════════════════════════════════════
@@ -63,7 +71,7 @@ export class AdminController {
   @Roles('ADMIN')
   @Get('admin/users')
   getUsers(@Query() query: GetUsersQueryDto) {
-    return this.adminService.getUsers(query);
+    return this.usersService.getUsers(query);
   }
 
   /**
@@ -75,7 +83,7 @@ export class AdminController {
   @HttpCode(HttpStatus.OK)
   @Patch('admin/users/:id/plan')
   updateUserPlan(@Param('id') id: string, @Body() body: UpdateUserPlanDto) {
-    return this.adminService.updateUserPlan(id, body.plan);
+    return this.usersService.updateUserPlan(id, body.plan);
   }
 
   // ════════════════════════════════════════════════════════════
@@ -89,7 +97,7 @@ export class AdminController {
   @Roles('ADMIN')
   @Get('admin/reports/users')
   getNewUsersReport(@Query() query: GetReportDto) {
-    return this.adminService.getNewUsersReport(query);
+    return this.reportsService.getNewUsersReport(query);
   }
 
   // ════════════════════════════════════════════════════════════
@@ -103,7 +111,7 @@ export class AdminController {
   @Roles('ADMIN')
   @Get('admin/reports/revenue')
   getRevenueReport(@Query() query: GetReportDto) {
-    return this.adminService.getRevenueReport(query);
+    return this.reportsService.getRevenueReport(query);
   }
 
   // ════════════════════════════════════════════════════════════
@@ -118,7 +126,7 @@ export class AdminController {
   @Roles('ADMIN')
   @Get('admin/reports/revenue-series')
   getRevenueSeries(@Query() query: SeriesQueryDto) {
-    return this.adminService.getRevenueSeries(query.days);
+    return this.reportsService.getRevenueSeries(query.days);
   }
 
   /**
@@ -129,7 +137,7 @@ export class AdminController {
   @Roles('ADMIN')
   @Get('admin/reports/usage-series')
   getUsageSeries(@Query() query: SeriesQueryDto) {
-    return this.adminService.getUsageSeries(query.days);
+    return this.reportsService.getUsageSeries(query.days);
   }
 
   // ════════════════════════════════════════════════════════════
@@ -143,7 +151,7 @@ export class AdminController {
   @Roles('ADMIN')
   @Get('admin/reports/compare')
   compareMonths(@Query() query: CompareMonthDto) {
-    return this.adminService.compareMonths(query.month1, query.month2);
+    return this.reportsService.compareMonths(query.month1, query.month2);
   }
 
   // ════════════════════════════════════════════════════════════
@@ -162,7 +170,7 @@ export class AdminController {
     @Query('to') to: string,
     @Res() res: Response,
   ) {
-    const csv = await this.adminService.exportRevenueReportCsv(from, to);
+    const csv = await this.reportsService.exportRevenueReportCsv(from, to);
     const filename = `revenue_${from}_to_${to}.csv`;
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -183,7 +191,7 @@ export class AdminController {
     @Query('to') to: string,
     @Res() res: Response,
   ) {
-    const csv = await this.adminService.exportUsersReportCsv(from, to);
+    const csv = await this.reportsService.exportUsersReportCsv(from, to);
     const filename = `users_${from}_to_${to}.csv`;
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -206,7 +214,7 @@ export class AdminController {
     @Req() req: AuthenticatedRequest,
     @Body() body: SubmitFeedbackDto,
   ) {
-    return this.adminService.submitFeedback(req.user.userId, body);
+    return this.feedbackService.submitFeedback(req.user.userId, body);
   }
 
   /**
@@ -221,7 +229,7 @@ export class AdminController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
   ) {
-    return this.adminService.getFeedbacks(status, +page, +limit);
+    return this.feedbackService.getFeedbacks(status, +page, +limit);
   }
 
   /**
@@ -237,7 +245,7 @@ export class AdminController {
     @Req() req: AuthenticatedRequest,
     @Body() body: ReplyFeedbackDto,
   ) {
-    return this.adminService.replyFeedback(id, req.user.userId, body.reply);
+    return this.feedbackService.replyFeedback(id, req.user.userId, body.reply);
   }
 
   /**
@@ -252,6 +260,10 @@ export class AdminController {
     @Query('limit') limit = 20,
   ) {
     // Lấy userId từ token đăng nhập để tìm đúng phản hồi của người đó
-    return this.adminService.getUserFeedbacks(req.user.userId, +page, +limit);
+    return this.feedbackService.getUserFeedbacks(
+      req.user.userId,
+      +page,
+      +limit,
+    );
   }
 }

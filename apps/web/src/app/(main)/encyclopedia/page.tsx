@@ -1,4 +1,4 @@
-import { TreeDictionary } from "@/components/TreeDictionary";
+import { TreeDictionary } from "@/components/encyclopedia/TreeDictionary";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

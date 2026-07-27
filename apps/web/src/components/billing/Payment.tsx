@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ArrowLeft,
   CreditCard,
@@ -45,7 +45,15 @@ function formatExpiry(value: string) {
 export function Payment() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { refreshUser } = useAuth();
+  const { refreshUser, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+
+  // Khách vãng lai không được vào trang thanh toán (kể cả gõ URL trực tiếp)
+  const isGuest = !isAuthLoading && !isAuthenticated;
+  useEffect(() => {
+    if (isGuest) {
+      router.replace(`/login?redirect=${encodeURIComponent("/upgrade")}`);
+    }
+  }, [isGuest, router]);
 
   const name = searchParams.get("name") || DEFAULT_PLAN.name;
   const price = searchParams.get("price") || DEFAULT_PLAN.price;
@@ -94,6 +102,22 @@ export function Payment() {
       setIsLoading(false);
     }
   };
+
+  // Đang chờ xác định phiên đăng nhập, hoặc là khách → không render form thanh toán
+  if (isAuthLoading || isGuest) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 font-medium">
+            {isGuest
+              ? "Bạn cần đăng nhập để nâng cấp gói. Đang chuyển tới trang đăng nhập..."
+              : "Đang kiểm tra tài khoản..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 via-emerald-50/20 to-gray-100 font-sans text-gray-900 pb-20 relative">

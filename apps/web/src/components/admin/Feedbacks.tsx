@@ -11,7 +11,8 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { formatDate, pageVariants } from "./utils";
+import { formatDateShortTimeVN as formatDate } from "@agri-scan/shared";
+import { pageVariants } from "@/utils/animation";
 import { adminApi } from "@agri-scan/shared";
 import type { IFeedback } from "@agri-scan/shared";
 

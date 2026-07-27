@@ -47,10 +47,9 @@ export default function RootLayout() {
         <Stack.Screen name="auth/otp-verification" />
         <Stack.Screen name="auth/reset-password" />
         <Stack.Screen name="auth/set-password" />
-        <Stack.Screen name="auth/AuthHeader" />
         <Stack.Screen name="user" />
         <Stack.Screen name="scan" />
-        <Stack.Screen name="treeDic" />
+        <Stack.Screen name="tree-dictionary" />
         <Stack.Screen name="upgrade" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="about" />

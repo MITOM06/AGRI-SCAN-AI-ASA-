@@ -24,7 +24,7 @@ import {
   RefreshCw,
 } from "lucide-react-native";
 
-import { productApi } from "@agri-scan/shared";
+import { productApi, formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
 
 export default function ProductDetailScreen() {
   const router = useRouter();
@@ -54,12 +54,6 @@ export default function ProductDetailScreen() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount || 0);
-  };
 
   // 🔥 HÀM KIỂM TRA ĐĂNG NHẬP TRƯỚC KHI MUA HÀNG
   const requireAuth = async (actionCallback: () => void) => {

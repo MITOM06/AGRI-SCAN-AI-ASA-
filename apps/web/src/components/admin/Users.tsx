@@ -8,7 +8,8 @@ import {
   MessageCircle,
   Loader2,
 } from "lucide-react";
-import { formatDate, pageVariants } from "./utils";
+import { formatDateShortTimeVN as formatDate } from "@agri-scan/shared";
+import { pageVariants } from "@/utils/animation";
 import { adminApi } from "@agri-scan/shared"; // Kiểm tra lại đường dẫn này
 import { IUser, SubscriptionPlan, UserRole } from "@agri-scan/shared";
 

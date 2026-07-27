@@ -7,7 +7,7 @@ import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { PlantsModule } from './modules/plants/plants.module';
 import { AiScanModule } from './modules/ai-scan/ai-scan.module';
-import { WeatherModule } from './modules/weather/Weather.module';
+import { WeatherModule } from './modules/weather/weather.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ProductsModule } from './modules/products/products.module';
 import { OrdersModule } from './modules/orders/orders.module';

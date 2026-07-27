@@ -15,7 +15,7 @@ import {
   Leaf
 } from "lucide-react";
 import type { IMyGardenPlant } from "@agri-scan/shared";
-import { containerVariants, itemVariants } from "../../../utils/animation";
+import { containerVariants, itemVariants } from "@/utils/animation";
 
 interface TrackingViewProps {
   plant: IMyGardenPlant | null;

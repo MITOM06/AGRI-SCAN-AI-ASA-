@@ -4,8 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { WeatherRule, WeatherRuleSchema } from '@agri-scan/database';
-import { WeatherController } from './Weather.controller';
-import { WeatherService } from './Weather.service';
+import { WeatherController } from './weather.controller';
+import { WeatherService } from './weather.service';
 
 @Module({
   imports: [

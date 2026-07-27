@@ -20,7 +20,7 @@ import {
   Plus,
 } from "lucide-react";
 import type { IMyGardenPlant } from "@agri-scan/shared";
-import { containerVariants, itemVariants } from "../../../utils/animation";
+import { containerVariants, itemVariants } from "@/utils/animation";
 
 interface ResultViewProps {
   selectedPlant: IMyGardenPlant | null;

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MyGardenController } from './my-garden.controller';
 import { MyGardenService } from './my-garden.service';
-import { WeatherModule } from '../weather/Weather.module';
+import { WeatherModule } from '../weather/weather.module';
 import {
   MyGarden,
   MyGardenSchema,

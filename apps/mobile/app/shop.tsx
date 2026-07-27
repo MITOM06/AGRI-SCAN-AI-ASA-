@@ -15,7 +15,7 @@ import { useRouter } from "expo-router";
 import { ArrowLeft, Search, ShoppingCart, Star } from "lucide-react-native";
 
 // Bổ sung import productApi
-import { productApi } from "@agri-scan/shared";
+import { productApi, formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
 
 // Map chuẩn danh mục với Backend
 const CATEGORIES = [
@@ -57,12 +57,6 @@ export default function ShopScreen() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount || 0);
-  };
 
   return (
     <View style={styles.container}>

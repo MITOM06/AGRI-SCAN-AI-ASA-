@@ -12,7 +12,10 @@ import {
   ChatHistory,
   ChatHistorySchema,
 } from '@agri-scan/database';
-import { AdminService } from './admin.service';
+import { AdminDashboardService } from './admin-dashboard.service';
+import { AdminUsersService } from './admin-users.service';
+import { AdminReportsService } from './admin-reports.service';
+import { AdminFeedbackService } from './admin-feedback.service';
 import { AdminController } from './admin.controller';
 
 @Module({
@@ -26,6 +29,11 @@ import { AdminController } from './admin.controller';
     ]),
   ],
   controllers: [AdminController],
-  providers: [AdminService],
+  providers: [
+    AdminDashboardService,
+    AdminUsersService,
+    AdminReportsService,
+    AdminFeedbackService,
+  ],
 })
 export class AdminModule {}

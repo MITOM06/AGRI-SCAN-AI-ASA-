@@ -12,8 +12,8 @@ import {
   Inbox,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "../hooks/useAuth";
-import { cn } from "../lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 // Đổi import này theo alias/package thật của project bạn nếu cần
 import { adminApi } from "@agri-scan/shared";
