@@ -23,8 +23,10 @@ import {
 } from "lucide-react-native";
 
 import { orderApi, formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
 export default function MyOrdersScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -65,42 +67,42 @@ export default function MyOrdersScreen() {
     switch (status) {
       case "PENDING":
         return {
-          text: "Chờ xác nhận",
+          text: t("shop.mStatusPending"),
           color: "#f59e0b",
           bg: "#fef3c7",
           icon: <Clock size={16} color="#f59e0b" />,
         };
       case "CONFIRMED":
         return {
-          text: "Đã xác nhận",
+          text: t("shop.mStatusConfirmed"),
           color: "#3b82f6",
           bg: "#dbeafe",
           icon: <Package size={16} color="#3b82f6" />,
         };
       case "SHIPPING":
         return {
-          text: "Đang giao hàng",
+          text: t("shop.mStatusShipping"),
           color: "#0ea5e9",
           bg: "#e0f2fe",
           icon: <Truck size={16} color="#0ea5e9" />,
         };
       case "DELIVERED":
         return {
-          text: "Giao thành công",
+          text: t("shop.mStatusDelivered"),
           color: "#16a34a",
           bg: "#dcfce3",
           icon: <CheckCircle2 size={16} color="#16a34a" />,
         };
       case "CANCELLED":
         return {
-          text: "Đã Hủy",
+          text: t("shop.mStatusCancelled"),
           color: "#ef4444",
           bg: "#fee2e2",
           icon: <XCircle size={16} color="#ef4444" />,
         };
       default:
         return {
-          text: "Không rõ",
+          text: t("shop.mStatusUnknown"),
           color: "#64748b",
           bg: "#f1f5f9",
           icon: <Package size={16} color="#64748b" />,
@@ -117,7 +119,7 @@ export default function MyOrdersScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Lịch sử mua hàng</Text>
+        <Text style={styles.headerTitle}>{t("shop.mOrderHistoryTitle")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -135,12 +137,12 @@ export default function MyOrdersScreen() {
           {orders.length === 0 ? (
             <View style={styles.emptyBox}>
               <Package size={48} color="#cbd5e1" />
-              <Text style={styles.emptyText}>Bạn chưa có đơn hàng nào.</Text>
+              <Text style={styles.emptyText}>{t("shop.mNoOrders")}</Text>
               <TouchableOpacity
                 style={styles.shopBtn}
                 onPress={() => router.push("/shop" as any)}
               >
-                <Text style={styles.shopBtnText}>Mua sắm ngay</Text>
+                <Text style={styles.shopBtnText}>{t("shop.mShopNow")}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -160,7 +162,7 @@ export default function MyOrdersScreen() {
                       🛒{" "}
                       {order.sellerId?.shopName ||
                         order.sellerId?.fullName ||
-                        "Gian hàng"}
+                        t("shop.mShopFallback")}
                     </Text>
                     <View
                       style={[
@@ -202,7 +204,7 @@ export default function MyOrdersScreen() {
                         />
                         <View style={styles.productInfo}>
                           <Text style={styles.productName} numberOfLines={2}>
-                            {productInfo.name || "Sản phẩm không xác định"}
+                            {productInfo.name || t("shop.mUnknownProduct")}
                           </Text>
                           <View
                             style={{
@@ -231,8 +233,10 @@ export default function MyOrdersScreen() {
                     >
                       <Text style={styles.expandBtnText}>
                         {isExpanded
-                          ? "Thu gọn"
-                          : `Xem thêm ${order.items.length - 1} sản phẩm`}
+                          ? t("shop.mCollapse")
+                          : t("shop.mShowMoreItems", {
+                              count: order.items.length - 1,
+                            })}
                       </Text>
                       {isExpanded ? (
                         <ChevronUp size={16} color="#16a34a" />
@@ -243,7 +247,9 @@ export default function MyOrdersScreen() {
                   )}
 
                   <View style={styles.orderFooter}>
-                    <Text style={styles.totalLabel}>Thành tiền:</Text>
+                    <Text style={styles.totalLabel}>
+                      {t("shop.mSubtotalInline")}
+                    </Text>
                     <Text style={styles.totalValue}>
                       {formatCurrency(order.totalAmount)}
                     </Text>
