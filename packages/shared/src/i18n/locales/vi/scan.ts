@@ -28,6 +28,10 @@ export const scan = {
   noAnswer: "Trợ lý chưa có phản hồi.",
   loginRequired: "Bạn cần đăng nhập để sử dụng tính năng quét ảnh.",
   genericError: "Có lỗi xảy ra. Vui lòng thử lại.",
+  invalidFile: "File không hợp lệ",
+  analysisIncomplete: "Không thể hoàn tất phân tích ảnh",
+  scanError: "Có lỗi xảy ra khi quét ảnh",
+  detailFetchFailed: "Không thể lấy chi tiết kết quả",
 
   // Thanh bên
   newChat: "Cuộc trò chuyện mới",

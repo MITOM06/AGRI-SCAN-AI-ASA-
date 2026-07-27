@@ -15,7 +15,9 @@ import {
   Leaf
 } from "lucide-react";
 import type { IMyGardenPlant } from "@agri-scan/shared";
+import { NO_FERTILIZER_NEEDED, DATE_LOCALES } from "@agri-scan/shared";
 import { containerVariants, itemVariants } from "@/utils/animation";
+import { useI18n } from "@/context/I18nContext";
 
 interface TrackingViewProps {
   plant: IMyGardenPlant | null;
@@ -24,13 +26,20 @@ interface TrackingViewProps {
 }
 
 export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps) {
+  // Cần cả `locale` để định dạng ngày theo ngôn ngữ đang chọn
+  const { t, locale } = useI18n();
+  const dateLocale = DATE_LOCALES[locale];
   const [expandedTask, setExpandedTask] = useState<number | null>(null);
 
   if (!plant) return null;
 
-  const displayName = plant.customName?.trim() || plant.plantInfo?.commonName?.trim() || "Cây trồng";
+  const displayName =
+    plant.customName?.trim() ||
+    plant.plantInfo?.commonName?.trim() ||
+    t("myGarden.defaultPlantName");
   const imageSrc = plant.imageUrl || plant.plantInfo?.images?.[0] || "/placeholder-plant.png";
-  const conditionText = plant.currentCondition?.trim() || "Cây đang phát triển ổn định";
+  const conditionText =
+    plant.currentCondition?.trim() || t("myGarden.growingWell");
 
   // Dữ liệu lộ trình thật; không có thì hiển thị trạng thái rỗng, không bịa.
   const stages = plant.growthStages ?? [];
@@ -60,9 +69,11 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
             <h1 className="text-2xl font-extrabold text-gray-900">{displayName}</h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md text-[11px] font-bold uppercase tracking-wider">
-                <Activity size={12} /> Đang theo dõi
+                <Activity size={12} /> {t("myGarden.tracking")}
               </span>
-              <span className="text-sm text-gray-500">• {plant.plantInfo?.commonName || "Chưa có định danh"}</span>
+              <span className="text-sm text-gray-500">
+                • {plant.plantInfo?.commonName || t("myGarden.noIdentification")}
+              </span>
             </div>
           </div>
         </div>
@@ -91,11 +102,15 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
 
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
-                <span className="text-xs font-semibold text-emerald-600 mb-1 uppercase tracking-wider">Tiến độ</span>
+                <span className="text-xs font-semibold text-emerald-600 mb-1 uppercase tracking-wider">
+                  {t("myGarden.progress")}
+                </span>
                 <span className="text-2xl font-black text-emerald-700">{plant.progressPercentage || 0}%</span>
               </div>
               <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
-                <span className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wider">Cập nhật</span>
+                <span className="text-xs font-semibold text-blue-600 mb-1 uppercase tracking-wider">
+                  {t("myGarden.updated")}
+                </span>
                 <span className="text-sm font-bold text-blue-900 mt-1">{new Date().toLocaleDateString('vi-VN')}</span>
               </div>
             </div>
@@ -107,8 +122,12 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
             </div>
             <div className="relative z-10 flex items-center justify-between">
               <div>
-                <h3 className="text-white font-bold text-lg">Cập nhật hôm nay</h3>
-                <p className="text-emerald-100/80 text-sm mt-1">Chụp ảnh để AI phân tích</p>
+                <h3 className="text-white font-bold text-lg">
+                  {t("myGarden.updateToday")}
+                </h3>
+                <p className="text-emerald-100/80 text-sm mt-1">
+                  {t("myGarden.updateTodayHint")}
+                </p>
               </div>
               <button
                 onClick={onUpdatePhoto}
@@ -127,7 +146,8 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
           {/* TIMELINE */}
           <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-emerald-50">
             <h2 className="text-lg font-bold text-emerald-900 mb-6 flex items-center gap-2">
-              <Award className="text-emerald-500" size={20} /> Lộ trình sinh trưởng
+              <Award className="text-emerald-500" size={20} />{" "}
+              {t("myGarden.growthRoadmap")}
             </h2>
 
             {hasStages ? (
@@ -162,7 +182,7 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Info size={24} className="text-emerald-400 mb-2" />
                 <p className="text-sm text-gray-500 font-medium">
-                  Chưa có lộ trình sinh trưởng cho cây này.
+                  {t("myGarden.noRoadmap")}
                 </p>
               </div>
             )}
@@ -173,7 +193,8 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
           {/* NHIỆM VỤ HÔM NAY - ĐÃ TỐI ƯU GIAO DIỆN NHẮC NHỞ */}
           <div>
             <h2 className="text-lg font-bold text-emerald-900 mb-4 ml-2 flex items-center gap-2">
-              <CalendarDays className="text-emerald-600" size={20} /> Nhiệm vụ Hôm nay
+              <CalendarDays className="text-emerald-600" size={20} />{" "}
+              {t("myGarden.todayTasks")}
             </h2>
             
             <div className="bg-white border border-emerald-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden">
@@ -183,10 +204,18 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-emerald-100/60">
                 <div>
                   <h3 className="text-2xl font-black text-emerald-950 flex items-center gap-2">
-                    Ngày {todayTask.day} 
-                    <span className="text-sm font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">Hôm nay</span>
+                    {t("myGarden.dayN", { day: todayTask.day })}
+                    <span className="text-sm font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                      {t("myGarden.today")}
+                    </span>
                   </h3>
-                  <p className="text-emerald-800/60 mt-1 font-medium">{new Date(todayTask.date).toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                  <p className="text-emerald-800/60 mt-1 font-medium">
+                    {new Date(todayTask.date).toLocaleDateString(dateLocale, {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                    })}
+                  </p>
                 </div>
                 <div className="inline-flex items-center gap-2 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-100/50 px-4 py-2 rounded-xl">
                   <Sun size={16} className="text-amber-500" />
@@ -206,7 +235,9 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
                     <div className="w-10 h-10 bg-white shadow-sm text-blue-500 rounded-xl flex items-center justify-center border border-blue-50">
                       <Droplets size={20} />
                     </div>
-                    <h4 className="font-extrabold text-blue-900 text-[15px]">Tưới nước</h4>
+                    <h4 className="font-extrabold text-blue-900 text-[15px]">
+                      {t("myGarden.taskWatering")}
+                    </h4>
                   </div>
                   <p className="text-blue-900/70 text-sm leading-relaxed font-medium">
                     {todayTask.waterAction}
@@ -222,10 +253,12 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
                     <div className="w-10 h-10 bg-white shadow-sm text-amber-500 rounded-xl flex items-center justify-center border border-emerald-50">
                       <Sparkles size={20} />
                     </div>
-                    <h4 className="font-extrabold text-emerald-900 text-[15px]">Bón phân & Chăm sóc</h4>
+                    <h4 className="font-extrabold text-emerald-900 text-[15px]">
+                      {t("myGarden.taskFertilizing")}
+                    </h4>
                   </div>
                   <div className="text-emerald-900/70 text-sm leading-relaxed font-medium">
-                    {todayTask.fertilizerAction !== "Chưa cần bón phân" && (
+                    {todayTask.fertilizerAction !== NO_FERTILIZER_NEEDED && (
                       <span className="block mb-1 font-semibold text-emerald-800">{todayTask.fertilizerAction}.</span>
                     )}
                     <span>{todayTask.careAction}</span>
@@ -238,7 +271,9 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
 
           {/* ACCORDION CÁC NGÀY TIẾP THEO */}
           <div className="mt-8">
-            <h2 className="text-sm font-bold text-emerald-800/50 mb-4 ml-2 uppercase tracking-wider">Lịch trình các ngày tới</h2>
+            <h2 className="text-sm font-bold text-emerald-800/50 mb-4 ml-2 uppercase tracking-wider">
+              {t("myGarden.upcomingSchedule")}
+            </h2>
             <div className="space-y-3">
               {upcomingTasks.map((task, idx) => {
                 const isExpanded = expandedTask === idx;
@@ -253,7 +288,9 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
                           {task.day}
                         </div>
                         <div className="text-left">
-                          <p className="font-bold text-emerald-950 text-base">Nhiệm vụ Ngày {task.day}</p>
+                          <p className="font-bold text-emerald-950 text-base">
+                            {t("myGarden.taskDayN", { day: task.day })}
+                          </p>
                           <p className="text-xs text-emerald-800/50 mt-0.5">{new Date(task.date).toLocaleDateString('vi-VN')}</p>
                         </div>
                       </div>
@@ -266,14 +303,18 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
                           <div className="flex gap-3">
                             <Droplets size={16} className="text-blue-500 shrink-0 mt-0.5" />
                             <div>
-                              <p className="text-xs font-bold text-emerald-900 mb-1">Tưới nước</p>
+                              <p className="text-xs font-bold text-emerald-900 mb-1">
+                                {t("myGarden.taskWatering")}
+                              </p>
                               <p className="text-sm text-emerald-800/70">{task.waterAction}</p>
                             </div>
                           </div>
                           <div className="flex gap-3">
                             <Sparkles size={16} className="text-amber-500 shrink-0 mt-0.5" />
                             <div>
-                              <p className="text-xs font-bold text-emerald-900 mb-1">Chăm sóc</p>
+                              <p className="text-xs font-bold text-emerald-900 mb-1">
+                                {t("myGarden.taskCare")}
+                              </p>
                               <p className="text-sm text-emerald-800/70">{task.fertilizerAction}. {task.careAction}</p>
                             </div>
                           </div>
@@ -292,11 +333,10 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
                 <CalendarDays size={26} className="text-emerald-400" />
               </div>
               <h3 className="text-lg font-bold text-emerald-950 mb-1">
-                Chưa có lộ trình chăm sóc
+                {t("myGarden.noCareRoadmap")}
               </h3>
               <p className="text-sm text-gray-500 max-w-sm">
-                Chụp ảnh cập nhật để AI phân tích và tạo lộ trình chăm sóc hằng
-                ngày cho cây của bạn.
+                {t("myGarden.noCareRoadmapDesc")}
               </p>
             </div>
           )}

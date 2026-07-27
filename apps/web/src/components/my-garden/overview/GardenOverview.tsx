@@ -15,8 +15,9 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-import { plantApi } from "@agri-scan/shared";
+import { plantApi, HEALTHY_CONDITION } from "@agri-scan/shared";
 import type { IMyGardenPlant, IPlantListItem } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 
 // Danh mục "Cây hỗ trợ" (tabs FRUIT/FLOWER/ORNAMENTAL) lấy từ API cây thật.
 // Cây thật chỉ có `category` (tiếng Việt), nên suy ra nhóm hiển thị từ đó.
@@ -59,9 +60,11 @@ export function GardenOverview({
   handleViewTrackedPlant,
   navigate,
 }: GardenOverviewProps) {
+  const t = useT();
+
   const totalPlants = trackedPlants.length;
   const healthyPlants = trackedPlants.filter(
-    (p) => p.currentCondition === "Khỏe mạnh",
+    (p) => p.currentCondition === HEALTHY_CONDITION,
   ).length;
 
   const attentionPlants = totalPlants - healthyPlants;
@@ -79,7 +82,7 @@ export function GardenOverview({
         const data = await plantApi.getAllPlants();
         setCatalogPlants(data);
       } catch {
-        setCatalogError("Không thể tải danh mục cây. Vui lòng thử lại.");
+        setCatalogError("myGarden.catalogError");
       } finally {
         setCatalogLoading(false);
       }
@@ -142,7 +145,7 @@ export function GardenOverview({
             </button>
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-1">
-                Vườn của tôi
+                {t("myGarden.myGarden")}
               </h1>
               <div className="flex items-center gap-2 text-gray-500 text-sm font-medium">
                 <MapPin size={16} className="text-emerald-500" /> Ho Chi Minh
@@ -160,7 +163,7 @@ export function GardenOverview({
                   {totalPlants}
                 </span>
                 <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-1">
-                  Tổng cây
+                  {t("myGarden.totalPlants")}
                 </span>
               </div>
               <div className="w-px h-8 bg-gray-200"></div>
@@ -169,7 +172,7 @@ export function GardenOverview({
                   {healthyPlants}
                 </span>
                 <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-1">
-                  Khỏe mạnh
+                  {t("myGarden.healthy")}
                 </span>
               </div>
               <div className="w-px h-8 bg-gray-200"></div>
@@ -178,7 +181,7 @@ export function GardenOverview({
                   {attentionPlants}
                 </span>
                 <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-1">
-                  Cần chú ý
+                  {t("myGarden.needsAttention")}
                 </span>
               </div>
             </div>
@@ -188,7 +191,7 @@ export function GardenOverview({
               onClick={() => setStep("UPLOAD")}
               className="w-full sm:w-auto bg-emerald-500 text-white px-6 py-3.5 rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/40 hover:-translate-y-0.5 font-bold"
             >
-              <Plus size={20} /> Thêm cây mới
+              <Plus size={20} /> {t("myGarden.addPlant")}
             </button>
           </div>
         </div>
@@ -204,7 +207,7 @@ export function GardenOverview({
               : "bg-white text-gray-500 hover:bg-gray-50 border border-gray-100"
           }`}
         >
-          Cây đang theo dõi
+          {t("myGarden.trackedPlants")}
         </button>
         <button
           onClick={() => setActiveTab("FRUIT")}
@@ -214,7 +217,7 @@ export function GardenOverview({
               : "bg-white text-gray-500 hover:bg-gray-50 border border-gray-100"
           }`}
         >
-          Cây ăn quả
+          {t("myGarden.tabFruit")}
         </button>
         <button
           onClick={() => setActiveTab("FLOWER")}
@@ -224,7 +227,7 @@ export function GardenOverview({
               : "bg-white text-gray-500 hover:bg-gray-50 border border-gray-100"
           }`}
         >
-          Cây hoa
+          {t("myGarden.tabFlower")}
         </button>
         <button
           onClick={() => setActiveTab("ORNAMENTAL")}
@@ -234,7 +237,7 @@ export function GardenOverview({
               : "bg-white text-gray-500 hover:bg-gray-50 border border-gray-100"
           }`}
         >
-          Cây kiểng
+          {t("myGarden.tabOrnamental")}
         </button>
       </div>
 
@@ -264,20 +267,19 @@ export function GardenOverview({
             </div>
 
             <h2 className="text-2xl font-extrabold text-gray-900 mb-3 leading-tight">
-              Khu vườn của bạn đang trống
+              {t("myGarden.emptyGardenTitle")}
               <br />
-              hãy lấp đầy nó nhé!
+              {t("myGarden.emptyGardenTitle2")}
             </h2>
             <p className="text-gray-500 mb-10 text-lg leading-relaxed">
-              Chụp ảnh bất kỳ cây nào—chúng tôi sẽ nhận diện và theo dõi quá
-              trình chăm sóc, cực kỳ dễ dàng.
+              {t("myGarden.emptyGardenDesc")}
             </p>
 
             <button
               onClick={() => setStep("UPLOAD")}
               className="bg-emerald-500 text-white px-12 py-4 rounded-full font-bold text-lg hover:bg-emerald-600 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 shadow-lg shadow-emerald-500/30 w-full justify-center max-w-xs"
             >
-              <Plus size={24} /> Thêm cây mới
+              <Plus size={24} /> {t("myGarden.addPlant")}
             </button>
           </div>
         ) : (
@@ -285,12 +287,12 @@ export function GardenOverview({
             {/* List Header */}
             <div className="flex items-center justify-between mb-6 px-2">
               <h2 className="text-xl font-bold text-gray-900">
-                Cây đang theo dõi
+                {t("myGarden.trackedPlants")}
               </h2>
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span className="text-sm font-medium text-gray-500">
-                  Cập nhật theo thời gian thực
+                  {t("myGarden.realtimeUpdate")}
                 </span>
               </div>
             </div>
@@ -315,7 +317,7 @@ export function GardenOverview({
                         }}
                         className="px-6 py-2.5 bg-emerald-500 text-white font-bold rounded-full hover:bg-emerald-600 transition-colors shadow-md w-48 flex items-center justify-center gap-2"
                       >
-                        <ScanLine size={18} /> Chi tiết
+                        <ScanLine size={18} /> {t("myGarden.detail")}
                       </button>
                       <button
                         onClick={(e) => {
@@ -324,7 +326,7 @@ export function GardenOverview({
                         }}
                         className="px-6 py-2.5 bg-white text-emerald-600 border-2 border-emerald-500 font-bold rounded-full hover:bg-emerald-50 transition-colors shadow-md w-48 flex items-center justify-center gap-2"
                       >
-                        <Activity size={18} /> Theo dõi
+                        <Activity size={18} /> {t("myGarden.track")}
                       </button>
                     </div>
 
@@ -344,7 +346,7 @@ export function GardenOverview({
                         <h3 className="font-bold text-xl text-gray-900 pr-6 break-words">
                           {plant.customName}
                         </h3>
-                        {plant.currentCondition !== "Khỏe mạnh" && (
+                        {plant.currentCondition !== HEALTHY_CONDITION && (
                           <div className="w-6 h-6 rounded-full bg-red-50 flex items-center justify-center shrink-0 absolute top-4 right-4 sm:static">
                             <AlertCircle size={16} className="text-red-500" />
                           </div>
@@ -352,7 +354,7 @@ export function GardenOverview({
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                        <span>Giai đoạn:</span>
+                        <span>{t("myGarden.stage")}</span>
                         <span className="font-bold text-gray-800 bg-gray-50 px-2 py-0.5 rounded-md whitespace-nowrap">
                           {plant.growthStages[plant.currentStageIndex]}
                         </span>
@@ -362,7 +364,7 @@ export function GardenOverview({
                       <div className="flex items-center gap-3 mb-5 w-full">
                         <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden flex-1">
                           <div
-                            className={`h-full rounded-full relative ${plant.currentCondition === "Khỏe mạnh" ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-amber-400 to-amber-500"}`}
+                            className={`h-full rounded-full relative ${plant.currentCondition === HEALTHY_CONDITION ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-amber-400 to-amber-500"}`}
                             style={{ width: `${plant.progressPercentage}%` }}
                           >
                             <div className="absolute right-0 top-0 bottom-0 w-4 bg-white/30 animate-pulse rounded-r-full"></div>
@@ -392,27 +394,27 @@ export function GardenOverview({
                                 )
                               : 1;
                             return days <= 1
-                              ? "Tưới: Hôm nay"
+                              ? t("myGarden.waterToday")
                               : days === 2
-                                ? "Tưới: Ngày mai"
-                                : `Tưới: ${days} ngày tới`;
+                                ? t("myGarden.waterTomorrow")
+                                : t("myGarden.waterInDays", { days });
                           })()}
                         </div>
                         <div
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border ${
-                            plant.currentCondition === "Khỏe mạnh"
+                            plant.currentCondition === HEALTHY_CONDITION
                               ? "bg-emerald-50 text-emerald-600 border-emerald-100/50"
                               : "bg-red-50 text-red-600 border-red-100/50"
                           }`}
                         >
-                          {plant.currentCondition === "Khỏe mạnh" ? (
+                          {plant.currentCondition === HEALTHY_CONDITION ? (
                             <Leaf size={14} />
                           ) : (
                             <AlertCircle size={14} />
                           )}
-                          {plant.currentCondition === "Khỏe mạnh"
-                            ? "Tốt"
-                            : "Cảnh báo bệnh"}
+                          {plant.currentCondition === HEALTHY_CONDITION
+                            ? t("myGarden.statusGood")
+                            : t("myGarden.statusDiseaseWarning")}
                         </div>
                       </div>
                     </div>
@@ -424,7 +426,7 @@ export function GardenOverview({
                         handleRemovePlant(plant._id);
                       }}
                       className="absolute top-4 right-4 p-2.5 bg-white/90 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full shadow-sm backdrop-blur-md transition-all z-30 opacity-0 group-hover:opacity-100 hover:scale-110"
-                      title="Xóa khỏi vườn"
+                      title={t("myGarden.removeFromGarden")}
                     >
                       <Trash2 size={18} />
                     </button>
@@ -439,21 +441,23 @@ export function GardenOverview({
           <div className="flex items-center justify-between mb-6 px-2">
             <h2 className="text-xl font-bold text-gray-900">
               {activeTab === "FRUIT"
-                ? "Danh sách Cây ăn quả hỗ trợ"
+                ? t("myGarden.catalogFruit")
                 : activeTab === "FLOWER"
-                  ? "Danh sách Cây hoa hỗ trợ"
-                  : "Danh sách Cây kiểng hỗ trợ"}
+                  ? t("myGarden.catalogFlower")
+                  : t("myGarden.catalogOrnamental")}
             </h2>
           </div>
           {catalogLoading ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-500">
               <Loader2 size={32} className="animate-spin text-emerald-500 mb-3" />
-              <span className="font-medium">Đang tải danh mục cây...</span>
+              <span className="font-medium">
+                {t("myGarden.catalogLoading")}
+              </span>
             </div>
           ) : catalogError ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <AlertCircle size={32} className="text-red-500 mb-3" />
-              <p className="text-gray-600 font-medium">{catalogError}</p>
+              <p className="text-gray-600 font-medium">{t(catalogError)}</p>
             </div>
           ) : catalogForTab.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -461,7 +465,7 @@ export function GardenOverview({
                 <Leaf size={28} className="text-emerald-400" />
               </div>
               <p className="text-gray-600 font-medium">
-                Chưa có cây nào trong danh mục này.
+                {t("myGarden.catalogEmpty")}
               </p>
             </div>
           ) : (
@@ -491,7 +495,7 @@ export function GardenOverview({
                       onClick={() => handleViewCatalogPlant(plant)}
                       className="w-full py-2.5 bg-gray-50 text-emerald-600 font-bold rounded-xl hover:bg-emerald-50 transition-colors text-sm"
                     >
-                      Xem chi tiết mẫu
+                      {t("myGarden.viewSample")}
                     </button>
                   </div>
                 </motion.div>

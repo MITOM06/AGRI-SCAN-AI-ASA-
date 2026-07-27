@@ -11,10 +11,12 @@ import { scan } from "./scan";
 import { encyclopedia } from "./encyclopedia";
 import { weather } from "./weather";
 import { shop } from "./shop";
+import { myGarden } from "./my-garden";
 
 export const en: Dictionary = {
   weather,
   shop,
+  myGarden,
   common,
   nav,
   footer,

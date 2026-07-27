@@ -28,6 +28,10 @@ export const scan = {
   noAnswer: "The assistant has no reply yet.",
   loginRequired: "You need to sign in to use image scanning.",
   genericError: "Something went wrong. Please try again.",
+  invalidFile: "Invalid file",
+  analysisIncomplete: "Could not finish analysing the image",
+  scanError: "Something went wrong while scanning",
+  detailFetchFailed: "Could not fetch the result details",
 
   // Sidebar
   newChat: "New conversation",

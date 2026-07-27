@@ -11,6 +11,7 @@ import {
   Flower2,
   Leaf,
 } from "lucide-react";
+import { useT } from "@/context/I18nContext";
 
 interface UploadViewProps {
   onBack: () => void;
@@ -23,6 +24,8 @@ export function UploadView({
   handleRealUpload,
   fileInputRef,
 }: UploadViewProps) {
+  const t = useT();
+
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -61,15 +64,14 @@ export function UploadView({
         </motion.div>
 
         <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
-          Bác sĩ cây trồng{" "}
+          {t("myGarden.uploadTitlePrefix")}{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">
-            thông minh
+            {t("myGarden.uploadTitleHighlight")}
           </span>
         </h1>
 
         <p className="text-gray-500 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-          Chụp ảnh cây của bạn. AI sẽ nhận diện loại cây, chẩn đoán sức khỏe và
-          đưa ra phác đồ chăm sóc cá nhân hóa chỉ trong vài giây.
+          {t("myGarden.uploadSubtitle")}
         </p>
       </div>
 
@@ -105,11 +107,10 @@ export function UploadView({
           </motion.div>
 
           <h3 className="text-2xl font-bold text-gray-900 mb-3 relative z-10">
-            Chụp hoặc Tải ảnh lên
+            {t("myGarden.uploadCta")}
           </h3>
           <p className="text-gray-500 mb-8 max-w-sm mx-auto relative z-10">
-            Hỗ trợ định dạng JPG, PNG. Kích thước tối đa 10MB. Đảm bảo ảnh rõ
-            nét, đủ sáng.
+            {t("myGarden.uploadHint")}
           </p>
 
           <button
@@ -124,7 +125,7 @@ export function UploadView({
               size={20}
               className="group-hover:-translate-y-1 transition-transform"
             />
-            Chọn ảnh từ thiết bị
+            {t("myGarden.uploadPickFile")}
           </button>
         </div>
       </motion.div>
