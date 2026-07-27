@@ -40,4 +40,85 @@ export const shop = {
   trustedSeller: "Trusted seller",
   rating: "Rating",
   products: "Products",
+
+  // Cart
+  cart: "Cart",
+  cartTitle: "Your cart",
+  cartEmpty: "Your cart is empty",
+  cartEmptyDesc: "You haven't added any products yet.",
+  continueShopping: "Continue shopping",
+  colProduct: "Product",
+  colUnitPrice: "Unit price",
+  colQuantity: "Quantity",
+  colSubtotal: "Subtotal",
+  removeItem: "Remove item",
+  orderSummary: "Order summary",
+  subtotalWithCount: "Subtotal ({count} items)",
+  shippingFee: "Shipping",
+  calculatedLater: "Calculated at checkout",
+  grandTotal: "Total",
+  vatIncluded: "(VAT included where applicable)",
+  proceedToCheckout: "Proceed to checkout",
+  singleShopOnly:
+    "A cart can only contain items from one shop. Please order separately.",
+
+  // Checkout
+  checkout: "Checkout",
+  orderPlaced: "Order placed!",
+  orderPlacedDesc:
+    "Thanks for shopping at Agri-Shop. Your order is being processed and will ship soon.",
+  cartEmptyShort: "Cart is empty",
+
+  shippingAddress: "Delivery address",
+  enterManually: "Enter manually",
+  receiverName: "Recipient name",
+  receiverNamePlaceholder: "Enter the recipient's name",
+  phone: "Phone number",
+  phonePlaceholder: "Enter a phone number",
+  addressPlaceholder: "Street address, ward, district, province/city",
+
+  carrier: "Shipping method",
+  carrierFast: "Express delivery",
+  carrierFastEta: "Estimated: 2-3 days",
+  carrierEconomy: "Economy delivery",
+  carrierEconomyEta: "Estimated: 4-5 days",
+
+  paymentMethod: "Payment method",
+  paymentCod: "Cash on delivery (COD)",
+  paymentBankTransfer: "Bank transfer",
+  paymentMomo: "MoMo wallet",
+
+  yourOrder: "Your order",
+  subtotalLabel: "Subtotal:",
+  shippingFeeLabel: "Shipping:",
+  discountLabel: "Discount:",
+  totalPayment: "Total:",
+  vatIncludedShort: "(VAT included)",
+  placeOrder: "Place order",
+
+  // Checkout errors
+  errorReceiverName: "Please enter the recipient's name.",
+  errorPhone: "Please enter a delivery phone number.",
+  errorAddress: "Please enter a delivery address.",
+  errorNoSeller:
+    "Could not determine the product's seller. Please go back to the cart and re-add the item.",
+  errorOrderFailed: "Could not place the order right now. Please try again.",
+
+  // My orders
+  myOrders: "My orders",
+  statusPending: "Awaiting confirmation",
+  statusConfirmed: "Confirmed",
+  statusShipping: "Out for delivery",
+  statusDelivered: "Delivered",
+  statusCancelled: "Cancelled",
+  noOrders: "No orders",
+  noOrdersDesc: "You have no orders in this status.",
+  orderCode: "Order number",
+  orderDate: "Order date",
+  productFallback: "Product #{id}",
+  variantDefault: "Variant: Default",
+  itemCount: "{count} items",
+  totalAmount: "Total",
+  buyAgain: "Buy again",
+  details: "Details",
 } as const;

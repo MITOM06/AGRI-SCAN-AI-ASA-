@@ -15,8 +15,10 @@ import {
 import { useRouter } from "next/navigation";
 import { orderApi } from "@agri-scan/shared";
 import { IOrder, OrderStatus } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 
 export function MyOrdersPage() {
+  const t = useT();
   const router = useRouter();
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,31 +63,31 @@ export function MyOrdersPage() {
       case ORDER_STATUS.PENDING:
         return (
           <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full flex items-center gap-1">
-            <Clock size={12} /> Chờ xác nhận
+            <Clock size={12} /> {t("shop.statusPending")}
           </span>
         );
       case ORDER_STATUS.CONFIRMED:
         return (
           <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full flex items-center gap-1">
-            <CheckCircle2 size={12} /> Đã xác nhận
+            <CheckCircle2 size={12} /> {t("shop.statusConfirmed")}
           </span>
         );
       case ORDER_STATUS.SHIPPING:
         return (
           <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full flex items-center gap-1">
-            <Truck size={12} /> Đang giao hàng
+            <Truck size={12} /> {t("shop.statusShipping")}
           </span>
         );
       case ORDER_STATUS.DELIVERED:
         return (
           <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1">
-            <CheckCircle2 size={12} /> Đã giao
+            <CheckCircle2 size={12} /> {t("shop.statusDelivered")}
           </span>
         );
       case ORDER_STATUS.CANCELLED:
         return (
           <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full flex items-center gap-1">
-            <XCircle size={12} /> Đã hủy
+            <XCircle size={12} /> {t("shop.statusCancelled")}
           </span>
         );
       default:
@@ -97,12 +99,13 @@ export function MyOrdersPage() {
     }
   };
 
+  // `id` là mã trạng thái so khớp với order.orderStatus — không dịch.
   const tabs = [
-    { id: "ALL", label: "Tất cả" },
-    { id: ORDER_STATUS.PENDING, label: "Chờ xác nhận" },
-    { id: ORDER_STATUS.SHIPPING, label: "Đang giao" },
-    { id: ORDER_STATUS.DELIVERED, label: "Đã giao" },
-    { id: ORDER_STATUS.CANCELLED, label: "Đã hủy" },
+    { id: "ALL", label: t("common.all") },
+    { id: ORDER_STATUS.PENDING, label: t("shop.statusPending") },
+    { id: ORDER_STATUS.SHIPPING, label: t("shop.statusShipping") },
+    { id: ORDER_STATUS.DELIVERED, label: t("shop.statusDelivered") },
+    { id: ORDER_STATUS.CANCELLED, label: t("shop.statusCancelled") },
   ];
 
   return (
@@ -114,17 +117,19 @@ export function MyOrdersPage() {
             className="hover:text-primary cursor-pointer"
             onClick={() => router.push("/")}
           >
-            Trang chủ
+            {t("nav.home")}
           </span>
           <ChevronRight size={16} />
           <span
             className="hover:text-primary cursor-pointer"
             onClick={() => router.push("/shop")}
           >
-            Cửa hàng
+            {t("shop.storeShort")}
           </span>
           <ChevronRight size={16} />
-          <span className="font-medium text-gray-900">Đơn hàng của tôi</span>
+          <span className="font-medium text-gray-900">
+            {t("shop.myOrders")}
+          </span>
         </div>
       </div>
 
@@ -133,7 +138,9 @@ export function MyOrdersPage() {
           <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
             <ShoppingBag size={24} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Đơn hàng của tôi</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t("shop.myOrders")}
+          </h1>
         </div>
 
         {/* Tabs */}
@@ -166,16 +173,14 @@ export function MyOrdersPage() {
               <Search size={32} className="text-gray-400" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-1">
-              Không có đơn hàng nào
+              {t("shop.noOrders")}
             </h3>
-            <p className="text-gray-500 mb-6">
-              Bạn chưa có đơn hàng nào trong trạng thái này.
-            </p>
+            <p className="text-gray-500 mb-6">{t("shop.noOrdersDesc")}</p>
             <button
               onClick={() => router.push("/shop")}
               className="px-6 py-2 bg-primary text-white rounded-full font-medium"
             >
-              Tiếp tục mua sắm
+              {t("shop.continueShopping")}
             </button>
           </div>
         ) : (
@@ -192,7 +197,7 @@ export function MyOrdersPage() {
                   <div className="flex items-center gap-4">
                     <div>
                       <p className="text-xs text-gray-500 font-medium mb-0.5">
-                        Mã đơn hàng
+                        {t("shop.orderCode")}
                       </p>
                       <p className="text-sm font-bold text-gray-900">
                         #{order._id?.substring(0, 8).toUpperCase()}
@@ -201,7 +206,7 @@ export function MyOrdersPage() {
                     <div className="w-px h-8 bg-gray-200 hidden sm:block"></div>
                     <div className="hidden sm:block">
                       <p className="text-xs text-gray-500 font-medium mb-0.5">
-                        Ngày đặt
+                        {t("shop.orderDate")}
                       </p>
                       <p className="text-sm font-bold text-gray-900">
                         {order.createdAt
@@ -230,10 +235,14 @@ export function MyOrdersPage() {
                         </div>
                         <div className="flex-1">
                           <h4 className="text-base font-medium text-gray-900 line-clamp-2 mb-1">
-                            {typeof item.productId === 'object' ? item.productId.name : `Sản phẩm #${String(item.productId).substring(0, 6)}`}
+                            {typeof item.productId === 'object'
+                              ? item.productId.name
+                              : t("shop.productFallback", {
+                                  id: String(item.productId).substring(0, 6),
+                                })}
                           </h4>
                           <p className="text-sm text-gray-500 mb-2">
-                            Phân loại: Mặc định
+                            {t("shop.variantDefault")}
                           </p>
                           <div className="flex justify-between items-center">
                             <p className="text-sm font-medium text-gray-900">
@@ -252,12 +261,12 @@ export function MyOrdersPage() {
                 {/* Order Footer */}
                 <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex flex-wrap justify-between items-center gap-4">
                   <div className="text-sm text-gray-600">
-                    {order.items.length} sản phẩm
+                    {t("shop.itemCount", { count: order.items.length })}
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="text-xs text-gray-500 font-medium mb-0.5">
-                        Tổng tiền
+                        {t("shop.totalAmount")}
                       </p>
                       <p className="text-lg font-bold text-red-500 leading-none">
                         {order.totalAmount.toLocaleString("vi-VN")}đ
@@ -266,11 +275,11 @@ export function MyOrdersPage() {
                     <div className="flex gap-2">
                       {order.orderStatus === ORDER_STATUS.DELIVERED && (
                         <button className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-colors">
-                          Mua lại
+                          {t("shop.buyAgain")}
                         </button>
                       )}
                       <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-50 transition-colors">
-                        Chi tiết
+                        {t("shop.details")}
                       </button>
                     </div>
                   </div>

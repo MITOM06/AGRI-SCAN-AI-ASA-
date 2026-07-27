@@ -8,6 +8,7 @@ import React, {
   ReactNode,
 } from "react";
 import { IProduct } from "@agri-scan/shared";
+import { useT } from "./I18nContext";
 
 // ============================================================
 // TYPES
@@ -35,6 +36,8 @@ const CartContext = createContext<ICartContext | undefined>(undefined);
 // PROVIDER
 // ============================================================
 export function CartProvider({ children }: { children: ReactNode }) {
+  // CartProvider được bọc bên trong I18nProvider (xem app/layout.tsx) nên gọi được
+  const t = useT();
   const [cartItems, setCartItems] = useState<ICartItem[]>([]);
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -50,9 +53,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const currentSellerId = prev[0].sellerId?._id ?? prev[0].sellerId;
         const newSellerId = product.sellerId?._id ?? product.sellerId;
         if (currentSellerId !== newSellerId) {
-          alert(
-            "Giỏ hàng chỉ có thể chứa sản phẩm từ 1 gian hàng. Vui lòng đặt hàng riêng.",
-          );
+          alert(t("shop.singleShopOnly"));
           return prev; // Không thêm
         }
       }
@@ -67,7 +68,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, { ...product, quantity }];
     });
-  }, []);
+    // `t` đổi khi người dùng chuyển ngôn ngữ → phải có trong deps
+  }, [t]);
 
   const removeFromCart = useCallback((productId: string) => {
     setCartItems((prev) => prev.filter((i) => i._id !== productId));
