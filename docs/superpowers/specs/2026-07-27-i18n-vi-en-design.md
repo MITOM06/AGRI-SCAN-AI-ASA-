@@ -196,15 +196,28 @@ dữ liệu demo điền sẵn form ở `CheckoutPage`, và comment tiếng Vi�
   nên đây là cửa kiểm tra thật cho phần còn lại.
 
 Đã chuyển thêm: `app/scan.tsx`, `app/tree-dictionary.tsx`, `app/garden-setup.tsx`,
-`app/my-garden.tsx`, `app/upgrade.tsx`, `app/garden-detail.tsx`.
+`app/my-garden.tsx`, `app/upgrade.tsx`, `app/garden-detail.tsx`, và **toàn bộ
+cụm `app/auth/` (6 màn)**.
 
-**Còn lại 32 file** (~475 dòng), sắp theo khối lượng giảm dần:
-`user`(30) `payment`(29) `add-product`(29)
-`profile`(27) `feedback`(26) `auth/login`(25) `admin`(24) `buy-detail`(23)
-`checkout`(20) `auth/register`(20) `product-detail`(19) `my-orders`(17)
-`auth/reset-password`(17) `auth/set-password`(16) `about`(15) `notification`(14)
-`tips`(12) `components/admin/*`(31 tổng) `success-order`(11) `onboarding`(9)
-`auth/otp-verification`(9) `my-shop`(8) `auth/forgot-password`(7) …
+**Còn lại 26 file** (~285 dòng), sắp theo khối lượng giảm dần:
+`user`(30) `payment`(29) `add-product`(29) `profile`(27) `feedback`(26)
+`admin`(24) `buy-detail`(23) `checkout`(20) `product-detail`(19)
+`my-orders`(17) `about`(15) `notification`(14) `tips`(12)
+`components/admin/*`(31 tổng, 4 file) `success-order`(11) `onboarding`(9)
+`my-shop`(8) `components/ui/Input`(1) `components/auth/AuthHeader` …
+
+### Cách làm hiệu quả cho phần còn lại
+
+Làm **theo cụm namespace**, không theo từng file: soạn hết key của cụm vào
+`locales/vi/<ns>.ts` + `en/<ns>.ts` trong một lượt, build packages, rồi mới sửa
+các component. Cụm auth (6 màn, ~94 dòng) làm xong trong một lượt theo cách này.
+
+Cụm tiếp theo nên gộp:
+- **shop/đơn hàng** (`payment`, `checkout`, `buy-detail`, `product-detail`,
+  `my-orders`, `success-order`, `my-shop`, `add-product`) → `shop.*` + `billing.*`
+- **admin** (`admin.tsx` + 4 file `components/admin/*`) → `admin.*`
+- **tài khoản** (`user`, `profile`, `notification`) → `profile.*`
+- **tĩnh** (`about`, `tips`, `onboarding`) → `about.*` + namespace mới `tips`
 
 Nhiều màn mobile trùng nội dung với web → **ưu tiên dùng lại namespace có sẵn**
 (`nav`, `auth`, `shop`, `myGarden`, `weather`, `scan`, `encyclopedia`, `feedback`,
