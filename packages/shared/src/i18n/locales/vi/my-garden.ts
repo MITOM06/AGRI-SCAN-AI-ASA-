@@ -191,4 +191,52 @@ export const myGarden = {
   addPlantFailed: "Không thể thêm cây vào vườn.",
   deletePlantFailed: "Không thể xóa cây.",
   checkInFailed: "Không thể check-in.",
+
+  // ── Mobile: màn khai báo thông tin cây (garden-setup) ──────────────────
+  setupTitle: "Khai báo thông tin",
+
+  // Mục tiêu chăm sóc — `id` là mã gửi lên API, không dịch
+  goalHealDisease: "Chữa bệnh cho cây",
+  goalGetFruit: "Thu hoạch quả",
+  goalGetFlower: "Lấy hoa",
+  goalMaintain: "Duy trì khỏe mạnh",
+
+  // Trạng thái định vị
+  locating: "Đang lấy vị trí...",
+  locationWebMode: "Đã lấy vị trí (Web Mode)",
+  locationDenied: "Bị từ chối quyền vị trí",
+  locationOk: "Đã lấy vị trí chính xác",
+  locationFailed: "Không thể lấy vị trí",
+
+  // Phân tích AI
+  analyzingCondition: "AI đang phân tích tình trạng cây...",
+  analysisDone: "Hoàn tất phân tích!",
+  detectedPrefix: "Phát hiện: {disease}",
+  composingRoadmap: "AI đang soạn lộ trình...",
+
+  // Biểu mẫu
+  step1Label: "1. Đặt tên cho cây của bạn",
+  namePlaceholder: "Ví dụ: Cà chua ban công, Hoa hồng trồng chậu...",
+  step2Label: "2. Mục tiêu chăm sóc",
+  step2Hint: "AI sẽ dựa vào mục tiêu này để đưa ra lời khuyên phù hợp.",
+  step3Label: "3. Tọa độ & Thời tiết",
+  yourGardenLocation: "Vị trí vườn của bạn",
+  weatherHint:
+    "AI sẽ lấy dữ liệu thời tiết 7 ngày tới tại vị trí này để tối ưu lượng nước tưới.",
+  submitButton: "Tạo Lộ Trình Chăm Sóc",
+
+  // Thông báo
+  errorNoValidImage: "Không tìm thấy ảnh hợp lệ.",
+  errorAiTitle: "Lỗi AI",
+  errorAiMessage: "Không thể nhận diện ảnh lúc này.",
+  errorMissingInfoTitle: "Thiếu thông tin",
+  errorMissingNameMessage: "Vui lòng đặt tên cho cây của bạn.",
+  waitTitle: "Chờ chút",
+  waitGpsMessage:
+    "Hệ thống đang lấy vị trí GPS của bạn để kiểm tra thời tiết.",
+  successTitle: "🎉 Thành công!",
+  successMessage:
+    "AI đã phân tích thời tiết và tạo xong lộ trình chăm sóc cho cây của bạn.",
+  viewGardenNow: "Xem vườn ngay",
+  errorCreateRoadmap: "Có lỗi xảy ra khi tạo lộ trình.",
 } as const;

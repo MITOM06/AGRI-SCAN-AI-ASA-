@@ -187,4 +187,51 @@ export const myGarden = {
   addPlantFailed: "Could not add the plant to your garden.",
   deletePlantFailed: "Could not delete the plant.",
   checkInFailed: "Could not check in.",
+
+  // ── Mobile: plant setup screen (garden-setup) ──────────────────────────
+  setupTitle: "Plant details",
+
+  // Care goals — the `id` is the API code, not translated
+  goalHealDisease: "Treat a disease",
+  goalGetFruit: "Harvest fruit",
+  goalGetFlower: "Get flowers",
+  goalMaintain: "Keep it healthy",
+
+  // Location status
+  locating: "Getting your location...",
+  locationWebMode: "Location acquired (web mode)",
+  locationDenied: "Location permission denied",
+  locationOk: "Precise location acquired",
+  locationFailed: "Could not get your location",
+
+  // AI analysis
+  analyzingCondition: "The AI is analysing your plant...",
+  analysisDone: "Analysis complete!",
+  detectedPrefix: "Detected: {disease}",
+  composingRoadmap: "The AI is composing your roadmap...",
+
+  // Form
+  step1Label: "1. Name your plant",
+  namePlaceholder: "e.g. Balcony tomato, Potted rose...",
+  step2Label: "2. Care goal",
+  step2Hint: "The AI uses this goal to tailor its advice.",
+  step3Label: "3. Location & weather",
+  yourGardenLocation: "Your garden's location",
+  weatherHint:
+    "The AI will pull the next 7 days of weather at this location to optimise watering.",
+  submitButton: "Create care roadmap",
+
+  // Messages
+  errorNoValidImage: "No valid image found.",
+  errorAiTitle: "AI error",
+  errorAiMessage: "Could not analyse the image right now.",
+  errorMissingInfoTitle: "Missing information",
+  errorMissingNameMessage: "Please give your plant a name.",
+  waitTitle: "One moment",
+  waitGpsMessage: "We're getting your GPS location to check the weather.",
+  successTitle: "🎉 Done!",
+  successMessage:
+    "The AI has analysed the weather and built a care roadmap for your plant.",
+  viewGardenNow: "View my garden",
+  errorCreateRoadmap: "Something went wrong while creating the roadmap.",
 } as const;

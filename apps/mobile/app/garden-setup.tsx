@@ -25,19 +25,27 @@ import {
   CheckCircle2,
 } from "lucide-react-native";
 
-import { scanApi, myGardenApi } from "@agri-scan/shared";
+import {
+  scanApi,
+  myGardenApi,
+  HEALTHY_CONDITION,
+  DEFAULT_PLANT_NAME,
+} from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
 // Định nghĩa Type chính xác cho mục tiêu
 type GoalType = "HEAL_DISEASE" | "GET_FRUIT" | "GET_FLOWER" | "MAINTAIN";
 
-const GOALS: { id: GoalType; label: string; icon: string }[] = [
-  { id: "HEAL_DISEASE", label: "Chữa bệnh cho cây", icon: "💊" },
-  { id: "GET_FRUIT", label: "Thu hoạch quả", icon: "🍅" },
-  { id: "GET_FLOWER", label: "Lấy hoa", icon: "🌸" },
-  { id: "MAINTAIN", label: "Duy trì khỏe mạnh", icon: "🌿" },
+// `id` là mã gửi lên API — không dịch. Nhãn nằm ở `labelKey`.
+const GOALS: { id: GoalType; labelKey: string; icon: string }[] = [
+  { id: "HEAL_DISEASE", labelKey: "myGarden.goalHealDisease", icon: "💊" },
+  { id: "GET_FRUIT", labelKey: "myGarden.goalGetFruit", icon: "🍅" },
+  { id: "GET_FLOWER", labelKey: "myGarden.goalGetFlower", icon: "🌸" },
+  { id: "MAINTAIN", labelKey: "myGarden.goalMaintain", icon: "🌿" },
 ];
 
 export default function GardenSetupScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { imageUri } = useLocalSearchParams();
@@ -47,8 +55,9 @@ export default function GardenSetupScreen() {
 
   // Dữ liệu bóc tách từ AI
   const [scannedImageUrl, setScannedImageUrl] = useState<string>("");
-  const [plantName, setPlantName] = useState<string>("Cây trồng");
-  const [diseaseName, setDiseaseName] = useState<string>("Khỏe mạnh");
+  // Hai giá trị này đi vào payload addPlant → là DỮ LIỆU, không dịch
+  const [plantName, setPlantName] = useState<string>(DEFAULT_PLANT_NAME);
+  const [diseaseName, setDiseaseName] = useState<string>(HEALTHY_CONDITION);
 
   const [customName, setCustomName] = useState("");
   // 🔥 FIX: Ép đúng kiểu GoalType thay vì string chung chung
@@ -56,7 +65,7 @@ export default function GardenSetupScreen() {
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(
     null,
   );
-  const [locationStatus, setLocationStatus] = useState("Đang lấy vị trí...");
+  const [locationStatus, setLocationStatus] = useState(t("myGarden.locating"));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -65,7 +74,7 @@ export default function GardenSetupScreen() {
     if (imageUri) {
       processImageWithAI_REAL(imageUri as string);
     } else {
-      Alert.alert("Lỗi", "Không tìm thấy ảnh hợp lệ.");
+      Alert.alert(t("common.error"), t("myGarden.errorNoValidImage"));
       router.back();
     }
   }, [imageUri]);
@@ -74,20 +83,20 @@ export default function GardenSetupScreen() {
     try {
       if (Platform.OS === "web") {
         setLocation({ lat: 10.762622, lon: 106.660172 });
-        setLocationStatus("Đã lấy vị trí (Web Mode)");
+        setLocationStatus(t("myGarden.locationWebMode"));
         return;
       }
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        setLocationStatus("Bị từ chối quyền vị trí");
+        setLocationStatus(t("myGarden.locationDenied"));
         setLocation({ lat: 10.762622, lon: 106.660172 });
         return;
       }
       let loc = await Location.getCurrentPositionAsync({});
       setLocation({ lat: loc.coords.latitude, lon: loc.coords.longitude });
-      setLocationStatus("Đã lấy vị trí chính xác");
+      setLocationStatus(t("myGarden.locationOk"));
     } catch (error) {
-      setLocationStatus("Không thể lấy vị trí");
+      setLocationStatus(t("myGarden.locationFailed"));
       setLocation({ lat: 10.762622, lon: 106.660172 });
     }
   };
@@ -122,9 +131,9 @@ export default function GardenSetupScreen() {
       const diseaseLabel =
         topPred?.diseaseId?.name ||
         (result as any).topDisease?.name ||
-        "Khỏe mạnh";
+        HEALTHY_CONDITION;
 
-      let pName = "Cây trồng";
+      let pName = DEFAULT_PLANT_NAME;
       let dName = diseaseLabel;
 
       if (diseaseLabel.includes("___")) {
@@ -138,7 +147,7 @@ export default function GardenSetupScreen() {
       setPlantName(pName);
       setDiseaseName(dName);
 
-      if (dName !== "Khỏe mạnh" && dName !== "healthy") {
+      if (dName !== HEALTHY_CONDITION && dName !== "healthy") {
         setSelectedGoal("HEAL_DISEASE");
       } else {
         setSelectedGoal("MAINTAIN");
@@ -146,8 +155,8 @@ export default function GardenSetupScreen() {
     } catch (error: any) {
       console.log("Lỗi scan ảnh tạo vườn:", error);
       Alert.alert(
-        "Lỗi AI",
-        error?.message || "Không thể nhận diện ảnh lúc này.",
+        t("myGarden.errorAiTitle"),
+        error?.message || t("myGarden.errorAiMessage"),
       );
       router.back();
     } finally {
@@ -158,13 +167,13 @@ export default function GardenSetupScreen() {
   const handleCreateRoadmap_REAL = async () => {
     if (!customName.trim())
       return Alert.alert(
-        "Thiếu thông tin",
-        "Vui lòng đặt tên cho cây của bạn.",
+        t("myGarden.errorMissingInfoTitle"),
+        t("myGarden.errorMissingNameMessage"),
       );
     if (!location)
       return Alert.alert(
-        "Chờ chút",
-        "Hệ thống đang lấy vị trí GPS của bạn để kiểm tra thời tiết.",
+        t("myGarden.waitTitle"),
+        t("myGarden.waitGpsMessage"),
       );
 
     try {
@@ -181,11 +190,11 @@ export default function GardenSetupScreen() {
       });
 
       Alert.alert(
-        "🎉 Thành công!",
-        "AI đã phân tích thời tiết và tạo xong lộ trình chăm sóc cho cây của bạn.",
+        t("myGarden.successTitle"),
+        t("myGarden.successMessage"),
         [
           {
-            text: "Xem vườn ngay",
+            text: t("myGarden.viewGardenNow"),
             onPress: () => router.replace("/my-garden" as any),
           },
         ],
@@ -193,8 +202,8 @@ export default function GardenSetupScreen() {
     } catch (error: any) {
       console.log("Lỗi tạo lộ trình:", error);
       Alert.alert(
-        "Lỗi",
-        error?.response?.data?.message || "Có lỗi xảy ra khi tạo lộ trình.",
+        t("common.error"),
+        error?.response?.data?.message || t("myGarden.errorCreateRoadmap"),
       );
     } finally {
       setIsSubmitting(false);
@@ -216,7 +225,7 @@ export default function GardenSetupScreen() {
         >
           <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Khai báo thông tin</Text>
+        <Text style={styles.headerTitle}>{t("myGarden.setupTitle")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -233,16 +242,18 @@ export default function GardenSetupScreen() {
             <View style={styles.scanningOverlay}>
               <ActivityIndicator size="large" color="#16a34a" />
               <Text style={styles.scanningText}>
-                AI đang phân tích tình trạng cây...
+                {t("myGarden.analyzingCondition")}
               </Text>
             </View>
           ) : (
             <View style={styles.resultBadge}>
               <CheckCircle2 size={20} color="#16a34a" />
               <View style={{ marginLeft: 8, flex: 1 }}>
-                <Text style={styles.resultTitle}>Hoàn tất phân tích!</Text>
+                <Text style={styles.resultTitle}>
+                  {t("myGarden.analysisDone")}
+                </Text>
                 <Text style={styles.resultDesc} numberOfLines={1}>
-                  Phát hiện: {diseaseName}
+                  {t("myGarden.detectedPrefix", { disease: diseaseName })}
                 </Text>
               </View>
             </View>
@@ -255,14 +266,14 @@ export default function GardenSetupScreen() {
         >
           <View style={styles.inputGroup}>
             <Text style={styles.label}>
-              1. Đặt tên cho cây của bạn{" "}
+              {t("myGarden.step1Label")}{" "}
               <Text style={{ color: "#ef4444" }}>*</Text>
             </Text>
             <View style={styles.inputWrapper}>
               <Leaf size={20} color="#64748b" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
-                placeholder="Ví dụ: Cà chua ban công, Hoa hồng trồng chậu..."
+                placeholder={t("myGarden.namePlaceholder")}
                 value={customName}
                 onChangeText={setCustomName}
               />
@@ -271,10 +282,11 @@ export default function GardenSetupScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>
-              2. Mục tiêu chăm sóc <Text style={{ color: "#ef4444" }}>*</Text>
+              {t("myGarden.step2Label")}{" "}
+              <Text style={{ color: "#ef4444" }}>*</Text>
             </Text>
             <Text style={styles.subLabel}>
-              AI sẽ dựa vào mục tiêu này để đưa ra lời khuyên phù hợp.
+              {t("myGarden.step2Hint")}
             </Text>
             <View style={styles.goalsContainer}>
               {GOALS.map((goal) => (
@@ -293,7 +305,7 @@ export default function GardenSetupScreen() {
                       selectedGoal === goal.id && styles.goalTextActive,
                     ]}
                   >
-                    {goal.label}
+                    {t(goal.labelKey)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -301,13 +313,15 @@ export default function GardenSetupScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>3. Tọa độ & Thời tiết</Text>
+            <Text style={styles.label}>{t("myGarden.step3Label")}</Text>
             <View style={styles.locationBox}>
               <View style={styles.locIconBox}>
                 <MapPin size={24} color="#3b82f6" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.locTitle}>Vị trí vườn của bạn</Text>
+                <Text style={styles.locTitle}>
+                  {t("myGarden.yourGardenLocation")}
+                </Text>
                 <Text style={styles.locDesc}>{locationStatus}</Text>
                 {location && (
                   <Text style={styles.locCoords}>
@@ -318,8 +332,7 @@ export default function GardenSetupScreen() {
               </View>
             </View>
             <Text style={styles.aiNotice}>
-              <Sparkles size={14} color="#d97706" /> AI sẽ lấy dữ liệu thời tiết
-              7 ngày tới tại vị trí này để tối ưu lượng nước tưới.
+              <Sparkles size={14} color="#d97706" /> {t("myGarden.weatherHint")}
             </Text>
           </View>
 
@@ -337,13 +350,15 @@ export default function GardenSetupScreen() {
               >
                 <ActivityIndicator color="#fff" />
                 <Text style={styles.submitBtnText}>
-                  AI đang soạn lộ trình...
+                  {t("myGarden.composingRoadmap")}
                 </Text>
               </View>
             ) : (
               <>
                 <Stethoscope size={20} color="#fff" />
-                <Text style={styles.submitBtnText}>Tạo Lộ Trình Chăm Sóc</Text>
+                <Text style={styles.submitBtnText}>
+                  {t("myGarden.submitButton")}
+                </Text>
               </>
             )}
           </TouchableOpacity>
