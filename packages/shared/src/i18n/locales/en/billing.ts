@@ -100,4 +100,25 @@ export const billing = {
   // Errors
   invalidPlan: "Invalid plan",
   paymentFailed: "Payment failed. Please try again.",
+
+  // ── Mobile: upgrade screen (richer feature list than web) ──────────────
+  tagPremium: "PREMIUM",
+
+  mFreeFeature1: "Basic model",
+  mFreeFeature2: "Limited messages and uploads",
+  mFreeFeature3: "Limited image generation",
+  mFreeFeature4: "Short-term memory",
+
+  mPlusFeature1: "Advanced AI model (faster and more accurate)",
+  mPlusFeature2: "Higher message and upload limits",
+  mPlusFeature3: "High-quality image generation",
+  mPlusFeature4: "Memory carried across conversations",
+  mPlusFeature5: "Deep analysis mode",
+  mPlusFeature6: "Priority support",
+
+  mProFeature1: "Unlimited messages",
+  mProFeature2: "Premium agricultural expert model",
+  mProFeature3: "In-depth plant disease image analysis",
+  mProFeature4: "Detailed report generation",
+  mProFeature5: "API access for developers",
 } as const;

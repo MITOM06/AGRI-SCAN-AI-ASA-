@@ -100,4 +100,25 @@ export const billing = {
   // Lỗi
   invalidPlan: "Gói không hợp lệ",
   paymentFailed: "Thanh toán thất bại. Vui lòng thử lại.",
+
+  // ── Mobile: màn nâng cấp gói (danh sách tính năng chi tiết hơn web) ────
+  tagPremium: "CAO CẤP",
+
+  mFreeFeature1: "Mô hình cơ bản",
+  mFreeFeature2: "Giới hạn tin nhắn và tải ảnh",
+  mFreeFeature3: "Giới hạn tạo hình ảnh",
+  mFreeFeature4: "Bộ nhớ ngắn hạn",
+
+  mPlusFeature1: "Mô hình AI nâng cao (nhanh & chính xác hơn)",
+  mPlusFeature2: "Tăng giới hạn tin nhắn và tải ảnh",
+  mPlusFeature3: "Tạo hình ảnh chất lượng cao",
+  mPlusFeature4: "Bộ nhớ mở rộng giữa các đoạn chat",
+  mPlusFeature5: "Chế độ phân tích sâu",
+  mPlusFeature6: "Ưu tiên hỗ trợ",
+
+  mProFeature1: "Không giới hạn tin nhắn",
+  mProFeature2: "Mô hình chuyên gia nông nghiệp cao cấp",
+  mProFeature3: "Phân tích hình ảnh bệnh cây chuyên sâu",
+  mProFeature4: "Tạo báo cáo chi tiết",
+  mProFeature5: "API truy cập cho nhà phát triển",
 } as const;
