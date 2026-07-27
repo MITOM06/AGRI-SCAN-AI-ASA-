@@ -18,6 +18,11 @@ import { loginSchema, type LoginFormData } from "@agri-scan/shared";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  safeRedirect,
+  withRedirect,
+  rememberOAuthRedirect,
+} from "@/lib/redirect";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -27,6 +32,10 @@ export default function LoginForm() {
 
   const isRegistrationSuccess =
     searchParams.get("message") === "registration_success";
+
+  // Trang cần quay lại sau khi đăng nhập (vd: khách bấm "Nâng cấp gói" ở /upgrade)
+  const redirectParam = searchParams.get("redirect");
+  const redirectTo = safeRedirect(redirectParam, "/");
 
   const {
     register,
@@ -45,7 +54,7 @@ export default function LoginForm() {
         router.push("/admin/dashboard");
         console.log("Đăng nhập thành công với vai trò ADMIN");
       } else {
-        router.push("/");
+        router.push(redirectTo);
       }
     } catch (error: any) {
       const errorMessage =
@@ -187,7 +196,10 @@ export default function LoginForm() {
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               type="button"
-              onClick={loginWithGoogle}
+              onClick={() => {
+                rememberOAuthRedirect(redirectParam);
+                loginWithGoogle();
+              }}
               className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all"
             >
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
@@ -214,7 +226,10 @@ export default function LoginForm() {
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               type="button"
-              onClick={loginWithFacebook}
+              onClick={() => {
+                rememberOAuthRedirect(redirectParam);
+                loginWithFacebook();
+              }}
               className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all"
             >
               <svg className="h-5 w-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
@@ -227,7 +242,7 @@ export default function LoginForm() {
           <div className="text-center text-sm">
             <span className="text-gray-500">Chưa có tài khoản? </span>
             <Link
-              href="/register"
+              href={withRedirect("/register", redirectParam)}
               className="font-medium text-primary hover:text-primary-dark"
             >
               Đăng ký ngay

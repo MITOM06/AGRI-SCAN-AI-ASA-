@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Leaf,
   User,
@@ -18,10 +18,15 @@ import { registerSchema, type RegisterFormData } from "@agri-scan/shared";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { withRedirect, rememberOAuthRedirect } from "@/lib/redirect";
 
 export default function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register: registerApi, loginWithGoogle, loginWithFacebook } = useAuth();
+
+  // Giữ đích đến (vd: /upgrade) xuyên suốt đăng ký → nhập OTP → đăng nhập
+  const redirectParam = searchParams.get("redirect");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -49,7 +54,12 @@ export default function RegisterForm() {
       // Bước 1: gửi thông tin đăng ký → BE gửi OTP về email (chưa tạo tài khoản)
       await registerApi(data.email, data.fullName, data.password);
       // Chuyển sang trang nhập OTP để hoàn tất đăng ký
-      router.push(`/register/verify?email=${encodeURIComponent(data.email)}`);
+      router.push(
+        withRedirect(
+          `/register/verify?email=${encodeURIComponent(data.email)}`,
+          redirectParam,
+        ),
+      );
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
@@ -293,7 +303,10 @@ export default function RegisterForm() {
                 whileTap={{ scale: 0.98 }}
                 type="button"
                 className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all"
-                onClick={loginWithGoogle}>
+                onClick={() => {
+                  rememberOAuthRedirect(redirectParam);
+                  loginWithGoogle();
+                }}>
                 <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                   <path
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -319,7 +332,10 @@ export default function RegisterForm() {
                 whileTap={{ scale: 0.98 }}
                 type="button"
                 className="w-full inline-flex justify-center items-center py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all"
-                onClick={loginWithFacebook}
+                onClick={() => {
+                  rememberOAuthRedirect(redirectParam);
+                  loginWithFacebook();
+                }}
               >
                 <svg
                   className="h-5 w-5 mr-2"
@@ -336,7 +352,7 @@ export default function RegisterForm() {
           <div className="text-center text-sm">
             <span className="text-gray-500">Đã có tài khoản? </span>
             <Link
-              href="/login"
+              href={withRedirect("/login", redirectParam)}
               className="font-medium text-primary hover:text-primary-dark"
             >
               Đăng nhập

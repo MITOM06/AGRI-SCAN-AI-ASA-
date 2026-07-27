@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { consumeOAuthRedirect, safeRedirect } from "@/lib/redirect";
 
 function OAuthCallbackHandler() {
   const router = useRouter();
@@ -44,11 +45,10 @@ function OAuthCallbackHandler() {
     // ── Lưu token và cập nhật State NGAY LẬP TỨC ──────────────
     handleOAuthSuccess(accessToken, refreshToken, userData);
 
-if (!isPasswordSet) {
-      router.replace("/"); 
-    } else {
-      router.replace("/"); 
-    }
+    // Quay lại trang user đang muốn vào trước khi bị chặn (vd: /upgrade)
+    const target = safeRedirect(consumeOAuthRedirect(), "/");
+    void isPasswordSet; // TODO: điều hướng sang trang đặt mật khẩu khi có
+    router.replace(target);
   }, [searchParams, router, handleOAuthSuccess]);
 
   return (
