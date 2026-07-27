@@ -14,10 +14,12 @@ import {
 } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { productApi } from "@agri-scan/shared";
-import { CATEGORY_LABEL } from "../../constants/shop.constants";
+import { CATEGORY_LABEL_KEY } from "../../constants/shop.constants";
 import { IProduct } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 
 export function ProductDetailPage() {
+  const t = useT();
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
@@ -58,16 +60,16 @@ export function ProductDetailPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center p-8 bg-white rounded-2xl shadow-sm">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            Sản phẩm không tồn tại
+            {t("shop.notFoundTitle")}
           </h2>
           <p className="text-gray-500 mb-6">
-            Sản phẩm bạn đang tìm kiếm có thể đã bị xóa hoặc không tồn tại.
+            {t("shop.notFoundDesc")}
           </p>
           <button
             onClick={() => router.push("/shop")}
             className="px-6 py-2 bg-primary text-white rounded-full font-medium"
           >
-            Quay lại cửa hàng
+            {t("shop.backToStore")}
           </button>
         </div>
       </div>
@@ -95,14 +97,14 @@ export function ProductDetailPage() {
               className="hover:text-primary cursor-pointer"
               onClick={() => router.push("/")}
             >
-              Trang chủ
+              {t("nav.home")}
             </span>
             <ChevronRight size={16} />
             <span
               className="hover:text-primary cursor-pointer"
               onClick={() => router.push("/shop")}
             >
-              Cửa hàng
+              {t("shop.storeShort")}
             </span>
             <ChevronRight size={16} />
             <span className="font-medium text-gray-900 truncate max-w-[200px] sm:max-w-md">
@@ -172,15 +174,17 @@ export function ProductDetailPage() {
             <div className="w-full md:w-1/2 lg:w-7/12 p-6 lg:p-10 flex flex-col">
               <div className="mb-2 flex items-center gap-2">
                 <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full uppercase tracking-wider">
-                  {CATEGORY_LABEL[product.category] ?? product.category}
+                  {CATEGORY_LABEL_KEY[product.category]
+                    ? t(CATEGORY_LABEL_KEY[product.category])
+                    : product.category}
                 </span>
                 {product.stock > 0 ? (
                   <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full flex items-center gap-1">
-                    <CheckCircle size={12} /> Còn hàng
+                    <CheckCircle size={12} /> {t("shop.inStock")}
                   </span>
                 ) : (
                   <span className="px-3 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-full">
-                    Hết hàng
+                    {t("shop.outOfStock")}
                   </span>
                 )}
               </div>
@@ -197,11 +201,8 @@ export function ProductDetailPage() {
                   </span>
                 </div>
                 <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                <span>
-                  Đã bán{" "}
-                  <span className="font-medium text-gray-900">
-                    {product.sold}
-                  </span>
+                <span className="font-medium text-gray-900">
+                  {t("shop.sold", { count: product.sold })}
                 </span>
                 <span className="w-1 h-1 rounded-full bg-gray-300"></span>
                 <span>
@@ -218,7 +219,9 @@ export function ProductDetailPage() {
 
               {/* Quantity Selector */}
               <div className="flex items-center gap-4 mb-8">
-                <span className="text-gray-700 font-medium">Số lượng:</span>
+                <span className="text-gray-700 font-medium">
+                  {t("shop.quantity")}
+                </span>
                 <div className="flex items-center bg-gray-50 rounded-xl border border-gray-200">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -241,7 +244,7 @@ export function ProductDetailPage() {
                   </button>
                 </div>
                 <span className="text-sm text-gray-500">
-                  {product.stock} sản phẩm có sẵn
+                  {t("shop.stockAvailable", { count: product.stock })}
                 </span>
               </div>
 
@@ -267,7 +270,7 @@ export function ProductDetailPage() {
                         className="flex items-center gap-2"
                       >
                         <CheckCircle size={20} />
-                        Đã thêm vào giỏ
+                        {t("shop.addedToCart")}
                       </motion.div>
                     ) : (
                       <motion.div
@@ -278,7 +281,7 @@ export function ProductDetailPage() {
                         className="flex items-center gap-2"
                       >
                         <ShoppingCart size={20} />
-                        Thêm vào giỏ hàng
+                        {t("shop.addToCart")}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -302,10 +305,10 @@ export function ProductDetailPage() {
                   />
                   <div>
                     <h4 className="text-sm font-bold text-gray-900">
-                      Cam kết chính hãng
+                      {t("shop.genuineGuarantee")}
                     </h4>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      Hoàn tiền 111% nếu hàng giả
+                      {t("shop.genuineGuaranteeDesc")}
                     </p>
                   </div>
                 </div>
@@ -313,10 +316,10 @@ export function ProductDetailPage() {
                   <Truck className="text-blue-500 flex-shrink-0" size={24} />
                   <div>
                     <h4 className="text-sm font-bold text-gray-900">
-                      Giao hàng toàn quốc
+                      {t("shop.nationwideShipping")}
                     </h4>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      Hỗ trợ phí ship cho đơn từ 500k
+                      {t("shop.nationwideShippingDesc")}
                     </p>
                   </div>
                 </div>
@@ -330,7 +333,7 @@ export function ProductDetailPage() {
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
               <h3 className="text-xl font-bold text-gray-900 mb-6">
-                Mô tả sản phẩm
+                {t("shop.productDescription")}
               </h3>
               <div className="prose prose-emerald max-w-none text-gray-700 leading-relaxed whitespace-pre-line">
                 {product.description}
@@ -342,7 +345,7 @@ export function ProductDetailPage() {
           <div className="space-y-8">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">
-                Thông tin người bán
+                {t("shop.sellerInfo")}
               </h3>
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 flex-shrink-0">
@@ -352,21 +355,25 @@ export function ProductDetailPage() {
                   <h4 className="font-bold text-gray-900 text-lg">
                     {product.sellerId && typeof product.sellerId === "object"
                       ? product.sellerId.fullName
-                      : "Người bán"}
+                      : t("shop.seller")}
                   </h4>
                   <div className="flex items-center gap-1 text-sm text-emerald-600 font-medium mt-1">
-                    <CheckCircle size={14} /> Người bán uy tín
+                    <CheckCircle size={14} /> {t("shop.trustedSeller")}
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-6 text-center">
                 <div className="bg-gray-50 p-3 rounded-xl">
                   <div className="text-xl font-bold text-gray-900">4.9</div>
-                  <div className="text-xs text-gray-500 mt-1">Đánh giá</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {t("shop.rating")}
+                  </div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-xl">
                   <div className="text-xl font-bold text-gray-900">1.2k</div>
-                  <div className="text-xs text-gray-500 mt-1">Sản phẩm</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {t("shop.products")}
+                  </div>
                 </div>
               </div>
               <button className="w-full py-3 border-2 border-primary text-primary font-bold rounded-xl hover:bg-primary hover:text-white transition-colors">

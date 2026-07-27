@@ -21,8 +21,11 @@ import {
   ChevronRight,
   Smartphone,
 } from "lucide-react-native";
+import { useT } from "../context/I18nContext";
+import { LanguageSwitcher } from "../components/ui/LanguageSwitcher";
 
 export default function SettingsScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -91,7 +94,7 @@ export default function SettingsScreen() {
           <ArrowLeft size={24} color={theme.textMain} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.textMain }]}>
-          Cài đặt ứng dụng
+          {t("settings.title")}
         </Text>
         <View style={{ width: 40 }} />
       </View>
@@ -101,14 +104,15 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <Text style={[styles.sectionTitle, { color: theme.textSub }]}>
-          Hiển thị & Tùy chỉnh
+          {t("settings.sectionDisplay")}
         </Text>
         <View style={[styles.sectionGroup, { borderColor: theme.borderColor }]}>
+          {/* Hàng này trước chỉ hiển thị "Tiếng Việt" và onPress rỗng.
+              Nay là nút chuyển ngôn ngữ thật, đặt ở rightElement. */}
           <SettingRow
             icon={<Globe size={20} color="#3b82f6" />}
-            title="Ngôn ngữ"
-            subtitle="Tiếng Việt"
-            onPress={() => {}}
+            title={t("settings.rowLanguage")}
+            rightElement={<LanguageSwitcher />}
           />
           <View
             style={[styles.divider, { backgroundColor: theme.borderColor }]}
@@ -123,8 +127,8 @@ export default function SettingsScreen() {
             }
             title={
               isDarkMode
-                ? "Giao diện sáng (Light Mode)"
-                : "Giao diện tối (Dark Mode)"
+                ? t("settings.rowLightMode")
+                : t("settings.rowDarkMode")
             }
             rightElement={
               <Switch
@@ -138,13 +142,13 @@ export default function SettingsScreen() {
         </View>
 
         <Text style={[styles.sectionTitle, { color: theme.textSub }]}>
-          Thông báo
+          {t("settings.sectionNotifications")}
         </Text>
         <View style={[styles.sectionGroup, { borderColor: theme.borderColor }]}>
           <SettingRow
             icon={<Bell size={20} color="#f59e0b" />}
-            title="Thông báo đẩy"
-            subtitle="Nhận nhắc nhở chăm sóc cây"
+            title={t("settings.rowPush")}
+            subtitle={t("settings.rowPushSubtitle")}
             rightElement={
               <Switch
                 value={isPushEnabled}
@@ -159,7 +163,7 @@ export default function SettingsScreen() {
           />
           <SettingRow
             icon={<Smartphone size={20} color="#10b981" />}
-            title="Âm thanh ứng dụng"
+            title={t("settings.rowSound")}
             rightElement={
               <Switch
                 value={isSoundEnabled}
@@ -172,13 +176,13 @@ export default function SettingsScreen() {
         </View>
 
         <Text style={[styles.sectionTitle, { color: theme.textSub }]}>
-          Bảo mật & Hỗ trợ
+          {t("settings.sectionSecurity")}
         </Text>
         <View style={[styles.sectionGroup, { borderColor: theme.borderColor }]}>
           <SettingRow
             icon={<Shield size={20} color="#ef4444" />}
-            title="Bảo mật tài khoản"
-            subtitle="Mật khẩu & Xác thực 2 lớp"
+            title={t("settings.rowAccountSecurity")}
+            subtitle={t("settings.rowAccountSecuritySubtitle")}
             onPress={() => {}}
           />
           <View
@@ -186,8 +190,8 @@ export default function SettingsScreen() {
           />
           <SettingRow
             icon={<HelpCircle size={20} color="#8b5cf6" />}
-            title="Trung tâm trợ giúp"
-            subtitle="Câu hỏi thường gặp (FAQ)"
+            title={t("settings.rowHelpCenter")}
+            subtitle={t("settings.rowHelpCenterSubtitle")}
             onPress={() => {}}
           />
         </View>

@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { authApi, scanApi } from "@agri-scan/shared";
+import {
+  authApi,
+  scanApi,
+  DATE_LOCALES,
+  HEALTHY_DISEASE_NAME,
+} from "@agri-scan/shared";
 import {
   View,
   Text,
@@ -28,9 +33,13 @@ import {
   ChevronUp,
 } from "lucide-react-native";
 
+import { useI18n } from "../context/I18nContext";
+
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Cần cả `locale` để định dạng ngày của từng dòng hoạt động
+  const { t, locale } = useI18n();
 
   const [userData, setUserData] = useState<{
     fullName?: string;
@@ -74,21 +83,19 @@ export default function ProfileScreen() {
 
         const uniqueDiseases = new Set();
 
+        // Chỉ giữ dữ liệu thô ở state; nhãn hiển thị được dựng lúc render để
+        // đổi ngôn ngữ không phải gọi lại API.
         const scanActivities = (scans || []).map((item: any) => {
           const diseaseName = item.aiPredictions?.[0]?.diseaseId?.name;
-          if (diseaseName && diseaseName !== "Cây khỏe mạnh") {
+          if (diseaseName && diseaseName !== HEALTHY_DISEASE_NAME) {
             uniqueDiseases.add(diseaseName);
           }
           const confidence = item.aiPredictions?.[0]?.confidence || 0;
           return {
             id: `scan_${item._id || item.id}`,
             type: "scan",
-            title: `Chẩn đoán: ${diseaseName || "Không xác định"}`,
-            desc: new Date(item.scannedAt || item.createdAt).toLocaleDateString(
-              "vi-VN",
-            ),
+            diseaseName,
             date: new Date(item.scannedAt || item.createdAt),
-            status: confidence >= 0.8 ? "Nguy cơ cao" : "Cần theo dõi",
             isHighRisk: confidence >= 0.8,
           };
         });
@@ -96,8 +103,8 @@ export default function ProfileScreen() {
         const chatActivities = (chats || []).map((item: any) => ({
           id: `chat_${item.sessionId}`,
           type: "chat",
-          title: item.title || "Trò chuyện với AI",
-          desc: new Date(item.updatedAt).toLocaleDateString("vi-VN"),
+          // Tiêu đề do API sinh — là dữ liệu, không dịch
+          chatTitle: item.title,
           date: new Date(item.updatedAt),
         }));
 
@@ -148,57 +155,62 @@ export default function ProfileScreen() {
     }
   };
 
-  const displayName = userData?.fullName || userData?.name || "Người Dùng";
+  const displayName =
+    userData?.fullName || userData?.name || t("home.uFallbackName");
 
   const currentPlanStr = userData?.plan || "FREE";
   const PLAN_CONFIG: Record<string, any> = {
     FREE: {
-      name: "Gói Free",
+      name: t("profile.mPlanFree"),
       color: "#9ca3af",
       bg: "#f3f4f6",
       border: "#e5e7eb",
       icon: <Zap size={20} color="#4b5563" />,
-      desc: "Trải nghiệm cơ bản",
+      desc: t("profile.mPlanFreeDesc"),
     },
     PLUS: {
-      name: "Gói Plus",
+      name: t("profile.mPlanPlus"),
       color: "#8b5cf6",
       bg: "#f3e8ff",
       border: "#d8b4fe",
       icon: <Star size={20} color="#8b5cf6" />,
-      desc: "Mở khóa sức mạnh AI",
+      desc: t("profile.mPlanPlusDesc"),
     },
     PREMIUM: {
-      name: "Gói Plus",
+      name: t("profile.mPlanPlus"),
       color: "#8b5cf6",
       bg: "#f3e8ff",
       border: "#d8b4fe",
       icon: <Star size={20} color="#8b5cf6" />,
-      desc: "Mở khóa sức mạnh AI",
+      desc: t("profile.mPlanPlusDesc"),
     },
     PRO: {
-      name: "Gói VIP (Pro)",
+      name: t("profile.mPlanVip"),
       color: "#eab308",
       bg: "#fef08a",
       border: "#fde047",
       icon: <Crown size={20} color="#ca8a04" />,
-      desc: "Không giới hạn tính năng",
+      desc: t("profile.mPlanVipDesc"),
     },
     VIP: {
-      name: "Gói VIP (Pro)",
+      name: t("profile.mPlanVip"),
       color: "#eab308",
       bg: "#fef08a",
       border: "#fde047",
       icon: <Crown size={20} color="#ca8a04" />,
-      desc: "Không giới hạn tính năng",
+      desc: t("profile.mPlanVipDesc"),
     },
   };
   const activePlan = PLAN_CONFIG[currentPlanStr] || PLAN_CONFIG.FREE;
 
   const STATS = [
-    { id: 1, label: "Ảnh đã quét", value: String(stats.scanCount) },
-    { id: 2, label: "Đoạn chat AI", value: String(stats.chatCount) },
-    { id: 3, label: "Bệnh phát hiện", value: String(stats.diseaseCount) },
+    { id: 1, label: t("profile.mStatScans"), value: String(stats.scanCount) },
+    { id: 2, label: t("profile.mStatChats"), value: String(stats.chatCount) },
+    {
+      id: 3,
+      label: t("profile.statDiseases"),
+      value: String(stats.diseaseCount),
+    },
   ];
 
   const displayedActivities = showAllActivities
@@ -220,7 +232,7 @@ export default function ProfileScreen() {
         >
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Hồ sơ của tôi</Text>
+        <Text style={styles.headerTitle}>{t("nav.myProfile")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -251,7 +263,7 @@ export default function ProfileScreen() {
                   {displayName}
                 </Text>
                 <Text style={styles.userEmail} numberOfLines={1}>
-                  {userData?.email || "Đang tải email..."}
+                  {userData?.email || t("home.uLoadingEmail")}
                 </Text>
               </View>
             </View>
@@ -260,7 +272,9 @@ export default function ProfileScreen() {
 
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
               <LogOut size={18} color="#ef4444" />
-              <Text style={styles.logoutText}>Đăng xuất tài khoản</Text>
+              <Text style={styles.logoutText}>
+                {t("profile.mLogoutAccount")}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -293,14 +307,16 @@ export default function ProfileScreen() {
               onPress={() => router.push("/upgrade")}
               activeOpacity={0.8}
             >
-              <Text style={styles.upgradeActionText}>Nâng cấp</Text>
+              <Text style={styles.upgradeActionText}>
+                {t("profile.mUpgrade")}
+              </Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Activity size={18} color="#16a34a" />
-              <Text style={styles.cardTitle}>Thống kê tương tác</Text>
+              <Text style={styles.cardTitle}>{t("profile.mStatsTitle")}</Text>
             </View>
 
             <View style={styles.statsRow}>
@@ -326,7 +342,9 @@ export default function ProfileScreen() {
 
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Lịch sử hoạt động</Text>
+              <Text style={styles.cardTitle}>
+                {t("profile.mActivityHistory")}
+              </Text>
             </View>
 
             <View style={styles.activityList}>
@@ -337,7 +355,7 @@ export default function ProfileScreen() {
                   style={{ marginVertical: 20 }}
                 />
               ) : allActivities.length === 0 ? (
-                <Text style={styles.emptyText}>Chưa có hoạt động nào</Text>
+                <Text style={styles.emptyText}>{t("profile.mNoActivity")}</Text>
               ) : (
                 displayedActivities.map((activity, index) => (
                   <View
@@ -365,8 +383,19 @@ export default function ProfileScreen() {
                     </View>
 
                     <View style={styles.activityInfo}>
-                      <Text style={styles.activityTitle}>{activity.title}</Text>
-                      <Text style={styles.activityDesc}>{activity.desc}</Text>
+                      <Text style={styles.activityTitle}>
+                        {activity.type === "chat"
+                          ? activity.chatTitle ||
+                            t("profile.mActivityChatTitle")
+                          : t("profile.mActivityScanTitle", {
+                              name:
+                                activity.diseaseName ||
+                                t("profile.mActivityUnknownDisease"),
+                            })}
+                      </Text>
+                      <Text style={styles.activityDesc}>
+                        {activity.date.toLocaleDateString(DATE_LOCALES[locale])}
+                      </Text>
 
                       {activity.type === "scan" && (
                         <View
@@ -385,7 +414,9 @@ export default function ProfileScreen() {
                                 : styles.statusNormalText,
                             ]}
                           >
-                            {activity.status}
+                            {activity.isHighRisk
+                              ? t("profile.mRiskHigh")
+                              : t("profile.mRiskWatch")}
                           </Text>
                         </View>
                       )}
@@ -402,8 +433,10 @@ export default function ProfileScreen() {
               >
                 <Text style={styles.viewAllText}>
                   {showAllActivities
-                    ? "Thu gọn danh sách"
-                    : `Xem tất cả (${allActivities.length})`}
+                    ? t("profile.mCollapseList")
+                    : t("profile.mViewAllCount", {
+                        count: allActivities.length,
+                      })}
                 </Text>
                 {showAllActivities ? (
                   <ChevronUp size={16} color="#059669" />

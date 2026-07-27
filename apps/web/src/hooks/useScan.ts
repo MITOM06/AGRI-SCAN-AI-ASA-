@@ -22,7 +22,8 @@ export function useScan(): UseScanResult {
   const scan = useCallback(async (file: File): Promise<IScanStatusResponse | null> => {
     const validation = isValidImageFile(file);
     if (!validation.valid) {
-      setError(validation.error || 'File không hợp lệ');
+      // Các chuỗi lỗi ở hook này là KEY i18n; component dịch bằng t(error)
+      setError(validation.error || 'scan.invalidFile');
       return null;
     }
 
@@ -33,14 +34,14 @@ export function useScan(): UseScanResult {
       const result = await scanApi.scanImageAndWait(file);
 
       if (result.status !== 'COMPLETED') {
-        throw new Error(result.message || 'Không thể hoàn tất phân tích ảnh');
+        throw new Error(result.message || 'scan.analysisIncomplete');
       }
 
       setScanResult(result);
       return result;
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Có lỗi xảy ra khi quét ảnh';
+        err instanceof Error ? err.message : 'scan.scanError';
       setError(errorMessage);
       return null;
     } finally {
@@ -53,7 +54,7 @@ export function useScan(): UseScanResult {
       return await scanApi.getScanDetail(scanId);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Không thể lấy chi tiết kết quả';
+        err instanceof Error ? err.message : 'scan.detailFetchFailed';
       setError(errorMessage);
       return null;
     }

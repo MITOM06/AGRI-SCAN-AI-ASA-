@@ -6,12 +6,15 @@ import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { HeroStats } from "./HeroStats";
 import { FloatingCards } from "./FloatingCards";
+import { useT } from "@/context/I18nContext";
 
 export function HeroSection() {
+  const t = useT();
+
   const heroStats = [
-    { value: "98%", label: "Độ chính xác" },
-    { value: "2s", label: "Thời gian xử lý" },
-    { value: "500+", label: "Loại bệnh" },
+    { value: "98%", label: t("landing.statAccuracy") },
+    { value: "2s", label: t("landing.statSpeed") },
+    { value: "500+", label: t("landing.statDiseases") },
   ];
 
   return (
@@ -32,19 +35,19 @@ export function HeroSection() {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-green-100 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               <span className="text-sm font-medium text-gray-600">
-                AI Innovation Contest 2026
+                {t("landing.badge")}
               </span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-gray-900 leading-[1.1] tracking-tight">
-              Bác Sĩ <br />
-              <span className="text-primary">Cây Trồng</span> <br />
-              Thông Minh
+              {t("landing.heroLine1")} <br />
+              <span className="text-primary">{t("landing.heroLine2")}</span>{" "}
+              <br />
+              {t("landing.heroLine3")}
             </h1>
 
             <p className="text-lg sm:text-xl text-gray-600 max-w-lg leading-relaxed">
-              Chẩn đoán bệnh cây trồng tức thì bằng AI. Nhận phác đồ điều trị
-              khoa học và lộ trình chăm sóc bền vững chỉ với một lần quét.
+              {t("landing.heroSubtitle")}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -52,14 +55,14 @@ export function HeroSection() {
                 href="/scan"
                 className="px-6 sm:px-8 py-3 sm:py-4 bg-primary text-white rounded-full font-semibold text-base sm:text-lg hover:bg-primary-dark transition-all shadow-lg shadow-primary/30 flex items-center justify-center gap-2 group w-full sm:w-auto"
               >
-                Chẩn đoán ngay
+                {t("landing.heroCta")}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 href="/about"
                 className="px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-semibold text-base sm:text-lg hover:bg-gray-50 transition-all w-full sm:w-auto text-center"
               >
-                Tìm hiểu thêm
+                {t("landing.heroSecondaryCta")}
               </Link>
             </div>
 

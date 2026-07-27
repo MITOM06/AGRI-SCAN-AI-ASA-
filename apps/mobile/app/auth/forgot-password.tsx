@@ -10,6 +10,7 @@ import { Leaf, ArrowLeft, CheckCircle2 } from "lucide-react-native";
 import { forgotPasswordSchema, type ForgotPasswordFormData, authApi } from "@agri-scan/shared";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { useT } from "../../context/I18nContext";
 
 const customForgotResolver = async (values: any) => {
   const result = forgotPasswordSchema.safeParse(values);
@@ -26,6 +27,7 @@ const customForgotResolver = async (values: any) => {
 };
 
 export default function ForgotPasswordScreen() {
+  const t = useT();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
@@ -50,7 +52,7 @@ export default function ForgotPasswordScreen() {
       });
     } catch (error: any) {
       setApiError(
-        error.response?.data?.message || "Không thể gửi email. Vui lòng thử lại."
+        error.response?.data?.message || t("auth.mSendEmailFailed")
       );
     } finally {
       setIsSubmitting(false);
@@ -72,9 +74,9 @@ export default function ForgotPasswordScreen() {
             <View style={styles.iconContainer}>
               <Leaf size={28} color="#16a34a" />
             </View>
-            <Text style={styles.title}>Quên mật khẩu?</Text>
+            <Text style={styles.title}>{t("auth.mForgotTitle")}</Text>
             <Text style={styles.subtitle}>
-              Đừng lo lắng! Nhập email đã đăng ký, chúng tôi sẽ gửi mã OTP để đặt lại mật khẩu.
+              {t("auth.mForgotSubtitle")}
             </Text>
           </View>
 
@@ -91,7 +93,7 @@ export default function ForgotPasswordScreen() {
               render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                 <View style={{ marginBottom: 16 }}>
                   <Input
-                    label="Email của bạn"
+                    label={t("auth.mEmailLabel")}
                     placeholder="name@example.com"
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -105,7 +107,7 @@ export default function ForgotPasswordScreen() {
             />
 
             <Button
-              title="Gửi mã OTP"
+              title={t("auth.mSendOtp")}
               variant="primary"
               size="lg"
               isLoading={isSubmitting}
@@ -117,7 +119,7 @@ export default function ForgotPasswordScreen() {
               <Link href="/auth/login" asChild>
                 <TouchableOpacity style={styles.backLink}>
                   <ArrowLeft size={18} color="#4b5563" style={{ marginRight: 6 }} />
-                  <Text style={styles.backText}>Quay lại đăng nhập</Text>
+                  <Text style={styles.backText}>{t("auth.mBackToLogin")}</Text>
                 </TouchableOpacity>
               </Link>
             </View>

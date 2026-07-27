@@ -34,57 +34,42 @@ import {
 } from "lucide-react-native";
 
 import { weatherApi } from "@agri-scan/shared";
-import type { WeatherAndAdviceResponse } from "@agri-scan/shared";
+import type { WeatherAndAdviceResponse, TranslateFn } from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
 import { styles } from "../styles/weather.styles";
+// `id` là giá trị gửi lên API — không dịch. Nhãn dùng chung key với web.
 const CATEGORIES = [
-  { id: "ALL", label: "Tất cả" },
-  { id: "VEGETABLE", label: "Rau màu" },
-  { id: "FRUIT", label: "Ăn quả" },
-  { id: "FLOWER", label: "Hoa kiểng" },
+  { id: "ALL", labelKey: "weather.cropAll" },
+  { id: "VEGETABLE", labelKey: "weather.cropVegetable" },
+  { id: "FRUIT", labelKey: "weather.cropFruit" },
+  { id: "FLOWER", labelKey: "weather.cropFlower" },
 ];
 
-const translateWeather = (engDesc: string) => {
+/**
+ * Dịch `description` của OpenWeatherMap.
+ *
+ * Trước đây là một object tiếng Việt hardcode ngay trong file này. Nay từ điển
+ * nằm ở weather.conditions.* trong @agri-scan/shared, keyed bằng đúng chuỗi OWM
+ * trả về — nên bản tiếng Anh cũng được "dịch" (viết hoa cho đẹp) thay vì hiện
+ * nguyên chuỗi thô. Không khớp key thì t() trả về chính chuỗi đó.
+ */
+const translateWeather = (engDesc: string, t: TranslateFn) => {
   if (!engDesc) return "";
-  const dict: Record<string, string> = {
-    "clear sky": "Trời quang đãng",
-    "few clouds": "Ít mây",
-    "scattered clouds": "Mây rải rác",
-    "broken clouds": "Nhiều mây",
-    "overcast clouds": "Mây u ám",
-    "light rain": "Mưa nhỏ",
-    "moderate rain": "Mưa vừa",
-    "heavy intensity rain": "Mưa to",
-    "very heavy rain": "Mưa rất to",
-    "extreme rain": "Mưa cực to",
-    "freezing rain": "Mưa lạnh buốt",
-    "light intensity shower rain": "Mưa rào nhẹ",
-    "shower rain": "Mưa rào",
-    "heavy intensity shower rain": "Mưa rào to",
-    thunderstorm: "Dông bão",
-    "thunderstorm with light rain": "Dông và mưa nhỏ",
-    "thunderstorm with rain": "Dông kèm mưa",
-    "thunderstorm with heavy rain": "Dông và mưa to",
-    snow: "Tuyết rơi",
-    mist: "Sương mù nhẹ",
-    fog: "Sương mù dày",
-    haze: "Sương mù",
-    dust: "Bụi mù",
-  };
-  return dict[engDesc.toLowerCase()] || engDesc;
+  return t(`weather.conditions.${engDesc.toLowerCase()}`);
 };
 
-// 🔥 Hàm dịch câu Tóm tắt (Summary) từ OWM sang Tiếng Việt
-const translateSummary = (summary: string) => {
+/** Dịch câu tóm tắt ngày từ summary của OWM. */
+const translateSummary = (summary: string, t: TranslateFn) => {
   if (!summary) return "";
-  let s = summary.toLowerCase();
+  const s = summary.toLowerCase();
   if (s.includes("partly cloudy") && s.includes("clear spells"))
-    return "Dự báo một ngày nhiều mây xen lẫn trời nắng hanh.";
+    return t("weather.summaries.cloudyWithSun");
   if (s.includes("partly cloudy") && s.includes("rain"))
-    return "Dự báo một ngày nhiều mây kèm theo mưa.";
-  if (s.includes("partly cloudy")) return "Dự báo một ngày nhiều mây.";
-  if (s.includes("clear")) return "Trời quang đãng, nắng đẹp rực rỡ.";
-  if (s.includes("rain")) return "Dự báo có mưa, thời tiết ẩm ướt.";
+    return t("weather.summaries.cloudyWithRain");
+  if (s.includes("partly cloudy")) return t("weather.summaries.partlyCloudy");
+  if (s.includes("clear")) return t("weather.summaries.clear");
+  if (s.includes("rain")) return t("weather.summaries.rain");
   return summary; // Giữ nguyên nếu không khớp từ điển
 };
 
@@ -114,6 +99,7 @@ const getModernIconUrl = (code: string) => {
 };
 
 export default function WeatherScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -125,7 +111,7 @@ export default function WeatherScreen() {
   const [activeCategory, setActiveCategory] = useState<
     "ALL" | "FRUIT" | "FLOWER" | "VEGETABLE"
   >("ALL");
-  const [cityName, setCityName] = useState("Đang định vị...");
+  const [cityName, setCityName] = useState(t("weather.locating"));
   const [errorMsg, setErrorMsg] = useState("");
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
 
@@ -134,7 +120,7 @@ export default function WeatherScreen() {
       setErrorMsg("");
       let lat = 10.8231;
       let lon = 106.6297;
-      let cName = "TP.Hồ Chí Minh";
+      let cName = t("weather.defaultCity");
 
       try {
         let { status } = await Location.requestForegroundPermissionsAsync();
@@ -142,7 +128,7 @@ export default function WeatherScreen() {
           let location = await Location.getCurrentPositionAsync({});
           lat = location.coords.latitude;
           lon = location.coords.longitude;
-          cName = "Vị trí của bạn";
+          cName = t("weather.yourLocation");
 
           if (Platform.OS !== "web") {
             try {
@@ -156,7 +142,7 @@ export default function WeatherScreen() {
                   place.subregion ||
                   place.city ||
                   place.region ||
-                  "Vị trí hiện tại";
+                  t("weather.currentLocation");
               }
             } catch (geoErr) {}
           } else {
@@ -166,9 +152,9 @@ export default function WeatherScreen() {
               );
               const data = await res.json();
               cName =
-                data.city || data.principalSubdivision || "Vị trí hiện tại";
+                data.city || data.principalSubdivision || t("weather.currentLocation");
             } catch (webGeoErr) {
-              cName = "Vị trí hiện tại (Web)";
+              cName = t("weather.currentLocationWeb");
             }
           }
         }
@@ -179,7 +165,7 @@ export default function WeatherScreen() {
       setWeatherData(res);
     } catch (error: any) {
       setErrorMsg(
-        error.response?.data?.message || "Không thể tải dữ liệu thời tiết.",
+        error.response?.data?.message || t("weather.loadFailed"),
       );
     } finally {
       setLoading(false);
@@ -212,30 +198,33 @@ export default function WeatherScreen() {
     if (dayInfo.tempMax >= 34) {
       tips.push({
         adviceType: "WARNING",
-        title: "🔥 Nắng nóng gay gắt",
-        message: `Nhiệt độ lên tới ${Math.round(dayInfo.tempMax)}°C. Ưu tiên tưới đẫm vào sáng sớm hoặc chiều mát.`,
+        title: t("weather.alerts.heatTitle"),
+        message: t("weather.alerts.heatMessage", {
+          temp: Math.round(dayInfo.tempMax),
+        }),
       });
     }
     if (dayInfo.pop >= 60) {
       tips.push({
         adviceType: "WARNING",
-        title: "🌧️ Nguy cơ mưa lớn",
-        message: `Xác suất mưa ${dayInfo.pop}%. Tạm dừng phun xịt hóa chất, kiểm tra hệ thống thoát nước.`,
+        title: t("weather.alerts.rainTitle"),
+        message: t("weather.alerts.rainMessage", { pop: dayInfo.pop }),
       });
     }
     if (dayInfo.windSpeed >= 6) {
       tips.push({
         adviceType: "WARNING",
-        title: "💨 Cảnh báo gió mạnh",
-        message: `Gió thổi tốc độ ${dayInfo.windSpeed}m/s. Cần gia cố giàn leo, chằng chống cây cảnh.`,
+        title: t("weather.alerts.windTitle"),
+        message: t("weather.alerts.windMessage", {
+          speed: dayInfo.windSpeed,
+        }),
       });
     }
     if (tips.length === 0) {
       tips.push({
         adviceType: "RECOMMEND",
-        title: "🌱 Thời tiết thuận lợi",
-        message:
-          "Điều kiện sinh trưởng lý tưởng. Thích hợp cho mọi hoạt động: bón phân, phun thuốc, cắt tỉa.",
+        title: t("weather.alerts.goodTitle"),
+        message: t("weather.alerts.goodMessage"),
       });
     }
     return tips;
@@ -258,10 +247,12 @@ export default function WeatherScreen() {
   };
 
   const getDayName = (timestamp: number, index: number) => {
-    if (index === 0) return "Hôm nay";
-    if (index === 1) return "Ngày mai";
+    if (index === 0) return t("weather.today");
+    if (index === 1) return t("weather.tomorrow");
     const d = new Date(timestamp * 1000);
-    return d.getDay() === 0 ? "Chủ nhật" : `Thứ ${d.getDay() + 1}`;
+    return d.getDay() === 0
+      ? t("weather.sunday")
+      : t("weather.weekdayN", { n: d.getDay() + 1 });
   };
 
   const formatTime = (timestamp: number) => {
@@ -276,14 +267,17 @@ export default function WeatherScreen() {
   };
 
   const getMoonPhaseText = (phase: number) => {
-    if (phase === 0 || phase === 1) return "Trăng non";
-    if (phase > 0 && phase < 0.25) return "Trăng lưỡi liềm";
-    if (phase === 0.25) return "Bán nguyệt đầu tháng";
-    if (phase > 0.25 && phase < 0.5) return "Trăng khuyết";
-    if (phase === 0.5) return "Trăng tròn";
-    if (phase > 0.5 && phase < 0.75) return "Trăng khuyết cuối";
-    if (phase === 0.75) return "Bán nguyệt cuối tháng";
-    return "Trăng tàn";
+    if (phase === 0 || phase === 1) return t("weather.moonPhases.new");
+    if (phase > 0 && phase < 0.25)
+      return t("weather.moonPhases.waxingCrescent");
+    if (phase === 0.25) return t("weather.moonPhases.firstQuarter");
+    if (phase > 0.25 && phase < 0.5)
+      return t("weather.moonPhases.waxingGibbous");
+    if (phase === 0.5) return t("weather.moonPhases.full");
+    if (phase > 0.5 && phase < 0.75)
+      return t("weather.moonPhases.waningGibbous");
+    if (phase === 0.75) return t("weather.moonPhases.lastQuarter");
+    return t("weather.moonPhases.waningCrescent");
   };
 
   const getHeroBgColor = (iconCode: string) => {
@@ -298,9 +292,7 @@ export default function WeatherScreen() {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#16a34a" />
-        <Text style={styles.loadingText}>
-          Đang lấy dữ liệu trạm khí tượng...
-        </Text>
+        <Text style={styles.loadingText}>{t("weather.loadingStation")}</Text>
       </View>
     );
   }
@@ -325,7 +317,10 @@ export default function WeatherScreen() {
           visibility: safeData.weatherData.current.visibility,
           sunrise: safeData.weatherData.current.sunrise,
           sunset: safeData.weatherData.current.sunset,
-          summary: translateSummary(safeData.weatherData.daily[0]?.summary),
+          summary: translateSummary(
+            safeData.weatherData.daily[0]?.summary,
+            t,
+          ),
           moonPhase: safeData.weatherData.daily[0]?.moonPhase,
         }
       : weatherData && selectedDayIndex > 0
@@ -350,6 +345,7 @@ export default function WeatherScreen() {
             sunset: safeData.weatherData.daily[selectedDayIndex]?.sunset,
             summary: translateSummary(
               safeData.weatherData.daily[selectedDayIndex]?.summary,
+              t,
             ),
             moonPhase: safeData.weatherData.daily[selectedDayIndex]?.moonPhase,
           }
@@ -394,7 +390,7 @@ export default function WeatherScreen() {
                   activeCategory === cat.id && styles.filterBtnTextActive,
                 ]}
               >
-                {cat.label}
+                {t(cat.labelKey)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -420,7 +416,7 @@ export default function WeatherScreen() {
               style={styles.retryBtn}
               onPress={() => fetchWeather()}
             >
-              <Text style={styles.retryText}>Thử lại</Text>
+              <Text style={styles.retryText}>{t("common.retry")}</Text>
             </TouchableOpacity>
           </View>
         ) : weatherData && currentViewData ? (
@@ -436,7 +432,7 @@ export default function WeatherScreen() {
                 <View style={styles.heroTextGroup}>
                   <Text style={styles.tempHuge}>{currentViewData.temp}°</Text>
                   <Text style={styles.weatherDesc}>
-                    {translateWeather(currentViewData.desc)}
+                    {translateWeather(currentViewData.desc, t)}
                   </Text>
                 </View>
                 <Image
@@ -452,14 +448,18 @@ export default function WeatherScreen() {
                   <Text style={styles.statValueRow}>
                     {currentViewData.humidity}%
                   </Text>
-                  <Text style={styles.statLabelRow}>Độ ẩm</Text>
+                  <Text style={styles.statLabelRow}>
+                    {t("weather.labelHumidityShort")}
+                  </Text>
                 </View>
                 <View style={styles.statItemRow}>
                   <Wind size={20} color="#cbd5e1" />
                   <Text style={styles.statValueRow}>
                     {currentViewData.wind} m/s
                   </Text>
-                  <Text style={styles.statLabelRow}>Gió</Text>
+                  <Text style={styles.statLabelRow}>
+                    {t("weather.labelWindShort")}
+                  </Text>
                 </View>
                 <View style={styles.statItemRow}>
                   <Sun size={20} color="#fde047" />
@@ -471,7 +471,9 @@ export default function WeatherScreen() {
                   <Text style={styles.statValueRow}>
                     {currentViewData.pop}%
                   </Text>
-                  <Text style={styles.statLabelRow}>Mưa</Text>
+                  <Text style={styles.statLabelRow}>
+                    {t("weather.labelRainShort")}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -485,15 +487,15 @@ export default function WeatherScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.goldenTitle}>
-                      Thời điểm lý tưởng nhất
+                      {t("weather.goldenHourTitle")}
                     </Text>
                     {goldenHour ? (
                       <Text style={styles.goldenDesc}>
-                        Gió êm, ráo nước. Rất tốt để phun thuốc, bón phân.
+                        {t("weather.goldenHourGood")}
                       </Text>
                     ) : (
                       <Text style={styles.goldenDesc}>
-                        Hôm nay thời tiết bất lợi, không nên phun xịt hóa chất.
+                        {t("weather.goldenHourBad")}
                       </Text>
                     )}
                   </View>
@@ -513,7 +515,9 @@ export default function WeatherScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <CalendarDays size={20} color="#111827" />
-                <Text style={styles.sectionTitle}>Dự báo 8 ngày tới</Text>
+                <Text style={styles.sectionTitle}>
+                  {t("weather.forecast8Days")}
+                </Text>
               </View>
               <ScrollView
                 horizontal
@@ -553,7 +557,9 @@ export default function WeatherScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Activity size={20} color="#111827" />
-                <Text style={styles.sectionTitle}>Chi tiết thời tiết</Text>
+                <Text style={styles.sectionTitle}>
+                  {t("weather.weatherDetail")}
+                </Text>
               </View>
 
               {/* Tóm tắt thời tiết nổi bật (Đã dịch sang Tiếng Việt) */}
@@ -571,7 +577,9 @@ export default function WeatherScreen() {
                     <View style={styles.extendedItem}>
                       <Gauge size={22} color="#6366f1" />
                       <View>
-                        <Text style={styles.extendedLabel}>Áp suất</Text>
+                        <Text style={styles.extendedLabel}>
+                          {t("weather.labelPressure")}
+                        </Text>
                         <Text style={styles.extendedValue}>
                           {currentViewData.pressure} hPa
                         </Text>
@@ -583,7 +591,9 @@ export default function WeatherScreen() {
                     <View style={styles.extendedItem}>
                       <Eye size={22} color="#14b8a6" />
                       <View>
-                        <Text style={styles.extendedLabel}>Tầm nhìn</Text>
+                        <Text style={styles.extendedLabel}>
+                          {t("weather.labelVisibility")}
+                        </Text>
                         <Text style={styles.extendedValue}>
                           {(currentViewData.visibility / 1000).toFixed(1)} km
                         </Text>
@@ -595,7 +605,9 @@ export default function WeatherScreen() {
                     <View style={styles.extendedItem}>
                       <Sunrise size={22} color="#f59e0b" />
                       <View>
-                        <Text style={styles.extendedLabel}>Bình minh</Text>
+                        <Text style={styles.extendedLabel}>
+                          {t("weather.labelSunrise")}
+                        </Text>
                         <Text style={styles.extendedValue}>
                           {formatTimeFromStamp(currentViewData.sunrise)}
                         </Text>
@@ -607,7 +619,9 @@ export default function WeatherScreen() {
                     <View style={styles.extendedItem}>
                       <Sunset size={22} color="#f43f5e" />
                       <View>
-                        <Text style={styles.extendedLabel}>Hoàng hôn</Text>
+                        <Text style={styles.extendedLabel}>
+                          {t("weather.labelSunset")}
+                        </Text>
                         <Text style={styles.extendedValue}>
                           {formatTimeFromStamp(currentViewData.sunset)}
                         </Text>
@@ -620,7 +634,7 @@ export default function WeatherScreen() {
                       <Moon size={22} color="#8b5cf6" />
                       <View>
                         <Text style={styles.extendedLabel}>
-                          Mặt trăng đêm nay
+                          {t("weather.moonTonight")}
                         </Text>
                         <Text style={styles.extendedValue}>
                           {getMoonPhaseText(currentViewData.moonPhase)}
@@ -641,7 +655,7 @@ export default function WeatherScreen() {
                   style={{ width: 22, height: 22 }}
                 />
                 <Text style={styles.sectionTitle}>
-                  Bác sĩ cây trồng phân tích
+                  {t("weather.plantDoctorAnalysis")}
                 </Text>
               </View>
 
@@ -690,7 +704,7 @@ export default function WeatherScreen() {
                     marginLeft: 4,
                   }}
                 >
-                  Không có lời khuyên đặc biệt cho ngày này.
+                  {t("weather.noAdviceToday")}
                 </Text>
               )}
             </View>
@@ -698,7 +712,9 @@ export default function WeatherScreen() {
             {/* DỰ BÁO 24 GIỜ TỚI (Chỉ hiện hôm nay) */}
             {selectedDayIndex === 0 && (
               <View style={[styles.section, { marginBottom: 40 }]}>
-                <Text style={styles.sectionTitle}>🕒 Biến động 24 giờ tới</Text>
+                <Text style={styles.sectionTitle}>
+                  {t("weather.next24Hours")}
+                </Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -707,7 +723,9 @@ export default function WeatherScreen() {
                   {weatherData.weatherData.hourly.map((hour, idx) => (
                     <View key={idx} style={styles.hourlyItem}>
                       <Text style={styles.hourlyTime}>
-                        {idx === 0 ? "Bây giờ" : formatTime(hour.timestamp)}
+                        {idx === 0
+                          ? t("weather.nowShort")
+                          : formatTime(hour.timestamp)}
                       </Text>
                       <Image
                         source={{ uri: getModernIconUrl(hour.weatherIcon) }}

@@ -28,12 +28,18 @@ import {
   Sparkles,
 } from "lucide-react-native";
 
-import { myGardenApi, uploadApi } from "@agri-scan/shared";
+import {
+  myGardenApi,
+  uploadApi,
+  HEALTHY_CONDITION,
+} from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
 import { styles } from "../styles/garden-detail.styles";
 type TabType = "ROADMAP" | "CHECKIN";
 
 export default function GardenDetailScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { plantId } = useLocalSearchParams();
@@ -56,12 +62,12 @@ export default function GardenDetailScreen() {
       if (foundPlant) {
         setPlant(foundPlant);
       } else {
-        Alert.alert("Lỗi", "Không tìm thấy cây này.");
+        Alert.alert(t("common.error"), t("myGarden.detailNotFound"));
         router.back();
       }
     } catch (error) {
       console.log("Lỗi tải chi tiết cây:", error);
-      Alert.alert("Lỗi", "Không thể tải thông tin.");
+      Alert.alert(t("common.error"), t("myGarden.detailLoadFailed"));
     } finally {
       setLoading(false);
     }
@@ -69,20 +75,26 @@ export default function GardenDetailScreen() {
 
   const handleDeletePlant = () => {
     Alert.alert(
-      "Xóa cây khỏi vườn?",
-      "Bạn có chắc chắn muốn ngừng chăm sóc cây này không? Bạn sẽ nhận lại 1 vị trí trống trong vườn.",
+      t("myGarden.deleteConfirmTitle"),
+      t("myGarden.deleteConfirmMessage"),
       [
-        { text: "Hủy", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Xóa bỏ",
+          text: t("myGarden.deleteConfirmYes"),
           style: "destructive",
           onPress: async () => {
             try {
               await myGardenApi.removePlant(plantId as string);
-              Alert.alert("Thành công", "Đã xóa cây khỏi vườn.");
+              Alert.alert(
+                t("myGarden.deleteSuccessTitle"),
+                t("myGarden.deleteSuccessMessage"),
+              );
               router.back();
             } catch (error) {
-              Alert.alert("Lỗi", "Không thể xóa cây lúc này.");
+              Alert.alert(
+                t("common.error"),
+                t("myGarden.deleteFailedShort"),
+              );
             }
           },
         },
@@ -92,7 +104,7 @@ export default function GardenDetailScreen() {
 
   const handleDailyCheckIn = async () => {
     if (Platform.OS === "web") {
-      alert("Tính năng chụp ảnh check-in đang hoạt động ở chế độ Mobile.");
+      alert(t("myGarden.checkInWebOnly"));
       return;
     }
 
@@ -136,9 +148,9 @@ export default function GardenDetailScreen() {
         });
 
         if (res.requireRegeneration) {
-          Alert.alert("⚠️ Cảnh báo từ AI", res.message, [
+          Alert.alert(t("myGarden.checkInWarningTitle"), res.message, [
             {
-              text: "Tạo lộ trình mới",
+              text: t("myGarden.checkInCreateNewRoadmap"),
               onPress: () =>
                 router.push({
                   pathname: "/garden-setup",
@@ -147,16 +159,16 @@ export default function GardenDetailScreen() {
             },
           ]);
         } else {
-          Alert.alert("🎉 Thành công!", res.message);
+          Alert.alert(t("myGarden.checkInSuccessTitle"), res.message);
           fetchPlantDetail();
         }
       }
     } catch (error: any) {
       console.log("Lỗi checkin:", error);
       Alert.alert(
-        "Lỗi",
+        t("common.error"),
         error?.response?.data?.message ||
-          "Có lỗi xảy ra khi chụp ảnh check-in.",
+          t("myGarden.checkInFailedMessage"),
       );
     } finally {
       setIsCheckingIn(false);
@@ -168,7 +180,7 @@ export default function GardenDetailScreen() {
       <View style={styles.centerBox}>
         <ActivityIndicator size="large" color="#16a34a" />
         <Text style={{ marginTop: 12, color: "#64748b" }}>
-          Đang tải thông tin cây...
+          {t("myGarden.detailLoading")}
         </Text>
       </View>
     );
@@ -226,24 +238,25 @@ export default function GardenDetailScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.plantName}>{plant?.customName}</Text>
               <Text style={styles.plantCondition}>
-                Tình trạng:{" "}
+                {t("myGarden.conditionLabel")}{" "}
                 <Text
                   style={{
                     color:
-                      plant?.currentCondition === "Khỏe mạnh"
+                      plant?.currentCondition === HEALTHY_CONDITION
                         ? "#16a34a"
                         : "#ef4444",
                   }}
                 >
-                  {plant?.currentCondition || "Đang tải"}
+                  {/* currentCondition là dữ liệu từ API → hiện nguyên văn */}
+                  {plant?.currentCondition || t("myGarden.conditionLoading")}
                 </Text>
               </Text>
             </View>
             <View style={styles.goalBadge}>
               <Text style={styles.goalBadgeText}>
                 {plant?.userGoal === "HEAL_DISEASE"
-                  ? "Chữa bệnh"
-                  : "Nuôi trồng"}
+                  ? t("myGarden.goalHealShort")
+                  : t("myGarden.goalDefaultShort")}
               </Text>
             </View>
           </View>
@@ -274,7 +287,7 @@ export default function GardenDetailScreen() {
                 <Text
                   style={{ fontWeight: "bold", color: "#15803d", fontSize: 14 }}
                 >
-                  Đánh giá của AI
+                  {t("myGarden.aiEvaluation")}
                 </Text>
               </View>
               <Text
@@ -298,7 +311,9 @@ export default function GardenDetailScreen() {
                 marginBottom: 8,
               }}
             >
-              <Text style={styles.progressLabel}>Tiến độ hoàn thành</Text>
+              <Text style={styles.progressLabel}>
+                {t("myGarden.completionProgress")}
+              </Text>
               <Text style={styles.progressValue}>
                 {plant?.progressPercentage || 0}%
               </Text>
@@ -333,7 +348,7 @@ export default function GardenDetailScreen() {
                 activeTab === "ROADMAP" && styles.tabTextActive,
               ]}
             >
-              Lộ trình (AI)
+              {t("myGarden.roadmapAi")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -353,7 +368,7 @@ export default function GardenDetailScreen() {
                 activeTab === "CHECKIN" && styles.tabTextActive,
               ]}
             >
-              Check-in hôm nay
+              {t("myGarden.checkInToday")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -363,7 +378,7 @@ export default function GardenDetailScreen() {
           {activeTab === "ROADMAP" ? (
             <View style={styles.roadmapTab}>
               <Text style={styles.sectionTitle}>
-                Các việc cần làm tiếp theo
+                {t("myGarden.nextTasks")}
               </Text>
               <View style={styles.timelineLine} />
 
@@ -388,7 +403,9 @@ export default function GardenDetailScreen() {
                     ]}
                   >
                     <View style={styles.taskHeader}>
-                      <Text style={styles.taskDayTitle}>Ngày {task.day}</Text>
+                      <Text style={styles.taskDayTitle}>
+                        {t("myGarden.dayN", { day: task.day })}
+                      </Text>
                       <Text style={styles.taskDate}>
                         {new Date(task.date).toLocaleDateString("vi-VN")}
                       </Text>
@@ -410,7 +427,9 @@ export default function GardenDetailScreen() {
                         style={{ marginTop: 2 }}
                       />
                       <Text style={styles.taskDetailText}>
-                        <Text style={{ fontWeight: "bold" }}>Nước:</Text>{" "}
+                        <Text style={{ fontWeight: "bold" }}>
+                          {t("myGarden.taskWaterInline")}
+                        </Text>{" "}
                         {task.waterAction}
                       </Text>
                     </View>
@@ -421,7 +440,9 @@ export default function GardenDetailScreen() {
                         style={{ marginTop: 2 }}
                       />
                       <Text style={styles.taskDetailText}>
-                        <Text style={{ fontWeight: "bold" }}>Phân bón:</Text>{" "}
+                        <Text style={{ fontWeight: "bold" }}>
+                          {t("myGarden.taskFertilizerInline")}
+                        </Text>{" "}
                         {task.fertilizerAction}
                       </Text>
                     </View>
@@ -432,7 +453,9 @@ export default function GardenDetailScreen() {
                         style={{ marginTop: 2 }}
                       />
                       <Text style={styles.taskDetailText}>
-                        <Text style={{ fontWeight: "bold" }}>Chăm sóc:</Text>{" "}
+                        <Text style={{ fontWeight: "bold" }}>
+                          {t("myGarden.taskCareInline")}
+                        </Text>{" "}
                         {task.careAction}
                       </Text>
                     </View>
@@ -444,10 +467,11 @@ export default function GardenDetailScreen() {
             <View style={styles.checkinTab}>
               <View style={styles.checkinBox}>
                 <Sprout size={64} color="#16a34a" />
-                <Text style={styles.checkinTitle}>Đến lúc chăm cây rồi!</Text>
+                <Text style={styles.checkinTitle}>
+                  {t("myGarden.checkInTimeTitle")}
+                </Text>
                 <Text style={styles.checkinDesc}>
-                  Hãy chụp một bức ảnh cập nhật tình trạng mới nhất của cây để
-                  AI đánh giá xem bạn có đang làm đúng theo lộ trình không nhé.
+                  {t("myGarden.checkInTimeDesc")}
                 </Text>
                 <TouchableOpacity
                   style={styles.cameraBtn}
@@ -460,7 +484,7 @@ export default function GardenDetailScreen() {
                     <>
                       <CameraIcon size={24} color="#fff" />
                       <Text style={styles.cameraBtnText}>
-                        Mở Camera Check-in
+                        {t("myGarden.checkInOpenCamera")}
                       </Text>
                     </>
                   )}
@@ -468,8 +492,7 @@ export default function GardenDetailScreen() {
                 <View style={styles.warningBox}>
                   <AlertTriangle size={20} color="#d97706" />
                   <Text style={styles.warningText}>
-                    Lưu ý: Nếu bạn quên check-in quá 3 ngày, lộ trình cũ sẽ bị
-                    hủy và phải nhờ AI tạo lại từ đầu!
+                    {t("myGarden.checkInWarningNote")}
                   </Text>
                 </View>
               </View>

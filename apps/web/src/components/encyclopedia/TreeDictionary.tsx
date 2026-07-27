@@ -12,8 +12,11 @@ import {
 } from "lucide-react";
 import { plantApi } from "@agri-scan/shared";
 import type { IPlantListItem, IPlantDetail } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 
 export function TreeDictionary() {
+  const t = useT();
+
   // ── Data states ──────────────────────────────────────────────────────────
   const [plants, setPlants] = useState<IPlantListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,18 +34,34 @@ export function TreeDictionary() {
   const [selectedWaters, setSelectedWaters] = useState<string[]>([]);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Filter options
+  // Filter options.
+  //
+  // `value` là dữ liệu THẬT trong MongoDB (plant.growthRate, plant.light, ...)
+  // nên PHẢI giữ nguyên tiếng Việt — bộ lọc so khớp bằng chuỗi này.
+  // Chỉ `label` được dịch. Đổi value sẽ làm bộ lọc không khớp gì cả.
   const categories = [
-    "Cây bóng mát",
-    "Cây cảnh quan",
-    "Cây lấy gỗ",
-    "Cây ăn quả",
-    "Cây tâm linh",
-    "Cây phong thủy",
+    { value: "Cây bóng mát", label: t("encyclopedia.typeShade") },
+    { value: "Cây cảnh quan", label: t("encyclopedia.typeLandscape") },
+    { value: "Cây lấy gỗ", label: t("encyclopedia.typeTimber") },
+    { value: "Cây ăn quả", label: t("encyclopedia.typeFruit") },
+    { value: "Cây tâm linh", label: t("encyclopedia.typeSpiritual") },
+    { value: "Cây phong thủy", label: t("encyclopedia.typeFengShui") },
   ];
-  const growthRates = ["Nhanh", "Trung bình", "Chậm"];
-  const lights = ["Ưa sáng", "Ưa bóng", "Bán phần"];
-  const waters = ["Ít", "Trung bình", "Nhiều"];
+  const growthRates = [
+    { value: "Nhanh", label: t("encyclopedia.growthFast") },
+    { value: "Trung bình", label: t("encyclopedia.growthMedium") },
+    { value: "Chậm", label: t("encyclopedia.growthSlow") },
+  ];
+  const lights = [
+    { value: "Ưa sáng", label: t("encyclopedia.lightFull") },
+    { value: "Ưa bóng", label: t("encyclopedia.lightShade") },
+    { value: "Bán phần", label: t("encyclopedia.lightPartial") },
+  ];
+  const waters = [
+    { value: "Ít", label: t("encyclopedia.waterLow") },
+    { value: "Trung bình", label: t("encyclopedia.waterMedium") },
+    { value: "Nhiều", label: t("encyclopedia.waterHigh") },
+  ];
 
   // ── Fetch list on mount ───────────────────────────────────────────────────
   useEffect(() => {
@@ -52,7 +71,7 @@ export function TreeDictionary() {
         const data = await plantApi.getAllPlants();
         setPlants(data);
       } catch {
-        setError("Không thể tải danh sách cây. Vui lòng thử lại.");
+        setError("encyclopedia.loadListFailed");
       } finally {
         setIsLoading(false);
       }
@@ -68,7 +87,7 @@ export function TreeDictionary() {
       const detail = await plantApi.getPlantById(id);
       setSelectedPlant(detail);
     } catch {
-      setError("Không thể tải thông tin chi tiết. Vui lòng thử lại."); // ← thêm dòng này
+      setError("encyclopedia.loadDetailFailed");
     } finally {
       setIsLoadingDetail(false);
     }
@@ -132,7 +151,7 @@ export function TreeDictionary() {
     setter,
   }: {
     title: string;
-    items: string[];
+    items: { value: string; label: string }[];
     selected: string[];
     setter: (val: string[]) => void;
   }) => (
@@ -141,26 +160,26 @@ export function TreeDictionary() {
       <div className="space-y-2">
         {items.map((item) => (
           <label
-            key={item}
+            key={item.value}
             className="flex items-center space-x-2 cursor-pointer group"
           >
             <div
-              className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selected.includes(item) ? "bg-emerald-500 border-emerald-500" : "border-gray-300 group-hover:border-emerald-400"}`}
+              className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selected.includes(item.value) ? "bg-emerald-500 border-emerald-500" : "border-gray-300 group-hover:border-emerald-400"}`}
             >
-              {selected.includes(item) && (
+              {selected.includes(item.value) && (
                 <div className="w-2.5 h-2.5 bg-white rounded-sm" />
               )}
             </div>
             <input
               type="checkbox"
               className="hidden"
-              checked={selected.includes(item)}
-              onChange={() => toggleFilter(item, selected, setter)}
+              checked={selected.includes(item.value)}
+              onChange={() => toggleFilter(item.value, selected, setter)}
             />
             <span
-              className={`text-sm ${selected.includes(item) ? "text-gray-900 font-medium" : "text-gray-600"}`}
+              className={`text-sm ${selected.includes(item.value) ? "text-gray-900 font-medium" : "text-gray-600"}`}
             >
-              {item}
+              {item.label}
             </span>
           </label>
         ))}
@@ -173,11 +192,10 @@ export function TreeDictionary() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Từ Điển Cây Trồng
+            {t("encyclopedia.title")}
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Khám phá thế giới thực vật phong phú với thông tin chi tiết về đặc
-            điểm, công dụng và cách chăm sóc.
+            {t("encyclopedia.subtitle")}
           </p>
         </div>
 
@@ -188,7 +206,7 @@ export function TreeDictionary() {
             onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
           >
             <Filter size={20} />
-            <span>Bộ lọc</span>
+            <span>{t("encyclopedia.filters")}</span>
             {isMobileFilterOpen ? (
               <ChevronUp size={16} />
             ) : (
@@ -203,28 +221,30 @@ export function TreeDictionary() {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto no-scrollbar">
               <div className="flex items-center space-x-2 mb-6 pb-4 border-b border-gray-100">
                 <Filter size={20} className="text-emerald-600" />
-                <h2 className="font-bold text-lg text-gray-900">Bộ lọc</h2>
+                <h2 className="font-bold text-lg text-gray-900">
+                  {t("encyclopedia.filters")}
+                </h2>
               </div>
               <FilterSection
-                title="Loại cây"
+                title={t("encyclopedia.filterType")}
                 items={categories}
                 selected={selectedCategories}
                 setter={setSelectedCategories}
               />
               <FilterSection
-                title="Tốc độ sinh trưởng"
+                title={t("encyclopedia.filterGrowth")}
                 items={growthRates}
                 selected={selectedGrowthRates}
                 setter={setSelectedGrowthRates}
               />
               <FilterSection
-                title="Nhu cầu ánh sáng"
+                title={t("encyclopedia.filterLight")}
                 items={lights}
                 selected={selectedLights}
                 setter={setSelectedLights}
               />
               <FilterSection
-                title="Nhu cầu nước"
+                title={t("encyclopedia.filterWater")}
                 items={waters}
                 selected={selectedWaters}
                 setter={setSelectedWaters}
@@ -242,7 +262,7 @@ export function TreeDictionary() {
                   }}
                   className="w-full py-2 text-sm text-red-500 hover:text-red-600 font-medium border border-red-100 hover:border-red-200 rounded-lg transition-colors mt-2"
                 >
-                  Xóa bộ lọc
+                  {t("encyclopedia.clearFilters")}
                 </button>
               )}
             </div>
@@ -258,7 +278,7 @@ export function TreeDictionary() {
               <input
                 type="text"
                 className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm shadow-sm"
-                placeholder="Tìm kiếm theo tên cây hoặc tên khoa học..."
+                placeholder={t("encyclopedia.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -274,12 +294,12 @@ export function TreeDictionary() {
             {/* Error state */}
             {error && (
               <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-red-200">
-                <p className="text-red-500 text-lg">{error}</p>
+                <p className="text-red-500 text-lg">{t(error)}</p>
                 <button
                   onClick={() => window.location.reload()}
                   className="mt-4 text-emerald-600 font-medium hover:underline"
                 >
-                  Thử lại
+                  {t("common.retry")}
                 </button>
               </div>
             )}
@@ -321,8 +341,8 @@ export function TreeDictionary() {
                           className={`px-2 py-1 rounded text-xs font-medium ${plant.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" : "bg-yellow-100 text-yellow-700"}`}
                         >
                           {plant.status === "APPROVED"
-                            ? "Đã duyệt"
-                            : "Chờ duyệt"}
+                            ? t("encyclopedia.approved")
+                            : t("encyclopedia.pending")}
                         </span>
                       </div>
                     </div>
@@ -334,13 +354,13 @@ export function TreeDictionary() {
             {!isLoading && !error && filteredPlants.length === 0 && (
               <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
                 <p className="text-gray-500 text-lg">
-                  Không tìm thấy cây nào phù hợp.
+                  {t("encyclopedia.noResults")}
                 </p>
                 <button
                   onClick={() => setSearchTerm("")}
                   className="mt-4 text-emerald-600 font-medium hover:underline"
                 >
-                  Xóa tìm kiếm
+                  {t("encyclopedia.clearSearch")}
                 </button>
               </div>
             )}
@@ -422,7 +442,7 @@ export function TreeDictionary() {
                     <div className="grid grid-cols-2 gap-4 mb-6">
                       <div className="bg-gray-50 p-3 rounded-lg">
                         <span className="text-xs text-gray-400 uppercase font-bold block mb-1">
-                          Tốc độ lớn
+                          {t("encyclopedia.labelGrowth")}
                         </span>
                         <span className="text-gray-800 font-medium">
                           {selectedPlant.growthRate}
@@ -430,7 +450,7 @@ export function TreeDictionary() {
                       </div>
                       <div className="bg-gray-50 p-3 rounded-lg">
                         <span className="text-xs text-gray-400 uppercase font-bold block mb-1">
-                          Ánh sáng
+                          {t("encyclopedia.labelLight")}
                         </span>
                         <span className="text-gray-800 font-medium">
                           {selectedPlant.light}
@@ -438,7 +458,7 @@ export function TreeDictionary() {
                       </div>
                       <div className="bg-gray-50 p-3 rounded-lg">
                         <span className="text-xs text-gray-400 uppercase font-bold block mb-1">
-                          Nước
+                          {t("encyclopedia.labelWater")}
                         </span>
                         <span className="text-gray-800 font-medium">
                           {selectedPlant.water}
@@ -446,7 +466,7 @@ export function TreeDictionary() {
                       </div>
                       <div className="bg-gray-50 p-3 rounded-lg">
                         <span className="text-xs text-gray-400 uppercase font-bold block mb-1">
-                          Họ
+                          {t("encyclopedia.labelFamily")}
                         </span>
                         <span
                           className="text-gray-800 font-medium truncate"
@@ -461,7 +481,7 @@ export function TreeDictionary() {
                       {selectedPlant.height && (
                         <div>
                           <span className="text-xs text-gray-400 uppercase font-bold block mb-1">
-                            Chiều cao
+                            {t("encyclopedia.labelHeight")}
                           </span>
                           <span className="text-gray-700 text-sm">
                             {selectedPlant.height}
@@ -471,7 +491,7 @@ export function TreeDictionary() {
                       {selectedPlant.floweringTime && (
                         <div>
                           <span className="text-xs text-gray-400 uppercase font-bold block mb-1">
-                            Mùa ra hoa
+                            {t("encyclopedia.labelBloomSeason")}
                           </span>
                           <span className="text-gray-700 text-sm">
                             {selectedPlant.floweringTime}
@@ -481,7 +501,7 @@ export function TreeDictionary() {
                       {selectedPlant.suitableLocation && (
                         <div className="col-span-2">
                           <span className="text-xs text-gray-400 uppercase font-bold block mb-1">
-                            Vị trí trồng
+                            {t("encyclopedia.labelPlantingSite")}
                           </span>
                           <span className="text-gray-700 text-sm">
                             {selectedPlant.suitableLocation}
@@ -491,7 +511,7 @@ export function TreeDictionary() {
                       {selectedPlant.soil && (
                         <div className="col-span-2">
                           <span className="text-xs text-gray-400 uppercase font-bold block mb-1">
-                            Loại đất
+                            {t("encyclopedia.labelSoilType")}
                           </span>
                           <span className="text-gray-700 text-sm">
                             {selectedPlant.soil}
@@ -501,7 +521,7 @@ export function TreeDictionary() {
                       {selectedPlant.diseasesInfo?.length > 0 && (
                         <div className="col-span-2">
                           <span className="text-xs text-gray-400 uppercase font-bold block mb-1">
-                            Bệnh thường gặp
+                            {t("encyclopedia.labelCommonDiseases")}
                           </span>
                           <span className="text-red-600 text-sm font-medium">
                             {selectedPlant.diseasesInfo
@@ -515,7 +535,7 @@ export function TreeDictionary() {
                     <div className="space-y-6">
                       <div>
                         <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">
-                          Mô tả
+                          {t("encyclopedia.labelDescription")}
                         </h4>
                         <p className="text-gray-700 leading-relaxed">
                           {selectedPlant.description}
@@ -523,7 +543,7 @@ export function TreeDictionary() {
                       </div>
                       <div>
                         <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">
-                          Công dụng
+                          {t("encyclopedia.labelUses")}
                         </h4>
                         <p className="text-gray-700 leading-relaxed">
                           {selectedPlant.uses}
@@ -531,7 +551,7 @@ export function TreeDictionary() {
                       </div>
                       <div>
                         <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">
-                          Cách chăm sóc
+                          {t("encyclopedia.labelCare")}
                         </h4>
                         <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
                           <p className="text-emerald-800 leading-relaxed">

@@ -12,8 +12,10 @@ import { formatDateShortTimeVN as formatDate } from "@agri-scan/shared";
 import { pageVariants } from "@/utils/animation";
 import { adminApi } from "@agri-scan/shared"; // Kiểm tra lại đường dẫn này
 import { IUser, SubscriptionPlan, UserRole } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 
 export default function UsersTab() {
+  const t = useT();
   // --- States ---
   const [users, setUsers] = useState<IUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +89,7 @@ export default function UsersTab() {
     console.log("Gói mới chọn:", newPlan);
 
     if (!userId) {
-      alert("Lỗi: ID người dùng không hợp lệ (undefined)!");
+      alert(t("admin.errorInvalidUserId"));
       return;
     }
 
@@ -110,7 +112,7 @@ export default function UsersTab() {
       const errorMsg = error.response?.data?.message || error.message;
       console.error("Lỗi cập nhật chi tiết:", error.response?.data);
 
-      alert(`Lỗi: ${errorMsg}`);
+      alert(t("admin.errorPrefix", { message: errorMsg }));
     }
   };
 
@@ -124,7 +126,7 @@ export default function UsersTab() {
     >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-slate-800">
-          Quản lý người dùng
+          {t("admin.usersTitle")}
         </h2>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
@@ -134,7 +136,7 @@ export default function UsersTab() {
             />
             <input
               type="text"
-              placeholder="Tìm email, tên..."
+              placeholder={t("admin.usersSearchPlaceholder")}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all shadow-sm"
               value={searchUser}
               onChange={(e) => {
@@ -151,7 +153,7 @@ export default function UsersTab() {
               setCurrentPage(1); // Reset về trang 1 khi lọc
             }}
           >
-            <option value="ALL">Tất cả gói</option>
+            <option value="ALL">{t("admin.usersFilterAllPlans")}</option>
             <option value={SubscriptionPlan.FREE}>FREE</option>
             <option value={SubscriptionPlan.PREMIUM}>PREMIUM</option>
             <option value={SubscriptionPlan.VIP}>VIP</option>
@@ -172,22 +174,22 @@ export default function UsersTab() {
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-100">
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Người dùng
+                  {t("admin.colUser")}
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Vai trò
+                  {t("admin.colRole")}
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Gói hiện tại
+                  {t("admin.colCurrentPlan")}
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Lượt dùng
+                  {t("admin.colUsage")}
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Ngày đăng ký
+                  {t("admin.colRegisteredAt")}
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
-                  Thao tác
+                  {t("admin.colActions")}
                 </th>
               </tr>
             </thead>
@@ -285,7 +287,11 @@ export default function UsersTab() {
                       <div className="flex flex-col gap-1 text-xs font-medium text-slate-600">
                         <div className="flex items-center gap-1.5">
                           <ImageIcon size={14} className="text-emerald-500" />
-                          <span>{user.dailyImageCount} ảnh</span>
+                          <span>
+                            {t("admin.imageCount", {
+                              count: user.dailyImageCount,
+                            })}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <MessageCircle size={14} className="text-blue-500" />
@@ -308,12 +314,14 @@ export default function UsersTab() {
                         }
                       >
                         <option value={SubscriptionPlan.FREE}>
-                          Hạ về FREE
+                          {t("admin.actionDowngradeFree")}
                         </option>
                         <option value={SubscriptionPlan.PREMIUM}>
-                          Nâng PREMIUM
+                          {t("admin.actionUpgradePremium")}
                         </option>
-                        <option value={SubscriptionPlan.VIP}>Nâng VIP</option>
+                        <option value={SubscriptionPlan.VIP}>
+                          {t("admin.actionUpgradeVip")}
+                        </option>
                       </select>
                     </td>
                   </motion.tr>
@@ -329,10 +337,10 @@ export default function UsersTab() {
                     <div className="flex flex-col items-center justify-center">
                       <Search size={40} className="text-slate-300 mb-3" />
                       <p className="text-lg font-medium text-slate-600">
-                        Không tìm thấy người dùng
+                        {t("admin.usersEmpty")}
                       </p>
                       <p className="text-sm text-slate-400">
-                        Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                        {t("admin.usersEmptyHint")}
                       </p>
                     </div>
                   </td>
@@ -345,9 +353,9 @@ export default function UsersTab() {
         {/* --- Pagination --- */}
         <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-white">
           <span className="text-sm font-medium text-slate-500">
-            Hiển thị{" "}
+            {t("admin.usersShowing")}{" "}
             <span className="text-slate-900 font-bold">{users.length}</span> /{" "}
-            {totalUsers} người dùng
+            {t("admin.usersOfTotal", { total: totalUsers })}
           </span>
           <div className="flex gap-2">
             <button

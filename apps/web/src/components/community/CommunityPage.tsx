@@ -3,8 +3,10 @@ import React from 'react';
 import { Users, Hammer, ArrowLeft, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useT } from '@/context/I18nContext';
 
 export function Community() {
+  const t = useT();
   const router = useRouter();
 
   return (
@@ -31,11 +33,12 @@ export function Community() {
           </motion.div>
 
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
-            Cộng đồng <span className="text-primary">Agri-Scan</span>
+            {t('community.titlePrefix')}{' '}
+            <span className="text-primary">Agri-Scan</span>
           </h1>
-          
+
           <p className="text-gray-600 mb-8 text-lg leading-relaxed">
-            Nơi giao lưu, chia sẻ kinh nghiệm chăm sóc cây trồng và kết nối những người yêu thiên nhiên. Tính năng này đang được chúng tôi nỗ lực hoàn thiện!
+            {t('community.subtitle')}
           </p>
 
           <motion.div 
@@ -45,7 +48,7 @@ export function Community() {
             className="flex items-center justify-center gap-3 text-sm font-bold text-amber-700 bg-amber-50 border border-amber-200/50 py-3 px-6 rounded-2xl mb-10 w-fit mx-auto shadow-sm"
           >
             <Hammer className="w-5 h-5 animate-bounce" />
-            <span>Đang trong quá trình phát triển...</span>
+            <span>{t('community.inDevelopment')}</span>
             <Sparkles className="w-4 h-4 text-amber-500" />
           </motion.div>
 
@@ -54,7 +57,7 @@ export function Community() {
             className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto py-3.5 px-8 bg-gray-900 hover:bg-gray-800 text-white font-bold rounded-2xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
           >
             <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-            Quay lại trang chủ
+            {t('community.backHome')}
           </button>
         </div>
       </motion.div>
@@ -70,22 +73,34 @@ export function Community() {
           <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-4 text-blue-600 font-bold text-xl">
             💬
           </div>
-          <h3 className="font-bold text-gray-900 mb-2">Hỏi đáp chuyên gia</h3>
-          <p className="text-sm text-gray-500">Đặt câu hỏi và nhận tư vấn trực tiếp từ các chuyên gia nông nghiệp.</p>
+          <h3 className="font-bold text-gray-900 mb-2">
+            {t('community.featureQaTitle')}
+          </h3>
+          <p className="text-sm text-gray-500">
+            {t('community.featureQaDesc')}
+          </p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
           <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mx-auto mb-4 text-green-600 font-bold text-xl">
             📸
           </div>
-          <h3 className="font-bold text-gray-900 mb-2">Chia sẻ khoảnh khắc</h3>
-          <p className="text-sm text-gray-500">Khoe thành quả khu vườn của bạn và truyền cảm hứng cho người khác.</p>
+          <h3 className="font-bold text-gray-900 mb-2">
+            {t('community.featureShareTitle')}
+          </h3>
+          <p className="text-sm text-gray-500">
+            {t('community.featureShareDesc')}
+          </p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
           <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mx-auto mb-4 text-purple-600 font-bold text-xl">
             🏆
           </div>
-          <h3 className="font-bold text-gray-900 mb-2">Thử thách trồng cây</h3>
-          <p className="text-sm text-gray-500">Tham gia các sự kiện, thử thách để nhận huy hiệu và phần thưởng.</p>
+          <h3 className="font-bold text-gray-900 mb-2">
+            {t('community.featureChallengeTitle')}
+          </h3>
+          <p className="text-sm text-gray-500">
+            {t('community.featureChallengeDesc')}
+          </p>
         </div>
       </motion.div>
     </div>

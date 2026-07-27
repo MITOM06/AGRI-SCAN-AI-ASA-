@@ -10,8 +10,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Check, ArrowLeft, Zap, Star, Crown } from "lucide-react-native";
+import { useT } from "../context/I18nContext";
 
 export default function UpgradeScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -20,15 +22,15 @@ export default function UpgradeScreen() {
     {
       name: "Free",
       price: "0",
-      period: "tháng",
-      description: "Khám phá sức mạnh của AI",
+      period: t("billing.period"),
+      description: t("billing.freeDescription"),
       features: [
-        "Mô hình cơ bản",
-        "Giới hạn tin nhắn và tải ảnh",
-        "Giới hạn tạo hình ảnh",
-        "Bộ nhớ ngắn hạn",
+        t("billing.mFreeFeature1"),
+        t("billing.mFreeFeature2"),
+        t("billing.mFreeFeature3"),
+        t("billing.mFreeFeature4"),
       ],
-      buttonText: "Gói hiện tại",
+      buttonText: t("billing.currentPlan"),
       current: true,
       themeColor: "#6b7280", // Xám
       bgColor: "#f3f4f6",
@@ -39,19 +41,19 @@ export default function UpgradeScreen() {
       price: "129.000",
       subtotal: "117.273",
       vat: "11.727",
-      period: "tháng",
-      description: "Mở khóa trải nghiệm đầy đủ",
+      period: t("billing.period"),
+      description: t("billing.premiumDescription"),
       features: [
-        "Mô hình AI nâng cao (nhanh & chính xác hơn)",
-        "Tăng giới hạn tin nhắn và tải ảnh",
-        "Tạo hình ảnh chất lượng cao",
-        "Bộ nhớ mở rộng giữa các đoạn chat",
-        "Chế độ phân tích sâu",
-        "Ưu tiên hỗ trợ",
+        t("billing.mPlusFeature1"),
+        t("billing.mPlusFeature2"),
+        t("billing.mPlusFeature3"),
+        t("billing.mPlusFeature4"),
+        t("billing.mPlusFeature5"),
+        t("billing.mPlusFeature6"),
       ],
-      buttonText: "Nâng cấp lên Plus",
+      buttonText: t("billing.premiumCta"),
       current: false,
-      tag: "PHỔ BIẾN",
+      tag: t("billing.tagPopular"),
       themeColor: "#8b5cf6", // Tím
       bgColor: "#f3e8ff",
       icon: <Star size={24} color="#8b5cf6" />,
@@ -61,19 +63,22 @@ export default function UpgradeScreen() {
       price: "499.000",
       subtotal: "453.636",
       vat: "45.364",
-      period: "tháng",
-      description: "Tối đa hóa năng suất của bạn",
+      period: t("billing.period"),
+      description: t("billing.vipDescription"),
+      // Đã bỏ phần tử sentinel "Tất cả tính năng của Plus và:" — nó chỉ tồn tại
+      // để bị lọc ra ở 2 chỗ, trong khi tiêu đề đó đã được render riêng bằng
+      // điều kiện plan.name === "Pro". Sau khi i18n hóa thì filter theo tiền tố
+      // chuỗi cũng không còn khớp được nữa.
       features: [
-        "Tất cả tính năng của Plus và:",
-        "Không giới hạn tin nhắn",
-        "Mô hình chuyên gia nông nghiệp cao cấp",
-        "Phân tích hình ảnh bệnh cây chuyên sâu",
-        "Tạo báo cáo chi tiết",
-        "API truy cập cho nhà phát triển",
+        t("billing.mProFeature1"),
+        t("billing.mProFeature2"),
+        t("billing.mProFeature3"),
+        t("billing.mProFeature4"),
+        t("billing.mProFeature5"),
       ],
-      buttonText: "Nâng cấp lên Pro",
+      buttonText: t("billing.vipCta"),
       current: false,
-      tag: "CAO CẤP",
+      tag: t("billing.tagPremium"),
       themeColor: "#eab308", // Vàng VIP
       bgColor: "#fef08a",
       icon: <Crown size={24} color="#ca8a04" />,
@@ -90,9 +95,9 @@ export default function UpgradeScreen() {
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
         <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle}>Nâng cấp gói dịch vụ</Text>
+          <Text style={styles.headerTitle}>{t("billing.title")}</Text>
           <Text style={styles.headerSubtitle}>
-            Chọn gói phù hợp với nhu cầu canh tác của bạn
+            {t("billing.subtitle")}
           </Text>
         </View>
       </View>
@@ -155,9 +160,7 @@ export default function UpgradeScreen() {
                     price: plan.price,
                     subtotal: plan.subtotal,
                     vat: plan.vat,
-                    features: plan.features.filter(
-                      (f) => !f.startsWith("Tất cả tính năng"),
-                    ),
+                    features: plan.features,
                   };
                   router.push({
                     pathname: "/payment",
@@ -185,11 +188,10 @@ export default function UpgradeScreen() {
             <View style={styles.featuresContainer}>
               {plan.name === "Pro" && (
                 <Text style={styles.proFeatureTitle}>
-                  Bao gồm mọi thứ của Plus và:
+                  {t("billing.includesPlus")}
                 </Text>
               )}
               {plan.features.map((feature, i) => {
-                if (feature.startsWith("Tất cả tính năng")) return null;
                 return (
                   <View key={i} style={styles.featureRow}>
                     <View style={styles.checkIcon}>
@@ -209,10 +211,10 @@ export default function UpgradeScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Bạn cần gói doanh nghiệp tùy chỉnh?{" "}
+            {t("billing.enterpriseQuestion")}{" "}
           </Text>
           <TouchableOpacity>
-            <Text style={styles.footerLink}>Liên hệ với chúng tôi</Text>
+            <Text style={styles.footerLink}>{t("billing.contactUs")}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

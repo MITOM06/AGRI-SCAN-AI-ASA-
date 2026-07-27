@@ -14,26 +14,29 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { useT } from "@/context/I18nContext";
 
 // Đổi import này theo alias/package thật của project bạn nếu cần
 import { adminApi } from "@agri-scan/shared";
 import type { IFeedback, FeedbackCategory } from "@agri-scan/shared";
 
-const CATEGORY_OPTIONS: { value: FeedbackCategory; label: string }[] = [
-  { value: "BUG", label: "Báo lỗi" },
-  { value: "FEATURE", label: "Đề xuất tính năng" },
-  { value: "COMPLAINT", label: "Khiếu nại" },
-  { value: "GENERAL", label: "Góp ý chung" },
+/** Mã loại phản hồi gửi lên API, kèm KEY i18n của nhãn hiển thị. */
+const CATEGORY_OPTIONS: { value: FeedbackCategory; labelKey: string }[] = [
+  { value: "BUG", labelKey: "feedback.typeBug" },
+  { value: "FEATURE", labelKey: "feedback.typeFeature" },
+  { value: "COMPLAINT", labelKey: "feedback.typeComplaint" },
+  { value: "GENERAL", labelKey: "feedback.typeGeneral" },
 ];
 
-const CATEGORY_LABEL: Record<FeedbackCategory, string> = {
-  BUG: "Báo lỗi",
-  FEATURE: "Đề xuất tính năng",
-  COMPLAINT: "Khiếu nại",
-  GENERAL: "Góp ý chung",
+const CATEGORY_LABEL_KEY: Record<FeedbackCategory, string> = {
+  BUG: "feedback.typeBug",
+  FEATURE: "feedback.typeFeature",
+  COMPLAINT: "feedback.typeComplaint",
+  GENERAL: "feedback.typeGeneral",
 };
 
 export function FeedbackPage() {
+  const t = useT();
   const { user } = useAuth();
 
   const [feedbacks, setFeedbacks] = useState<IFeedback[]>([]);
@@ -65,7 +68,7 @@ export function FeedbackPage() {
     } catch (err: any) {
       console.error("Failed to fetch feedbacks", err);
       setError(
-        err?.response?.data?.message || "Không thể tải lịch sử phản hồi.",
+        err?.response?.data?.message || t("feedback.loadHistoryFailed"),
       );
     } finally {
       setIsLoading(false);
@@ -76,7 +79,7 @@ export function FeedbackPage() {
     e.preventDefault();
 
     if (!content.trim()) {
-      setError("Vui lòng nhập nội dung phản hồi.");
+      setError(t("feedback.errorEmptyContent"));
       return;
     }
 
@@ -92,7 +95,7 @@ export function FeedbackPage() {
 
       setContent("");
       setCategory("GENERAL");
-      setSuccessMessage("Phản hồi đã được gửi thành công!");
+      setSuccessMessage(t("feedback.submitSuccess"));
 
       await fetchFeedbacks();
 
@@ -102,7 +105,7 @@ export function FeedbackPage() {
     } catch (err: any) {
       console.error("Submit feedback failed", err);
       setError(
-        err?.response?.data?.message || "Có lỗi xảy ra khi gửi phản hồi.",
+        err?.response?.data?.message || t("feedback.submitFailed"),
       );
     } finally {
       setIsSubmitting(false);
@@ -121,17 +124,16 @@ export function FeedbackPage() {
             <MessageSquare className="w-10 h-10 text-primary" />
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900 mb-3">
-            Vui lòng đăng nhập
+            {t("feedback.loginTitle")}
           </h2>
           <p className="text-gray-500 mb-8 leading-relaxed">
-            Bạn cần đăng nhập vào tài khoản để có thể gửi góp ý và theo dõi quá
-            trình xử lý phản hồi từ chúng tôi.
+            {t("feedback.loginDesc")}
           </p>
           <a
             href="/login"
             className="inline-flex items-center justify-center w-full py-3.5 px-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20"
           >
-            Đăng nhập ngay
+            {t("feedback.loginCta")}
           </a>
         </motion.div>
       </div>
@@ -148,9 +150,11 @@ export function FeedbackPage() {
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Gửi phản hồi</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                {t("feedback.formTitle")}
+              </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Chúng tôi luôn lắng nghe ý kiến của bạn
+                {t("feedback.formSubtitle")}
               </p>
             </div>
           </div>
@@ -190,7 +194,7 @@ export function FeedbackPage() {
           >
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                Loại phản hồi
+                {t("feedback.labelType")}
               </label>
               <select
                 value={category}
@@ -202,7 +206,7 @@ export function FeedbackPage() {
               >
                 {CATEGORY_OPTIONS.map((item) => (
                   <option key={item.value} value={item.value}>
-                    {item.label}
+                    {t(item.labelKey)}
                   </option>
                 ))}
               </select>
@@ -211,7 +215,7 @@ export function FeedbackPage() {
             <div className="flex-1 flex flex-col min-h-[220px]">
               <div className="flex justify-between items-end mb-1.5">
                 <label className="block text-sm font-bold text-gray-700">
-                  Nội dung chi tiết
+                  {t("feedback.labelContent")}
                 </label>
                 <span className="text-xs font-medium text-gray-400">
                   {content.length}/1000
@@ -221,7 +225,7 @@ export function FeedbackPage() {
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Mô tả chi tiết vấn đề hoặc đề xuất của bạn..."
+                placeholder={t("feedback.contentPlaceholder")}
                 maxLength={1000}
                 disabled={isSubmitting}
                 className="w-full flex-1 p-4 bg-gray-50 rounded-xl border border-transparent focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all resize-none outline-none font-medium text-gray-900 placeholder:text-gray-400 placeholder:font-normal text-sm"
@@ -242,7 +246,7 @@ export function FeedbackPage() {
             ) : (
               <>
                 <Send className="w-4 h-4" />
-                Gửi phản hồi
+                {t("feedback.submit")}
               </>
             )}
           </button>
@@ -252,9 +256,11 @@ export function FeedbackPage() {
       {/* RIGHT PANEL: HISTORY */}
       <div className="flex-1 bg-white rounded-3xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-white flex justify-between items-center shrink-0">
-          <h2 className="text-xl font-bold text-gray-900">Lịch sử phản hồi</h2>
+          <h2 className="text-xl font-bold text-gray-900">
+            {t("feedback.historyTitle")}
+          </h2>
           <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold">
-            {feedbacks.length} yêu cầu
+            {t("feedback.requestCount", { count: feedbacks.length })}
           </span>
         </div>
 
@@ -269,11 +275,10 @@ export function FeedbackPage() {
                 <Inbox className="w-10 h-10 text-gray-300" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                Chưa có phản hồi nào
+                {t("feedback.historyEmpty")}
               </h3>
               <p className="text-sm text-gray-500">
-                Lịch sử trống. Hãy sử dụng biểu mẫu bên trái để gửi góp ý hoặc
-                báo cáo sự cố cho chúng tôi nhé.
+                {t("feedback.historyEmptyDesc")}
               </p>
             </div>
           ) : (
@@ -297,7 +302,7 @@ export function FeedbackPage() {
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-bold text-gray-900 text-base leading-tight">
-                                {CATEGORY_LABEL[item.category]}
+                                {t(CATEGORY_LABEL_KEY[item.category])}
                               </h3>
                               <span className="px-2.5 py-1 rounded-md text-[10px] uppercase tracking-wider font-bold bg-gray-100 text-gray-600 border border-gray-200">
                                 {item.category}
@@ -324,8 +329,8 @@ export function FeedbackPage() {
                             <Clock className="w-3 h-3" />
                           )}
                           {item.status === "REPLIED"
-                            ? "Đã trả lời"
-                            : "Đang xử lý"}
+                            ? t("feedback.statusAnswered")
+                            : t("feedback.statusProcessing")}
                         </span>
                       </div>
 

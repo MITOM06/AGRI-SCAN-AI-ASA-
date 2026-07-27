@@ -15,8 +15,10 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useT } from "@/context/I18nContext";
 
 export function AboutPage() {
+  const t = useT();
   const router = useRouter();
 
   const fadeIn = {
@@ -43,23 +45,23 @@ export function AboutPage() {
             <motion.div {...fadeIn}>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-800/80 border border-emerald-700 mb-6 text-emerald-200 text-sm font-medium backdrop-blur-sm">
                 <Sprout size={16} />
-                <span>Nông nghiệp thông minh 4.0</span>
+                <span>{t("about.badge")}</span>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                Mang chuyên gia <br />
-                <span className="text-emerald-400">đến từng mảnh vườn</span>
+                {t("about.heroLine1")} <br />
+                <span className="text-emerald-400">
+                  {t("about.heroLine2")}
+                </span>
               </h1>
               <p className="text-emerald-100 text-lg mb-8 leading-relaxed max-w-xl">
-                Agri-Scan AI kết hợp trí tuệ nhân tạo và kiến thức nông nghiệp
-                chuyên sâu, giúp bà con nông dân chẩn đoán bệnh cây trồng chỉ
-                trong vài giây qua camera điện thoại.
+                {t("about.heroSubtitle")}
               </p>
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => router.push("/scan")}
                   className="bg-emerald-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-emerald-400 transition-colors inline-flex items-center gap-2 shadow-lg shadow-emerald-900/20"
                 >
-                  Trải nghiệm AI ngay <ArrowRight size={20} />
+                  {t("about.heroCta")} <ArrowRight size={20} />
                 </button>
               </div>
             </motion.div>
@@ -73,7 +75,7 @@ export function AboutPage() {
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-emerald-700/50 aspect-4/3">
                 <img
                   src="https://picsum.photos/seed/agriculture-tech/800/600"
-                  alt="Nông dân sử dụng app"
+                  alt={t("about.heroImageAlt")}
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
@@ -85,10 +87,10 @@ export function AboutPage() {
                     </div>
                     <div>
                       <p className="text-white font-bold">
-                        Đã phân tích 100,000+ mẫu bệnh
+                        {t("about.heroBadge1")}
                       </p>
                       <p className="text-emerald-200 text-sm">
-                        Độ chính xác lên đến 98%
+                        {t("about.heroBadge2")}
                       </p>
                     </div>
                   </div>
@@ -104,10 +106,10 @@ export function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { number: "98%", label: "Độ chính xác" },
-              { number: "50+", label: "Loại cây trồng" },
-              { number: "2s", label: "Thời gian chẩn đoán" },
-              { number: "24/7", label: "Hỗ trợ liên tục" },
+              { number: "98%", label: t("about.statAccuracy") },
+              { number: "50+", label: t("about.statPlantTypes") },
+              { number: "2s", label: t("about.statSpeed") },
+              { number: "24/7", label: t("about.statSupport") },
             ].map((stat, idx) => (
               <motion.div
                 key={idx}
@@ -137,13 +139,13 @@ export function AboutPage() {
               <div className="grid grid-cols-2 gap-4">
                 <img
                   src="https://picsum.photos/seed/farmer1/400/500"
-                  alt="Nông dân"
+                  alt={t("about.storyImageAlt1")}
                   className="rounded-3xl object-cover w-full h-64 md:h-80 shadow-lg"
                   referrerPolicy="no-referrer"
                 />
                 <img
                   src="https://picsum.photos/seed/farmer2/400/500"
-                  alt="Cánh đồng"
+                  alt={t("about.storyImageAlt2")}
                   className="rounded-3xl object-cover w-full h-64 md:h-80 shadow-lg mt-8"
                   referrerPolicy="no-referrer"
                 />
@@ -155,30 +157,22 @@ export function AboutPage() {
 
             <motion.div {...fadeIn} className="order-1 lg:order-2">
               <h2 className="text-emerald-600 font-bold tracking-wider uppercase text-sm mb-2">
-                Câu chuyện của chúng tôi
+                {t("about.storyEyebrow")}
               </h2>
               <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-                Từ nỗi trăn trở trên cánh đồng đến giải pháp công nghệ
+                {t("about.storyTitle")}
               </h3>
               <div className="space-y-4 text-gray-600 text-lg leading-relaxed">
                 <p>
-                  Việt Nam là một quốc gia nông nghiệp, nhưng hàng năm bà con
-                  nông dân vẫn phải đối mặt với thiệt hại lớn do sâu bệnh gây
-                  ra. Việc chẩn đoán sai, lạm dụng thuốc trừ sâu hoặc phát hiện
-                  muộn thường dẫn đến hậu quả nghiêm trọng cho mùa màng và môi
-                  trường.
+                  {t("about.storyPara1")}
                 </p>
                 <p>
-                  Nhận thấy vấn đề đó, đội ngũ Agri-Scan AI đã phát triển một
-                  giải pháp đột phá:{" "}
-                  <strong>Ứng dụng AI nhận diện hình ảnh</strong> để chẩn đoán
-                  bệnh cây trồng ngay lập tức chỉ qua một bức ảnh chụp từ điện
-                  thoại.
+                  {t("about.storyPara2Prefix")}{" "}
+                  <strong>{t("about.storyPara2Strong")}</strong>{" "}
+                  {t("about.storyPara2Suffix")}
                 </p>
                 <p>
-                  Chúng tôi không chỉ cung cấp công cụ, chúng tôi mang đến một
-                  &quot;chuyên gia nông nghiệp&quot; luôn túc trực 24/7 trong
-                  túi áo của mỗi người nông dân.
+                  {t("about.storyPara3")}
                 </p>
               </div>
             </motion.div>
@@ -191,14 +185,13 @@ export function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 max-w-3xl mx-auto">
             <h2 className="text-emerald-600 font-bold tracking-wider uppercase text-sm mb-2">
-              Công nghệ
+              {t("about.techEyebrow")}
             </h2>
             <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Sức mạnh đằng sau Agri-Scan
+              {t("about.techTitle")}
             </h3>
             <p className="text-gray-600 text-lg">
-              Hệ thống của chúng tôi được xây dựng trên nền tảng công nghệ tiên
-              tiến nhất, đảm bảo độ chính xác và tốc độ vượt trội.
+              {t("about.techSubtitle")}
             </p>
           </div>
 
@@ -207,17 +200,17 @@ export function AboutPage() {
               {
                 icon: <Microscope size={32} />,
                 title: "Computer Vision",
-                desc: "Mô hình học sâu (Deep Learning) được huấn luyện trên hàng triệu hình ảnh lá cây bị bệnh, có khả năng nhận diện các dấu hiệu nhỏ nhất.",
+                desc: t("about.tech1Desc"),
               },
               {
                 icon: <Globe2 size={32} />,
-                title: "Xử lý ngôn ngữ tự nhiên",
-                desc: "Tích hợp LLM giúp AI giao tiếp tự nhiên, giải thích nguyên nhân và hướng dẫn cách điều trị một cách dễ hiểu cho bà con.",
+                title: t("about.tech2Title"),
+                desc: t("about.tech2Desc"),
               },
               {
                 icon: <Zap size={32} />,
-                title: "Xử lý thời gian thực",
-                desc: "Kiến trúc Cloud Native cho phép xử lý ảnh và trả về kết quả chẩn đoán chỉ trong vòng chưa tới 2 giây.",
+                title: t("about.tech3Title"),
+                desc: t("about.tech3Desc"),
               },
             ].map((tech, idx) => (
               <motion.div
@@ -247,37 +240,36 @@ export function AboutPage() {
           <div className="grid lg:grid-cols-3 gap-12">
             <div className="lg:col-span-1">
               <h2 className="text-emerald-400 font-bold tracking-wider uppercase text-sm mb-2">
-                Giá trị cốt lõi
+                {t("about.valuesEyebrow")}
               </h2>
               <h3 className="text-3xl md:text-4xl font-bold mb-6">
-                Kim chỉ nam cho mọi hành động
+                {t("about.valuesTitle")}
               </h3>
               <p className="text-emerald-100 text-lg mb-8">
-                Chúng tôi cam kết mang lại những giá trị thiết thực nhất cho nền
-                nông nghiệp Việt Nam.
+                {t("about.valuesSubtitle")}
               </p>
             </div>
             <div className="lg:col-span-2 grid sm:grid-cols-2 gap-8">
               {[
                 {
                   icon: <Target size={28} />,
-                  title: "Chính xác & Minh bạch",
-                  desc: "Kết quả chẩn đoán dựa trên dữ liệu khoa học, luôn đưa ra cảnh báo nếu độ tin cậy thấp.",
+                  title: t("about.value1Title"),
+                  desc: t("about.value1Desc"),
                 },
                 {
                   icon: <Users size={28} />,
-                  title: "Lấy nông dân làm trung tâm",
-                  desc: "Giao diện đơn giản, dễ sử dụng, phù hợp với mọi lứa tuổi và trình độ công nghệ.",
+                  title: t("about.value2Title"),
+                  desc: t("about.value2Desc"),
                 },
                 {
                   icon: <Shield size={28} />,
-                  title: "Phát triển bền vững",
-                  desc: "Khuyến khích các phương pháp điều trị sinh học, hạn chế hóa chất độc hại.",
+                  title: t("about.value3Title"),
+                  desc: t("about.value3Desc"),
                 },
                 {
                   icon: <Leaf size={28} />,
-                  title: "Đồng hành dài lâu",
-                  desc: "Không chỉ chẩn đoán, chúng tôi theo dõi và tư vấn suốt chu kỳ phát triển của cây.",
+                  title: t("about.value4Title"),
+                  desc: t("about.value4Desc"),
                 },
               ].map((val, idx) => (
                 <motion.div
@@ -310,18 +302,16 @@ export function AboutPage() {
             className="bg-emerald-50 rounded-[3rem] p-8 md:p-12 border border-emerald-100"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Sẵn sàng bảo vệ mùa màng của bạn?
+              {t("about.ctaTitle")}
             </h2>
             <p className="text-gray-600 mb-10 text-lg max-w-xl mx-auto">
-              Trải nghiệm sức mạnh của AI trong việc chẩn đoán và điều trị bệnh
-              cây trồng ngay hôm nay. Hoàn toàn miễn phí cho các tính năng cơ
-              bản.
+              {t("about.ctaDesc")}
             </p>
             <button
               onClick={() => router.push("/scan")}
               className="bg-emerald-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-emerald-700 transition-colors inline-flex items-center gap-2 shadow-xl shadow-emerald-600/20 hover:scale-105 transform duration-200"
             >
-              Bắt đầu quét ảnh ngay <ArrowRight size={20} />
+              {t("about.ctaButton")} <ArrowRight size={20} />
             </button>
           </motion.div>
         </div>

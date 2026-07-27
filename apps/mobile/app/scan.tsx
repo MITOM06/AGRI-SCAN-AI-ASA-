@@ -31,7 +31,8 @@ import {
   Image as ImageIcon,
 } from "lucide-react-native";
 
-import { scanApi } from "@agri-scan/shared";
+import { scanApi, DEFAULT_PLANT_NAME } from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
 import { styles } from "../styles/scan.styles";
 const { width } = Dimensions.get("window");
@@ -54,13 +55,15 @@ const getDateGroup = (date: string | Date): string => {
       new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) /
       (1000 * 60 * 60 * 24),
   );
-  if (diffDays <= 0) return "Hôm nay";
-  if (diffDays === 1) return "Hôm qua";
-  if (diffDays <= 7) return "7 ngày trước";
-  return "30 ngày trước";
+  // Trả về KEY i18n, không phải nhãn — hàm này ở cấp module, không gọi được hook
+  if (diffDays <= 0) return "scan.groupToday";
+  if (diffDays === 1) return "scan.groupYesterday";
+  if (diffDays <= 7) return "scan.group7Days";
+  return "scan.group30Days";
 };
 
 export default function ScanChatScreen() {
+  const t = useT();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -118,7 +121,7 @@ export default function ScanChatScreen() {
       (chatSessionsApi || []).forEach((s) => {
         merged.push({
           id: s.sessionId,
-          title: s.title || "Trò chuyện",
+          title: s.title || t("scan.defaultChatTitle"),
           updatedAt: new Date(s.updatedAt),
           type: "chat",
         });
@@ -128,7 +131,9 @@ export default function ScanChatScreen() {
         const rawId = s.id ?? s.scanHistoryId ?? s._id;
         const topDiseaseInfo = s.aiPredictions?.[0]?.diseaseId;
         const topName =
-          topDiseaseInfo?.name || s.topPrediction?.diseaseName || "Quét ảnh";
+          topDiseaseInfo?.name ||
+          s.topPrediction?.diseaseName ||
+          t("scan.defaultScanTitle");
         const scannedAt =
           s.scannedAt ?? s.createdAt ?? s.updatedAt ?? Date.now();
 
@@ -242,7 +247,7 @@ export default function ScanChatScreen() {
         },
         {
           id: `scan-bot-${rawId}`,
-          text: "Kết quả chẩn đoán",
+          text: t("scan.resultHeading"),
           sender: "bot",
           timestamp: new Date(scanTime.getTime() + 1000),
           scanResult: fakeResult,
@@ -273,9 +278,7 @@ export default function ScanChatScreen() {
 
   const handleOpenCamera = async () => {
     if (Platform.OS === "web") {
-      alert(
-        "Máy ảnh không hỗ trợ trên trình duyệt, vui lòng dùng nút chọn ảnh.",
-      );
+      alert(t("scan.cameraNotSupportedWeb"));
       return;
     }
 
@@ -287,11 +290,14 @@ export default function ScanChatScreen() {
 
         if (newPerm?.status !== "granted") {
           Alert.alert(
-            "Cấp quyền Máy ảnh",
-            "Agri-Scan cần quyền truy cập máy ảnh để bạn có thể chụp hình cây trồng. Vui lòng mở Cài đặt của điện thoại và cho phép.",
+            t("scan.permissionCameraTitle"),
+            t("scan.permissionCameraMessage"),
             [
-              { text: "Đóng", style: "cancel" },
-              { text: "Mở Cài đặt", onPress: () => Linking.openSettings() },
+              { text: t("common.close"), style: "cancel" },
+              {
+                text: t("scan.openSettings"),
+                onPress: () => Linking.openSettings(),
+              },
             ],
           );
           return;
@@ -309,8 +315,8 @@ export default function ScanChatScreen() {
     } catch (error) {
       console.log("Lỗi mở camera:", error);
       Alert.alert(
-        "Lỗi",
-        "Không thể mở máy ảnh. Lưu ý: Máy ảo (Emulator) có thể không hỗ trợ camera.",
+        t("scan.errorTitle"),
+        t("scan.cameraOpenFailed"),
       );
     }
   };
@@ -324,11 +330,14 @@ export default function ScanChatScreen() {
 
         if (newPerm?.status !== "granted") {
           Alert.alert(
-            "Cấp quyền Thư viện ảnh",
-            "Agri-Scan cần quyền truy cập bộ sưu tập để bạn tải ảnh lên chẩn đoán. Vui lòng mở Cài đặt của điện thoại và cho phép.",
+            t("scan.permissionLibraryTitle"),
+            t("scan.permissionLibraryMessage"),
             [
-              { text: "Đóng", style: "cancel" },
-              { text: "Mở Cài đặt", onPress: () => Linking.openSettings() },
+              { text: t("common.close"), style: "cancel" },
+              {
+                text: t("scan.openSettings"),
+                onPress: () => Linking.openSettings(),
+              },
             ],
           );
           return;
@@ -357,7 +366,7 @@ export default function ScanChatScreen() {
 
     if (lastSyncedSessionId && !currentSessionId) {
       alert(
-        "Bạn đang xem lịch sử chat cũ.\n\nHãy bấm nút '+' để tạo cuộc trò chuyện mới trước khi gửi tin nhắn!",
+        t("scan.oldSessionWarning"),
       );
       return;
     }
@@ -413,7 +422,7 @@ export default function ScanChatScreen() {
           ...prev,
           {
             id: (Date.now() + 1).toString(),
-            text: "Kết quả chẩn đoán",
+            text: t("scan.resultHeading"),
             sender: "bot",
             timestamp: new Date(),
             scanResult: result, // result giờ đã là full object có topDisease và predictions
@@ -424,7 +433,8 @@ export default function ScanChatScreen() {
         // 🔥 CẬP NHẬT API MỚI: Dùng chatAndWait
         const aiResponse = await scanApi.chatAndWait(
           userText,
-          currentScanLabel || "Cây trồng",
+          // Gửi lên API → là DỮ LIỆU, không dịch
+          currentScanLabel || DEFAULT_PLANT_NAME,
           currentSessionId || undefined,
         );
 
@@ -449,23 +459,24 @@ export default function ScanChatScreen() {
       const status = error?.response?.status;
       const backendMsg = error?.response?.data?.message;
 
-      let errorText = "Có lỗi kết nối máy chủ. Vui lòng thử lại sau.";
+      let errorText = t("scan.errorServerConnection");
 
       if (status === 401) {
-        errorText = "Bạn cần đăng nhập để sử dụng tính năng này.";
+        errorText = t("scan.errorLoginRequired");
       } else if (status === 400) {
         const detail = Array.isArray(backendMsg) ? backendMsg[0] : backendMsg;
-        errorText = `Lỗi dữ liệu: ${detail || "Ảnh không hợp lệ."}`;
+        errorText = t("scan.errorDataPrefix", {
+          detail: detail || t("scan.errorInvalidImage"),
+        });
         if (errorText.includes("expected size is less than")) {
-          errorText = "Ảnh quá nặng (> 10MB). Vui lòng chọn ảnh khác nhẹ hơn!";
+          errorText = t("scan.errorImageTooLarge");
         }
       } else if (status === 500) {
-        errorText =
-          "Hệ thống AI đang quá tải. Vui lòng đợi một lát rồi gửi lại!";
+        errorText = t("scan.errorAiOverloaded");
       } else if (error.message === "Network Error") {
-        errorText = "Lỗi mạng hoặc ảnh bị hỏng. Hãy thử ảnh khác!";
+        errorText = t("scan.errorNetworkOrCorrupt");
       } else {
-        errorText = `Lỗi: ${error.message}`;
+        errorText = t("scan.errorGenericPrefix", { message: error.message });
       }
 
       setMessages((prev) => [
@@ -501,7 +512,9 @@ export default function ScanChatScreen() {
     ) {
       return (
         <View style={styles.treatmentsSection}>
-          <Text style={styles.sectionTitle}>Phương pháp điều trị:</Text>
+          <Text style={styles.sectionTitle}>
+            {t("scan.treatmentMethods")}
+          </Text>
           {treatmentsData.map((step: string, idx: number) => (
             <Text key={`flat-${idx}`} style={styles.treatmentText}>
               • {step}
@@ -515,13 +528,15 @@ export default function ScanChatScreen() {
     if (typeof treatmentsData === "object" && !Array.isArray(treatmentsData)) {
       return (
         <View style={styles.treatmentsSection}>
-          <Text style={styles.sectionTitle}>Phương pháp điều trị:</Text>
+          <Text style={styles.sectionTitle}>
+            {t("scan.treatmentMethods")}
+          </Text>
 
           {treatmentsData.biological &&
             treatmentsData.biological.length > 0 && (
               <View style={styles.treatmentSubSection}>
                 <Text style={styles.treatmentSubTitle}>
-                  🌱 Sinh học (Organic):
+                  {t("scan.treatmentOrganic")}
                 </Text>
                 {treatmentsData.biological.map(
                   (treatment: string, idx: number) => (
@@ -536,7 +551,7 @@ export default function ScanChatScreen() {
           {treatmentsData.chemical && treatmentsData.chemical.length > 0 && (
             <View style={styles.treatmentSubSection}>
               <Text style={styles.treatmentSubTitle}>
-                🧪 Hóa học (Chemical):
+                {t("scan.treatmentChemicalLabel")}
               </Text>
               {treatmentsData.chemical.map((treatment: string, idx: number) => (
                 <Text key={`chem-${idx}`} style={styles.treatmentText}>
@@ -550,7 +565,7 @@ export default function ScanChatScreen() {
             treatmentsData.preventive.length > 0 && (
               <View style={styles.treatmentSubSection}>
                 <Text style={styles.treatmentSubTitle}>
-                  🛡️ Phòng ngừa (Preventive):
+                  {t("scan.treatmentPreventive")}
                 </Text>
                 {treatmentsData.preventive.map(
                   (treatment: string, idx: number) => (
@@ -616,7 +631,9 @@ export default function ScanChatScreen() {
               ]}
             >
               <View style={styles.sidebarHeader}>
-                <Text style={styles.sidebarTitle}>Lịch sử hoạt động</Text>
+                <Text style={styles.sidebarTitle}>
+                  {t("scan.historyTitle")}
+                </Text>
                 <TouchableOpacity onPress={closeSidebar}>
                   <X size={24} color="#fff" />
                 </TouchableOpacity>
@@ -645,7 +662,7 @@ export default function ScanChatScreen() {
                     ]}
                   >
                     {" "}
-                    Trò chuyện
+                    {t("scan.tabChat")}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -670,7 +687,7 @@ export default function ScanChatScreen() {
                     ]}
                   >
                     {" "}
-                    Ảnh quét
+                    {t("scan.tabScans")}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -687,19 +704,19 @@ export default function ScanChatScreen() {
                     >
                       <Plus size={18} color="#fff" />
                       <Text style={styles.newChatSidebarText}>
-                        Cuộc trò chuyện mới
+                        {t("scan.newChat")}
                       </Text>
                     </TouchableOpacity>
                     {sessions.filter((s) => s.type === "chat").length === 0 ? (
                       <Text style={styles.emptySidebarTxt}>
-                        Chưa có lịch sử nào
+                        {t("scan.noHistory")}
                       </Text>
                     ) : (
                       [
-                        "Hôm nay",
-                        "Hôm qua",
-                        "7 ngày trước",
-                        "30 ngày trước",
+                        "scan.groupToday",
+                        "scan.groupYesterday",
+                        "scan.group7Days",
+                        "scan.group30Days",
                       ].map((group) => {
                         const groupSessions = sessions.filter(
                           (h) =>
@@ -709,7 +726,9 @@ export default function ScanChatScreen() {
                         if (groupSessions.length === 0) return null;
                         return (
                           <View key={group}>
-                            <Text style={styles.dateGroupHeader}>{group}</Text>
+                            <Text style={styles.dateGroupHeader}>
+                              {t(group)}
+                            </Text>
                             {groupSessions.map((item) => (
                               <TouchableOpacity
                                 key={item.id}
@@ -757,7 +776,7 @@ export default function ScanChatScreen() {
                   </>
                 ) : sessions.filter((s) => s.type === "scan").length === 0 ? (
                   <Text style={styles.emptySidebarTxt}>
-                    Chưa có lịch sử quét ảnh
+                    {t("scan.noScanHistory")}
                   </Text>
                 ) : (
                   sessions
@@ -800,9 +819,11 @@ export default function ScanChatScreen() {
                     <Leaf size={20} color="#ca8a04" />
                   </View>
                   <View style={{ marginLeft: 12 }}>
-                    <Text style={styles.upgradeTitle}>Nâng cấp gói</Text>
+                    <Text style={styles.upgradeTitle}>
+                      {t("scan.upgradePlan")}
+                    </Text>
                     <Text style={styles.upgradeSub}>
-                      Mở khóa tính năng cao cấp
+                      {t("scan.upgradeSubtitle")}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -828,8 +849,7 @@ export default function ScanChatScreen() {
               </View>
               <Text style={styles.emptyTitle}>Agri-Scan AI</Text>
               <Text style={styles.emptyDesc}>
-                Trợ lý nông nghiệp thông minh của bạn. Hãy hỏi tôi về bệnh cây
-                trồng, cách chăm sóc hoặc gửi ảnh để chẩn đoán.
+                {t("scan.welcomeSubtitleMobile")}
               </Text>
             </View>
           ) : (
@@ -854,7 +874,9 @@ export default function ScanChatScreen() {
                   }
                 >
                   <Text style={styles.senderLabel}>
-                    {msg.sender === "user" ? "Bạn" : "Agri-Scan AI"}
+                    {msg.sender === "user"
+                      ? t("scan.senderYou")
+                      : t("scan.senderAssistant")}
                   </Text>
                   <View
                     style={[
@@ -874,18 +896,18 @@ export default function ScanChatScreen() {
                     {msg.scanResult ? (
                       <View style={styles.scanResultContainer}>
                         <Text style={styles.diagnosisTitle}>
-                          Kết quả chẩn đoán
+                          {t("scan.resultHeading")}
                         </Text>
                         <View style={styles.diseaseSection}>
                           <Text style={styles.diseaseLabel}>
-                            Bệnh phát hiện:{" "}
+                            {t("scan.diseaseDetectedLabel")}{" "}
                           </Text>
                           <Text style={styles.diseaseName}>
                             {msg.scanResult.topDisease?.name ||
-                              "Không xác định"}
+                              t("scan.unknownDisease")}
                           </Text>
                           <Text style={styles.confidenceText}>
-                            Độ tin cậy:{" "}
+                            {t("scan.confidenceLabel")}{" "}
                             {Math.round(
                               (msg.scanResult.predictions?.[0]?.confidence ||
                                 0) * 100,
@@ -898,7 +920,7 @@ export default function ScanChatScreen() {
                         msg.scanResult.topDisease.symptoms.length > 0 ? (
                           <View style={styles.symptomsSection}>
                             <Text style={styles.sectionTitle}>
-                              Triệu chứng:
+                              {t("scan.symptomsLabel")}
                             </Text>
                             {msg.scanResult.topDisease.symptoms.map(
                               (symptom: string, idx: number) => (
@@ -990,7 +1012,7 @@ export default function ScanChatScreen() {
               </TouchableOpacity>
               <TextInput
                 style={styles.textInput}
-                placeholder="Nhắn tin..."
+                placeholder={t("scan.inputPlaceholderMobile")}
                 placeholderTextColor="#9ca3af"
                 multiline
                 value={inputText}
@@ -1019,8 +1041,7 @@ export default function ScanChatScreen() {
               </TouchableOpacity>
             </View>
             <Text style={styles.disclaimer}>
-              Agri-Scan AI có thể mắc lỗi. Hãy kiểm tra lại thông tin quan
-              trọng.
+              {t("scan.disclaimer")}
             </Text>
           </View>
         </View>

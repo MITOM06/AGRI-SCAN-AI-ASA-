@@ -11,7 +11,8 @@ import {
 } from "lucide-react";
 import { formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
 import { pageVariants } from "@/utils/animation";
-import { adminApi, IDashboard } from "@agri-scan/shared";
+import { adminApi, IDashboard, DATE_LOCALES } from "@agri-scan/shared";
+import { useI18n } from "@/context/I18nContext";
 
 const EMPTY_DASHBOARD: IDashboard = {
   users: {
@@ -33,6 +34,7 @@ const iconColorMap = {
 } as const;
 
 export default function Dashboard() {
+  const { t, locale } = useI18n();
   const [dashboardData, setDashboardData] =
     useState<IDashboard>(EMPTY_DASHBOARD);
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,7 @@ export default function Dashboard() {
         console.error("Load admin dashboard failed:", err);
         const message =
           (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message || "Không tải được dữ liệu dashboard.";
+            ?.data?.message || t("admin.dashboardLoadFailed");
         setError(message);
       } finally {
         setLoading(false);
@@ -61,7 +63,7 @@ export default function Dashboard() {
   }, []);
 
   if (loading) {
-    return <div className="p-6">Đang tải dashboard...</div>;
+    return <div className="p-6">{t("admin.dashboardLoading")}</div>;
   }
 
   if (error) {
@@ -80,42 +82,48 @@ export default function Dashboard() {
         >
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-slate-800">
-              Tổng quan hệ thống
+              {t("admin.dashboardTitle")}
             </h2>
             <span className="text-sm text-slate-500 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-100">
-              Cập nhật lúc: {new Date().toLocaleTimeString("vi-VN")}
+              {t("admin.dashboardUpdatedAt", {
+                time: new Date().toLocaleTimeString(DATE_LOCALES[locale]),
+              })}
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                title: "Tổng người dùng",
+                title: t("admin.cardTotalUsers"),
                 value: dashboardData.users.total.toLocaleString(),
                 icon: Users,
                 color: "blue" as const,
-                sub: `+${dashboardData.users.newThisMonth} tháng này`,
+                sub: t("admin.cardNewThisMonth", {
+                  count: dashboardData.users.newThisMonth,
+                }),
               },
               {
-                title: "Doanh thu tháng này",
+                title: t("admin.cardRevenueThisMonth"),
                 value: formatCurrency(dashboardData.revenue.thisMonth),
                 icon: DollarSign,
                 color: "emerald" as const,
-                sub: `Tổng: ${formatCurrency(dashboardData.revenue.total)}`,
+                sub: t("admin.cardRevenueTotal", {
+                  amount: formatCurrency(dashboardData.revenue.total),
+                }),
               },
               {
-                title: "Tổng lượt quét",
+                title: t("admin.cardTotalScans"),
                 value: dashboardData.totalScans.toLocaleString(),
                 icon: Scan,
                 color: "purple" as const,
-                sub: "Hoạt động ổn định",
+                sub: t("admin.cardScansStable"),
               },
               {
-                title: "Feedback chờ xử lý",
+                title: t("admin.cardPendingFeedback"),
                 value: dashboardData.pendingFeedbacks.toLocaleString(),
                 icon: MessageSquare,
                 color: "amber" as const,
-                sub: "Cần phản hồi sớm",
+                sub: t("admin.cardNeedsReplySoon"),
               },
             ].map((stat, idx) => (
               <motion.div
@@ -169,24 +177,24 @@ export default function Dashboard() {
             >
               <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <Users size={20} className="text-emerald-600" />
-                Tỉ lệ gói đăng ký
+                {t("admin.planRatio")}
               </h3>
               <div className="space-y-6">
                 {[
                   {
-                    label: "Gói FREE",
+                    label: t("admin.planFree"),
                     value: dashboardData.users.byPlan.FREE,
                     color: "bg-slate-300",
                     text: "text-slate-700",
                   },
                   {
-                    label: "Gói PREMIUM",
+                    label: t("admin.planPremium"),
                     value: dashboardData.users.byPlan.PREMIUM,
                     color: "bg-blue-500",
                     text: "text-blue-700",
                   },
                   {
-                    label: "Gói VIP",
+                    label: t("admin.planVip"),
                     value: dashboardData.users.byPlan.VIP,
                     color: "bg-amber-500",
                     text: "text-amber-700",
@@ -241,42 +249,48 @@ export default function Dashboard() {
     >
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-800">
-          Tổng quan hệ thống
+          {t("admin.dashboardTitle")}
         </h2>
         <span className="text-sm text-slate-500 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-100">
-          Cập nhật lúc: {new Date().toLocaleTimeString("vi-VN")}
+          {t("admin.dashboardUpdatedAt", {
+            time: new Date().toLocaleTimeString(DATE_LOCALES[locale]),
+          })}
         </span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           {
-            title: "Tổng người dùng",
+            title: t("admin.cardTotalUsers"),
             value: dashboardData.users.total.toLocaleString(),
             icon: Users,
             color: "blue" as const,
-            sub: `+${dashboardData.users.newThisMonth} tháng này`,
+            sub: t("admin.cardNewThisMonth", {
+              count: dashboardData.users.newThisMonth,
+            }),
           },
           {
-            title: "Doanh thu tháng này",
+            title: t("admin.cardRevenueThisMonth"),
             value: formatCurrency(dashboardData.revenue.thisMonth),
             icon: DollarSign,
             color: "emerald" as const,
-            sub: `Tổng: ${formatCurrency(dashboardData.revenue.total)}`,
+            sub: t("admin.cardRevenueTotal", {
+              amount: formatCurrency(dashboardData.revenue.total),
+            }),
           },
           {
-            title: "Tổng lượt quét",
+            title: t("admin.cardTotalScans"),
             value: dashboardData.totalScans.toLocaleString(),
             icon: Scan,
             color: "purple" as const,
-            sub: "Hoạt động ổn định",
+            sub: t("admin.cardScansStable"),
           },
           {
-            title: "Feedback chờ xử lý",
+            title: t("admin.cardPendingFeedback"),
             value: dashboardData.pendingFeedbacks.toLocaleString(),
             icon: MessageSquare,
             color: "amber" as const,
-            sub: "Cần phản hồi sớm",
+            sub: t("admin.cardNeedsReplySoon"),
           },
         ].map((stat, idx) => (
           <motion.div
@@ -326,24 +340,24 @@ export default function Dashboard() {
         >
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <Users size={20} className="text-emerald-600" />
-            Tỉ lệ gói đăng ký
+            {t("admin.planRatio")}
           </h3>
           <div className="space-y-6">
             {[
               {
-                label: "Gói FREE",
+                label: t("admin.planFree"),
                 value: dashboardData.users.byPlan.FREE,
                 color: "bg-slate-300",
                 text: "text-slate-700",
               },
               {
-                label: "Gói PREMIUM",
+                label: t("admin.planPremium"),
                 value: dashboardData.users.byPlan.PREMIUM,
                 color: "bg-blue-500",
                 text: "text-blue-700",
               },
               {
-                label: "Gói VIP",
+                label: t("admin.planVip"),
                 value: dashboardData.users.byPlan.VIP,
                 color: "bg-amber-500",
                 text: "text-amber-700",

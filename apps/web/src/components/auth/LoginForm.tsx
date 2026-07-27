@@ -18,6 +18,7 @@ import { loginSchema, type LoginFormData } from "@agri-scan/shared";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/context/I18nContext";
 import {
   safeRedirect,
   withRedirect,
@@ -25,6 +26,7 @@ import {
 } from "@/lib/redirect";
 
 export default function LoginForm() {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login: loginApi, loginWithGoogle, loginWithFacebook } = useAuth();
@@ -52,14 +54,14 @@ export default function LoginForm() {
       const res = await loginApi(data.email, data.password);
       if (res.role === 'ADMIN') {
         router.push("/admin/dashboard");
-        console.log("Đăng nhập thành công với vai trò ADMIN");
       } else {
         router.push(redirectTo);
       }
     } catch (error: any) {
+      // Message của backend là câu hoàn chỉnh → t() trả nguyên văn.
+      // Fallback là key i18n → t() dịch theo ngôn ngữ đang chọn.
       const errorMessage =
-        error.response?.data?.message ||
-        "Đăng nhập thất bại. Vui lòng thử lại sau.";
+        error.response?.data?.message || "auth.loginFailed";
       setError("root", { type: "server", message: errorMessage });
     }
   };
@@ -76,17 +78,15 @@ export default function LoginForm() {
             <Leaf size={28} />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">
-            Chào mừng trở lại
+            {t("auth.loginTitle")}
           </h2>
-          <p className="mt-2 text-gray-600">
-            Đăng nhập để tiếp tục quản lý vườn cây của bạn
-          </p>
+          <p className="mt-2 text-gray-600">{t("auth.loginSubtitle")}</p>
         </div>
 
         {isRegistrationSuccess && (
           <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-200">
             <CheckCircle size={18} className="shrink-0" />
-            <span>Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.</span>
+            <span>{t("auth.registrationSuccess")}</span>
           </div>
         )}
 
@@ -95,7 +95,7 @@ export default function LoginForm() {
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                {t("auth.email")}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -105,12 +105,12 @@ export default function LoginForm() {
                   {...register("email")}
                   type="email"
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="name@example.com"
+                  placeholder={t("auth.emailPlaceholder")}
                 />
               </div>
               {errors.email && (
                 <p className="mt-1 text-sm text-red-500">
-                  {errors.email.message}
+                  {t(errors.email.message ?? "")}
                 </p>
               )}
             </div>
@@ -119,13 +119,13 @@ export default function LoginForm() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-sm font-medium text-gray-700">
-                  Mật khẩu
+                  {t("auth.password")}
                 </label>
                 <Link
                   href="/forgot-password"
                   className="text-sm font-medium text-primary hover:text-primary-dark"
                 >
-                  Quên mật khẩu?
+                  {t("auth.forgotPasswordLink")}
                 </Link>
               </div>
               <div className="relative">
@@ -148,7 +148,7 @@ export default function LoginForm() {
               </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-500">
-                  {errors.password.message}
+                  {t(errors.password.message ?? "")}
                 </p>
               )}
             </div>
@@ -159,7 +159,7 @@ export default function LoginForm() {
           {/* Lỗi từ backend */}
           {errors.root && (
             <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center border border-red-100">
-              {errors.root.message}
+              {t(errors.root.message ?? "")}
             </div>
           )}
 
@@ -171,11 +171,11 @@ export default function LoginForm() {
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin -ml-1 mr-2" size={20} />
-                Đang xử lý...
+                {t("common.processing")}
               </>
             ) : (
               <>
-                Đăng nhập <ArrowRight className="ml-2" size={20} />
+                {t("auth.loginButton")} <ArrowRight className="ml-2" size={20} />
               </>
             )}
           </button>
@@ -186,7 +186,7 @@ export default function LoginForm() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-2 bg-white text-gray-500">
-                Hoặc đăng ký bằng
+                {t("auth.orContinueWith")}
               </span>
             </div>
           </div>
@@ -240,12 +240,12 @@ export default function LoginForm() {
           </div>
 
           <div className="text-center text-sm">
-            <span className="text-gray-500">Chưa có tài khoản? </span>
+            <span className="text-gray-500">{t("auth.noAccount")} </span>
             <Link
               href={withRedirect("/register", redirectParam)}
               className="font-medium text-primary hover:text-primary-dark"
             >
-              Đăng ký ngay
+              {t("auth.registerNow")}
             </Link>
           </div>
 

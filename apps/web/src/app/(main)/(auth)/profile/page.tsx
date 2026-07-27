@@ -1,16 +1,14 @@
 import { UserProfile } from "@/components";
+import { LoadingFallback } from "@/components/common";
 import { Suspense } from "react";
+
 export default function ProfilePage() {
-return (
+  return (
     <div className="pt-24">
       <Suspense
-        fallback={
-          <div className="min-h-screen flex items-center justify-center text-gray-400">
-            Đang tải form hồ sơ...
-          </div>
-        }
+        fallback={<LoadingFallback messageKey="common.loadingProfileForm" />}
       >
-        <UserProfile  />
+        <UserProfile />
       </Suspense>
     </div>
   );

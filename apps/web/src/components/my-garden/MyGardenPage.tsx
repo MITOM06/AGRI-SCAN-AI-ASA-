@@ -3,6 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { IMyGardenPlant, IScanStatusResponse } from "@agri-scan/shared";
+import { HEALTHY_CONDITION, DEFAULT_PLANT_NAME } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 import { useScan } from "../../hooks/useScan";
 import { useMyGarden } from "../../hooks/useMyGarden";
 import { UploadView } from "./upload/UploadView";
@@ -18,8 +20,12 @@ function normalizeText(value?: string | null) {
   return value?.trim()?.replace(/\s+/g, " ") || "";
 }
 
+/**
+ * Trả về GIÁ TRỊ lưu vào `currentCondition` — không phải nhãn hiển thị,
+ * nên dùng HEALTHY_CONDITION chứ không đi qua t().
+ */
 function extractDiseaseName(result: IScanStatusResponse | null): string {
-  return normalizeText(result?.topDisease?.name) || "Khỏe mạnh";
+  return normalizeText(result?.topDisease?.name) || HEALTHY_CONDITION;
 }
 
 function extractPlantName(result: IScanStatusResponse | null): string {
@@ -40,7 +46,7 @@ function extractPlantName(result: IScanStatusResponse | null): string {
     if (parts.length > 1) return parts[0];
   }
 
-  return "Cây trồng";
+  return DEFAULT_PLANT_NAME;
 }
 
 function getDefaultGoalFromDisease(diseaseName: string) {
@@ -71,14 +77,16 @@ function useToast() {
   return { showToast };
 }
 
+// KEY i18n — AnalyzingView tự gọi t() khi hiển thị
 const ANALYZING_MESSAGES = [
-  "AI đang nhận diện cây trồng...",
-  "Đang đối chiếu đặc điểm bệnh lý...",
-  "Đang xây dựng kết quả chẩn đoán...",
-  "Đang chuẩn bị gợi ý chăm sóc...",
+  "myGarden.analyzingStep1",
+  "myGarden.analyzingStep2",
+  "myGarden.analyzingStep3",
+  "myGarden.analyzingStep4",
 ];
 
 export function MyGardenPage() {
+  const t = useT();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -113,11 +121,12 @@ export function MyGardenPage() {
   }, [fetchGarden]);
 
   useEffect(() => {
-    if (scanError) showToast(scanError, "error");
+    // scanError/gardenError giữ key i18n hoặc câu lỗi backend — t() xử lý cả hai
+    if (scanError) showToast(t(scanError), "error");
   }, [scanError]);
 
   useEffect(() => {
-    if (gardenError) showToast(gardenError, "error");
+    if (gardenError) showToast(t(gardenError), "error");
   }, [gardenError]);
 
   useEffect(() => {
@@ -164,11 +173,11 @@ export function MyGardenPage() {
     const ok = await removePlant(id);
 
     if (!ok) {
-      showToast("Xóa cây thất bại. Vui lòng thử lại.", "error");
+      showToast(t("myGarden.deleteFailed"), "error");
       return;
     }
 
-    showToast("Đã xóa cây khỏi khu vườn.");
+    showToast(t("myGarden.deleted"));
     setSelectedPlant(null);
     setScanResult(null);
     setIsViewingTracked(false);
@@ -183,13 +192,14 @@ export function MyGardenPage() {
       normalizeText(selectedPlant.currentCondition),
     );
 
+    // Hai giá trị này đi vào payload addPlant → là DỮ LIỆU, không dịch
     const diseaseName =
-      normalizeText(selectedPlant.currentCondition) || "Khỏe mạnh";
+      normalizeText(selectedPlant.currentCondition) || HEALTHY_CONDITION;
 
     const plantName =
       normalizeText(selectedPlant.aiLabel) ||
       normalizeText(selectedPlant.customName) ||
-      "Cây trồng";
+      DEFAULT_PLANT_NAME;
 
     const lat = 10.7769;
     const lon = 106.7009;
@@ -205,14 +215,14 @@ export function MyGardenPage() {
     });
 
     if (!result) {
-      showToast("Không thể thêm cây vào khu vườn.", "error");
+      showToast(t("myGarden.addFailed"), "error");
       return;
     }
 
     setSelectedPlant(result);
     setIsViewingTracked(true);
     setStep("TRACKING");
-    showToast("Đã thêm cây vào khu vườn.");
+    showToast(t("myGarden.added"));
   };
 
   const handleUpdateTrackedPlant = () => {
@@ -228,7 +238,7 @@ export function MyGardenPage() {
       const result = await scan(file);
 
       if (!result || result.status !== "COMPLETED") {
-        showToast("Không thể phân tích ảnh. Vui lòng thử lại.", "error");
+        showToast(t("myGarden.analyzeFailed"), "error");
         setStep("UPLOAD");
         return;
       }
@@ -254,7 +264,7 @@ export function MyGardenPage() {
         });
 
         if (!checkInResult) {
-          showToast("Không thể cập nhật tình trạng cây.", "error");
+          showToast(t("myGarden.updateConditionFailed"), "error");
           setIsUpdatingTracked(false);
           setStep("TRACKING");
           return;
@@ -278,7 +288,7 @@ export function MyGardenPage() {
 
         setIsUpdatingTracked(false);
         setStep("TRACKING");
-        showToast(checkInResult.message || "Đã cập nhật trạng thái cây.");
+        showToast(checkInResult.message || t("myGarden.conditionUpdated"));
         return;
       }
 
@@ -308,7 +318,7 @@ export function MyGardenPage() {
       setIsUpdatingTracked(false);
       setStep("RESULT");
     } catch {
-      showToast("Lỗi kết nối. Vui lòng thử lại.", "error");
+      showToast(t("myGarden.connectionError"), "error");
       setIsUpdatingTracked(false);
       setStep("UPLOAD");
     }
@@ -344,9 +354,9 @@ export function MyGardenPage() {
         <AnalyzingView
           analyzingText={
             isAdding
-              ? "AI đang tạo lộ trình chăm sóc..."
+              ? "myGarden.buildingSchedule"
               : isUpdatingTracked
-                ? "AI đang cập nhật tình trạng cây..."
+                ? "myGarden.updatingCondition"
                 : analyzingText
           }
         />

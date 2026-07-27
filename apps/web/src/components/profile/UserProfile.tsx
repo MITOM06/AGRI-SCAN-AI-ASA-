@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { scanApi } from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 
 type StatsState = {
   scanCount: number;
@@ -25,6 +26,7 @@ type StatsState = {
 };
 
 export function UserProfile() {
+  const t = useT();
   const { user, logout, setPassword } = useAuth();
   const router = useRouter();
 
@@ -93,13 +95,13 @@ export function UserProfile() {
     e.preventDefault();
     setPasswordError("");
     if (newPassword.length < 8) {
-      setPasswordError("Mật khẩu phải ít nhất 8 ký tự");
+      setPasswordError(t("profile.errorPasswordShort"));
       return;
     }
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
     if (!passwordRegex.test(newPassword)) {
       setPasswordError(
-        "Mật khẩu phải chứa ít nhất 1 chữ hoa, thường và 1 số và ký tự đặc biệt",
+        t("profile.errorPasswordWeak"),
       );
       return;
     }
@@ -110,7 +112,7 @@ export function UserProfile() {
       setNewPassword("");
     } catch (err: any) {
       setPasswordError(
-        err?.response?.data?.message ?? "Có lỗi xảy ra. Thử lại.",
+        err?.response?.data?.message ?? t("profile.errorGeneric"),
       );
     } finally {
       setIsSettingPassword(false);
@@ -149,7 +151,7 @@ export function UserProfile() {
   if (!user) {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center">
-        <p>Vui lòng đăng nhập để xem trang này.</p>
+        <p>{t("profile.loginRequired")}</p>
       </div>
     );
   }
@@ -194,7 +196,7 @@ export function UserProfile() {
                 className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors font-medium text-sm"
               >
                 <LogOut size={18} />
-                Đăng xuất
+                {t("nav.logout")}
               </button>
             </div>
 
@@ -206,7 +208,7 @@ export function UserProfile() {
                 <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
                   <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Zap size={18} className="text-gray-500" />
-                    Gói dịch vụ hiện tại
+                    {t("profile.currentPlan")}
                   </h3>
                   <div className="mb-4">
                     <span className="text-2xl font-bold text-gray-800">
@@ -215,7 +217,7 @@ export function UserProfile() {
                     {user.planExpiresAt && (
                       <p className="text-sm text-gray-500 flex items-center gap-1.5 mt-1">
                         <Calendar size={14} />
-                        Hết hạn:{" "}
+                        {t("profile.expiresOn")}{" "}
                         {new Date(user.planExpiresAt).toLocaleDateString(
                           "vi-VN",
                         )}
@@ -226,7 +228,7 @@ export function UserProfile() {
                     onClick={() => router.push("/upgrade")}
                     className="w-full py-2.5 bg-emerald-50 text-emerald-700 font-semibold rounded-lg hover:bg-emerald-100 transition-colors text-sm border border-emerald-200"
                   >
-                    Nâng cấp gói
+                    {t("profile.upgradePlan")}
                   </button>
                 </div>
 
@@ -234,23 +236,29 @@ export function UserProfile() {
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-100">
                   <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Leaf size={18} className="text-primary" />
-                    Thống kê
+                    {t("profile.stats")}
                   </h3>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Cây đã quét</span>
+                      <span className="text-gray-600">
+                        {t("profile.statScans")}
+                      </span>
                       <span className="font-bold">
                         {loadingStats ? "..." : stats.scanCount}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Bệnh phát hiện</span>
+                      <span className="text-gray-600">
+                        {t("profile.statDiseases")}
+                      </span>
                       <span className="font-bold">
                         {loadingStats ? "..." : stats.diseaseCount}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">Đoạn chat</span>
+                      <span className="text-gray-600">
+                        {t("profile.statChats")}
+                      </span>
                       <span className="font-bold">
                         {loadingStats ? "..." : stats.chatCount}
                       </span>
@@ -266,15 +274,14 @@ export function UserProfile() {
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
                     <h3 className="text-lg font-bold text-amber-900 mb-2 flex items-center gap-2">
                       <Lock size={20} />
-                      Thiết lập mật khẩu
+                      {t("profile.setPassword")}
                     </h3>
                     <p className="text-amber-700 mb-4 text-sm">
-                      Bạn đã đăng nhập bằng Google. Hãy thiết lập mật khẩu để có
-                      thể đăng nhập bằng email trong tương lai.
+                      {t("profile.setPasswordDesc")}
                     </p>
                     {passwordSuccess ? (
                       <div className="bg-green-100 text-green-800 p-3 rounded-lg text-sm font-medium">
-                        Thiết lập mật khẩu thành công!
+                        {t("profile.setPasswordSuccess")}
                       </div>
                     ) : (
                       <form onSubmit={handleSetPassword} className="space-y-4">
@@ -282,7 +289,7 @@ export function UserProfile() {
                           type="password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="Ít nhất 8 ký tự, có chữ hoa, chữ thường và số"
+                          placeholder={t("profile.setPasswordPlaceholder")}
                           className="w-full px-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white"
                         />
                         {passwordError && (
@@ -298,7 +305,7 @@ export function UserProfile() {
                           {isSettingPassword && (
                             <Loader2 size={16} className="animate-spin" />
                           )}
-                          Lưu mật khẩu
+                          {t("profile.savePassword")}
                         </button>
                       </form>
                     )}
@@ -308,7 +315,7 @@ export function UserProfile() {
                 {/* Hoạt động gần đây */}
                 <div className="bg-white border border-gray-100 rounded-xl p-6">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">
-                    Hoạt động gần đây
+                    {t("profile.recentActivity")}
                   </h3>
                   <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
@@ -321,14 +328,14 @@ export function UserProfile() {
                         </div>
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-900">
-                            Chẩn đoán bệnh Đốm lá
+                            {t("profile.sampleActivityTitle")}
                           </h4>
                           <p className="text-sm text-gray-500 mt-1">
-                            Cây Cà chua • 2 giờ trước
+                            {t("profile.sampleActivityMeta")}
                           </p>
                           <div className="mt-2">
                             <span className="inline-flex items-center px-2 py-1 rounded-md bg-red-50 text-red-700 text-xs font-medium">
-                              Nguy cơ cao
+                              {t("profile.sampleActivityRisk")}
                             </span>
                           </div>
                         </div>
@@ -336,7 +343,7 @@ export function UserProfile() {
                     ))}
                   </div>
                   <button className="w-full mt-4 py-2 text-sm text-primary font-medium hover:text-primary-dark transition-colors">
-                    Xem tất cả hoạt động
+                    {t("profile.viewAllActivity")}
                   </button>
                 </div>
               </div>

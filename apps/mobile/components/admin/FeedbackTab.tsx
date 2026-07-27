@@ -9,6 +9,8 @@ import {
 import { CheckCircle2, Clock, MessageSquare, Send } from "lucide-react-native";
 
 import { styles } from "../../styles/admin.styles";
+import { DATE_LOCALES } from "@agri-scan/shared";
+import { useI18n } from "../../context/I18nContext";
 import type { FeedbackStatus } from "./admin.types";
 
 interface FeedbackTabProps {
@@ -38,6 +40,9 @@ export function FeedbackTab({
   isSubmittingReply,
   onSubmitReply,
 }: FeedbackTabProps) {
+  // Cần cả `locale` để định dạng ngày theo ngôn ngữ đang chọn
+  const { t, locale } = useI18n();
+
   return (
     <View style={styles.tabContent}>
       <View style={styles.feedbackTabs}>
@@ -55,7 +60,7 @@ export function FeedbackTab({
               status === "PENDING" && { color: "#fff" },
             ]}
           >
-            Chờ xử lý
+            {t("admin.mFilterPending")}
           </Text>
         </TouchableOpacity>
 
@@ -76,7 +81,7 @@ export function FeedbackTab({
               status === "REPLIED" && { color: "#fff" },
             ]}
           >
-            Đã trả lời
+            {t("admin.mFilterReplied")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -89,7 +94,7 @@ export function FeedbackTab({
         />
       ) : feedbacks.length === 0 ? (
         <Text style={styles.emptyText}>
-          Không có phản hồi nào trong mục này.
+          {t("admin.mNoFeedbackInSection")}
         </Text>
       ) : (
         feedbacks.map((fb, idx) => (
@@ -97,7 +102,7 @@ export function FeedbackTab({
             <View style={styles.fbHeader}>
               <View>
                 <Text style={styles.fbName}>
-                  {fb.userId?.fullName || "Người dùng ẩn danh"}
+                  {fb.userId?.fullName || t("admin.mAnonymousUser")}
                 </Text>
                 <Text style={styles.fbEmail}>{fb.userId?.email}</Text>
               </View>
@@ -109,7 +114,11 @@ export function FeedbackTab({
             <View style={styles.fbContentBox}>
               <Text style={styles.fbContentText}>{fb.content}</Text>
               <Text style={styles.fbDate}>
-                {new Date(fb.createdAt).toLocaleDateString("vi-VN")} lúc{" "}
+                {t("admin.mCreatedAtPrefix", {
+                  date: new Date(fb.createdAt).toLocaleDateString(
+                    DATE_LOCALES[locale],
+                  ),
+                })}{" "}
                 {new Date(fb.createdAt).toLocaleTimeString("vi-VN", {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -122,7 +131,7 @@ export function FeedbackTab({
                 <View style={styles.replyBox}>
                   <TextInput
                     style={styles.replyInput}
-                    placeholder="Nhập câu trả lời của Admin..."
+                    placeholder={t("admin.mReplyPlaceholder")}
                     multiline
                     value={replyContent}
                     onChangeText={onReplyContentChange}
@@ -135,7 +144,9 @@ export function FeedbackTab({
                         onReplyContentChange("");
                       }}
                     >
-                      <Text style={styles.cancelReplyText}>Hủy</Text>
+                      <Text style={styles.cancelReplyText}>
+                        {t("common.cancel")}
+                      </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.submitReplyBtn}
@@ -148,7 +159,7 @@ export function FeedbackTab({
                         <>
                           <Send size={16} color="#fff" />
                           <Text style={styles.submitReplyText}>
-                            Gửi trả lời
+                            {t("admin.mSendReply")}
                           </Text>
                         </>
                       )}
@@ -161,15 +172,19 @@ export function FeedbackTab({
                   onPress={() => onReplyingIdChange(fb._id)}
                 >
                   <MessageSquare size={16} color="#16a34a" />
-                  <Text style={styles.openReplyText}>Trả lời phản hồi này</Text>
+                  <Text style={styles.openReplyText}>
+                    {t("admin.mOpenReply")}
+                  </Text>
                 </TouchableOpacity>
               )
             ) : (
               <View style={styles.repliedBox}>
-                <Text style={styles.repliedLabel}>Admin đã trả lời:</Text>
+                <Text style={styles.repliedLabel}>
+                  {t("admin.mAdminReplied")}
+                </Text>
                 <Text style={styles.repliedContent}>{fb.adminReply}</Text>
                 <Text style={styles.fbDate}>
-                  Trả lời lúc:{" "}
+                  {t("admin.mRepliedAtPrefix")}{" "}
                   {new Date(fb.repliedAt).toLocaleDateString("vi-VN")}{" "}
                   {new Date(fb.repliedAt).toLocaleTimeString("vi-VN", {
                     hour: "2-digit",

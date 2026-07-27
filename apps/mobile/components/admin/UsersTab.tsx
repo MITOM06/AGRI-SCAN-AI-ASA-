@@ -9,6 +9,7 @@ import {
 import { Search } from "lucide-react-native";
 
 import { styles } from "../../styles/admin.styles";
+import { useT } from "../../context/I18nContext";
 
 interface UsersTabProps {
   loading: boolean;
@@ -27,18 +28,20 @@ export function UsersTab({
   onSearchQueryChange,
   onSearch,
 }: UsersTabProps) {
+  const t = useT();
+
   return (
     <View style={styles.tabContent}>
       <View style={styles.searchBar}>
         <Search size={20} color="#94a3b8" />
         <TextInput
           style={styles.searchInput}
-          placeholder="Tìm email hoặc tên..."
+          placeholder={t("admin.mSearchPlaceholder")}
           value={searchQuery}
           onChangeText={onSearchQueryChange}
         />
         <TouchableOpacity style={styles.searchBtn} onPress={onSearch}>
-          <Text style={styles.searchBtnText}>Tìm</Text>
+          <Text style={styles.searchBtnText}>{t("common.search")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -59,7 +62,7 @@ export function UsersTab({
               </View>
               <View style={styles.userInfo}>
                 <Text style={styles.userName} numberOfLines={1}>
-                  {user.fullName || "Chưa cập nhật tên"}
+                  {user.fullName || t("admin.mNoNameYet")}
                 </Text>
                 <Text style={styles.userEmail} numberOfLines={1}>
                   {user.email}

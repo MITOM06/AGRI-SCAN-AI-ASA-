@@ -25,8 +25,10 @@ import {
 } from "lucide-react-native";
 
 import { productApi, formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
 export default function ProductDetailScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
@@ -64,16 +66,16 @@ export default function ProductDetailScreen() {
 
     if (!userStr) {
       if (Platform.OS === "web") {
-        window.alert("Bạn cần đăng nhập để mua sắm vật tư nhé!");
+        window.alert(t("shop.mLoginRequiredMessage"));
         router.push("/auth/login" as any);
       } else {
         Alert.alert(
-          "Yêu cầu đăng nhập",
-          "Bạn cần đăng nhập để mua sắm vật tư nhé!",
+          t("shop.mLoginRequiredTitle"),
+          t("shop.mLoginRequiredMessage"),
           [
-            { text: "Hủy", style: "cancel" },
+            { text: t("common.cancel"), style: "cancel" },
             {
-              text: "Đăng nhập",
+              text: t("nav.login"),
               onPress: () => router.push("/auth/login" as any),
             },
           ],
@@ -87,8 +89,8 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     Platform.OS === "web"
-      ? window.alert("Đã thêm sản phẩm vào giỏ hàng thành công!")
-      : Alert.alert("Thành công", "Đã thêm sản phẩm vào giỏ hàng thành công!");
+      ? window.alert(t("shop.mAddedToCartMessage"))
+      : Alert.alert(t("common.success"), t("shop.mAddedToCartMessage"));
   };
 
   const handleBuyNow = () => {
@@ -109,7 +111,7 @@ export default function ProductDetailScreen() {
       <View style={[styles.container, styles.centerBox]}>
         <ActivityIndicator size="large" color="#16a34a" />
         <Text style={{ marginTop: 12, color: "#64748b" }}>
-          Đang tải sản phẩm...
+          {t("shop.mLoadingProduct")}
         </Text>
       </View>
     );
@@ -134,16 +136,18 @@ export default function ProductDetailScreen() {
 
         <View style={[styles.centerBox, { flex: 1, paddingHorizontal: 32 }]}>
           <PackageX size={64} color="#94a3b8" />
-          <Text style={styles.errorTitle}>Không tải được sản phẩm</Text>
+          <Text style={styles.errorTitle}>
+            {t("shop.mLoadProductFailed")}
+          </Text>
           <Text style={styles.errorDesc}>
-            Sản phẩm không tồn tại hoặc đã có lỗi kết nối. Vui lòng thử lại.
+            {t("shop.mLoadProductFailedDesc")}
           </Text>
           <TouchableOpacity
             style={styles.retryBtn}
             onPress={fetchProductDetail}
           >
             <RefreshCw size={18} color="#fff" />
-            <Text style={styles.retryText}>Thử lại</Text>
+            <Text style={styles.retryText}>{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -182,7 +186,7 @@ export default function ProductDetailScreen() {
         {/* Thông tin Cơ bản */}
         <View style={styles.basicInfo}>
           <Text style={styles.productName}>
-            {product?.name || "Tên sản phẩm"}
+            {product?.name || t("shop.mProductNameFallback")}
           </Text>
           <Text style={styles.productPrice}>
             {formatCurrency(product?.price || 0)}
@@ -193,7 +197,9 @@ export default function ProductDetailScreen() {
               <Star size={16} color="#f59e0b" fill="#f59e0b" />
               <Text style={styles.ratingText}>{product?.rating || "4.8"}</Text>
             </View>
-            <Text style={styles.soldText}>Đã bán {product?.sold || 0}</Text>
+            <Text style={styles.soldText}>
+              {t("shop.sold", { count: product?.sold || 0 })}
+            </Text>
           </View>
         </View>
 
@@ -204,10 +210,10 @@ export default function ProductDetailScreen() {
           </View>
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={styles.sellerName}>
-              {product?.sellerId?.shopName || "Cửa hàng vật tư nông nghiệp"}
+              {product?.sellerId?.shopName || t("shop.mShopNameFallback")}
             </Text>
             <Text style={styles.sellerBadge}>
-              <ShieldCheck size={14} color="#2563eb" /> Cửa hàng uy tín
+              <ShieldCheck size={14} color="#2563eb" /> {t("shop.mTrustedShop")}
             </Text>
           </View>
           <TouchableOpacity style={styles.visitShopBtn}>
@@ -217,14 +223,14 @@ export default function ProductDetailScreen() {
 
         {/* Chi tiết sản phẩm */}
         <View style={styles.descSection}>
-          <Text style={styles.sectionTitle}>Mô tả chi tiết</Text>
+          <Text style={styles.sectionTitle}>{t("shop.mDescriptionTitle")}</Text>
           <Text style={styles.descContent}>
-            {product?.description || "Chưa có mô tả cho sản phẩm này."}
+            {product?.description || t("shop.mNoDescription")}
           </Text>
 
           {product?.usageInstruction && (
             <View style={styles.usageBox}>
-              <Text style={styles.descTitle}>Hướng dẫn sử dụng:</Text>
+              <Text style={styles.descTitle}>{t("shop.mUsageGuide")}</Text>
               <Text style={styles.descContent}>{product.usageInstruction}</Text>
             </View>
           )}
@@ -244,7 +250,7 @@ export default function ProductDetailScreen() {
           onPress={() => requireAuth(() => handleAddToCart())}
         >
           <ShoppingCart size={20} color="#16a34a" />
-          <Text style={styles.addToCartText}>Thêm vào giỏ</Text>
+          <Text style={styles.addToCartText}>{t("shop.mAddToCartShort")}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

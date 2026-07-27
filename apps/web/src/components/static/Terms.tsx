@@ -10,8 +10,49 @@ import {
   XCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useT } from "@/context/I18nContext";
 
 export default function TermsPage() {
+  const t = useT();
+
+  // Mỗi mục: icon + tiêu đề + (đoạn dẫn) + (danh sách gạch đầu dòng) hoặc các đoạn văn
+  const sections: {
+    icon: React.ReactNode;
+    titleKey: string;
+    leadKey?: string;
+    itemKeys?: string[];
+    bodyKeys?: string[];
+  }[] = [
+    {
+      icon: <Cpu className="w-6 h-6 text-primary" />,
+      titleKey: "terms.s1Title",
+      leadKey: "terms.s1Body",
+      itemKeys: ["terms.s1Item1", "terms.s1Item2"],
+    },
+    {
+      icon: <AlertOctagon className="w-6 h-6 text-primary" />,
+      titleKey: "terms.s2Title",
+      leadKey: "terms.s2Body",
+      itemKeys: ["terms.s2Item1", "terms.s2Item2"],
+    },
+    {
+      icon: <CreditCard className="w-6 h-6 text-primary" />,
+      titleKey: "terms.s3Title",
+      leadKey: "terms.s3Body",
+      itemKeys: ["terms.s3Item1", "terms.s3Item2", "terms.s3Item3"],
+    },
+    {
+      icon: <Copyright className="w-6 h-6 text-primary" />,
+      titleKey: "terms.s4Title",
+      bodyKeys: ["terms.s4Body1", "terms.s4Body2"],
+    },
+    {
+      icon: <XCircle className="w-6 h-6 text-primary" />,
+      titleKey: "terms.s5Title",
+      bodyKeys: ["terms.s5Body"],
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <motion.div
@@ -24,140 +65,51 @@ export default function TermsPage() {
             <FileText className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
-            Điều khoản sử dụng
+            {t("terms.title")}
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Chào mừng bạn đến với Agri-Scan. Bằng việc truy cập và sử dụng ứng
-            dụng của chúng tôi, bạn đồng ý tuân thủ các điều khoản và điều kiện
-            dưới đây.
+            {t("terms.intro")}
           </p>
           <div className="mt-6 text-sm text-gray-500 font-medium">
-            Có hiệu lực từ: 20/03/2026
+            {t("terms.effectiveFrom")}
           </div>
         </div>
 
         <div className="p-8 md:p-12 space-y-10">
-          <section>
-            <div className="flex items-center gap-3 mb-4">
-              <Cpu className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold text-gray-900">
-                1. Dịch vụ AI & Nhận diện bệnh cây
-              </h2>
-            </div>
-            <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed">
-              <p>
-                Agri-Scan cung cấp công cụ Trí tuệ nhân tạo để phân tích hình ảnh
-                cây trồng, hỗ trợ phát hiện sâu bệnh, thiếu dinh dưỡng và các vấn
-                đề thường gặp trên cây.
-              </p>
-              <ul className="list-disc pl-5 space-y-2 mt-3">
-                <li>
-                  Kết quả phân tích được tạo ra từ mô hình AI và dữ liệu huấn luyện.
-                </li>
-                <li>
-                  Hệ thống hỗ trợ chẩn đoán nhưng không đảm bảo chính xác tuyệt đối
-                  trong mọi trường hợp.
-                </li>
-              </ul>
-            </div>
-          </section>
+          {sections.map((section) => (
+            <section key={section.titleKey}>
+              <div className="flex items-center gap-3 mb-4">
+                {section.icon}
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {t(section.titleKey)}
+                </h2>
+              </div>
+              <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed space-y-4">
+                {section.leadKey && <p>{t(section.leadKey)}</p>}
 
-          <section>
-            <div className="flex items-center gap-3 mb-4">
-              <AlertOctagon className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold text-gray-900">
-                2. Miễn trừ trách nhiệm
-              </h2>
-            </div>
-            <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed">
-              <p className="font-medium text-red-600 bg-red-50 p-4 rounded-xl border border-red-100 mb-4">
-                Lưu ý: Các kết quả và đề xuất từ Agri-Scan chỉ mang tính tham khảo.
-              </p>
-              <ul className="list-disc pl-5 space-y-2">
-                <li>
-                  Người dùng nên kết hợp với tư vấn thực tế từ kỹ sư nông nghiệp
-                  hoặc chuyên gia phù hợp.
-                </li>
-                <li>
-                  Chúng tôi không chịu trách nhiệm cho thiệt hại phát sinh từ việc
-                  áp dụng trực tiếp mọi khuyến nghị của hệ thống.
-                </li>
-              </ul>
-            </div>
-          </section>
+                {section.itemKeys && (
+                  <ul className="list-disc pl-5 space-y-2">
+                    {section.itemKeys.map((key) => (
+                      <li key={key}>{t(key)}</li>
+                    ))}
+                  </ul>
+                )}
 
-          <section>
-            <div className="flex items-center gap-3 mb-4">
-              <CreditCard className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold text-gray-900">
-                3. Gói dịch vụ và thanh toán
-              </h2>
-            </div>
-            <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed">
-              <p>
-                Agri-Scan có thể cung cấp các gói miễn phí và trả phí tùy theo tính
-                năng của hệ thống.
-              </p>
-              <ul className="list-disc pl-5 space-y-2 mt-3">
-                <li>Phí dịch vụ sẽ được hiển thị rõ trước khi thanh toán.</li>
-                <li>
-                  Một số gói có thể tự gia hạn nếu người dùng không chủ động hủy.
-                </li>
-                <li>
-                  Chính sách hoàn tiền sẽ phụ thuộc vào từng loại gói và thông báo
-                  cụ thể tại thời điểm mua.
-                </li>
-              </ul>
-            </div>
-          </section>
-
-          <section>
-            <div className="flex items-center gap-3 mb-4">
-              <Copyright className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold text-gray-900">
-                4. Quyền sở hữu trí tuệ
-              </h2>
-            </div>
-            <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed">
-              <p>
-                Nội dung, giao diện, logo, dữ liệu và công nghệ của Agri-Scan thuộc
-                quyền sở hữu của chúng tôi hoặc các bên cấp phép liên quan.
-              </p>
-              <p className="mt-3">
-                Bạn không được sao chép, phân phối lại, chỉnh sửa hoặc khai thác
-                trái phép bất kỳ phần nào của hệ thống nếu chưa được cho phép.
-              </p>
-            </div>
-          </section>
-
-          <section>
-            <div className="flex items-center gap-3 mb-4">
-              <XCircle className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold text-gray-900">
-                5. Chấm dứt quyền sử dụng
-              </h2>
-            </div>
-            <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed">
-              <p>
-                Chúng tôi có quyền tạm ngưng hoặc chấm dứt tài khoản nếu phát hiện
-                hành vi vi phạm điều khoản, lạm dụng hệ thống hoặc gây ảnh hưởng đến
-                nền tảng.
-              </p>
-            </div>
-          </section>
+                {section.bodyKeys?.map((key) => <p key={key}>{t(key)}</p>)}
+              </div>
+            </section>
+          ))}
 
           <div className="mt-12 p-6 bg-gray-50 rounded-2xl border border-gray-100 text-center">
             <h3 className="text-lg font-bold text-gray-900 mb-2">
-              Cần hỗ trợ thêm?
+              {t("terms.ctaTitle")}
             </h3>
-            <p className="text-gray-600 mb-4">
-              Nếu bạn có thắc mắc về điều khoản sử dụng, hãy liên hệ với chúng tôi.
-            </p>
+            <p className="text-gray-600 mb-4">{t("terms.ctaDesc")}</p>
             <a
               href="/feedback"
               className="inline-flex items-center justify-center px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
             >
-              Gửi phản hồi
+              {t("terms.ctaButton")}
             </a>
           </div>
         </div>

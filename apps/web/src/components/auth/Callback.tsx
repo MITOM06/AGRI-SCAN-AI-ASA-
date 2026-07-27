@@ -4,9 +4,11 @@ import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/context/I18nContext";
 import { consumeOAuthRedirect, safeRedirect } from "@/lib/redirect";
 
 function OAuthCallbackHandler() {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { handleOAuthSuccess } = useAuth(); // Lấy hàm đồng bộ state từ Context
@@ -55,8 +57,8 @@ function OAuthCallbackHandler() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-gray-600 font-medium">Đang đồng bộ tài khoản...</p>
-        <p className="text-gray-400 text-sm mt-2">Vui lòng chờ trong giây lát</p>
+        <p className="text-gray-600 font-medium">{t("auth.callbackSyncing")}</p>
+        <p className="text-gray-400 text-sm mt-2">{t("auth.callbackWait")}</p>
       </div>
     </div>
   );

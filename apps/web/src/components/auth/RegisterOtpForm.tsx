@@ -8,11 +8,13 @@ import { ShieldCheck, Loader2, ArrowRight, Timer, MailCheck } from "lucide-react
 import { otpSchema, type OtpFormData } from "@agri-scan/shared";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/context/I18nContext";
 import { withRedirect } from "@/lib/redirect";
 
 const RESEND_COOLDOWN = 60; // giây
 
 export default function RegisterOtpForm() {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { verifyRegister, resendRegisterOtp } = useAuth();
@@ -54,7 +56,7 @@ export default function RegisterOtpForm() {
     } catch (error) {
       const errorMessage =
         (error as { response?: { data?: { message?: string } } })?.response
-          ?.data?.message || "Mã OTP không hợp lệ hoặc đã hết hạn.";
+          ?.data?.message || "auth.otpFailed";
       setError("root", { type: "server", message: errorMessage });
     }
   };
@@ -65,14 +67,14 @@ export default function RegisterOtpForm() {
     setResendMessage("");
     try {
       await resendRegisterOtp(email);
-      setResendMessage("Mã OTP mới đã được gửi đến email của bạn.");
+      setResendMessage("auth.otpResentMessage");
       setSeconds(RESEND_COOLDOWN);
     } catch (error) {
       setError("root", {
         type: "server",
         message:
           (error as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message || "Không thể gửi lại mã. Thử lại sau.",
+            ?.data?.message || "auth.otpResendFailed",
       });
     } finally {
       setIsResending(false);
@@ -90,17 +92,17 @@ export default function RegisterOtpForm() {
           <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mx-auto mb-4">
             <ShieldCheck size={28} />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Xác thực email</h2>
-          <p className="mt-2 text-gray-600">
-            Nhập mã OTP 6 chữ số đã được gửi đến
-          </p>
+          <h2 className="text-3xl font-bold text-gray-900">
+            {t("auth.otpTitle")}
+          </h2>
+          <p className="mt-2 text-gray-600">{t("auth.otpSentTo")}</p>
           <p className="font-medium text-gray-900 break-all">{email}</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mã OTP
+              {t("auth.otpLabel")}
             </label>
             <input
               {...register("otp")}
@@ -113,20 +115,22 @@ export default function RegisterOtpForm() {
               className="block w-full text-center text-3xl font-bold tracking-[0.5em] py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
             />
             {errors.otp && (
-              <p className="mt-1 text-sm text-red-500">{errors.otp.message}</p>
+              <p className="mt-1 text-sm text-red-500">
+                {t(errors.otp.message ?? "")}
+              </p>
             )}
           </div>
 
           {resendMessage && (
             <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 text-sm rounded-xl border border-green-200">
               <MailCheck size={18} className="shrink-0" />
-              <span>{resendMessage}</span>
+              <span>{t(resendMessage)}</span>
             </div>
           )}
 
           {errors.root && (
             <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center border border-red-100">
-              {errors.root.message}
+              {t(errors.root.message ?? "")}
             </div>
           )}
 
@@ -138,11 +142,11 @@ export default function RegisterOtpForm() {
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin -ml-1 mr-2" size={20} />
-                Đang xác thực...
+                {t("auth.otpVerifying")}
               </>
             ) : (
               <>
-                Xác nhận <ArrowRight className="ml-2" size={20} />
+                {t("common.confirm")} <ArrowRight className="ml-2" size={20} />
               </>
             )}
           </button>
@@ -150,7 +154,7 @@ export default function RegisterOtpForm() {
           <div className="text-center text-sm">
             {seconds > 0 ? (
               <span className="inline-flex items-center gap-1 text-gray-500">
-                <Timer size={16} /> Gửi lại mã sau {seconds}s
+                <Timer size={16} /> {t("auth.otpResendIn", { seconds })}
               </span>
             ) : (
               <button
@@ -159,7 +163,7 @@ export default function RegisterOtpForm() {
                 disabled={isResending}
                 className="font-medium text-primary hover:text-primary-dark disabled:opacity-60"
               >
-                {isResending ? "Đang gửi..." : "Gửi lại mã mới"}
+                {isResending ? t("common.sending") : t("auth.otpResendNew")}
               </button>
             )}
           </div>

@@ -23,7 +23,9 @@ import {
   CheckCircle2,
 } from "lucide-react-native";
 
-import { adminApi } from "@agri-scan/shared";
+import { adminApi, DATE_LOCALES } from "@agri-scan/shared";
+
+import { useI18n } from "../context/I18nContext";
 
 type CategoryType = "BUG" | "FEATURE" | "COMPLAINT" | "GENERAL";
 type TabType = "SEND" | "HISTORY";
@@ -31,6 +33,8 @@ type TabType = "SEND" | "HISTORY";
 export default function FeedbackScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Cần cả `locale` để định dạng ngày gửi phản hồi
+  const { t, locale } = useI18n();
 
   const [activeTab, setActiveTab] = useState<TabType>("SEND");
 
@@ -43,11 +47,12 @@ export default function FeedbackScreen() {
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
+  // `id` là mã gửi lên API; chỉ `label` được dịch
   const categories: { id: CategoryType; label: string }[] = [
-    { id: "GENERAL", label: "Hỗ trợ chung" },
-    { id: "BUG", label: "Báo lỗi ứng dụng" },
-    { id: "FEATURE", label: "Góp ý tính năng" },
-    { id: "COMPLAINT", label: "Khiếu nại" },
+    { id: "GENERAL", label: t("feedback.mCatGeneral") },
+    { id: "BUG", label: t("feedback.mCatBug") },
+    { id: "FEATURE", label: t("feedback.mCatFeature") },
+    { id: "COMPLAINT", label: t("feedback.mCatComplaint") },
   ];
 
   useEffect(() => {
@@ -66,8 +71,8 @@ export default function FeedbackScreen() {
     } catch (error) {
       console.log("Lỗi lấy lịch sử phản hồi:", error);
       Platform.OS === "web"
-        ? window.alert("Không thể tải lịch sử phản hồi.")
-        : Alert.alert("Lỗi", "Không thể tải lịch sử phản hồi.");
+        ? window.alert(t("feedback.loadHistoryFailed"))
+        : Alert.alert(t("common.error"), t("feedback.loadHistoryFailed"));
     } finally {
       setIsLoadingHistory(false);
     }
@@ -76,13 +81,8 @@ export default function FeedbackScreen() {
   const handleSubmit = async () => {
     if (content.trim().length < 10) {
       Platform.OS === "web"
-        ? window.alert(
-            "Vui lòng nhập nội dung phản hồi ít nhất 10 ký tự để Admin hiểu rõ vấn đề nhé!",
-          )
-        : Alert.alert(
-            "Lỗi",
-            "Vui lòng nhập nội dung phản hồi ít nhất 10 ký tự để Admin hiểu rõ vấn đề nhé!",
-          );
+        ? window.alert(t("feedback.mErrorTooShort"))
+        : Alert.alert(t("common.error"), t("feedback.mErrorTooShort"));
       return;
     }
 
@@ -92,11 +92,11 @@ export default function FeedbackScreen() {
       await adminApi.submitFeedback({ category, content: content.trim() });
 
       if (Platform.OS === "web") {
-        window.alert("🎉 Gửi thành công! Cảm ơn bạn đã gửi phản hồi.");
+        window.alert(t("feedback.mSubmitSuccessWebAlert"));
       } else {
         Alert.alert(
-          "Gửi thành công!",
-          "Cảm ơn bạn đã gửi phản hồi. Ban quản trị sẽ xem xét sớm nhất.",
+          t("feedback.mSubmitSuccessTitle"),
+          t("feedback.mSubmitSuccessBody"),
         );
       }
 
@@ -105,10 +105,10 @@ export default function FeedbackScreen() {
       setActiveTab("HISTORY");
     } catch (error: any) {
       const errorMsg =
-        error.response?.data?.message || "Không thể gửi phản hồi lúc này.";
+        error.response?.data?.message || t("feedback.mSubmitFailed");
       Platform.OS === "web"
         ? window.alert(errorMsg)
-        : Alert.alert("Lỗi", errorMsg);
+        : Alert.alert(t("common.error"), errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -123,7 +123,7 @@ export default function FeedbackScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Hỗ Trợ & Phản Hồi</Text>
+        <Text style={styles.headerTitle}>{t("feedback.mTitle")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -143,7 +143,7 @@ export default function FeedbackScreen() {
               activeTab === "SEND" && styles.tabTextActive,
             ]}
           >
-            Gửi góp ý
+            {t("feedback.mTabSend")}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -163,7 +163,7 @@ export default function FeedbackScreen() {
               activeTab === "HISTORY" && styles.tabTextActive,
             ]}
           >
-            Lịch sử của tôi
+            {t("feedback.mTabHistory")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -181,13 +181,10 @@ export default function FeedbackScreen() {
               <View style={styles.iconCircle}>
                 <MessageSquareWarning size={32} color="#16a34a" />
               </View>
-              <Text style={styles.introText}>
-                Bạn đang gặp vấn đề hay có ý tưởng hay? Hãy chia sẻ cùng
-                Agri-Scan để chúng tôi cải thiện ứng dụng nhé!
-              </Text>
+              <Text style={styles.introText}>{t("feedback.mIntro")}</Text>
             </View>
 
-            <Text style={styles.label}>Chủ đề phản hồi:</Text>
+            <Text style={styles.label}>{t("feedback.mLabelCategory")}</Text>
             <View style={styles.categoryContainer}>
               {categories.map((cat) => (
                 <TouchableOpacity
@@ -210,11 +207,11 @@ export default function FeedbackScreen() {
               ))}
             </View>
 
-            <Text style={styles.label}>Nội dung chi tiết:</Text>
+            <Text style={styles.label}>{t("feedback.mLabelContent")}</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.textInput}
-                placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải..."
+                placeholder={t("feedback.mContentPlaceholder")}
                 multiline
                 textAlignVertical="top"
                 value={content}
@@ -236,7 +233,9 @@ export default function FeedbackScreen() {
                 style={{ marginTop: 40 }}
               />
             ) : historyData.length === 0 ? (
-              <Text style={styles.emptyText}>Bạn chưa gửi phản hồi nào.</Text>
+              <Text style={styles.emptyText}>
+                {t("feedback.mHistoryEmpty")}
+              </Text>
             ) : (
               historyData.map((item) => (
                 <View key={item._id} style={styles.historyCard}>
@@ -248,7 +247,9 @@ export default function FeedbackScreen() {
                       </Text>
                     </View>
                     <Text style={styles.historyDate}>
-                      {new Date(item.createdAt).toLocaleDateString("vi-VN")}
+                      {new Date(item.createdAt).toLocaleDateString(
+                        DATE_LOCALES[locale],
+                      )}
                     </Text>
                   </View>
 
@@ -266,7 +267,7 @@ export default function FeedbackScreen() {
                       >
                         <CheckCircle2 size={16} color="#16a34a" />
                         <Text style={styles.repliedLabel}>
-                          Ban Quản Trị đã trả lời:
+                          {t("feedback.mAdminReplied")}
                         </Text>
                       </View>
                       <Text style={styles.repliedText}>{item.adminReply}</Text>
@@ -275,7 +276,7 @@ export default function FeedbackScreen() {
                     <View style={styles.pendingBox}>
                       <Clock size={14} color="#d97706" />
                       <Text style={styles.pendingText}>
-                        Đang chờ Admin xử lý...
+                        {t("feedback.mPending")}
                       </Text>
                     </View>
                   )}
@@ -307,7 +308,9 @@ export default function FeedbackScreen() {
             ) : (
               <>
                 <Send size={20} color="#fff" />
-                <Text style={styles.submitBtnText}>Gửi cho Ban Quản Trị</Text>
+                <Text style={styles.submitBtnText}>
+                  {t("feedback.mSubmit")}
+                </Text>
               </>
             )}
           </TouchableOpacity>

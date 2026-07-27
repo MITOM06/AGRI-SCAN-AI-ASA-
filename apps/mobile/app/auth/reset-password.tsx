@@ -21,6 +21,7 @@ import {
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
 import { AuthHeader } from "../../components/auth/AuthHeader";
+import { useT } from "../../context/I18nContext";
 
 const customResetResolver = async (values: any) => {
   const result = resetPasswordSchema.safeParse(values);
@@ -38,6 +39,7 @@ const customResetResolver = async (values: any) => {
 };
 
 export default function ResetPasswordScreen() {
+  const t = useT();
   const router = useRouter();
   const params = useLocalSearchParams();
   // BUG FIX: trước dùng "dummy_token_from_otp" hardcode → không đổi được pass thật
@@ -65,8 +67,8 @@ export default function ResetPasswordScreen() {
     console.log("Lỗi Validation từ Zod:", errors);
     if (errors.email || errors.token) {
       Alert.alert(
-        "Lỗi dữ liệu",
-        "Thông tin phiên bản cập nhật không đầy đủ, vui lòng thử lại OTP.",
+        t("auth.mDataErrorTitle"),
+        t("auth.mIncompleteSession"),
       );
     }
   };
@@ -92,22 +94,26 @@ export default function ResetPasswordScreen() {
       // BẮT ĐẦU ĐOẠN SỬA LỖI CHO WEB
       if (Platform.OS === "web") {
         // Trên Web: Dùng alert mặc định của trình duyệt, sau đó tự động chuyển trang luôn
-        window.alert("Thành công! Mật khẩu của bạn đã được cập nhật.");
+        window.alert(t("auth.mResetSuccessWeb"));
         router.replace("/auth/login");
       } else {
         // Trên Mobile: Giữ nguyên Alert xịn xò của Native
-        Alert.alert("Thành công", "Mật khẩu của bạn đã được cập nhật!", [
-          {
-            text: "Đăng nhập ngay",
-            onPress: () => router.replace("/auth/login"),
-          },
-        ]);
+        Alert.alert(
+          t("auth.mResetSuccessTitle"),
+          t("auth.mResetSuccessMessage"),
+          [
+            {
+              text: t("auth.mLoginButton"),
+              onPress: () => router.replace("/auth/login"),
+            },
+          ],
+        );
       }
       // KẾT THÚC ĐOẠN SỬA LỖI
     } catch (error: any) {
       setApiError(
         error.response?.data?.message ||
-          "Đổi mật khẩu thất bại. Phiên có thể đã hết hạn.",
+          t("auth.mResetFailed"),
       );
     } finally {
       setIsSubmitting(false);
@@ -132,9 +138,9 @@ export default function ResetPasswordScreen() {
               <View style={styles.iconContainer}>
                 <Lock size={28} color="#16a34a" />
               </View>
-              <Text style={styles.title}>Mật khẩu mới</Text>
+              <Text style={styles.title}>{t("auth.mResetTitle")}</Text>
               <Text style={styles.subtitle}>
-                Vui lòng nhập mật khẩu mới để hoàn tất việc khôi phục tài khoản
+                {t("auth.mResetSubtitle")}
               </Text>
             </View>
 
@@ -154,7 +160,7 @@ export default function ResetPasswordScreen() {
                 <View style={styles.inputGroup}>
                   <View style={styles.passwordWrapper}>
                     <Input
-                      label="Mật khẩu mới"
+                      label={t("auth.mNewPasswordLabel")}
                       placeholder="••••••••"
                       secureTextEntry={!showPassword}
                       onBlur={onBlur}
@@ -178,13 +184,15 @@ export default function ResetPasswordScreen() {
             />
 
             <View style={styles.requirementsContainer}>
-              <Text style={styles.requirementsTitle}>Yêu cầu mật khẩu:</Text>
+              <Text style={styles.requirementsTitle}>
+                {t("auth.passwordRequirements")}
+              </Text>
               {[
-                [isPasswordLengthValid, "Ít nhất 8 ký tự"],
-                [hasUpperCase, "Ít nhất 1 chữ hoa"],
-                [hasLowerCase, "Ít nhất 1 chữ thường"],
-                [hasNumber, "Ít nhất 1 số"],
-                [hasSpecialChar, "Ít nhất 1 ký tự đặc biệt"],
+                [isPasswordLengthValid, t("auth.mRuleMinLength8")],
+                [hasUpperCase, t("auth.mRuleUpper")],
+                [hasLowerCase, t("auth.mRuleLower")],
+                [hasNumber, t("auth.mRuleNumber")],
+                [hasSpecialChar, t("auth.mRuleSpecial")],
               ].map(([valid, label]) => (
                 <Text
                   key={label as string}
@@ -205,7 +213,7 @@ export default function ResetPasswordScreen() {
                 <View style={styles.inputGroup}>
                   <View style={styles.passwordWrapper}>
                     <Input
-                      label="Xác nhận mật khẩu"
+                      label={t("auth.mConfirmPasswordLabel")}
                       placeholder="••••••••"
                       secureTextEntry={!showConfirmPassword}
                       onBlur={onBlur}
@@ -231,7 +239,7 @@ export default function ResetPasswordScreen() {
             />
 
             <Button
-              title="Cập nhật mật khẩu"
+              title={t("auth.mUpdatePassword")}
               variant="primary"
               size="lg"
               isLoading={isSubmitting}

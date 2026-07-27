@@ -9,6 +9,7 @@
 
 import { ReactNode } from "react";
 import { AuthProvider } from "@/hooks/useAuth";
+import { I18nProvider } from "@/context/I18nContext";
 import { setTokenStorage } from "@agri-scan/shared";
 
 // Chỉ chạy phía trình duyệt (tránh crash khi Next.js SSR)
@@ -31,5 +32,10 @@ if (typeof window !== 'undefined') {
 }
 
 export function Providers({ children }: { children: ReactNode }) {
-  return <AuthProvider>{children}</AuthProvider>;
+  // I18nProvider bọc ngoài cùng để mọi component bên trong đều gọi được t()
+  return (
+    <I18nProvider>
+      <AuthProvider>{children}</AuthProvider>
+    </I18nProvider>
+  );
 }

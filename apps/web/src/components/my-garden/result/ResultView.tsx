@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import type { IMyGardenPlant } from "@agri-scan/shared";
 import { containerVariants, itemVariants } from "@/utils/animation";
+import { useT } from "@/context/I18nContext";
 
 interface ResultViewProps {
   selectedPlant: IMyGardenPlant | null;
@@ -37,18 +38,20 @@ export function ResultView({
   handleRemovePlant,
   handleAddToGarden,
 }: ResultViewProps) {
+  const t = useT();
+
   if (!selectedPlant) return null;
 
   const displayName =
     selectedPlant.customName?.trim() ||
     selectedPlant.plantInfo?.commonName?.trim() ||
     selectedPlant.aiLabel?.trim() ||
-    "Cây trồng";
+    t("myGarden.defaultPlantName");
 
   const subTitle =
     selectedPlant.plantInfo?.commonName?.trim() ||
     selectedPlant.aiLabel?.trim() ||
-    "Chưa có thông tin chi tiết";
+    t("myGarden.noDetailYet");
 
   const imageSrc =
     selectedPlant.imageUrl ||
@@ -56,8 +59,9 @@ export function ResultView({
     "/placeholder-plant.png";
 
   const conditionText =
-    selectedPlant.currentCondition?.trim() || "Chưa có chẩn đoán";
+    selectedPlant.currentCondition?.trim() || t("myGarden.noDiagnosisYet");
 
+  // So khớp trên GIÁ TRỊ dữ liệu (nhiều biến thể) — không dùng nhãn đã dịch
   const isHealthy = [
     "khỏe mạnh",
     "khoe manh",
@@ -110,17 +114,17 @@ export function ResultView({
             <Calendar size={24} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Dự kiến ngày ra trái
+            {t("myGarden.expectedFruitDate")}
           </h2>
         </div>
 
         <div className="mb-4">
           <div className="flex justify-between text-sm font-bold text-gray-400 mb-4 px-2">
-            <span>Gieo hạt</span>
+            <span>{t("myGarden.stageSeeding")}</span>
             <span className="text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-              Ra hoa (Hiện tại)
+              {t("myGarden.stageFloweringNow")}
             </span>
-            <span>Thu hoạch</span>
+            <span>{t("myGarden.stageHarvest")}</span>
           </div>
           <div className="h-6 bg-gray-100 rounded-full overflow-hidden shadow-inner p-1">
             <motion.div
@@ -133,11 +137,11 @@ export function ResultView({
             </motion.div>
           </div>
           <p className="text-center mt-6 text-gray-600 text-lg">
-            Dự kiến thu hoạch trong{" "}
+            {t("myGarden.harvestInPrefix")}{" "}
             <span className="font-extrabold text-orange-600 text-2xl mx-1">
               25-30
             </span>{" "}
-            ngày nữa
+            {t("myGarden.daysLeftSuffix")}
           </p>
         </div>
       </div>
@@ -148,7 +152,7 @@ export function ResultView({
             <Apple size={24} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Bí quyết ép cây ra trái
+            {t("myGarden.fruitTipsTitle")}
           </h2>
         </div>
 
@@ -156,23 +160,23 @@ export function ResultView({
           {[
             {
               step: 1,
-              title: "Siết nước",
-              desc: "Ngừng tưới nước từ 5-7 ngày để cây chuyển sang trạng thái sinh sản, kích thích ra hoa đậu quả.",
+              title: t("myGarden.fruitTip1Title"),
+              desc: t("myGarden.fruitTip1Desc"),
             },
             {
               step: 2,
-              title: "Bón phân Kali cao",
-              desc: "Sử dụng phân bón NPK tỷ lệ Kali cao (vd: 15-5-20) để tăng tỷ lệ đậu trái và giúp trái ngọt hơn.",
+              title: t("myGarden.fruitTip2Title"),
+              desc: t("myGarden.fruitTip2Desc"),
             },
             {
               step: 3,
-              title: "Thụ phấn nhân tạo",
-              desc: "Dùng cọ mềm quét phấn từ hoa đực sang hoa cái vào buổi sáng sớm (7h-9h) để tăng tỷ lệ đậu.",
+              title: t("myGarden.fruitTip3Title"),
+              desc: t("myGarden.fruitTip3Desc"),
             },
             {
               step: 4,
-              title: "Tỉa cành vượt",
-              desc: "Cắt bỏ các cành tăm, cành vượt không có khả năng ra trái để tập trung dinh dưỡng nuôi quả.",
+              title: t("myGarden.fruitTip4Title"),
+              desc: t("myGarden.fruitTip4Desc"),
             },
           ].map((item) => (
             <div
@@ -202,17 +206,17 @@ export function ResultView({
             <Calendar size={24} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Dự kiến ngày ra hoa
+            {t("myGarden.expectedBloomDate")}
           </h2>
         </div>
 
         <div className="mb-4">
           <div className="flex justify-between text-sm font-bold text-gray-400 mb-4 px-2">
-            <span>Nảy mầm</span>
+            <span>{t("myGarden.stageSprouting")}</span>
             <span className="text-pink-600 bg-pink-50 px-3 py-1 rounded-full">
-              Đóng nụ (Hiện tại)
+              {t("myGarden.stageBuddingNow")}
             </span>
-            <span>Nở rộ</span>
+            <span>{t("myGarden.stageFullBloom")}</span>
           </div>
           <div className="h-6 bg-gray-100 rounded-full overflow-hidden shadow-inner p-1">
             <motion.div
@@ -225,11 +229,11 @@ export function ResultView({
             </motion.div>
           </div>
           <p className="text-center mt-6 text-gray-600 text-lg">
-            Dự kiến hoa sẽ nở rộ trong{" "}
+            {t("myGarden.bloomInPrefix")}{" "}
             <span className="font-extrabold text-pink-600 text-2xl mx-1">
               5-7
             </span>{" "}
-            ngày nữa
+            {t("myGarden.daysLeftSuffix")}
           </p>
         </div>
       </div>
@@ -240,7 +244,7 @@ export function ResultView({
             <Flower2 size={24} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Chăm sóc để hoa nở to & bền
+            {t("myGarden.flowerTipsTitle")}
           </h2>
         </div>
 
@@ -250,22 +254,22 @@ export function ResultView({
               icon: Sun,
               color: "text-amber-500",
               bg: "bg-amber-50",
-              title: "Tăng cường ánh sáng",
-              desc: "Đảm bảo cây nhận đủ 6-8 tiếng nắng trực tiếp mỗi ngày. Thiếu nắng nụ sẽ nhỏ và dễ rụng.",
+              title: t("myGarden.flowerTip1Title"),
+              desc: t("myGarden.flowerTip1Desc"),
             },
             {
               icon: Droplets,
               color: "text-blue-500",
               bg: "bg-blue-50",
-              title: "Tưới nước đúng cách",
-              desc: "Chỉ tưới vào gốc, tuyệt đối không tưới lên nụ và hoa để tránh làm úng nụ và thối hoa.",
+              title: t("myGarden.flowerTip2Title"),
+              desc: t("myGarden.flowerTip2Desc"),
             },
             {
               icon: Sparkles,
               color: "text-purple-500",
               bg: "bg-purple-50",
-              title: "Bón phân Lân (P) cao",
-              desc: "Bổ sung phân bón giàu Lân (như siêu lân) để kích thích mầm hoa phát triển mạnh, màu sắc rực rỡ.",
+              title: t("myGarden.flowerTip3Title"),
+              desc: t("myGarden.flowerTip3Desc"),
             },
           ].map((item, idx) => (
             <div
@@ -299,7 +303,7 @@ export function ResultView({
             <Scissors size={24} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Hướng dẫn cắt tỉa tạo dáng
+            {t("myGarden.pruningTitle")}
           </h2>
         </div>
 
@@ -313,32 +317,31 @@ export function ResultView({
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
                 <span className="text-white font-bold flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-emerald-400" /> Vị trí
-                  cắt chuẩn
+                  <CheckCircle2 size={16} className="text-emerald-400" />{" "}
+                  {t("myGarden.pruningCorrectSpot")}
                 </span>
               </div>
             </div>
             <h3 className="font-bold text-gray-900 text-lg mb-2">
-              Góc cắt lý tưởng
+              {t("myGarden.pruningIdealAngle")}
             </h3>
             <p className="text-gray-600 leading-relaxed">
-              Cắt cách mắt lá khoảng 1-2cm, cắt xéo 45 độ để nước không đọng lại
-              trên vết cắt gây nấm mốc.
+              {t("myGarden.pruningIdealAngleDesc")}
             </p>
           </div>
           <div className="space-y-4 flex flex-col justify-center">
             {[
               {
-                title: "Tỉa thưa (Thinning)",
-                desc: "Cắt bỏ các cành mọc chen chúc bên trong tán để tạo độ thông thoáng.",
+                title: t("myGarden.pruningTip1Title"),
+                desc: t("myGarden.pruningTip1Desc"),
               },
               {
-                title: "Bấm ngọn (Pinching)",
-                desc: "Ngắt bỏ phần ngọn non để kích thích cây đâm chồi nách, giúp tán lá sum suê.",
+                title: t("myGarden.pruningTip2Title"),
+                desc: t("myGarden.pruningTip2Desc"),
               },
               {
-                title: "Vệ sinh lá",
-                desc: "Thường xuyên lau bụi trên mặt lá bằng khăn ẩm để cây quang hợp tốt nhất.",
+                title: t("myGarden.pruningTip3Title"),
+                desc: t("myGarden.pruningTip3Desc"),
               },
             ].map((item, idx) => (
               <div
@@ -359,7 +362,7 @@ export function ResultView({
             <Leaf size={24} />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Chăm sóc lá xanh bóng
+            {t("myGarden.leafCareTitle")}
           </h2>
         </div>
 
@@ -369,22 +372,22 @@ export function ResultView({
               icon: Droplets,
               color: "text-teal-600",
               bg: "bg-teal-100",
-              title: "Độ ẩm không khí",
-              desc: "Cây kiểng lá thường ưa ẩm (60-80%). Hãy phun sương lên lá 1-2 lần/ngày hoặc đặt cạnh máy phun sương.",
+              title: t("myGarden.leafTip1Title"),
+              desc: t("myGarden.leafTip1Desc"),
             },
             {
               icon: Sun,
               color: "text-amber-500",
               bg: "bg-amber-100",
-              title: "Ánh sáng tán xạ",
-              desc: "Tránh ánh nắng gắt trực tiếp làm cháy lá. Đặt cây ở nơi có ánh sáng hắt qua cửa sổ hoặc dùng lưới che.",
+              title: t("myGarden.leafTip2Title"),
+              desc: t("myGarden.leafTip2Desc"),
             },
             {
               icon: Sparkles,
               color: "text-emerald-500",
               bg: "bg-emerald-100",
-              title: "Phân bón giàu Đạm (N)",
-              desc: "Sử dụng phân bón lá hoặc phân NPK tỷ lệ Đạm cao để giúp lá to, dày và xanh mướt.",
+              title: t("myGarden.leafTip3Title"),
+              desc: t("myGarden.leafTip3Desc"),
             },
           ].map((item, idx) => (
             <div
@@ -427,7 +430,9 @@ export function ResultView({
             size={20}
             className="group-hover:-translate-x-1 transition-transform"
           />
-          {isViewingTracked ? "Quay lại khu vườn" : "Quét cây khác"}
+          {isViewingTracked
+            ? t("myGarden.backToGarden")
+            : t("myGarden.scanAnother")}
         </motion.button>
 
         {isViewingTracked && (
@@ -436,7 +441,7 @@ export function ResultView({
             onClick={() => handleRemovePlant(selectedPlant._id)}
             className="flex items-center gap-2 text-red-500 hover:text-red-700 hover:bg-red-50 font-bold transition-colors px-4 py-2 rounded-full"
           >
-            <Trash2 size={18} /> Xóa khỏi vườn
+            <Trash2 size={18} /> {t("myGarden.removeFromGarden")}
           </motion.button>
         )}
       </div>
@@ -465,19 +470,21 @@ export function ResultView({
               <div className="absolute bottom-6 left-6 px-4 py-2 bg-white/95 backdrop-blur-md rounded-full text-sm font-bold text-gray-900 shadow-xl flex items-center gap-2">
                 {selectedPlant.userGoal === "GET_FRUIT" && (
                   <>
-                    <Apple size={16} className="text-orange-500" /> Nhóm Ăn Quả
+                    <Apple size={16} className="text-orange-500" />{" "}
+                    {t("myGarden.groupFruit")}
                   </>
                 )}
                 {selectedPlant.userGoal === "GET_FLOWER" && (
                   <>
-                    <Flower2 size={16} className="text-pink-500" /> Nhóm Cây Hoa
+                    <Flower2 size={16} className="text-pink-500" />{" "}
+                    {t("myGarden.groupFlower")}
                   </>
                 )}
                 {(selectedPlant.userGoal === "MAINTAIN" ||
                   selectedPlant.userGoal === "HEAL_DISEASE") && (
                   <>
-                    <Leaf size={16} className="text-emerald-500" /> Nhóm Cây
-                    Kiểng
+                    <Leaf size={16} className="text-emerald-500" />{" "}
+                    {t("myGarden.groupOrnamental")}
                   </>
                 )}
               </div>
@@ -495,7 +502,7 @@ export function ResultView({
                 <ScanLine size={16} className="text-emerald-600" />
               </div>
               <span className="text-emerald-600 font-bold text-sm tracking-widest uppercase">
-                Đã nhận diện thành công
+                {t("myGarden.identified")}
               </span>
             </motion.div>
 
@@ -528,29 +535,29 @@ export function ResultView({
                   icon: Sun,
                   color: "text-amber-500",
                   bg: "bg-amber-50",
-                  label: "Ánh sáng",
+                  label: t("myGarden.labelLight"),
                   value: "Cao",
                 },
                 {
                   icon: Droplets,
                   color: "text-blue-500",
                   bg: "bg-blue-50",
-                  label: "Tưới nước",
-                  value: "2 ngày/lần",
+                  label: t("myGarden.labelWatering"),
+                  value: t("myGarden.valueEveryTwoDays"),
                 },
                 {
                   icon: Thermometer,
                   color: "text-red-400",
                   bg: "bg-red-50",
-                  label: "Nhiệt độ",
+                  label: t("myGarden.labelTemperature"),
                   value: "22-28°C",
                 },
                 {
                   icon: Activity,
                   color: "text-emerald-500",
                   bg: "bg-emerald-50",
-                  label: "Độ khó",
-                  value: "Trung bình",
+                  label: t("myGarden.labelDifficulty"),
+                  value: t("myGarden.valueMedium"),
                 },
               ].map((item, idx) => (
                 <motion.div
@@ -583,7 +590,9 @@ export function ResultView({
               <div className="w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center text-white shadow-lg shadow-gray-900/20">
                 <Activity size={24} />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Chẩn đoán</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {t("myGarden.diagnosis")}
+              </h2>
             </div>
 
             <div
@@ -603,7 +612,9 @@ export function ResultView({
                   <p
                     className={`text-xl font-extrabold mb-2 ${healthStyle.text}`}
                   >
-                    {health === "GOOD" ? "Cây khỏe mạnh" : "Cần chú ý"}
+                    {health === "GOOD"
+                      ? t("myGarden.plantHealthy")
+                      : t("myGarden.needsAttention")}
                   </p>
                   <p
                     className={`text-sm leading-relaxed ${healthStyle.text} opacity-90 font-medium`}
@@ -617,7 +628,7 @@ export function ResultView({
             {health !== "GOOD" && (
               <div className="space-y-5">
                 <h3 className="font-bold text-gray-900 text-lg">
-                  Phác đồ điều trị:
+                  {t("myGarden.treatmentPlan")}
                 </h3>
                 <ul className="space-y-4">
                   <li className="flex gap-4 items-start group">
@@ -625,7 +636,7 @@ export function ResultView({
                       1
                     </div>
                     <p className="text-gray-600 leading-relaxed">
-                      Cách ly cây khỏi các cây khác để tránh lây nhiễm chéo.
+                      {t("myGarden.treatmentStep1")}
                     </p>
                   </li>
                   <li className="flex gap-4 items-start group">
@@ -633,7 +644,7 @@ export function ResultView({
                       2
                     </div>
                     <p className="text-gray-600 leading-relaxed">
-                      Cắt bỏ các lá/cành bị bệnh nặng bằng kéo đã sát trùng.
+                      {t("myGarden.treatmentStep2")}
                     </p>
                   </li>
                   <li className="flex gap-4 items-start group">
@@ -641,14 +652,13 @@ export function ResultView({
                       3
                     </div>
                     <p className="text-gray-600 leading-relaxed">
-                      Sử dụng thuốc đặc trị sinh học phun đều lên 2 mặt lá vào
-                      buổi chiều mát.
+                      {t("myGarden.treatmentStep3")}
                     </p>
                   </li>
                 </ul>
 
                 <button className="w-full mt-6 py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-gray-800 transition-all hover:shadow-lg hover:shadow-gray-900/20 flex items-center justify-center gap-2 group">
-                  Mua thuốc đặc trị
+                  {t("myGarden.buyTreatment")}
                   <ArrowRight
                     size={18}
                     className="group-hover:translate-x-1 transition-transform"
@@ -663,10 +673,10 @@ export function ResultView({
                   onClick={handleAddToGarden}
                   className="w-full py-4 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
                 >
-                  <Plus size={20} /> Thêm vào khu vườn của tôi
+                  <Plus size={20} /> {t("myGarden.addToMyGarden")}
                 </button>
                 <p className="text-center text-sm text-gray-500 mt-3">
-                  Lưu lại để theo dõi lịch tưới nước và chăm sóc
+                  {t("myGarden.addToMyGardenHint")}
                 </p>
               </div>
             )}

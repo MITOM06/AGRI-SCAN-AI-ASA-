@@ -1,6 +1,6 @@
+"use client";
+
 import {
-  Phone,
-  Mail,
   MapPin,
   Facebook,
   Youtube,
@@ -8,8 +8,11 @@ import {
   ShieldCheck,
   Smartphone,
 } from "lucide-react";
+import { useT } from "@/context/I18nContext";
 
 export function Footer() {
+  const t = useT();
+
   return (
     <footer className="bg-[#064E3B] text-emerald-100 py-12 mt-auto font-sans text-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,14 +21,14 @@ export function Footer() {
           <div className="space-y-6">
             <div>
               <h3 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">
-                Tải ứng dụng Agri-Scan
+                {t("footer.downloadApp")}
               </h3>
               <div className="flex flex-col gap-2">
                 <button className="flex items-center bg-emerald-800 border border-emerald-700 text-white px-3 py-2 rounded hover:bg-emerald-700 transition-colors w-fit">
                   <Smartphone size={16} className="mr-2" />
                   <div className="text-left">
                     <div className="text-[8px] uppercase text-emerald-200">
-                      Download on the
+                      {t("footer.downloadOnThe")}
                     </div>
                     <div className="text-xs font-bold leading-none">
                       App Store
@@ -36,7 +39,7 @@ export function Footer() {
                   <Globe size={16} className="mr-2" />
                   <div className="text-left">
                     <div className="text-[8px] uppercase text-emerald-200">
-                      Get it on
+                      {t("footer.getItOn")}
                     </div>
                     <div className="text-xs font-bold leading-none">
                       Google Play
@@ -48,7 +51,7 @@ export function Footer() {
 
             <div>
               <h3 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">
-                Kết nối
+                {t("footer.connect")}
               </h3>
               <div className="flex gap-3">
                 <a
@@ -76,12 +79,12 @@ export function Footer() {
           {/* Column 2: Contact Info */}
           <div>
             <h3 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">
-              Tổng đài hỗ trợ
+              {t("footer.hotline")}
             </h3>
             <div className="space-y-3">
               <div>
                 <p className="text-xs text-emerald-300 mb-0.5">
-                  Tư vấn kỹ thuật (Miễn phí)
+                  {t("footer.technicalSupport")}
                 </p>
                 <a
                   href="tel:18006601"
@@ -92,7 +95,7 @@ export function Footer() {
               </div>
               <div>
                 <p className="text-xs text-emerald-300 mb-0.5">
-                  Hỗ trợ tài khoản (8h-22h)
+                  {t("footer.accountSupport")}
                 </p>
                 <a
                   href="tel:18006602"
@@ -102,7 +105,9 @@ export function Footer() {
                 </a>
               </div>
               <div>
-                <p className="text-xs text-emerald-300 mb-0.5">Email</p>
+                <p className="text-xs text-emerald-300 mb-0.5">
+                  {t("footer.email")}
+                </p>
                 <a
                   href="mailto:hotro@agriscan.ai"
                   className="text-emerald-100 hover:text-white flex items-center"
@@ -116,32 +121,32 @@ export function Footer() {
           {/* Column 3: Policies */}
           <div>
             <h3 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">
-              Chính sách
+              {t("footer.policies")}
             </h3>
             <ul className="space-y-2 text-emerald-200">
               <li>
                 <a href="#" className="hover:text-white transition-colors">
-                  Điều khoản sử dụng
+                  {t("footer.terms")}
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition-colors">
-                  Chính sách bảo mật
+                  {t("footer.privacy")}
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition-colors">
-                  Chính sách thanh toán
+                  {t("footer.paymentPolicy")}
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition-colors">
-                  Hướng dẫn chẩn đoán
+                  {t("footer.scanGuide")}
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition-colors">
-                  Gửi góp ý & Khiếu nại
+                  {t("footer.complaints")}
                 </a>
               </li>
             </ul>
@@ -150,15 +155,12 @@ export function Footer() {
           {/* Column 4: Address & Certs */}
           <div>
             <h3 className="text-white font-bold mb-4 uppercase text-xs tracking-wider">
-              Địa chỉ
+              {t("footer.address")}
             </h3>
             <div className="space-y-4 text-emerald-200">
               <p className="flex items-start text-xs leading-relaxed">
                 <MapPin size={14} className="mr-2 mt-0.5 shrink-0" />
-                <span>
-                  Lô E2a-7, Đường D1, Khu Công nghệ cao, P. Long Thạnh Mỹ, TP.
-                  Thủ Đức, TP. Hồ Chí Minh
-                </span>
+                <span>{t("footer.addressValue")}</span>
               </p>
 
               <div className="pt-4 border-t border-emerald-800">
@@ -166,7 +168,7 @@ export function Footer() {
                   <div className="bg-white p-1 rounded h-8 w-auto flex items-center">
                     <ShieldCheck className="text-emerald-600 mr-1" size={12} />
                     <span className="text-[8px] font-bold text-emerald-800 leading-tight">
-                      BỘ CÔNG THƯƠNG
+                      {t("footer.motCertification")}
                     </span>
                   </div>
                   <div className="bg-white p-1 rounded h-8 w-auto flex items-center">
@@ -194,10 +196,8 @@ export function Footer() {
 
         {/* Bottom Footer */}
         <div className="border-t border-emerald-800 pt-6 text-center text-xs text-emerald-400">
-          <p className="mb-1">
-            © 2026 Công Ty Cổ Phần Công Nghệ Nông Nghiệp Agri-Scan AI.
-          </p>
-          <p>Website & AI Innovation Contest 2026 - Foundation Track</p>
+          <p className="mb-1">{t("footer.copyright")}</p>
+          <p>{t("footer.contest")}</p>
         </div>
       </div>
     </footer>

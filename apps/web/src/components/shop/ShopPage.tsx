@@ -6,19 +6,21 @@ import { Search, ShoppingCart, ChevronRight, Star, Filter } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { productApi } from "@agri-scan/shared";
 import {
-  CATEGORY_MAP,
-  CATEGORY_LABEL,
-  CATEGORIES,
+  CATEGORY_CODES,
+  CATEGORY_LABEL_KEY,
 } from "../../constants/shop.constants";
 import { IProduct } from "@agri-scan/shared";
 import { useRouter } from 'next/navigation';
-
-// const CATEGORIES = ["Tất cả", "Phân bón", "Thuốc BVTV", "Hạt giống", "Dụng cụ"];
+import { useT } from "@/context/I18nContext";
 
 export function ShopPage() {
+  const t = useT();
   const navigate = useRouter();
   const { cartCount } = useCart();
-  const [activeCategory, setActiveCategory] = useState("Tất cả");
+
+  // State giữ MÃ danh mục ("" = tất cả), không giữ nhãn đã dịch —
+  // nhãn đổi theo ngôn ngữ, mã thì không.
+  const [activeCategory, setActiveCategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<IProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +30,7 @@ export function ShopPage() {
       setIsLoading(true);
       try {
         const res = await productApi.getProducts({
-          category: CATEGORY_MAP[activeCategory] || undefined,
+          category: activeCategory || undefined,
           search: searchQuery || undefined,
         });
         setProducts(res.data);
@@ -43,8 +45,9 @@ export function ShopPage() {
   }, [activeCategory, searchQuery]);
 
   const filteredProducts = products.filter((p) => {
-    const matchCat =
-      activeCategory === "Tất cả" || p.category === activeCategory;
+    // BUG FIX: bản cũ so p.category (mã: FERTILIZER…) với nhãn tiếng Việt
+    // ("Phân bón") nên không bao giờ khớp. Giờ cả hai đều là mã.
+    const matchCat = activeCategory === "" || p.category === activeCategory;
     const matchSearch = p.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -61,11 +64,11 @@ export function ShopPage() {
               className="hover:text-primary cursor-pointer"
               onClick={() => navigate.push("/")}
             >
-              Trang chủ
+              {t("nav.home")}
             </span>
             <ChevronRight size={16} />
             <span className="font-medium text-gray-900">
-              Cửa hàng Agri-Shop
+              {t("shop.storeTitle")}
             </span>
           </div>
 
@@ -77,7 +80,7 @@ export function ShopPage() {
               />
               <input
                 type="text"
-                placeholder="Tìm vật tư nông nghiệp..."
+                placeholder={t("shop.searchPlaceholder")}
                 className="w-full bg-gray-100 text-sm rounded-full py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -104,12 +107,12 @@ export function ShopPage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sticky top-24">
             <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
               <Filter size={18} className="text-primary" />
-              Danh mục sản phẩm
+              {t("shop.categoryHeading")}
             </h2>
             <div className="space-y-2">
-              {CATEGORIES.map((cat) => (
+              {CATEGORY_CODES.map((cat) => (
                 <button
-                  key={cat}
+                  key={cat || "ALL"}
                   onClick={() => setActiveCategory(cat)}
                   className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                     activeCategory === cat
@@ -117,7 +120,7 @@ export function ShopPage() {
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   }`}
                 >
-                  {cat}
+                  {t(CATEGORY_LABEL_KEY[cat])}
                 </button>
               ))}
             </div>
@@ -126,9 +129,9 @@ export function ShopPage() {
 
         {/* Mobile Categories (Horizontal Scroll) */}
         <div className="md:hidden overflow-x-auto hide-scrollbar flex gap-2 pb-2 -mx-4 px-4">
-          {CATEGORIES.map((cat) => (
+          {CATEGORY_CODES.map((cat) => (
             <button
-              key={cat}
+              key={cat || "ALL"}
               onClick={() => setActiveCategory(cat)}
               className={`whitespace-nowrap px-5 py-2 rounded-full text-sm font-medium transition-colors ${
                 activeCategory === cat
@@ -136,7 +139,7 @@ export function ShopPage() {
                   : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
               }`}
             >
-              {cat}
+              {t(CATEGORY_LABEL_KEY[cat])}
             </button>
           ))}
         </div>
@@ -145,10 +148,12 @@ export function ShopPage() {
         <div className="flex-1">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-900">
-              {activeCategory === "Tất cả" ? "Tất cả sản phẩm" : activeCategory}
+              {activeCategory === ""
+                ? t("shop.allProducts")
+                : t(CATEGORY_LABEL_KEY[activeCategory])}
             </h2>
             <span className="text-sm text-gray-500">
-              {products.length} sản phẩm
+              {t("shop.productCount", { count: products.length })}
             </span>
           </div>
 
@@ -183,7 +188,7 @@ export function ShopPage() {
                       />
                       {product.stock < 10 && (
                         <div className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md">
-                          Sắp hết
+                          {t("shop.lowStock")}
                         </div>
                       )}
                     </div>
@@ -201,7 +206,9 @@ export function ShopPage() {
                             {product.rating}
                           </span>
                           <span className="mx-1 text-gray-300">|</span>
-                          <span>Đã bán {product.sold}</span>
+                          <span>
+                            {t("shop.sold", { count: product.sold })}
+                          </span>
                         </div>
                         <div className="flex items-end justify-between">
                           <div className="text-red-500 font-bold text-lg">
@@ -225,10 +232,10 @@ export function ShopPage() {
                 <Search size={32} className="text-gray-400" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-1">
-                Không tìm thấy sản phẩm
+                {t("shop.noProducts")}
               </h3>
               <p className="text-gray-500">
-                Vui lòng thử lại với từ khóa hoặc danh mục khác.
+                {t("shop.noProductsHint")}
               </p>
             </div>
           )}

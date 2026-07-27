@@ -18,9 +18,11 @@ import { registerSchema, type RegisterFormData } from "@agri-scan/shared";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useT } from "@/context/I18nContext";
 import { withRedirect, rememberOAuthRedirect } from "@/lib/redirect";
 
 export default function RegisterForm() {
+  const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { register: registerApi, loginWithGoogle, loginWithFacebook } = useAuth();
@@ -61,9 +63,9 @@ export default function RegisterForm() {
         ),
       );
     } catch (error: any) {
+      // Message backend là câu hoàn chỉnh → t() trả nguyên văn; fallback là key i18n
       const errorMessage =
-        error.response?.data?.message ||
-        "Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.";
+        error.response?.data?.message || "auth.registerFailed";
       setError("root", { type: "server", message: errorMessage });
     }
   };
@@ -80,11 +82,9 @@ export default function RegisterForm() {
             <Leaf size={28} />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">
-            Tạo tài khoản mới
+            {t("auth.registerTitle")}
           </h2>
-          <p className="mt-2 text-gray-600">
-            Bắt đầu hành trình quản lý vườn cây thông minh
-          </p>
+          <p className="mt-2 text-gray-600">{t("auth.registerSubtitle")}</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -92,7 +92,7 @@ export default function RegisterForm() {
             {/* Họ tên */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Họ và tên
+                {t("auth.fullName")}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -102,12 +102,12 @@ export default function RegisterForm() {
                   {...register("fullName")}
                   type="text"
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="Nguyễn Văn A"
+                  placeholder={t("auth.fullNamePlaceholder")}
                 />
               </div>
               {errors.fullName && (
                 <p className="mt-1 text-sm text-red-500">
-                  {errors.fullName.message}
+                  {t(errors.fullName.message ?? "")}
                 </p>
               )}
             </div>
@@ -115,7 +115,7 @@ export default function RegisterForm() {
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
+                {t("auth.email")}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -125,12 +125,12 @@ export default function RegisterForm() {
                   {...register("email")}
                   type="email"
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="name@example.com"
+                  placeholder={t("auth.emailPlaceholder")}
                 />
               </div>
               {errors.email && (
                 <p className="mt-1 text-sm text-red-500">
-                  {errors.email.message}
+                  {t(errors.email.message ?? "")}
                 </p>
               )}
             </div>
@@ -138,7 +138,7 @@ export default function RegisterForm() {
             {/* Mật khẩu */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mật khẩu
+                {t("auth.password")}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -160,29 +160,29 @@ export default function RegisterForm() {
               </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-500">
-                  {errors.password.message}
+                  {t(errors.password.message ?? "")}
                 </p>
               )}
 
-              {/* Yêu cầu mật khẩu */}
+              {/* Yêu cầu mật khẩu — key i18n làm React key để ổn định khi đổi ngôn ngữ */}
               <div className="mt-3 text-sm space-y-1">
                 <p className="font-medium text-gray-700 mb-1">
-                  Yêu cầu mật khẩu:
+                  {t("auth.passwordRequirements")}
                 </p>
-                {[
-                  [isPasswordLengthValid, "Ít nhất 8 ký tự"],
-                  [hasUpperCase, "Chứa chữ in hoa"],
-                  [hasLowerCase, "Chứa chữ thường"],
-                  [hasNumber, "Chứa số"],
-                  [hasSpecialChar, "Chứa ký tự đặc biệt"],
-                ].map(([valid, label]) => (
+                {([
+                  [isPasswordLengthValid, "auth.ruleMinLength"],
+                  [hasUpperCase, "auth.ruleUpperCase"],
+                  [hasLowerCase, "auth.ruleLowerCase"],
+                  [hasNumber, "auth.ruleNumber"],
+                  [hasSpecialChar, "auth.ruleSpecialChar"],
+                ] as const).map(([valid, key]) => (
                   <p
-                    key={label as string}
+                    key={key}
                     className={`text-xs flex items-center gap-1 ${valid ? "text-green-600" : "text-gray-400"
                       }`}
                   >
                     <span className="w-1 h-1 bg-current rounded-full" />
-                    {label as string}
+                    {t(key)}
                   </p>
                 ))}
               </div>
@@ -191,7 +191,7 @@ export default function RegisterForm() {
             {/* Xác nhận mật khẩu */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Xác nhận mật khẩu
+                {t("auth.confirmPassword")}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -217,7 +217,7 @@ export default function RegisterForm() {
               </div>
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-500">
-                  {errors.confirmPassword.message}
+                  {t(errors.confirmPassword.message ?? "")}
                 </p>
               )}
             </div>
@@ -238,19 +238,19 @@ export default function RegisterForm() {
                   htmlFor="terms"
                   className="font-medium text-gray-600 cursor-pointer"
                 >
-                  Tôi đồng ý với{" "}
+                  {t("auth.agreePrefix")}{" "}
                   <Link
                     href="/terms"
                     className="text-primary hover:text-primary-dark hover:underline"
                   >
-                    Điều khoản dịch vụ
+                    {t("auth.termsOfService")}
                   </Link>{" "}
-                  và{" "}
+                  {t("auth.and")}{" "}
                   <Link
                     href="/privacy"
                     className="text-primary hover:text-primary-dark hover:underline"
                   >
-                    Chính sách bảo mật
+                    {t("auth.privacyPolicy")}
                   </Link>
                 </label>
               </div>
@@ -258,13 +258,15 @@ export default function RegisterForm() {
           </div>
 
           {errors.terms && (
-            <p className="mt-1 text-sm text-red-500">{errors.terms.message}</p>
+            <p className="mt-1 text-sm text-red-500">
+              {t(errors.terms.message ?? "")}
+            </p>
           )}
 
           {/* Lỗi backend */}
           {errors.root && (
             <div className="p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center border border-red-100">
-              {errors.root.message}
+              {t(errors.root.message ?? "")}
             </div>
           )}
 
@@ -276,11 +278,12 @@ export default function RegisterForm() {
             {isSubmitting ? (
               <>
                 <Loader2 className="animate-spin -ml-1 mr-2" size={20} />
-                Đang xử lý...
+                {t("common.processing")}
               </>
             ) : (
               <>
-                Tạo tài khoản <ArrowRight className="ml-2" size={20} />
+                {t("auth.registerButton")}{" "}
+                <ArrowRight className="ml-2" size={20} />
               </>
             )}
           </button>
@@ -292,7 +295,7 @@ export default function RegisterForm() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                  Hoặc đăng ký bằng
+                  {t("auth.orContinueWith")}
                 </span>
               </div>
             </div>
@@ -350,12 +353,12 @@ export default function RegisterForm() {
           </div>
 
           <div className="text-center text-sm">
-            <span className="text-gray-500">Đã có tài khoản? </span>
+            <span className="text-gray-500">{t("auth.haveAccount")} </span>
             <Link
               href={withRedirect("/login", redirectParam)}
               className="font-medium text-primary hover:text-primary-dark"
             >
-              Đăng nhập
+              {t("auth.loginButton")}
             </Link>
           </div>
         </form>

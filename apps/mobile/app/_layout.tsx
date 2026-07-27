@@ -3,6 +3,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { setTokenStorage } from "@agri-scan/shared";
+import { I18nProvider } from "../context/I18nContext";
 
 if (Platform.OS === "web") {
   // Chạy trên Expo Web (localhost:8081) hoặc trình duyệt
@@ -39,6 +40,8 @@ if (Platform.OS === "web") {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
+      {/* I18nProvider bọc ngoài Stack để mọi màn hình đều gọi được t() */}
+      <I18nProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="auth/login" />
@@ -74,6 +77,7 @@ export default function RootLayout() {
         <Stack.Screen name="garden-detail" />
         <Stack.Screen name="garden-setup" />
       </Stack>
+      </I18nProvider>
     </SafeAreaProvider>
   );
 }

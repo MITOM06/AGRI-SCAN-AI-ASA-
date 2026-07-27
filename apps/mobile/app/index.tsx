@@ -24,10 +24,13 @@ import {
   PlayCircle,
   ShoppingCart,
 } from "lucide-react-native";
+import { useT } from "../context/I18nContext";
+import { LanguageSwitcher } from "../components/ui/LanguageSwitcher";
 
 const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -76,25 +79,22 @@ export default function HomeScreen() {
   const features = [
     {
       icon: <ShieldCheck size={28} color="#2563eb" />,
-      title: "Chẩn đoán nhanh 2s",
-      description:
-        "Dùng thử miễn phí 3 lượt nhận diện bệnh trên cây trồng không cần tài khoản.",
+      title: t("home.feature1Title"),
+      description: t("home.feature1Desc"),
       colorBg: "#eff6ff",
       path: "/scan",
     },
     {
       icon: <Sprout size={28} color="#16a34a" />,
-      title: "Giải pháp sinh học",
-      description:
-        "Hướng dẫn cách trị bệnh bằng phương pháp an toàn, không độc hại.",
+      title: t("home.feature2Title"),
+      description: t("home.feature2Desc"),
       colorBg: "#f0fdf4",
       path: "/scan",
     },
     {
       icon: <Users size={28} color="#ea580c" />,
-      title: "Hàng ngàn nhà nông",
-      description:
-        "Đăng nhập để tham gia cộng đồng và lưu trữ lịch sử chăm sóc cây.",
+      title: t("home.feature3Title"),
+      description: t("home.feature3Desc"),
       colorBg: "#fff7ed",
       path: "/auth/login",
     },
@@ -119,6 +119,9 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.headerRight}>
+          {/* Nút chuyển ngôn ngữ ở góc trên bên phải màn chính */}
+          <LanguageSwitcher />
+
           <TouchableOpacity
             onPress={() => router.push("/shop" as any)}
             style={styles.navIconBtn}
@@ -130,7 +133,7 @@ export default function HomeScreen() {
             onPress={() => router.push("/auth/login" as any)}
             style={styles.navLoginBtn}
           >
-            <Text style={styles.navLoginText}>Đăng nhập</Text>
+            <Text style={styles.navLoginText}>{t("nav.login")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -168,7 +171,7 @@ export default function HomeScreen() {
               ]}
             >
               <View style={styles.menuHeader}>
-                <Text style={styles.menuTitle}>Danh mục</Text>
+                <Text style={styles.menuTitle}>{t("home.menuTitle")}</Text>
                 <TouchableOpacity onPress={closeMenu} style={styles.closeBtn}>
                   <X size={26} color="#374151" />
                 </TouchableOpacity>
@@ -179,35 +182,37 @@ export default function HomeScreen() {
                 showsVerticalScrollIndicator={false}
               >
                 <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
-                  <Text style={styles.menuItemText}>Trang chủ</Text>
+                  <Text style={styles.menuItemText}>{t("home.menuHome")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/scan")}
                 >
-                  <Text style={styles.menuItemText}>Dùng thử AI (Guest)</Text>
+                  <Text style={styles.menuItemText}>
+                    {t("home.menuTryAi")}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/shop")}
                 >
-                  <Text style={styles.menuItemText}>
-                    Chợ vật tư nông nghiệp
-                  </Text>
+                  <Text style={styles.menuItemText}>{t("home.menuShop")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/onboarding")}
                 >
                   <Text style={styles.menuItemText}>
-                    Xem hướng dẫn ứng dụng
+                    {t("home.menuGuide")}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/about")}
                 >
-                  <Text style={styles.menuItemText}>Về chúng tôi</Text>
+                  <Text style={styles.menuItemText}>
+                    {t("home.menuAbout")}
+                  </Text>
                 </TouchableOpacity>
               </ScrollView>
 
@@ -221,7 +226,9 @@ export default function HomeScreen() {
                   style={styles.menuLoginBtn}
                   onPress={() => handleNavigate("/auth/login")}
                 >
-                  <Text style={styles.menuLoginText}>Đăng nhập / Đăng ký</Text>
+                  <Text style={styles.menuLoginText}>
+                    {t("home.menuLogin")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -236,18 +243,15 @@ export default function HomeScreen() {
         <View style={styles.heroSection}>
           <View style={styles.badgeWeb}>
             <View style={styles.dot} />
-            <Text style={styles.badgeText}>
-              Dùng thử miễn phí không cần Đăng nhập
-            </Text>
+            <Text style={styles.badgeText}>{t("home.guestBadge")}</Text>
           </View>
           <Text style={styles.mainTitle}>
-            Bác Sĩ <Text style={styles.greenTitle}>Thực Vật</Text>
-            {"\n"}Bỏ Túi
+            {t("home.heroLine1")}{" "}
+            <Text style={styles.greenTitle}>{t("home.heroHighlight")}</Text>
+            {"\n"}
+            {t("home.heroLine2")}
           </Text>
-          <Text style={styles.description}>
-            Hệ thống AI phân tích bệnh trên lá cây với độ chính xác 98%. Tham
-            gia cùng hơn 10,000+ nông dân Việt Nam.
-          </Text>
+          <Text style={styles.description}>{t("home.heroSubtitle")}</Text>
 
           <View style={styles.buttonGroup}>
             <TouchableOpacity
@@ -255,7 +259,7 @@ export default function HomeScreen() {
               activeOpacity={0.8}
               onPress={() => router.push("/scan")}
             >
-              <Text style={styles.primaryBtnText}>Quét thử ngay</Text>
+              <Text style={styles.primaryBtnText}>{t("home.ctaScan")}</Text>
               <ArrowRight size={18} color="#fff" />
             </TouchableOpacity>
 
@@ -265,7 +269,9 @@ export default function HomeScreen() {
               onPress={() => router.push("/onboarding")}
             >
               <PlayCircle size={20} color="#16a34a" />
-              <Text style={styles.onboardingBtnText}>Xem hướng dẫn</Text>
+              <Text style={styles.onboardingBtnText}>
+                {t("home.ctaOnboarding")}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -276,14 +282,14 @@ export default function HomeScreen() {
             >
               <ShoppingCart size={22} color="#f59e0b" />
               <Text style={styles.publicFeatureText}>
-                Khám phá Chợ vật tư nông nghiệp
+                {t("home.ctaShop")}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.featuresSection}>
-          <Text style={styles.featuresTitle}>Vì sao chọn Agri-Scan?</Text>
+          <Text style={styles.featuresTitle}>{t("home.featuresTitle")}</Text>
           <View style={styles.featuresList}>
             {/* Đưa comment ra ngoài vòng lặp map để tránh lỗi JSX */}
             {features.map((item, index) => (

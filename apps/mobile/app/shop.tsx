@@ -17,16 +17,20 @@ import { ArrowLeft, Search, ShoppingCart, Star } from "lucide-react-native";
 // Bổ sung import productApi
 import { productApi, formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
 
-// Map chuẩn danh mục với Backend
+import { useT } from "../context/I18nContext";
+
+// Map chuẩn danh mục với Backend.
+// `id` là mã gửi lên API — không dịch. `labelKey` mới là phần được dịch.
 const CATEGORIES = [
-  { id: "", label: "Tất cả" },
-  { id: "FERTILIZER", label: "Phân bón" },
-  { id: "PESTICIDE", label: "Thuốc BVTV" },
-  { id: "SEED", label: "Hạt giống" },
-  { id: "TOOL", label: "Dụng cụ" },
+  { id: "", labelKey: "shop.categoryAll" },
+  { id: "FERTILIZER", labelKey: "shop.categoryFertilizer" },
+  { id: "PESTICIDE", labelKey: "shop.categoryPesticide" },
+  { id: "SEED", labelKey: "shop.categorySeed" },
+  { id: "TOOL", labelKey: "shop.categoryTool" },
 ];
 
 export default function ShopScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -67,7 +71,7 @@ export default function ShopScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Cửa hàng Agri-Shop</Text>
+        <Text style={styles.headerTitle}>{t("shop.storeTitle")}</Text>
 
         <TouchableOpacity
           onPress={() => router.push("/my-cart" as any)}
@@ -85,7 +89,7 @@ export default function ShopScreen() {
         <View style={styles.searchBar}>
           <Search size={20} color="#9ca3af" />
           <TextInput
-            placeholder="Tìm vật tư nông nghiệp..."
+            placeholder={t("shop.searchPlaceholder")}
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -96,7 +100,7 @@ export default function ShopScreen() {
               style={styles.searchActionBtn}
               onPress={fetchProducts}
             >
-              <Text style={styles.searchActionText}>Tìm</Text>
+              <Text style={styles.searchActionText}>{t("common.search")}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -124,7 +128,7 @@ export default function ShopScreen() {
                   activeCategory === cat.id && styles.categoryTextActive,
                 ]}
               >
-                {cat.label}
+                {t(cat.labelKey)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -143,7 +147,7 @@ export default function ShopScreen() {
             style={{ marginTop: 50, width: "100%" }}
           />
         ) : products.length === 0 ? (
-          <Text style={styles.emptyText}>Không tìm thấy sản phẩm nào.</Text>
+          <Text style={styles.emptyText}>{t("shop.noProducts")}</Text>
         ) : (
           products.map((item) => (
             <TouchableOpacity
@@ -172,7 +176,10 @@ export default function ShopScreen() {
                   <Text style={styles.ratingText}>
                     {item.rating.toFixed(1)}
                   </Text>
-                  <Text style={styles.soldText}> | Đã bán {item.sold}</Text>
+                  <Text style={styles.soldText}>
+                    {" "}
+                    | {t("shop.sold", { count: item.sold })}
+                  </Text>
                 </View>
 
                 <View style={styles.priceRow}>

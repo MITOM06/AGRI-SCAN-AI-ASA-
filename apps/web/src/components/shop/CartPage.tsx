@@ -11,8 +11,10 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCart } from "../../context/CartContext";
+import { useT } from "@/context/I18nContext";
 
 export function CartPage() {
+  const t = useT();
   const router = useRouter();
   const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
 
@@ -25,23 +27,23 @@ export function CartPage() {
             className="hover:text-primary cursor-pointer"
             onClick={() => router.push("/")}
           >
-            Trang chủ
+            {t("nav.home")}
           </span>
           <ChevronRight size={16} />
           <span
             className="hover:text-primary cursor-pointer"
             onClick={() => router.push("/shop")}
           >
-            Cửa hàng
+            {t("shop.storeShort")}
           </span>
           <ChevronRight size={16} />
-          <span className="font-medium text-gray-900">Giỏ hàng</span>
+          <span className="font-medium text-gray-900">{t("shop.cart")}</span>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-8">
-          Giỏ hàng của bạn
+          {t("shop.cartTitle")}
         </h1>
 
         {cartItems.length === 0 ? (
@@ -52,16 +54,16 @@ export function CartPage() {
           >
             <ShoppingBag size={80} className="mb-6 text-gray-200" />
             <p className="text-xl font-medium text-gray-600 mb-2">
-              Giỏ hàng đang trống
+              {t("shop.cartEmpty")}
             </p>
             <p className="text-gray-500 mb-8">
-              Chưa có sản phẩm nào trong giỏ hàng của bạn.
+              {t("shop.cartEmptyDesc")}
             </p>
             <button
               onClick={() => router.push("/shop")}
               className="px-8 py-3 bg-primary text-white rounded-full font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
             >
-              Tiếp tục mua sắm
+              {t("shop.continueShopping")}
             </button>
           </motion.div>
         ) : (
@@ -70,10 +72,16 @@ export function CartPage() {
             <div className="flex-1 space-y-4">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="hidden sm:grid grid-cols-12 gap-4 p-4 border-b border-gray-100 bg-gray-50 text-sm font-bold text-gray-600">
-                  <div className="col-span-6">Sản phẩm</div>
-                  <div className="col-span-2 text-center">Đơn giá</div>
-                  <div className="col-span-2 text-center">Số lượng</div>
-                  <div className="col-span-2 text-right">Thành tiền</div>
+                  <div className="col-span-6">{t("shop.colProduct")}</div>
+                  <div className="col-span-2 text-center">
+                    {t("shop.colUnitPrice")}
+                  </div>
+                  <div className="col-span-2 text-center">
+                    {t("shop.colQuantity")}
+                  </div>
+                  <div className="col-span-2 text-right">
+                    {t("shop.colSubtotal")}
+                  </div>
                 </div>
 
                 <div className="divide-y divide-gray-100">
@@ -168,7 +176,7 @@ export function CartPage() {
                             whileTap={{ scale: 0.9 }}
                             onClick={() => removeFromCart(item._id)}
                             className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 shrink-0"
-                            title="Xóa sản phẩm"
+                            title={t("shop.removeItem")}
                           >
                             <Trash2 size={18} />
                           </motion.button>
@@ -184,28 +192,36 @@ export function CartPage() {
             <div className="w-full lg:w-80 flex-shrink-0">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
                 <h2 className="text-lg font-bold text-gray-900 mb-6">
-                  Tóm tắt đơn hàng
+                  {t("shop.orderSummary")}
                 </h2>
 
                 <div className="space-y-4 text-sm mb-6">
                   <div className="flex justify-between text-gray-600">
-                    <span>Tạm tính ({cartItems.length} sản phẩm)</span>
+                    <span>
+                      {t("shop.subtotalWithCount", {
+                        count: cartItems.length,
+                      })}
+                    </span>
                     <span className="font-medium text-gray-900">
                       {cartTotal.toLocaleString("vi-VN")} đ
                     </span>
                   </div>
                   <div className="flex justify-between text-gray-600">
-                    <span>Phí giao hàng</span>
-                    <span className="text-gray-400">Tính ở bước sau</span>
+                    <span>{t("shop.shippingFee")}</span>
+                    <span className="text-gray-400">
+                      {t("shop.calculatedLater")}
+                    </span>
                   </div>
                   <div className="pt-4 border-t border-gray-100 flex justify-between items-end">
-                    <span className="font-bold text-gray-900">Tổng cộng</span>
+                    <span className="font-bold text-gray-900">
+                      {t("shop.grandTotal")}
+                    </span>
                     <div className="text-right">
                       <span className="text-2xl font-bold text-red-500 block leading-none mb-1">
                         {cartTotal.toLocaleString("vi-VN")} đ
                       </span>
                       <span className="text-xs text-gray-500">
-                        (Đã bao gồm VAT nếu có)
+                        {t("shop.vatIncluded")}
                       </span>
                     </div>
                   </div>
@@ -216,7 +232,7 @@ export function CartPage() {
                   onClick={() => router.push("/shop/checkout")}
                   className="w-full py-4 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
                 >
-                  Tiến hành thanh toán
+                  {t("shop.proceedToCheckout")}
                   <ArrowRight size={18} />
                 </motion.button>
               </div>

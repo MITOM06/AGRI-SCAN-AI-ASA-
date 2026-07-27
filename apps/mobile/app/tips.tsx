@@ -20,34 +20,37 @@ import {
   Heart,
 } from "lucide-react-native";
 
+import { useT } from "../context/I18nContext";
+
 export default function TipsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const t = useT();
   const [searchQuery, setSearchQuery] = useState("");
 
   // DỮ LIỆU TĨNH GỐC CỦA BẠN
   const blogs = [
     {
       id: 1,
-      title: "Bí quyết ủ phân hữu cơ tại nhà không mùi",
-      category: "Phân bón",
-      time: "5 phút đọc",
+      title: t("tips.post1Title"),
+      category: t("tips.catFertilizer"),
+      time: t("tips.readMinutes", { minutes: 5 }),
       img: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?q=80&w=600",
       isHot: true,
     },
     {
       id: 2,
-      title: "Lịch tưới nước chuẩn cho cây sầu riêng mùa khô",
-      category: "Tưới tiêu",
-      time: "3 phút đọc",
+      title: t("tips.post2Title"),
+      category: t("tips.catIrrigation"),
+      time: t("tips.readMinutes", { minutes: 3 }),
       img: "https://images.unsplash.com/photo-1592424006691-88b0e74f11d1?q=80&w=600",
       isHot: false,
     },
     {
       id: 3,
-      title: "Phòng ngừa bọ trĩ phá hoại hoa hồng mùa nắng",
-      category: "Sâu bệnh",
-      time: "4 phút đọc",
+      title: t("tips.post3Title"),
+      category: t("tips.catPests"),
+      time: t("tips.readMinutes", { minutes: 4 }),
       img: "https://images.unsplash.com/photo-1496062031456-07b8f162a322?q=80&w=600",
       isHot: true,
     },
@@ -70,21 +73,18 @@ export default function TipsScreen() {
           >
             <ArrowLeft size={24} color="#111827" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Cẩm Nang Agri-Scan</Text>
+          <Text style={styles.headerTitle}>{t("tips.title")}</Text>
           <TouchableOpacity style={styles.iconBtn}>
             <Bookmark size={22} color="#475569" />
           </TouchableOpacity>
         </View>
-        <Text style={styles.headerSubtitle}>
-          Tổng hợp kiến thức, bí quyết bón phân và chăm sóc cây trồng từ chuyên
-          gia.
-        </Text>
+        <Text style={styles.headerSubtitle}>{t("tips.subtitle")}</Text>
 
         <View style={styles.searchContainer}>
           <Search size={20} color="#94a3b8" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm kiếm bài viết, bí quyết..."
+            placeholder={t("tips.searchPlaceholder")}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -128,7 +128,7 @@ export default function TipsScreen() {
               </Text>
 
               <View style={styles.cardFooter}>
-                <Text style={styles.authorText}>By AgriExpert</Text>
+                <Text style={styles.authorText}>{t("tips.author")}</Text>
                 <View style={styles.interactionRow}>
                   <TouchableOpacity style={styles.miniIconBtn}>
                     <Heart size={16} color="#94a3b8" />

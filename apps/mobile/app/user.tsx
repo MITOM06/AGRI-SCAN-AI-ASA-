@@ -33,11 +33,13 @@ import {
 } from "lucide-react-native";
 
 import { styles } from "../styles/user.styles";
+import { useT } from "../context/I18nContext";
 const { width } = Dimensions.get("window");
 
 export default function UserHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const t = useT();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userData, setUserData] = useState<{
@@ -145,55 +147,50 @@ export default function UserHomeScreen() {
   const features = [
     {
       icon: <ShieldCheck size={28} color="#2563eb" />,
-      title: "AI Diagnosis",
-      description:
-        "Nhận diện bệnh cây qua ảnh chụp tức thời với độ chính xác cao.",
+      title: t("home.uFeatScanTitle"),
+      description: t("home.uFeatScanDesc"),
       colorBg: "#eff6ff",
       route: "/scan",
     },
     {
       icon: <Library size={28} color="#0ea5e9" />,
-      title: "Từ điển cây",
-      description:
-        "Tra cứu thông tin chi tiết về các loại bệnh và cách phòng trừ.",
+      title: t("home.uFeatDictTitle"),
+      description: t("home.uFeatDictDesc"),
       colorBg: "#e0f2fe",
       route: "/tree-dictionary", // 🔥 ĐÃ SỬA: Khớp với tên file tree-dictionary.tsx
     },
     {
       icon: <CloudSun size={28} color="#06b6d4" />,
-      title: "Agri-Weather",
-      description:
-        "Dự báo thời tiết chuyên sâu và khuyến nghị chăm sóc theo ngày.",
+      title: t("home.uFeatWeatherTitle"),
+      description: t("home.uFeatWeatherDesc"),
       colorBg: "#ecfeff",
       route: "/weather",
     },
     {
       icon: <ShoppingCart size={28} color="#f59e0b" />,
-      title: "Agri-Shop",
-      description:
-        "Chợ vật tư nông nghiệp, phân bón và thuốc sinh học chính hãng.",
+      title: t("home.uFeatShopTitle"),
+      description: t("home.uFeatShopDesc"),
       colorBg: "#fef3c7",
       route: "/shop",
     },
     {
       icon: <Store size={28} color="#db2777" />,
-      title: "Gian hàng của tôi",
-      description: "Đăng bán nông sản, vật tư và quản lý đơn khách đặt.",
+      title: t("home.uFeatMyShopTitle"),
+      description: t("home.uFeatMyShopDesc"),
       colorBg: "#fce7f3",
       route: "/my-shop",
     },
     {
       icon: <Sprout size={28} color="#8b5cf6" />,
-      title: "My Garden",
-      description: "Quản lý danh sách cây trồng và theo dõi lịch chăm sóc.",
+      title: t("home.uFeatGardenTitle"),
+      description: t("home.uFeatGardenDesc"),
       colorBg: "#f3e8ff",
       route: "/my-garden",
     },
     {
       icon: <BookOpen size={28} color="#10b981" />,
-      title: "Farming Tips",
-      description:
-        "Cẩm nang kiến thức, bí quyết bón phân và chăm sóc cây trồng.",
+      title: t("home.uFeatTipsTitle"),
+      description: t("home.uFeatTipsDesc"),
       colorBg: "#ecfdf5",
       route: "/tips",
     },
@@ -267,7 +264,7 @@ export default function UserHomeScreen() {
               ]}
             >
               <View style={styles.menuHeader}>
-                <Text style={styles.menuTitle}>Tài khoản</Text>
+                <Text style={styles.menuTitle}>{t("home.uDrawerTitle")}</Text>
                 <TouchableOpacity onPress={closeMenu} style={styles.closeBtn}>
                   <X size={26} color="#374151" />
                 </TouchableOpacity>
@@ -285,10 +282,10 @@ export default function UserHomeScreen() {
                 </View>
                 <View style={styles.userDetails}>
                   <Text style={styles.userName} numberOfLines={1}>
-                    {userData?.fullName || "Người Dùng"}
+                    {userData?.fullName || t("home.uFallbackName")}
                   </Text>
                   <Text style={styles.userEmail} numberOfLines={1}>
-                    {userData?.email || "Đang tải email..."}
+                    {userData?.email || t("home.uLoadingEmail")}
                   </Text>
                 </View>
               </View>
@@ -303,17 +300,19 @@ export default function UserHomeScreen() {
                     onPress={() => handleNavigate("/admin")}
                   >
                     <ShieldAlert size={20} color="#dc2626" />
-                    <Text style={styles.adminMenuText}>Quản trị Hệ thống</Text>
+                    <Text style={styles.adminMenuText}>
+                      {t("home.uMenuAdmin")}
+                    </Text>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity style={styles.menuItem} onPress={closeMenu}>
-                  <Text style={styles.menuItemText}>Trang chủ</Text>
+                  <Text style={styles.menuItemText}>{t("nav.home")}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/scan")}
                 >
-                  <Text style={styles.menuItemText}>Chẩn đoán AI</Text>
+                  <Text style={styles.menuItemText}>{t("nav.scan")}</Text>
                 </TouchableOpacity>
 
                 {/* 🔥 ĐÃ SỬA: Trỏ về /tree-dictionary */}
@@ -321,28 +320,34 @@ export default function UserHomeScreen() {
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/tree-dictionary")}
                 >
-                  <Text style={styles.menuItemText}>Từ điển cây</Text>
+                  <Text style={styles.menuItemText}>
+                    {t("nav.encyclopedia")}
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/shop")}
                 >
-                  <Text style={styles.menuItemText}>Cửa hàng vật tư (Mua)</Text>
+                  <Text style={styles.menuItemText}>
+                    {t("home.uMenuShopBuy")}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/my-shop")}
                 >
                   <Text style={[styles.menuItemText, { color: "#db2777" }]}>
-                    Gian hàng của tôi (Bán)
+                    {t("home.uMenuMyShopSell")}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItem}
                   onPress={() => handleNavigate("/my-garden")}
                 >
-                  <Text style={styles.menuItemText}>Vườn của tôi</Text>
+                  <Text style={styles.menuItemText}>
+                    {t("home.uMenuMyGarden")}
+                  </Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider} />
@@ -352,7 +357,7 @@ export default function UserHomeScreen() {
                 >
                   <MessageSquare size={20} color="#4b5563" />
                   <Text style={styles.menuItemTextIcon}>
-                    Gửi phản hồi & Hỗ trợ
+                    {t("home.uMenuFeedback")}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -360,14 +365,18 @@ export default function UserHomeScreen() {
                   onPress={() => handleNavigate("/profile")}
                 >
                   <UserIcon size={20} color="#4b5563" />
-                  <Text style={styles.menuItemTextIcon}>Hồ sơ của tôi</Text>
+                  <Text style={styles.menuItemTextIcon}>
+                    {t("nav.myProfile")}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.menuItemWithIcon}
                   onPress={() => handleNavigate("/setting")}
                 >
                   <Settings size={20} color="#4b5563" />
-                  <Text style={styles.menuItemTextIcon}>Cài đặt</Text>
+                  <Text style={styles.menuItemTextIcon}>
+                    {t("nav.settings")}
+                  </Text>
                 </TouchableOpacity>
               </ScrollView>
 
@@ -382,7 +391,7 @@ export default function UserHomeScreen() {
                   onPress={handleLogout}
                 >
                   <LogOut size={20} color="#ef4444" />
-                  <Text style={styles.menuLogoutText}>Đăng xuất</Text>
+                  <Text style={styles.menuLogoutText}>{t("nav.logout")}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -400,20 +409,22 @@ export default function UserHomeScreen() {
             <Text style={styles.badgeText}>AI Innovation Contest 2026</Text>
           </View>
           <Text style={styles.mainTitle}>
-            Bác Sĩ{"\n"}
-            <Text style={styles.greenTitle}>Cây Trồng{"\n"}</Text>Thông Minh
+            {t("home.uHeroLine1")}
+            {"\n"}
+            <Text style={styles.greenTitle}>
+              {t("home.uHeroHighlight")}
+              {"\n"}
+            </Text>
+            {t("home.uHeroLine2")}
           </Text>
-          <Text style={styles.description}>
-            Chẩn đoán bệnh cây trồng tức thì bằng AI. Nhận phác đồ điều trị khoa
-            học và lộ trình chăm sóc bền vững.
-          </Text>
+          <Text style={styles.description}>{t("home.uHeroSubtitle")}</Text>
           <View style={styles.buttonGroup}>
             <TouchableOpacity
               style={styles.primaryBtn}
               activeOpacity={0.8}
               onPress={() => router.push("/scan" as any)}
             >
-              <Text style={styles.primaryBtnText}>Chẩn đoán ngay</Text>
+              <Text style={styles.primaryBtnText}>{t("home.uCtaScan")}</Text>
               <ArrowRight size={18} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -421,9 +432,13 @@ export default function UserHomeScreen() {
 
         <View style={styles.featuresSection}>
           <View style={styles.featuresHeader}>
-            <Text style={styles.featuresEyebrow}>HỆ SINH THÁI TÍNH NĂNG</Text>
+            <Text style={styles.featuresEyebrow}>
+              {t("home.uFeaturesEyebrow")}
+            </Text>
             <Text style={styles.featuresTitle}>
-              Công nghệ tiên phong{"\n"}cho nông nghiệp bền vững
+              {t("home.uFeaturesTitleLine1")}
+              {"\n"}
+              {t("home.uFeaturesTitleLine2")}
             </Text>
           </View>
           <View style={styles.featuresList}>

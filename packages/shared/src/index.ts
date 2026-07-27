@@ -10,6 +10,9 @@ export * from "./utils";
 // Schemas
 export * from "./schemas";
 
+// i18n (lõi đa ngôn ngữ — dữ liệu + hàm thuần, không phụ thuộc React)
+export * from "./i18n";
+
 // Explicit exports to ensure TS sees them
 export { APP_DESCRIPTION } from "./constants/app.constants";
 export { isValidImageFile } from "./utils/validation.utils";

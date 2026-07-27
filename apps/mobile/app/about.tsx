@@ -20,21 +20,25 @@ import {
   ChevronRight,
   Info,
 } from "lucide-react-native";
+import { APP_VERSION } from "@agri-scan/shared";
+
+import { useT } from "../context/I18nContext";
 
 export default function AboutScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const t = useT();
 
   const supportLinks = [
     {
       id: "website",
-      title: "Trang web chính thức",
+      title: t("about.mLinkWebsite"),
       icon: <Globe size={22} color="#059669" />,
       action: () => Linking.openURL("https://agriscan.ai"),
     },
     {
       id: "email",
-      title: "Liên hệ hỗ trợ",
+      title: t("about.mLinkEmail"),
       icon: <Mail size={22} color="#059669" />,
       action: () => Linking.openURL("mailto:support@agriscan.ai"),
     },
@@ -43,13 +47,13 @@ export default function AboutScreen() {
   const legalLinks = [
     {
       id: "terms",
-      title: "Điều khoản sử dụng",
+      title: t("footer.terms"),
       icon: <FileText size={22} color="#6b7280" />,
       action: () => console.log("Mở trang điều khoản"),
     },
     {
       id: "privacy",
-      title: "Chính sách bảo mật",
+      title: t("footer.privacy"),
       icon: <Shield size={22} color="#6b7280" />,
       action: () => console.log("Mở trang bảo mật"),
     },
@@ -68,7 +72,7 @@ export default function AboutScreen() {
         >
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Về chúng tôi</Text>
+        <Text style={styles.headerTitle}>{t("about.mTitle")}</Text>
         <View style={styles.headerRightPlaceholder} />
       </View>
 
@@ -84,26 +88,23 @@ export default function AboutScreen() {
             <Leaf size={48} color="#fff" />
           </View>
           <Text style={styles.appName}>Agri-Scan AI</Text>
-          <Text style={styles.appVersion}>Phiên bản 1.0.0</Text>
+          <Text style={styles.appVersion}>
+            {t("about.mVersion", { version: APP_VERSION })}
+          </Text>
         </View>
 
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Info size={20} color="#16a34a" />
-            <Text style={styles.cardTitle}>Giới thiệu</Text>
+            <Text style={styles.cardTitle}>{t("about.mIntroTitle")}</Text>
           </View>
-          <Text style={styles.description}>
-            Agri-Scan AI là trợ lý nông nghiệp thông minh, ứng dụng công nghệ
-            Trí Tuệ Nhân Tạo (AI) tiên tiến nhất để giúp nhà nông chẩn đoán bệnh
-            cây trồng qua hình ảnh nhanh chóng và chính xác.
-          </Text>
+          <Text style={styles.description}>{t("about.mIntroPara1")}</Text>
           <Text style={[styles.description, { marginTop: 12 }]}>
-            Sứ mệnh của chúng tôi là bảo vệ mùa màng, tối ưu hóa năng suất và
-            hướng tới một nền nông nghiệp xanh, bền vững.
+            {t("about.mIntroPara2")}
           </Text>
         </View>
 
-        <Text style={styles.sectionLabel}>Hỗ trợ & Liên hệ</Text>
+        <Text style={styles.sectionLabel}>{t("about.mSectionSupport")}</Text>
         <View style={styles.linkGroup}>
           {supportLinks.map((item, index) => (
             <TouchableOpacity
@@ -123,7 +124,7 @@ export default function AboutScreen() {
           ))}
         </View>
 
-        <Text style={styles.sectionLabel}>Pháp lý</Text>
+        <Text style={styles.sectionLabel}>{t("about.mSectionLegal")}</Text>
         <View style={styles.linkGroup}>
           {legalLinks.map((item, index) => (
             <TouchableOpacity
@@ -144,9 +145,7 @@ export default function AboutScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Phát triển bởi đội ngũ Agri-Scan.
-          </Text>
+          <Text style={styles.footerText}>{t("about.mDevelopedBy")}</Text>
           <Text style={styles.footerText}>
             © {new Date().getFullYear()} Agri-Scan AI. All rights reserved.
           </Text>

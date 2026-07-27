@@ -21,8 +21,10 @@ import {
   Globe,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useT } from "../context/I18nContext";
 
 export default function PaymentScreen() {
+  const t = useT();
   const router = useRouter();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
@@ -34,23 +36,28 @@ export default function PaymentScreen() {
     subtotal: "117,273",
     vat: "11,727",
     features: [
-      "Mô hình AI nâng cao",
-      "Tăng giới hạn tin nhắn & tải ảnh",
-      "Tạo hình ảnh chất lượng cao",
-      "Bộ nhớ mở rộng",
+      t("billing.benefit1"),
+      t("billing.benefit2"),
+      t("billing.benefit3"),
+      t("billing.benefit4"),
     ],
   };
 
   const handleCheckout = async () => {
     if (!cardNumber || !expiry || !cvc || !name) {
-      Alert.alert("Thiếu thông tin", "Vui lòng điền đầy đủ thông tin thẻ.");
+      Alert.alert(
+        t("myGarden.errorMissingInfoTitle"),
+        t("billing.mErrorIncompleteCard"),
+      );
       return;
     }
     // Gọi API nâng cấp plan khi có endpoint
     // await axiosClient.post('/users/upgrade', { plan: plan.name });
-    Alert.alert("Thành công", `Bạn đã đăng ký gói ${plan.name} thành công!`, [
-      { text: "OK", onPress: () => router.replace("/user") }
-    ]);
+    Alert.alert(
+      t("common.success"),
+      t("billing.mSubscribeSuccess", { name: plan.name }),
+      [{ text: "OK", onPress: () => router.replace("/user") }],
+    );
   };
 
   const plan = params.plan ? JSON.parse(params.plan as string) : defaultPlan;
@@ -91,7 +98,7 @@ export default function PaymentScreen() {
           activeOpacity={0.7}
         >
           <ArrowLeft size={24} color="#4b5563" />
-          <Text style={styles.backText}>Quay lại chọn gói</Text>
+          <Text style={styles.backText}>{t("billing.backToPlans")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -109,12 +116,14 @@ export default function PaymentScreen() {
               transform: [{ translateY: translateYAnim }],
             }}
           >
-            <Text style={styles.pageTitle}>Thông tin thanh toán</Text>
+            <Text style={styles.pageTitle}>{t("billing.paymentInfo")}</Text>
 
             {/* Phương thức thanh toán */}
             <View style={styles.cardSection}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+                <Text style={styles.sectionTitle}>
+                  {t("billing.paymentMethod")}
+                </Text>
                 <View style={styles.cardIconsRow}>
                   <View
                     style={[styles.cardBadge, { backgroundColor: "#2563eb" }]}
@@ -135,7 +144,7 @@ export default function PaymentScreen() {
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={styles.label}>Số thẻ</Text>
+                <Text style={styles.label}>{t("billing.cardNumber")}</Text>
                 <View style={styles.inputContainer}>
                   <CreditCard
                     size={20}
@@ -155,7 +164,7 @@ export default function PaymentScreen() {
 
               <View style={styles.row}>
                 <View style={[styles.formGroup, { flex: 1, marginRight: 12 }]}>
-                  <Text style={styles.label}>Ngày hết hạn</Text>
+                  <Text style={styles.label}>{t("billing.expiryDate")}</Text>
                   <View style={styles.inputContainer}>
                     <TextInput
                       style={styles.input}
@@ -168,7 +177,9 @@ export default function PaymentScreen() {
                 </View>
 
                 <View style={[styles.formGroup, { flex: 1 }]}>
-                  <Text style={styles.label}>Mã bảo mật (CVC)</Text>
+                  <Text style={styles.label}>
+                    {t("billing.mSecurityCodeLabel")}
+                  </Text>
                   <View style={styles.inputContainer}>
                     <Lock size={20} color="#9ca3af" style={styles.inputIcon} />
                     <TextInput
@@ -187,14 +198,16 @@ export default function PaymentScreen() {
 
             {/* Địa chỉ thanh toán */}
             <View style={styles.cardSection}>
-              <Text style={styles.sectionTitle}>Địa chỉ thanh toán</Text>
+              <Text style={styles.sectionTitle}>
+                {t("billing.billingAddress")}
+              </Text>
 
               <View style={styles.formGroup}>
-                <Text style={styles.label}>Họ và tên</Text>
+                <Text style={styles.label}>{t("billing.fullName")}</Text>
                 <View style={styles.inputContainer}>
                   <TextInput
                     style={styles.input}
-                    placeholder="Nguyễn Văn A"
+                    placeholder={t("billing.fullNamePlaceholder")}
                     placeholderTextColor="#9ca3af"
                     value={name}
                     onChangeText={setName}
@@ -203,12 +216,12 @@ export default function PaymentScreen() {
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={styles.label}>Quốc gia / Khu vực</Text>
+                <Text style={styles.label}>{t("billing.country")}</Text>
                 <View style={styles.inputContainer}>
                   <Globe size={20} color="#9ca3af" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Việt Nam"
+                    placeholder={t("billing.countryVietnam")}
                     placeholderTextColor="#9ca3af"
                   // Để đơn giản trên mobile, dùng TextInput. Nếu cần chuẩn, bạn có thể cài library react-native-picker/picker
                   />
@@ -216,11 +229,11 @@ export default function PaymentScreen() {
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={styles.label}>Địa chỉ</Text>
+                <Text style={styles.label}>{t("billing.address")}</Text>
                 <View style={styles.inputContainer}>
                   <TextInput
                     style={styles.input}
-                    placeholder="Số nhà, tên đường..."
+                    placeholder={t("billing.addressPlaceholder")}
                     placeholderTextColor="#9ca3af"
                     value={address}
                     onChangeText={setAddress}
@@ -231,9 +244,13 @@ export default function PaymentScreen() {
 
             {/* Đơn hàng (Summary) */}
             <View style={styles.summarySection}>
-              <Text style={styles.summaryTitle}>Gói {plan.name}</Text>
+              <Text style={styles.summaryTitle}>
+                {t("billing.planNamed", { name: plan.name })}
+              </Text>
 
-              <Text style={styles.featureTitle}>Tính năng nổi bật</Text>
+              <Text style={styles.featureTitle}>
+                {t("billing.mHighlightFeatures")}
+              </Text>
               {plan.features.map((feature: string, index: number) => (
                 <View key={index} style={styles.featureItem}>
                   <Zap size={16} color="#10b981" style={styles.featureIcon} />
@@ -244,7 +261,9 @@ export default function PaymentScreen() {
               <View style={styles.divider} />
 
               <View style={styles.priceRow}>
-                <Text style={styles.priceLabel}>Giá gói hàng tháng</Text>
+                <Text style={styles.priceLabel}>
+                  {t("billing.monthlyPrice")}
+                </Text>
                 <Text style={styles.priceValue}>₫{plan.subtotal}</Text>
               </View>
               <View style={styles.priceRow}>
@@ -252,17 +271,14 @@ export default function PaymentScreen() {
                 <Text style={styles.priceValue}>₫{plan.vat}</Text>
               </View>
               <View style={[styles.priceRow, styles.totalRow]}>
-                <Text style={styles.totalLabel}>Thanh toán hôm nay</Text>
+                <Text style={styles.totalLabel}>{t("billing.dueToday")}</Text>
                 <Text style={styles.totalValue}>₫{plan.price}</Text>
               </View>
             </View>
 
             {/* Chú thích */}
             <Text style={styles.disclaimerText}>
-              Gói sẽ tự động gia hạn hàng tháng. Bạn sẽ bị tính phí ₫
-              {plan.price}/tháng. Bạn có thể hủy bất kỳ lúc nào trong Cài đặt.
-              Bằng việc đăng ký, bạn đồng ý với Điều khoản sử dụng của chúng
-              tôi.
+              {t("billing.mAutoRenewNote", { price: plan.price })}
             </Text>
           </Animated.View>
         </ScrollView>
@@ -276,12 +292,14 @@ export default function PaymentScreen() {
         ]}
       >
         <TouchableOpacity onPress={handleCheckout} style={styles.checkoutButton}>
-          <Text style={styles.checkoutButtonText}>Đăng ký ngay</Text>
+          <Text style={styles.checkoutButtonText}>
+            {t("billing.subscribeNow")}
+          </Text>
         </TouchableOpacity>
         <View style={styles.securityWrapper}>
           <Shield size={14} color="#9ca3af" />
           <Text style={styles.securityText}>
-            Thanh toán bảo mật & mã hóa SSL
+            {t("billing.securePayment")}
           </Text>
         </View>
       </View>

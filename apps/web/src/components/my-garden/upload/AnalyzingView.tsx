@@ -1,12 +1,16 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Leaf } from 'lucide-react';
+import { useT } from '@/context/I18nContext';
 
 interface AnalyzingViewProps {
+  /** KEY i18n của bước đang chạy (vd "myGarden.analyzingStep1"). */
   analyzingText: string;
 }
 
 export function AnalyzingView({ analyzingText }: AnalyzingViewProps) {
+  const t = useT();
+
   return (
     <motion.div 
       key="analyzing"
@@ -45,7 +49,9 @@ export function AnalyzingView({ analyzingText }: AnalyzingViewProps) {
         </div>
       </div>
       
-      <h2 className="text-3xl font-extrabold text-gray-900 mb-4">AI đang phân tích...</h2>
+      <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
+        {t("myGarden.analyzing")}
+      </h2>
       <div className="h-8">
         <AnimatePresence mode="wait">
           <motion.p 
@@ -56,7 +62,7 @@ export function AnalyzingView({ analyzingText }: AnalyzingViewProps) {
             transition={{ duration: 0.2 }}
             className="text-emerald-600 font-medium text-lg"
           >
-            {analyzingText}
+            {t(analyzingText)}
           </motion.p>
         </AnimatePresence>
       </div>

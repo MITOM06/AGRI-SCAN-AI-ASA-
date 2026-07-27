@@ -39,7 +39,9 @@ export function useMyGarden(): UseMyGardenReturn {
       const data = await myGardenApi.getUserGarden();
       setGarden(data || []);
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? "Không thể tải khu vườn.";
+      // Message backend là câu hoàn chỉnh; fallback là key i18n — cả hai đều
+      // đi qua t() ở nơi hiển thị (translate trả nguyên văn khi không thấy key)
+      const msg = err?.response?.data?.message ?? "myGarden.loadGardenFailed";
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -56,7 +58,7 @@ export function useMyGarden(): UseMyGardenReturn {
         return res.data;
       } catch (err: any) {
         const msg =
-          err?.response?.data?.message ?? "Không thể thêm cây vào vườn.";
+          err?.response?.data?.message ?? "myGarden.addPlantFailed";
         setError(msg);
         return null;
       } finally {
@@ -73,7 +75,7 @@ export function useMyGarden(): UseMyGardenReturn {
       setGarden((prev) => prev.filter((p) => p._id !== gardenId));
       return true;
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? "Không thể xóa cây.";
+      const msg = err?.response?.data?.message ?? "myGarden.deletePlantFailed";
       setError(msg);
       return false;
     }
@@ -101,7 +103,7 @@ export function useMyGarden(): UseMyGardenReturn {
 
         return res;
       } catch (err: any) {
-        const msg = err?.response?.data?.message ?? "Không thể check-in.";
+        const msg = err?.response?.data?.message ?? "myGarden.checkInFailed";
         setError(msg);
         return null;
       }

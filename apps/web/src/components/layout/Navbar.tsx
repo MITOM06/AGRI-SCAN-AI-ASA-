@@ -20,10 +20,13 @@ import {
 } from "lucide-react";
 import { cn } from "@agri-scan/shared";
 import { useAuth } from "../../hooks/useAuth";
+import { useT } from "@/context/I18nContext";
+import { LanguageSwitcher } from "@/components/common";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function Navbar() {
+  const t = useT();
   const [isOpen, setIsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isToolsOpen, setIsToolsOpen] = useState(false);
@@ -36,33 +39,39 @@ export function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const toolsMenuRef = useRef<HTMLDivElement>(null);
 
+  // `path` làm key React — ổn định khi đổi ngôn ngữ, khác với việc lấy nhãn làm key
   const navItems = [
-    { name: "Trang chủ", path: "/" },
-    { name: "Giới thiệu", path: "/about" },
-    { name: "Cộng đồng", path: "/community" },
-    { name: "Khu vườn", path: "/my-garden" },
+    { name: t("nav.home"), path: "/" },
+    { name: t("nav.about"), path: "/about" },
+    { name: t("nav.community"), path: "/community" },
+    { name: t("nav.myGarden"), path: "/my-garden" },
   ];
 
   const toolItems = [
     {
-      name: "Chẩn đoán AI",
+      name: t("nav.scan"),
       path: "/scan",
       icon: ScanSearch,
-      desc: "Nhận diện bệnh cây trồng",
+      desc: t("nav.scanDesc"),
     },
     {
-      name: "Từ điển cây",
+      name: t("nav.encyclopedia"),
       path: "/encyclopedia",
       icon: BookOpen,
-      desc: "Tra cứu thông tin cây",
+      desc: t("nav.encyclopediaDesc"),
     },
     {
-      name: "Thời tiết",
+      name: t("nav.weather"),
       path: "/weather",
       icon: CloudSun,
-      desc: "Dự báo nông nghiệp",
+      desc: t("nav.weatherDesc"),
     },
-    { name: "Cửa hàng", path: "/shop", icon: Store, desc: "Mua sắm sản phẩm" },
+    {
+      name: t("nav.shop"),
+      path: "/shop",
+      icon: Store,
+      desc: t("nav.shopDesc"),
+    },
   ];
 
   const isToolActive = toolItems.some((item) => pathname.startsWith(item.path));
@@ -123,10 +132,10 @@ export function Navbar() {
             </div>
             <div>
               <h1 className="text-base font-bold text-gray-900 leading-none tracking-tight">
-                Agri-Scan AI
+                {t("common.appName")}
               </h1>
               <span className="text-[10px] text-primary font-semibold tracking-widest uppercase">
-                Bác sĩ cây trồng
+                {t("common.tagline")}
               </span>
             </div>
           </Link>
@@ -135,7 +144,7 @@ export function Navbar() {
           <div className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => (
               <Link
-                key={item.name}
+                key={item.path}
                 href={item.path}
                 className={cn(
                   "relative flex items-center h-10 px-4 rounded-xl text-sm font-bold transition-all duration-200",
@@ -162,7 +171,7 @@ export function Navbar() {
                     : "text-gray-600 hover:text-primary hover:bg-gray-50",
                 )}
               >
-                Tiện ích
+                {t("nav.tools")}
                 <ChevronDown
                   size={14}
                   className={cn(
@@ -186,7 +195,7 @@ export function Navbar() {
                     <div className="flex flex-col gap-1">
                       {toolItems.map((item) => (
                         <Link
-                          key={item.name}
+                          key={item.path}
                           href={item.path}
                           className={cn(
                             "flex items-center gap-3.5 p-3 rounded-xl transition-all",
@@ -231,6 +240,8 @@ export function Navbar() {
 
           {/* Cụm Actions Bên Phải - ĐÃ KHÔI PHỤC ĐẦY ĐỦ */}
           <div className="hidden lg:flex items-center gap-2 shrink-0">
+            <LanguageSwitcher />
+
             <Link
               href="/scan"
               className={cn(
@@ -241,7 +252,7 @@ export function Navbar() {
               )}
             >
               <Zap size={15} />
-              Chẩn đoán AI
+              {t("nav.scan")}
             </Link>
 
             <div className="w-px h-5 bg-gray-200 mx-1" />
@@ -304,27 +315,27 @@ export function Navbar() {
                         href="/profile"
                         className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
                       >
-                        <User size={16} className="text-gray-400"/> Hồ sơ của tôi
+                        <User size={16} className="text-gray-400"/> {t("nav.myProfile")}
                       </Link>
                       <Link
                         href="/shop/orders"
                         className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
                       >
-                        <Package size={16} className="text-gray-400"/> Đơn hàng của tôi
+                        <Package size={16} className="text-gray-400"/> {t("nav.myOrders")}
                       </Link>
                       <Link
                         href="/feedback"
                         className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary transition-colors"
                       >
                         <MessageSquare size={20} className="text-gray-400" />
-                        Góp ý & Phản hồi
+                        {t("nav.feedback")}
                       </Link>
                       <div className="border-t border-gray-50 mt-1.5 pt-1.5">
                         <button
                           onClick={handleLogout}
                           className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
                         >
-                          <LogOut size={16} /> Đăng xuất
+                          <LogOut size={16} /> {t("nav.logout")}
                         </button>
                       </div>
                     </motion.div>
@@ -336,13 +347,14 @@ export function Navbar() {
                 href="/login"
                 className="px-5 py-2 bg-primary text-white rounded-full text-sm font-bold hover:bg-primary-dark transition-all shadow-md shadow-primary/25"
               >
-                Đăng nhập
+                {t("nav.login")}
               </Link>
             )}
           </div>
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden flex items-center gap-2">
+            <LanguageSwitcher />
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors"
@@ -365,7 +377,7 @@ export function Navbar() {
             <div className="px-4 pt-3 pb-6 flex flex-col gap-1">
               {navItems.map((item) => (
                 <Link
-                  key={item.name}
+                  key={item.path}
                   href={item.path}
                   className={cn(
                     "px-4 py-3 rounded-xl text-sm font-bold transition-all",
@@ -380,11 +392,11 @@ export function Navbar() {
 
               <div className="my-2 border-t border-gray-50 pt-3">
                 <p className="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                  Tiện ích
+                  {t("nav.tools")}
                 </p>
                 {toolItems.map((item) => (
                   <Link
-                    key={item.name}
+                    key={item.path}
                     href={item.path}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium",
@@ -420,13 +432,13 @@ export function Navbar() {
                       href="/profile"
                       className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 rounded-xl hover:bg-gray-50"
                     >
-                      <User size={18} /> Hồ sơ của tôi
+                      <User size={18} /> {t("nav.myProfile")}
                     </Link>
                     <button
                       onClick={handleLogout}
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 rounded-xl hover:bg-red-50"
                     >
-                      <LogOut size={18} /> Đăng xuất
+                      <LogOut size={18} /> {t("nav.logout")}
                     </button>
                   </div>
                 ) : (
@@ -434,7 +446,7 @@ export function Navbar() {
                     href="/login"
                     className="block w-full px-4 py-3 bg-primary text-white rounded-xl font-bold text-center text-sm shadow-md"
                   >
-                    Đăng nhập
+                    {t("nav.login")}
                   </Link>
                 )}
               </div>
