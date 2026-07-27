@@ -1,7 +1,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { GetWeatherDto } from './dto/Get weather.dto';
-import { WeatherService } from './Weather.service';
+import { GetWeatherDto } from './dto/get-weather.dto';
+import { WeatherService } from './weather.service';
 
 @Controller('weather')
 export class WeatherController {

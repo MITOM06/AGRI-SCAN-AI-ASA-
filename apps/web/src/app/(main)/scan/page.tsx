@@ -1,4 +1,4 @@
-import { Scanner } from "@/components/Scanner";
+import { Scanner } from "@/components/scan/Scanner";
 
 export default function ScanPage() {
   return (

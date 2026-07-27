@@ -22,7 +22,7 @@ import {
   ChevronUp,
 } from "lucide-react-native";
 
-import { orderApi } from "@agri-scan/shared";
+import { orderApi, formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
 
 export default function MyOrdersScreen() {
   const router = useRouter();
@@ -50,12 +50,6 @@ export default function MyOrdersScreen() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount || 0);
-  };
 
   // Hàm xử lý Mở rộng / Thu gọn đơn hàng
   const toggleExpandOrder = (orderId: string) => {

@@ -1,8 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { MailerService } from '@nestjs-modules/mailer';
 import { AuthService } from './auth.service';
+import { OtpMailService } from './otp-mail.service';
+import { AuthTokenService } from './auth-token.service';
 import { UsersService } from '../users/users.service';
 
 describe('AuthService', () => {
@@ -15,7 +16,8 @@ describe('AuthService', () => {
         { provide: UsersService, useValue: {} },
         { provide: JwtService, useValue: {} },
         { provide: CACHE_MANAGER, useValue: {} },
-        { provide: MailerService, useValue: {} },
+        { provide: OtpMailService, useValue: {} },
+        { provide: AuthTokenService, useValue: {} },
       ],
     }).compile();
 

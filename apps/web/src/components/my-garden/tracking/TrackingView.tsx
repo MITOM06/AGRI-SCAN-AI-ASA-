@@ -5,56 +5,23 @@ import {
   Camera,
   Droplets,
   Sun,
-  CheckCircle2,
   CalendarDays,
   Sparkles,
   Activity,
   Thermometer,
-  Circle,
   Award,
   ChevronDown,
   Info,
   Leaf
 } from "lucide-react";
 import type { IMyGardenPlant } from "@agri-scan/shared";
-import { containerVariants, itemVariants } from "../../../utils/animation";
+import { containerVariants, itemVariants } from "@/utils/animation";
 
 interface TrackingViewProps {
   plant: IMyGardenPlant | null;
   onBack: () => void;
   onUpdatePhoto: () => void;
 }
-
-const DEFAULT_STAGES = ["Phân tích", "Nảy mầm", "Cây non", "Phát triển", "Ra hoa"];
-const DEFAULT_TASKS = [
-  {
-    day: 1,
-    date: new Date().toISOString(),
-    weatherContext: "Trời nhiều mây, 24-26°C",
-    waterAction: "Tưới nước vừa phải để giữ ẩm đất",
-    fertilizerAction: "Chưa cần bón phân lúc này",
-    careAction: "Loại bỏ lá úa và kiểm tra sâu bệnh",
-    isCompleted: false,
-  },
-  {
-    day: 2,
-    date: new Date(Date.now() + 86400000).toISOString(),
-    weatherContext: "Nắng nhẹ, 26-28°C",
-    waterAction: "Tưới đẫm nếu bề mặt đất khô 2cm",
-    fertilizerAction: "Bón lót nhẹ phân hữu cơ",
-    careAction: "Quan sát rệp sáp dưới mặt lá",
-    isCompleted: false,
-  },
-  {
-    day: 3,
-    date: new Date(Date.now() + 86400000 * 2).toISOString(),
-    weatherContext: "Mưa rào, 23-25°C",
-    waterAction: "Ngưng tưới nước, chú ý thoát nước",
-    fertilizerAction: "Không bón phân",
-    careAction: "Tránh để cây bị úng nước",
-    isCompleted: false,
-  }
-];
 
 export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps) {
   const [expandedTask, setExpandedTask] = useState<number | null>(null);
@@ -64,13 +31,17 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
   const displayName = plant.customName?.trim() || plant.plantInfo?.commonName?.trim() || "Cây trồng";
   const imageSrc = plant.imageUrl || plant.plantInfo?.images?.[0] || "/placeholder-plant.png";
   const conditionText = plant.currentCondition?.trim() || "Cây đang phát triển ổn định";
-  
-  const stages = plant.growthStages?.length ? plant.growthStages : DEFAULT_STAGES;
-  const currentStageIndex = plant.currentStageIndex >= 0 ? plant.currentStageIndex : 2; 
-  const roadmap = plant.careRoadmap?.length ? plant.careRoadmap : DEFAULT_TASKS;
+
+  // Dữ liệu lộ trình thật; không có thì hiển thị trạng thái rỗng, không bịa.
+  const stages = plant.growthStages ?? [];
+  const hasStages = stages.length > 0;
+  const currentStageIndex = plant.currentStageIndex >= 0 ? plant.currentStageIndex : 0;
+
+  const roadmap = plant.careRoadmap ?? [];
+  const hasRoadmap = roadmap.length > 0;
 
   const todayTask = roadmap.find(t => !t.isCompleted) || roadmap[0];
-  const upcomingTasks = roadmap.filter(t => t !== todayTask);
+  const upcomingTasks = todayTask ? roadmap.filter(t => t !== todayTask) : [];
 
   return (
     <motion.div
@@ -158,36 +129,47 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
             <h2 className="text-lg font-bold text-emerald-900 mb-6 flex items-center gap-2">
               <Award className="text-emerald-500" size={20} /> Lộ trình sinh trưởng
             </h2>
-            
-            <div className="relative flex items-center justify-between w-full px-2">
-              <div className="absolute left-[5%] right-[5%] top-[14px] h-[3px] bg-gray-100 rounded-full z-0" />
-              <div 
-                className="absolute left-[5%] top-[14px] h-[3px] bg-emerald-500 rounded-full z-0 transition-all duration-1000"
-                style={{ width: `${(currentStageIndex / (stages.length - 1)) * 90}%` }}
-              />
 
-              {stages.map((stage, idx) => {
-                const isCompleted = idx < currentStageIndex;
-                const isCurrent = idx === currentStageIndex;
-                return (
-                  <div key={idx} className="relative z-10 flex flex-col items-center group w-[20%]">
-                    <div className={`w-8 h-8 rounded-full border-[3px] flex items-center justify-center bg-white transition-all duration-300 ${
-                      isCompleted ? "border-emerald-500" : isCurrent ? "border-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.15)]" : "border-gray-200"
-                    }`}>
-                      {isCompleted && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
-                      {isCurrent && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />}
+            {hasStages ? (
+              <div className="relative flex items-center justify-between w-full px-2">
+                <div className="absolute left-[5%] right-[5%] top-[14px] h-[3px] bg-gray-100 rounded-full z-0" />
+                <div
+                  className="absolute left-[5%] top-[14px] h-[3px] bg-emerald-500 rounded-full z-0 transition-all duration-1000"
+                  style={{ width: `${(currentStageIndex / Math.max(stages.length - 1, 1)) * 90}%` }}
+                />
+
+                {stages.map((stage, idx) => {
+                  const isCompleted = idx < currentStageIndex;
+                  const isCurrent = idx === currentStageIndex;
+                  return (
+                    <div key={idx} className="relative z-10 flex flex-col items-center group w-[20%]">
+                      <div className={`w-8 h-8 rounded-full border-[3px] flex items-center justify-center bg-white transition-all duration-300 ${
+                        isCompleted ? "border-emerald-500" : isCurrent ? "border-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.15)]" : "border-gray-200"
+                      }`}>
+                        {isCompleted && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
+                        {isCurrent && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse" />}
+                      </div>
+                      <p className={`mt-3 text-[11px] md:text-sm font-semibold text-center ${
+                        isCurrent ? "text-emerald-800" : isCompleted ? "text-emerald-600/80" : "text-gray-400"
+                      }`}>
+                        {stage}
+                      </p>
                     </div>
-                    <p className={`mt-3 text-[11px] md:text-sm font-semibold text-center ${
-                      isCurrent ? "text-emerald-800" : isCompleted ? "text-emerald-600/80" : "text-gray-400"
-                    }`}>
-                      {stage}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Info size={24} className="text-emerald-400 mb-2" />
+                <p className="text-sm text-gray-500 font-medium">
+                  Chưa có lộ trình sinh trưởng cho cây này.
+                </p>
+              </div>
+            )}
           </div>
 
+          {hasRoadmap && todayTask ? (
+          <>
           {/* NHIỆM VỤ HÔM NAY - ĐÃ TỐI ƯU GIAO DIỆN NHẮC NHỞ */}
           <div>
             <h2 className="text-lg font-bold text-emerald-900 mb-4 ml-2 flex items-center gap-2">
@@ -303,6 +285,21 @@ export function TrackingView({ plant, onBack, onUpdatePhoto }: TrackingViewProps
               })}
             </div>
           </div>
+          </>
+          ) : (
+            <div className="bg-white border border-emerald-100 p-8 rounded-[2rem] shadow-sm flex flex-col items-center justify-center text-center">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4">
+                <CalendarDays size={26} className="text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-bold text-emerald-950 mb-1">
+                Chưa có lộ trình chăm sóc
+              </h3>
+              <p className="text-sm text-gray-500 max-w-sm">
+                Chụp ảnh cập nhật để AI phân tích và tạo lộ trình chăm sóc hằng
+                ngày cho cây của bạn.
+              </p>
+            </div>
+          )}
 
         </motion.div>
       </div>

@@ -9,9 +9,21 @@ import {
   MessageSquare,
   TrendingUp,
 } from "lucide-react";
-import { formatCurrency, pageVariants } from "./utils";
-import { MOCK_DASHBOARD } from "./mockData";
+import { formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
+import { pageVariants } from "@/utils/animation";
 import { adminApi, IDashboard } from "@agri-scan/shared";
+
+const EMPTY_DASHBOARD: IDashboard = {
+  users: {
+    total: 0,
+    newToday: 0,
+    newThisMonth: 0,
+    byPlan: { FREE: 0, PREMIUM: 0, VIP: 0 },
+  },
+  revenue: { total: 0, thisMonth: 0 },
+  pendingFeedbacks: 0,
+  totalScans: 0,
+};
 
 const iconColorMap = {
   blue: "bg-blue-50 text-blue-600",
@@ -22,7 +34,7 @@ const iconColorMap = {
 
 export default function Dashboard() {
   const [dashboardData, setDashboardData] =
-    useState<IDashboard>(MOCK_DASHBOARD);
+    useState<IDashboard>(EMPTY_DASHBOARD);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,11 +46,12 @@ export default function Dashboard() {
 
         const data = await adminApi.getDashboard();
         setDashboardData(data);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Load admin dashboard failed:", err);
-        setError(
-          err?.response?.data?.message || "Không tải được dữ liệu dashboard.",
-        );
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message || "Không tải được dữ liệu dashboard.";
+        setError(message);
       } finally {
         setLoading(false);
       }

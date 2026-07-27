@@ -125,7 +125,7 @@ To meet the competition timeline and focus on the core AI-powered features (the 
    * Save diagnosis sessions and chat history with the AI so the user can track the plant's progress.
 
 <p align="center">
-<img src="img/chatbot.png" alt="Plant Wiki Demo" width="800px" style="border-radius: 10px;">
+<img src="docs/assets/img/chatbot.png" alt="Plant Wiki Demo" width="800px" style="border-radius: 10px;">
 </p>
 
 #### 2.1.2. **Plant Wiki:**
@@ -134,8 +134,8 @@ To meet the competition timeline and focus on the core AI-powered features (the 
 * Integrated disease info: each species comes with a list of common fungi, bacteria, and pests, giving users an overview before planting.
 
 <p align="center">
-<img src="img/wiki.png" alt="Plant Wiki Demo" width="500px" style="border-radius: 10px;">
-<img src="img/wiki1.png" alt="Plant Wiki Demo" width="500px" style="border-radius: 10px;">
+<img src="docs/assets/img/wiki.png" alt="Plant Wiki Demo" width="500px" style="border-radius: 10px;">
+<img src="docs/assets/img/wiki1.png" alt="Plant Wiki Demo" width="500px" style="border-radius: 10px;">
 </p>
 
 #### 2.1.3. **My Garden:**
@@ -146,8 +146,8 @@ To meet the competition timeline and focus on the core AI-powered features (the 
    * Recommends in-depth care tips: for example, water stress, high-potassium fertilizing, or artificial pollination techniques to boost yield.
    * Suggests a step-by-step recovery roadmap for a diseased plant.
 <p align="center">
-<img src="img/mygarden.png" alt="Plant Wiki Demo" height="410px" style="border-radius: 10px;">
-<img src="img/mygarden1.png" alt="Plant Wiki Demo" height="410px" style="border-radius: 10px;">
+<img src="docs/assets/img/mygarden.png" alt="Plant Wiki Demo" height="410px" style="border-radius: 10px;">
+<img src="docs/assets/img/mygarden1.png" alt="Plant Wiki Demo" height="410px" style="border-radius: 10px;">
 </p>
 
 #### 2.1.4. **Weather:**
@@ -155,8 +155,8 @@ To meet the competition timeline and focus on the core AI-powered features (the 
 * Detailed 24h & 8-day forecast: shows temperature, humidity, wind speed, and UV index in real time at the user's location.
 * Plant-doctor recommendations: based on the weather (e.g. high humidity), the system gives suitable farming advice such as: "Limit organic fertilizing in humid, muggy weather to avoid fungal disease".
 <p align="center">
-<img src="img/thoitiet.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
-<img src="img/thoitiet1.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
+<img src="docs/assets/img/thoitiet.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
+<img src="docs/assets/img/thoitiet1.png" alt="Plant Wiki Demo" height="400px" style="border-radius: 10px;">
 </p>
 
 #### 2.1.5. **Agriculture Shop:**
@@ -192,15 +192,15 @@ The model is trained on a real-world image dataset from [rice-leaf-diseases-dete
 
 | No. | Disease | Class Name | Sample image | Train | Val | Test | Identifying features |
 | :--: | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| 1 | **Bacterial Leaf Blight** | Bacterial Leaf Blight | <img src="./img/1.jpg" width="80"> | 957 | 119 | 121 | Long pale-yellow/white streaks along the leaf margins |
-| 2 | **Brown Spot** | Brown Spot | <img src="./img/2.jpg" width="80"> | 1229 | 153 | 155 | Small scattered round/oval brown spots |
-| 3 | **Leaf Blast** | Leaf Blast | <img src="./img/3.jpg" width="80"> | 1370 | 171 | 172 | Diamond-shaped lesions with a gray-white center and dark brown border |
-| 4 | **Leaf Scald** | Leaf Scald | <img src="./img/4.jpg" width="80"> | 1065 | 133 | 134 | Blotchy scald spreading from the leaf tip, with wavy bands |
-| 5 | **Narrow Brown Spot** | Narrow Brown | <img src="./img/5.jpg" width="80"> | 763 | 95 | 96 | Narrow, thin, long brown spots parallel to the leaf veins |
-| 6 | **Neck Blast** | Neck Blast | <img src="./img/6.jpg" width="80"> | 800 | 100 | 100 | Constriction at the panicle neck, causing empty grains or lodging |
-| 7 | **Rice Hispa** | Rice Hispa | <img src="./img/7.jpg" width="80"> | 1039 | 129 | 131 | Long white streaks left as feeding trails by the insect |
-| 8 | **Sheath Blight** | Sheath Blight | <img src="./img/8.jpg" width="80"> | 1300 | 162 | 163 | Tiger-stripe blotches on the leaf sheath near the water line |
-| 9 | **Healthy Rice Leaf** | Healthy Rice Leaf | <img src="./img/9.jpg" width="80"> | 865 | 108 | 109 | Lush green leaf with no signs of damage |
+| 1 | **Bacterial Leaf Blight** | Bacterial Leaf Blight | <img src="./docs/assets/img/1.jpg" width="80"> | 957 | 119 | 121 | Long pale-yellow/white streaks along the leaf margins |
+| 2 | **Brown Spot** | Brown Spot | <img src="./docs/assets/img/2.jpg" width="80"> | 1229 | 153 | 155 | Small scattered round/oval brown spots |
+| 3 | **Leaf Blast** | Leaf Blast | <img src="./docs/assets/img/3.jpg" width="80"> | 1370 | 171 | 172 | Diamond-shaped lesions with a gray-white center and dark brown border |
+| 4 | **Leaf Scald** | Leaf Scald | <img src="./docs/assets/img/4.jpg" width="80"> | 1065 | 133 | 134 | Blotchy scald spreading from the leaf tip, with wavy bands |
+| 5 | **Narrow Brown Spot** | Narrow Brown | <img src="./docs/assets/img/5.jpg" width="80"> | 763 | 95 | 96 | Narrow, thin, long brown spots parallel to the leaf veins |
+| 6 | **Neck Blast** | Neck Blast | <img src="./docs/assets/img/6.jpg" width="80"> | 800 | 100 | 100 | Constriction at the panicle neck, causing empty grains or lodging |
+| 7 | **Rice Hispa** | Rice Hispa | <img src="./docs/assets/img/7.jpg" width="80"> | 1039 | 129 | 131 | Long white streaks left as feeding trails by the insect |
+| 8 | **Sheath Blight** | Sheath Blight | <img src="./docs/assets/img/8.jpg" width="80"> | 1300 | 162 | 163 | Tiger-stripe blotches on the leaf sheath near the water line |
+| 9 | **Healthy Rice Leaf** | Healthy Rice Leaf | <img src="./docs/assets/img/9.jpg" width="80"> | 865 | 108 | 109 | Lush green leaf with no signs of damage |
 | | **TOTAL** | | | **9,388** | **1,170** | **1,181** | **Total: 11,739 files** |
 
 ### 3.3. Main API Endpoints
@@ -227,7 +227,7 @@ The data-processing pipeline is designed end-to-end to optimize the user experie
 3.  **Response optimization:** The diagnosis result is fed into the RAG system so the LLM (Gemini) generates a personalized care calendar.
 
 <p align="center">
-<img src="img/gemini_last.jpg" alt="AI Architechture" height="400px" style="border-radius: 10px;">
+<img src="docs/assets/img/gemini_last.jpg" alt="AI Architechture" height="400px" style="border-radius: 10px;">
 </p>
 
 ### 3.5. Experimental Results 

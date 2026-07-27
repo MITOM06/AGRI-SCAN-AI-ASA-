@@ -1,3 +1,4 @@
+export { LandingPage } from "./LandingPage";
 export { HeroSection } from "./HeroSection";
 export { HeroStats } from "./HeroStats";
 export { FloatingCards } from "./FloatingCards";

@@ -77,6 +77,9 @@ export const API_ENDPOINTS = {
       USERS: "/api/admin/reports/users",
       REVENUE: "/api/admin/reports/revenue",
       COMPARE: "/api/admin/reports/compare",
+      // Time-series cho biểu đồ dashboard (Reports.tsx)
+      REVENUE_SERIES: "/api/admin/reports/revenue-series",
+      USAGE_SERIES: "/api/admin/reports/usage-series",
     },
 
     // Xuất file CSV
@@ -91,6 +94,11 @@ export const API_ENDPOINTS = {
       LIST: "/api/admin/feedbacks", // GET (admin xem)
       REPLY: (feedbackId: string) => `/api/admin/feedbacks/${feedbackId}/reply`, // POST (admin reply)
     },
+  },
+
+  // ── UPLOAD (ẢNH CHUNG) ───────────────────────────────────────────────────────
+  UPLOAD: {
+    IMAGE: "/api/upload/image", // POST multipart field 'image' → { url }
   },
 
   // ── MARKETPLACE (SẢN PHẨM & GIAN HÀNG) ──────────────────────────────────────

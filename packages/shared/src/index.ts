@@ -39,6 +39,7 @@ export * from "./api/admin.api";
 export * from "./api/product.api";
 export * from "./api/order.api";
 export * from "./api/my-garden.api";
+export * from "./api/upload.api";
 
 // Feature types
 export * from "./types/weather.types";

@@ -12,20 +12,26 @@ The AI inference service. **Python + FastAPI**. Read this file when working in `
 ## Structure
 ```
 ai/
-  main.py          # FastAPI app, startup loads YOLO + inits the Vector DB, endpoints /predict /chat
+  main.py          # FastAPI app: startup (YOLO + Vector DB), GET /, include_router
+  schemas.py       # Pydantic: PredictResp, ChatRequest, DailyTask, Healthy/DiseasedPlantResp
+  state.py         # get_vector_db/set_vector_db — Vector DB dùng chung giữa startup và endpoint
+  endpoints/       # 1 endpoint 1 file: predict.py, chat.py, plant_garden.py
   model.py         # ViT_Backbone, Expert, GatingNetwork (MoE), predict_pil_image, load_yolo
   rag.py           # init_vector_db, query_vectorstore, load_knowledge (Chroma)
   llm.py           # ClaudeLLM wrapper (anthropic SDK)
-  worker.py        # LEGACY — not used (old Python-as-consumer architecture). See the file header.
-  main_backup.py   # backup, not used
+  router.py        # pick_model/Tier — chọn model Claude theo độ khó prompt
+tests/             # test_claude.py
 data/              # plant_knowledge.json, plants_data.json
 models/            # vit_moe_best.pth, class_to_idx.json
 ```
+⚠️ `ai/router.py` (số ít) = bộ chọn model LLM, **không** phải FastAPI router.
+Các APIRouter nằm trong `ai/endpoints/`.
 
 ## Main endpoints
 - `GET /` — healthcheck.
 - `POST /predict` — takes an image (UploadFile) → label + confidence.
 - `POST /chat` — RAG + Claude Q&A (with disease/plant context).
+- `POST /plant_garden` — RAG + Claude → 7-day care/treatment roadmap as JSON.
 
 ## Commands
 ```bash
@@ -49,3 +55,8 @@ The LLM is Claude → requires `ANTHROPIC_API_KEY` (see `llm.py`/`load_dotenv`).
 ## Rules when editing
 - Do not reload the model on every request — use the existing global variable/cache.
 - Keep the `PredictResp`/schema response signatures so the backend does not break.
+- A new endpoint = a new file in `ai/endpoints/` exporting `router = APIRouter()`, then
+  `app.include_router(...)` in `main.py`. Don't add endpoints to `main.py` directly.
+- Schemas live in `ai/schemas.py`; never define a Pydantic model inline mid-file.
+- Read the Vector DB via `ai.state.get_vector_db()` — importing the variable directly
+  captures `None` at import time and misses what startup assigned.

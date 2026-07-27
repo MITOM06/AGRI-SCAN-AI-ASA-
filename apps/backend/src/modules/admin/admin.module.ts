@@ -9,8 +9,13 @@ import {
   PaymentSchema,
   ScanHistory,
   ScanHistorySchema,
+  ChatHistory,
+  ChatHistorySchema,
 } from '@agri-scan/database';
-import { AdminService } from './admin.service';
+import { AdminDashboardService } from './admin-dashboard.service';
+import { AdminUsersService } from './admin-users.service';
+import { AdminReportsService } from './admin-reports.service';
+import { AdminFeedbackService } from './admin-feedback.service';
 import { AdminController } from './admin.controller';
 
 @Module({
@@ -20,9 +25,15 @@ import { AdminController } from './admin.controller';
       { name: Feedback.name, schema: FeedbackSchema },
       { name: Payment.name, schema: PaymentSchema },
       { name: ScanHistory.name, schema: ScanHistorySchema },
+      { name: ChatHistory.name, schema: ChatHistorySchema },
     ]),
   ],
   controllers: [AdminController],
-  providers: [AdminService],
+  providers: [
+    AdminDashboardService,
+    AdminUsersService,
+    AdminReportsService,
+    AdminFeedbackService,
+  ],
 })
 export class AdminModule {}

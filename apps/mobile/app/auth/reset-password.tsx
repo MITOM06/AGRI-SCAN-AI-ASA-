@@ -20,7 +20,7 @@ import {
 } from "@agri-scan/shared";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import { AuthHeader } from "./AuthHeader";
+import { AuthHeader } from "../../components/auth/AuthHeader";
 
 const customResetResolver = async (values: any) => {
   const result = resetPasswordSchema.safeParse(values);

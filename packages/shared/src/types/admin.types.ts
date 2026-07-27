@@ -101,6 +101,27 @@ export interface IRevenueReport {
 }
 
 // ════════════════════════════════════════════════════════════
+// TIME-SERIES CHO BIỂU ĐỒ DASHBOARD (Reports.tsx)
+// ════════════════════════════════════════════════════════════
+
+// 1 điểm trên biểu đồ doanh thu (mỗi ngày), có breakdown theo gói.
+// Trùng key với BarChart trong Reports.tsx: date / PREMIUM / VIP.
+export interface IRevenueSeriesPoint {
+  date: string; // 'YYYY-MM-DD'
+  revenue: number; // tổng doanh thu trong ngày = PREMIUM + VIP (VND)
+  PREMIUM: number; // doanh thu gói PREMIUM
+  VIP: number; // doanh thu gói VIP
+}
+
+// 1 điểm trên biểu đồ tần suất sử dụng (mỗi ngày).
+// Trùng key với AreaChart trong Reports.tsx: date / images / prompts.
+export interface IUsageSeriesPoint {
+  date: string; // 'YYYY-MM-DD'
+  images: number; // số lượt quét ảnh trong ngày
+  prompts: number; // số câu hỏi chat AI trong ngày
+}
+
+// ════════════════════════════════════════════════════════════
 // SO SÁNH THÁNG
 // ════════════════════════════════════════════════════════════
 

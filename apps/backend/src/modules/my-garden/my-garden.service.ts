@@ -14,7 +14,7 @@ import {
   DailyTask,
   User,
 } from '@agri-scan/database';
-import { WeatherService } from '../weather/Weather.service';
+import { WeatherService } from '../weather/weather.service';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { getErrorMessage } from '../../common/utils/error.util';

@@ -1,4 +1,4 @@
-import { UpdatePlan } from "@/components/UpdatePlan";
+import { UpdatePlan } from "@/components/billing/UpdatePlan";
 
 export default function UpgradePage() {
   return (

@@ -1,4 +1,4 @@
-import { FeedbackPage } from "@/components/FeedBackPage";
+import { FeedbackPage } from "@/components/feedback/FeedbackPage";
 
 export default function FeedBackRoute() {
   return (

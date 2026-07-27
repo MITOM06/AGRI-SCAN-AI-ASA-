@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 // Import Schemas
-import { WeatherRuleSchema } from '../schemas/Weather-rule.schema';
+import { WeatherRuleSchema } from '../schemas/weather-rule.schema';
 import { ProductSchema } from '../schemas/product.schema';
 import { OrderSchema } from '../schemas/order.schema';
 

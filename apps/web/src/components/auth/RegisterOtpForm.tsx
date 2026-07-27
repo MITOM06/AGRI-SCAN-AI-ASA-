@@ -8,6 +8,7 @@ import { ShieldCheck, Loader2, ArrowRight, Timer, MailCheck } from "lucide-react
 import { otpSchema, type OtpFormData } from "@agri-scan/shared";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { withRedirect } from "@/lib/redirect";
 
 const RESEND_COOLDOWN = 60; // giây
 
@@ -17,6 +18,7 @@ export default function RegisterOtpForm() {
   const { verifyRegister, resendRegisterOtp } = useAuth();
 
   const email = searchParams.get("email") ?? "";
+  const redirectParam = searchParams.get("redirect");
 
   const [seconds, setSeconds] = useState(RESEND_COOLDOWN);
   const [resendMessage, setResendMessage] = useState("");
@@ -46,7 +48,9 @@ export default function RegisterOtpForm() {
   const onSubmit = async (data: OtpFormData) => {
     try {
       await verifyRegister(email, data.otp);
-      router.push("/login?message=registration_success");
+      router.push(
+        withRedirect("/login?message=registration_success", redirectParam),
+      );
     } catch (error) {
       const errorMessage =
         (error as { response?: { data?: { message?: string } } })?.response

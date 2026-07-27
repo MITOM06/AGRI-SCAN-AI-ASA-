@@ -5,6 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { UsersModule } from '../users/users.module';
 import { AuthService } from './auth.service';
+import { OtpMailService } from './otp-mail.service';
+import { AuthTokenService } from './auth-token.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
@@ -48,6 +50,8 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
   controllers: [AuthController],
   providers: [
     AuthService,
+    OtpMailService,
+    AuthTokenService,
     JwtStrategy,
     GoogleStrategy, // ✅ THÊM MỚI
     FacebookStrategy, // ✅ THÊM MỚI

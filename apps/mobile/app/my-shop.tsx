@@ -22,7 +22,7 @@ import {
   Box,
 } from "lucide-react-native";
 
-import { productApi, orderApi } from "@agri-scan/shared";
+import { productApi, orderApi, formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
 
 export default function MyShopScreen() {
   const router = useRouter();
@@ -73,12 +73,6 @@ export default function MyShopScreen() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount || 0);
-  };
 
   return (
     <View style={styles.container}>

@@ -1,4 +1,12 @@
-import { IsDateString, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Max,
+  Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export enum GroupBy {
   DAY = 'day',
@@ -15,6 +23,19 @@ export class GetReportDto {
   @IsOptional()
   @IsEnum(GroupBy)
   groupBy?: GroupBy = GroupBy.DAY;
+}
+
+/**
+ * Query cho biểu đồ time-series N ngày gần nhất (Reports.tsx).
+ * VD: ?days=7 → 7 ngày gần nhất tính đến hôm nay.
+ */
+export class SeriesQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  days?: number = 7;
 }
 
 export class CompareMonthDto {

@@ -56,43 +56,7 @@ export default function FeedbackScreen() {
     }
   }, [activeTab]);
 
-  // ==============================================================
-  // GIẢ LẬP LẤY LỊCH SỬ PHẢN HỒI (CHỜ BACKEND LÀM API)
-  // ==============================================================
-  // const fetchFeedbackHistory = async () => {
-  //   setIsLoadingHistory(true);
-  //   // Giả lập load 1 giây
-  //   await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  //   // Dữ liệu giả định
-  //   const mockHistory = [
-  //     {
-  //       _id: "1",
-  //       category: "FEATURE",
-  //       content:
-  //         "Mình mong app sớm có thêm tính năng dự báo thời tiết 14 ngày thay vì chỉ 7 ngày như hiện tại.",
-  //       status: "REPLIED",
-  //       adminReply:
-  //         "Chào bạn, cảm ơn bạn đã góp ý! Đội ngũ phát triển đã ghi nhận và sẽ cập nhật tính năng thời tiết 14 ngày trong bản cập nhật tháng tới nhé. Chúc bạn một ngày vui vẻ!",
-  //       createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-  //       repliedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-  //     },
-  //     {
-  //       _id: "2",
-  //       category: "BUG",
-  //       content:
-  //         "Khi mình ấn vào nút chụp ảnh trên Android thỉnh thoảng app bị đơ mất 2 giây.",
-  //       status: "PENDING",
-  //       createdAt: new Date().toISOString(),
-  //     },
-  //   ];
-
-  //   setHistoryData(mockHistory);
-  //   setIsLoadingHistory(false);
-  // };
-  // ==============================================================
-  // GỌI API THẬT LẤY LỊCH SỬ PHẢN HỒI TỪ BACKEND
-  // ==============================================================
+  // Lấy lịch sử phản hồi của chính user đang đăng nhập từ Backend
   const fetchFeedbackHistory = async () => {
     try {
       setIsLoadingHistory(true);
