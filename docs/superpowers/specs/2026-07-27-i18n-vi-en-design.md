@@ -196,10 +196,10 @@ dữ liệu demo điền sẵn form ở `CheckoutPage`, và comment tiếng Vi�
   nên đây là cửa kiểm tra thật cho phần còn lại.
 
 Đã chuyển thêm: `app/scan.tsx`, `app/tree-dictionary.tsx`, `app/garden-setup.tsx`,
-`app/my-garden.tsx`.
+`app/my-garden.tsx`, `app/upgrade.tsx`, `app/garden-detail.tsx`.
 
-**Còn lại 34 file** (~545 dòng), sắp theo khối lượng giảm dần:
-`upgrade`(35) `garden-detail`(35) `user`(30) `payment`(29) `add-product`(29)
+**Còn lại 32 file** (~475 dòng), sắp theo khối lượng giảm dần:
+`user`(30) `payment`(29) `add-product`(29)
 `profile`(27) `feedback`(26) `auth/login`(25) `admin`(24) `buy-detail`(23)
 `checkout`(20) `auth/register`(20) `product-detail`(19) `my-orders`(17)
 `auth/reset-password`(17) `auth/set-password`(16) `about`(15) `notification`(14)
