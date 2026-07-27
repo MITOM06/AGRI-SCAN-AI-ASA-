@@ -30,7 +30,8 @@ import {
   Camera as CameraIcon,
 } from "lucide-react-native";
 
-import { myGardenApi } from "@agri-scan/shared";
+import { myGardenApi, HEALTHY_CONDITION } from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 48) / 2;
@@ -43,33 +44,38 @@ const ProgressBar = ({ progress }: { progress: number }) => (
 );
 
 const PlantCard = ({ plant, onPress }: { plant: any; onPress: () => void }) => {
+  const t = useT();
+
   const getHealthStatus = (status: string, condition: string) => {
     if (status === "COMPLETED")
       return {
-        text: "Hoàn thành",
+        text: t("myGarden.statusCompleted"),
         color: "#16a34a",
         icon: <Crown size={14} color="#16a34a" />,
       };
     if (status === "FAILED")
       return {
-        text: "Thất bại",
+        text: t("myGarden.statusFailed"),
         color: "#ef4444",
         icon: <XCircle size={14} color="#ef4444" />,
       };
-    if (condition === "Khỏe mạnh")
+    // So khớp trên GIÁ TRỊ dữ liệu, hiển thị bằng nhãn đã dịch
+    if (condition === HEALTHY_CONDITION)
       return {
-        text: "Khỏe mạnh",
+        text: t("myGarden.healthy"),
         color: "#16a34a",
         icon: <CheckCircle size={14} color="#16a34a" />,
       };
+    // "Đang điều trị" là chuỗi backend sinh ra — dữ liệu, không dịch
     if (condition && condition.includes("Đang điều trị"))
       return {
-        text: "Đang trị bệnh",
+        text: t("myGarden.statusTreating"),
         color: "#ef4444",
         icon: <AlertTriangle size={14} color="#ef4444" />,
       };
     return {
-      text: condition || "Chờ cập nhật",
+      // `condition` là dữ liệu từ API nên hiện nguyên văn khi có
+      text: condition || t("myGarden.statusAwaitingUpdate"),
       color: "#64748b",
       icon: <AlertTriangle size={14} color="#64748b" />,
     };
@@ -80,15 +86,15 @@ const PlantCard = ({ plant, onPress }: { plant: any; onPress: () => void }) => {
   const getGoalText = (goal: string) => {
     switch (goal) {
       case "HEAL_DISEASE":
-        return "Chữa bệnh";
+        return t("myGarden.goalHealShort");
       case "GET_FRUIT":
-        return "Lấy quả";
+        return t("myGarden.goalFruitShort");
       case "GET_FLOWER":
-        return "Lấy hoa";
+        return t("myGarden.goalFlowerShort");
       case "MAINTAIN":
-        return "Duy trì khỏe mạnh";
+        return t("myGarden.goalMaintainShort");
       default:
-        return "Nuôi trồng";
+        return t("myGarden.goalDefaultShort");
     }
   };
 
@@ -107,7 +113,7 @@ const PlantCard = ({ plant, onPress }: { plant: any; onPress: () => void }) => {
         <Text style={styles.goalText} numberOfLines={1}>
           <Target size={12} color="#64748b" /> {getGoalText(plant.userGoal)}
         </Text>
-        <Text style={styles.progressLabel}>Tiến độ nuôi trồng:</Text>
+        <Text style={styles.progressLabel}>{t("myGarden.growProgress")}</Text>
         <ProgressBar progress={plant.progressPercentage || 0} />
         <View style={styles.statusRow}>
           {healthStatus.icon}
@@ -124,6 +130,7 @@ const PlantCard = ({ plant, onPress }: { plant: any; onPress: () => void }) => {
 };
 
 export default function MyGardenScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -162,7 +169,7 @@ export default function MyGardenScreen() {
       setPlants(res || []);
     } catch (error) {
       console.log("Lỗi load vườn:", error);
-      setErrorMsg("Không thể tải thông tin vườn lúc này.");
+      setErrorMsg(t("myGarden.loadGardenFailedShort"));
     } finally {
       setLoading(false);
     }
@@ -186,7 +193,7 @@ export default function MyGardenScreen() {
   const handleOpenCamera = async () => {
     if (Platform.OS === "web") {
       alert(
-        "Máy ảnh không hỗ trợ trên trình duyệt, vui lòng dùng nút Tải ảnh lên.",
+        t("myGarden.cameraNotSupportedWebUpload"),
       );
       return;
     }
@@ -195,10 +202,17 @@ export default function MyGardenScreen() {
       if (currentPerm?.status !== "granted") {
         const newPerm = await ImagePicker.requestCameraPermissionsAsync();
         if (newPerm?.status !== "granted") {
-          Alert.alert("Cấp quyền", "Cần quyền máy ảnh để quét cây.", [
-            { text: "Đóng", style: "cancel" },
-            { text: "Mở Cài đặt", onPress: () => Linking.openSettings() },
-          ]);
+          Alert.alert(
+            t("myGarden.permissionTitle"),
+            t("myGarden.permissionCameraScan"),
+            [
+              { text: t("common.close"), style: "cancel" },
+              {
+                text: t("scan.openSettings"),
+                onPress: () => Linking.openSettings(),
+              },
+            ],
+          );
           return;
         }
       }
@@ -241,7 +255,7 @@ export default function MyGardenScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Khu vườn của tôi</Text>
+        <Text style={styles.headerTitle}>{t("myGarden.listTitle")}</Text>
         <View style={styles.headerRight}>
           <View style={styles.tempBox}>
             <Thermometer size={16} color="#475569" />
@@ -257,12 +271,16 @@ export default function MyGardenScreen() {
         <View style={styles.summaryContainer}>
           <View style={styles.summaryCard}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.summaryLabel}>Số lượng cây hiện tại:</Text>
+              <Text style={styles.summaryLabel}>
+                {t("myGarden.currentPlantCount")}
+              </Text>
               <View
                 style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
               >
                 <Text style={styles.summaryValue}>{totalPlants}</Text>
-                <Text style={styles.limitValue}>/ {planLimit} cây</Text>
+                <Text style={styles.limitValue}>
+                  {t("myGarden.plantLimitSuffix", { limit: planLimit })}
+                </Text>
               </View>
               <Text
                 style={[
@@ -271,14 +289,16 @@ export default function MyGardenScreen() {
                 ]}
               >
                 {remainingSlots > 0
-                  ? `Còn lại ${remainingSlots} slot nuôi trồng`
-                  : "Đã hết slot nuôi trồng"}
+                  ? t("myGarden.slotsRemaining", { count: remainingSlots })
+                  : t("myGarden.noSlotsLeft")}
               </Text>
             </View>
             <TouchableOpacity style={styles.planBadge}>
               <Crown size={18} color="#f59e0b" />
               <Text style={styles.planText}>
-                Gói {userPlan.plan || "Cơ bản"}
+                {t("myGarden.planNamed", {
+                  name: userPlan.plan || t("myGarden.planBasic"),
+                })}
               </Text>
             </TouchableOpacity>
           </View>
@@ -286,15 +306,18 @@ export default function MyGardenScreen() {
 
         {userPlan.plan && userPlan.plan !== "FREE" && remainingSlots > 0 && (
           <View style={styles.scannerSection}>
-            <Text style={styles.sectionHeading}>Thêm cây mới vào vườn</Text>
+            <Text style={styles.sectionHeading}>
+              {t("myGarden.addSectionHeading")}
+            </Text>
             <View style={styles.actionCard}>
               <View style={styles.actionIconBox}>
                 <CameraIcon size={48} color="#16a34a" />
               </View>
-              <Text style={styles.actionTitle}>Chụp hoặc Tải ảnh lên</Text>
+              <Text style={styles.actionTitle}>
+                {t("myGarden.addActionTitle")}
+              </Text>
               <Text style={styles.actionDesc}>
-                Sử dụng AI để nhận diện cây và tình trạng bệnh, sau đó bắt đầu
-                lộ trình chăm sóc.
+                {t("myGarden.addActionDesc")}
               </Text>
               <View style={styles.actionBtnRow}>
                 <TouchableOpacity
@@ -302,21 +325,27 @@ export default function MyGardenScreen() {
                   onPress={handleOpenCamera}
                 >
                   <CameraIcon size={20} color="#fff" />
-                  <Text style={styles.btnPrimaryText}>Mở Máy Ảnh</Text>
+                  <Text style={styles.btnPrimaryText}>
+                    {t("myGarden.openCamera")}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.btnSecondary}
                   onPress={handlePickImage}
                 >
                   <ImagePlus size={20} color="#16a34a" />
-                  <Text style={styles.btnSecondaryText}>Thư viện</Text>
+                  <Text style={styles.btnSecondaryText}>
+                    {t("myGarden.openLibrary")}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         )}
 
-        <Text style={styles.sectionHeading}>Cây đang nuôi trồng</Text>
+        <Text style={styles.sectionHeading}>
+          {t("myGarden.growingSectionHeading")}
+        </Text>
 
         {loading ? (
           <ActivityIndicator
@@ -332,26 +361,27 @@ export default function MyGardenScreen() {
         ) : !userPlan.plan || userPlan.plan === "FREE" ? (
           <View style={styles.freeBox}>
             <Sprout size={50} color="#cbd5e1" />
-            <Text style={styles.freeText}>Vườn đang đóng.</Text>
+            <Text style={styles.freeText}>{t("myGarden.gardenLocked")}</Text>
             <Text style={styles.freeSubtitle}>
-              Nâng cấp lên gói VIP hoặc PREMIUM để mở khóa tính năng nuôi trồng
-              cây!
+              {t("myGarden.gardenLockedDesc")}
             </Text>
             <TouchableOpacity
               style={styles.upgradeBtn}
               onPress={() => router.push("/upgrade" as any)}
             >
-              <Text style={styles.upgradeBtnText}>Nâng cấp ngay</Text>
+              <Text style={styles.upgradeBtnText}>
+                {t("myGarden.upgradeNow")}
+              </Text>
             </TouchableOpacity>
           </View>
         ) : plants.length === 0 ? (
           <View style={styles.emptyBox}>
             <Sprout size={50} color="#cbd5e1" />
             <Text style={styles.emptyText}>
-              Bạn chưa nuôi trồng cây nào trong vườn.
+              {t("myGarden.emptyListTitle")}
             </Text>
             <Text style={styles.emptySubtitle}>
-              Hãy dùng nút bên trên chụp một cây để bắt đầu!
+              {t("myGarden.emptyListDesc")}
             </Text>
           </View>
         ) : (

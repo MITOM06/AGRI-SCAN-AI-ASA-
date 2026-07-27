@@ -234,4 +234,53 @@ export const myGarden = {
     "The AI has analysed the weather and built a care roadmap for your plant.",
   viewGardenNow: "View my garden",
   errorCreateRoadmap: "Something went wrong while creating the roadmap.",
+
+  // ── Mobile: garden list (my-garden) ────────────────────────────────────
+  listTitle: "My garden",
+
+  // Plant status badges
+  statusCompleted: "Completed",
+  statusFailed: "Failed",
+  statusTreating: "Under treatment",
+  statusAwaitingUpdate: "Awaiting update",
+
+  // Goal labels (short form for mobile)
+  goalHealShort: "Treat disease",
+  goalFruitShort: "For fruit",
+  goalFlowerShort: "For flowers",
+  goalMaintainShort: "Keep healthy",
+  goalDefaultShort: "Growing",
+  growProgress: "Growing progress:",
+
+  // Plan summary
+  currentPlantCount: "Plants currently growing:",
+  plantLimitSuffix: "/ {limit} plants",
+  slotsRemaining: "{count} growing slots left",
+  noSlotsLeft: "No growing slots left",
+  planNamed: "{name} plan",
+  planBasic: "Basic",
+
+  // Add a plant
+  addSectionHeading: "Add a new plant",
+  addActionTitle: "Take or upload a photo",
+  addActionDesc:
+    "Use the AI to identify the plant and any disease, then start a care roadmap.",
+  openCamera: "Open camera",
+  openLibrary: "Photo library",
+
+  // Plant list
+  growingSectionHeading: "Plants you're growing",
+  gardenLocked: "Your garden is locked.",
+  gardenLockedDesc:
+    "Upgrade to VIP or PREMIUM to unlock plant growing!",
+  upgradeNow: "Upgrade now",
+  emptyListTitle: "You aren't growing any plants yet.",
+  emptyListDesc: "Use the button above to photograph a plant and get started!",
+
+  // Messages
+  loadGardenFailedShort: "Could not load your garden right now.",
+  cameraNotSupportedWebUpload:
+    "The camera isn't supported in the browser — please use the upload button.",
+  permissionTitle: "Permission needed",
+  permissionCameraScan: "Camera access is required to scan plants.",
 } as const;

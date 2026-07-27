@@ -239,4 +239,53 @@ export const myGarden = {
     "AI đã phân tích thời tiết và tạo xong lộ trình chăm sóc cho cây của bạn.",
   viewGardenNow: "Xem vườn ngay",
   errorCreateRoadmap: "Có lỗi xảy ra khi tạo lộ trình.",
+
+  // ── Mobile: danh sách khu vườn (my-garden) ─────────────────────────────
+  listTitle: "Khu vườn của tôi",
+
+  // Trạng thái cây (badge)
+  statusCompleted: "Hoàn thành",
+  statusFailed: "Thất bại",
+  statusTreating: "Đang trị bệnh",
+  statusAwaitingUpdate: "Chờ cập nhật",
+
+  // Nhãn mục tiêu (rút gọn cho mobile)
+  goalHealShort: "Chữa bệnh",
+  goalFruitShort: "Lấy quả",
+  goalFlowerShort: "Lấy hoa",
+  goalMaintainShort: "Duy trì khỏe mạnh",
+  goalDefaultShort: "Nuôi trồng",
+  growProgress: "Tiến độ nuôi trồng:",
+
+  // Tổng quan gói
+  currentPlantCount: "Số lượng cây hiện tại:",
+  plantLimitSuffix: "/ {limit} cây",
+  slotsRemaining: "Còn lại {count} slot nuôi trồng",
+  noSlotsLeft: "Đã hết slot nuôi trồng",
+  planNamed: "Gói {name}",
+  planBasic: "Cơ bản",
+
+  // Thêm cây
+  addSectionHeading: "Thêm cây mới vào vườn",
+  addActionTitle: "Chụp hoặc Tải ảnh lên",
+  addActionDesc:
+    "Sử dụng AI để nhận diện cây và tình trạng bệnh, sau đó bắt đầu lộ trình chăm sóc.",
+  openCamera: "Mở Máy Ảnh",
+  openLibrary: "Thư viện",
+
+  // Danh sách cây
+  growingSectionHeading: "Cây đang nuôi trồng",
+  gardenLocked: "Vườn đang đóng.",
+  gardenLockedDesc:
+    "Nâng cấp lên gói VIP hoặc PREMIUM để mở khóa tính năng nuôi trồng cây!",
+  upgradeNow: "Nâng cấp ngay",
+  emptyListTitle: "Bạn chưa nuôi trồng cây nào trong vườn.",
+  emptyListDesc: "Hãy dùng nút bên trên chụp một cây để bắt đầu!",
+
+  // Thông báo
+  loadGardenFailedShort: "Không thể tải thông tin vườn lúc này.",
+  cameraNotSupportedWebUpload:
+    "Máy ảnh không hỗ trợ trên trình duyệt, vui lòng dùng nút Tải ảnh lên.",
+  permissionTitle: "Cấp quyền",
+  permissionCameraScan: "Cần quyền máy ảnh để quét cây.",
 } as const;
