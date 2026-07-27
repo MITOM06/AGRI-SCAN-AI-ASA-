@@ -199,12 +199,16 @@ dữ liệu demo điền sẵn form ở `CheckoutPage`, và comment tiếng Vi�
 `app/my-garden.tsx`, `app/upgrade.tsx`, `app/garden-detail.tsx`, và **toàn bộ
 cụm `app/auth/` (6 màn)**.
 
-**Còn lại 26 file** (~285 dòng), sắp theo khối lượng giảm dần:
-`user`(30) `payment`(29) `add-product`(29) `profile`(27) `feedback`(26)
-`admin`(24) `buy-detail`(23) `checkout`(20) `product-detail`(19)
-`my-orders`(17) `about`(15) `notification`(14) `tips`(12)
-`components/admin/*`(31 tổng, 4 file) `success-order`(11) `onboarding`(9)
-`my-shop`(8) `components/ui/Input`(1) `components/auth/AuthHeader` …
+Đã chuyển thêm: **toàn bộ cụm shop/đơn hàng (8 màn)** — `checkout`,
+`success-order`, `my-shop`, `my-orders`, `product-detail`, `add-product`,
+`buy-detail`, `payment`.
+
+**Còn lại 18 file** (~120 dòng):
+- **admin** (5 file): `app/admin.tsx` + `components/admin/{DashboardTab,UsersTab,ReportTab,FeedbackTab}.tsx`
+- **tài khoản** (3): `user`(30) `profile`(27) `notification`(14)
+- **phản hồi** (1): `feedback`(26)
+- **tĩnh** (3): `about`(15) `tips`(12) `onboarding`(9)
+- **lẻ** (2): `components/ui/Input`(1) `components/auth/AuthHeader`
 
 ### Cách làm hiệu quả cho phần còn lại
 
