@@ -18,8 +18,10 @@ import { admin } from "./admin";
 import { feedback } from "./feedback";
 import { billing } from "./billing";
 import { privacy, terms, about } from "./static-pages";
+import { settings } from "./settings";
 
 export const vi = {
+  settings,
   admin,
   feedback,
   billing,
