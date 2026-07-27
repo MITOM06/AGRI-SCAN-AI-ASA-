@@ -3,8 +3,11 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck, Activity } from "lucide-react";
+import { useT } from "@/context/I18nContext";
 
 export function FloatingCards() {
+  const t = useT();
+
   return (
     <>
       {/* Floating Card 1 */}
@@ -19,8 +22,12 @@ export function FloatingCards() {
             <ShieldCheck size={20} />
           </div>
           <div>
-            <p className="text-xs text-gray-500">Trạng thái</p>
-            <p className="font-bold text-gray-900">Đã bảo vệ</p>
+            <p className="text-xs text-gray-500">
+              {t("landing.floatingStatus")}
+            </p>
+            <p className="font-bold text-gray-900">
+              {t("landing.floatingProtected")}
+            </p>
           </div>
         </div>
       </motion.div>
@@ -37,8 +44,12 @@ export function FloatingCards() {
             <Activity size={24} />
           </div>
           <div>
-            <p className="text-sm font-bold text-gray-900">Phân tích AI</p>
-            <p className="text-xs text-gray-500">Đang xử lý dữ liệu...</p>
+            <p className="text-sm font-bold text-gray-900">
+              {t("landing.floatingAnalysis")}
+            </p>
+            <p className="text-xs text-gray-500">
+              {t("landing.floatingProcessing")}
+            </p>
           </div>
         </div>
       </motion.div>

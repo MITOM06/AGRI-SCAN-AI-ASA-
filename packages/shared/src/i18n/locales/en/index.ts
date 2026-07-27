@@ -6,10 +6,14 @@ import type { Dictionary } from "../dictionary";
 import { common } from "./common";
 import { nav, footer } from "./nav";
 import { auth } from "./auth";
+import { landing } from "./landing";
+import { scan } from "./scan";
 
 export const en: Dictionary = {
   common,
   nav,
   footer,
   auth,
+  landing,
+  scan,
 };

@@ -21,7 +21,12 @@ import { default as ReactWebcam } from "react-webcam";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { cn, scanApi } from "@agri-scan/shared";
-import type { IChatSession, IScanStatusResponse } from "@agri-scan/shared";
+import type {
+  IChatSession,
+  IScanStatusResponse,
+  TranslateFn,
+} from "@agri-scan/shared";
+import { useT } from "@/context/I18nContext";
 
 interface Message {
   id: string;
@@ -31,25 +36,36 @@ interface Message {
   timestamp: Date;
 }
 
+// Giữ KEY i18n thay vì chuỗi — dịch tại điểm hiển thị, nhờ vậy các hằng số
+// ở cấp module vẫn dùng được (hook chỉ gọi được bên trong component).
 const SUGGESTIONS = [
   {
     icon: <ImagePlus size={18} className="text-emerald-500" />,
-    text: "Chẩn đoán bệnh từ ảnh lá cây",
+    key: "scan.suggestLeafDiagnosis",
   },
   {
     icon: <Sprout size={18} className="text-emerald-500" />,
-    text: "Cách bón phân NPK cho lúa",
+    key: "scan.suggestNpk",
   },
   {
     icon: <CloudSun size={18} className="text-emerald-500" />,
-    text: "Lịch thời vụ trồng sầu riêng",
+    key: "scan.suggestDurianSeason",
   },
   {
     icon: <Sparkles size={18} className="text-emerald-500" />,
-    text: "Mẹo phòng trừ sâu bệnh tự nhiên",
+    key: "scan.suggestNaturalPest",
   },
 ];
 
+/** Các nhóm ngày, theo đúng thứ tự hiển thị ở thanh bên. */
+const DATE_GROUP_KEYS = [
+  "scan.groupToday",
+  "scan.groupYesterday",
+  "scan.group7Days",
+  "scan.group30Days",
+] as const;
+
+/** Trả về KEY i18n của nhóm ngày, không phải nhãn đã dịch. */
 const getDateGroup = (date: string | Date): string => {
   const d = new Date(date);
   const todayStart = new Date();
@@ -60,10 +76,10 @@ const getDateGroup = (date: string | Date): string => {
       (1000 * 60 * 60 * 24),
   );
 
-  if (diffDays <= 0) return "Hôm nay";
-  if (diffDays === 1) return "Hôm qua";
-  if (diffDays <= 7) return "7 ngày trước";
-  return "30 ngày trước";
+  if (diffDays <= 0) return "scan.groupToday";
+  if (diffDays === 1) return "scan.groupYesterday";
+  if (diffDays <= 7) return "scan.group7Days";
+  return "scan.group30Days";
 };
 
 function renderInline(text: string): React.ReactNode[] {
@@ -228,7 +244,11 @@ function BotMessageContent({ text }: { text: string }) {
   return <div className="space-y-2">{nodes}</div>;
 }
 
-function formatScanResultMessage(result: IScanStatusResponse): string {
+// Nhận t qua tham số vì đây là hàm cấp module, không gọi được hook.
+function formatScanResultMessage(
+  result: IScanStatusResponse,
+  t: TranslateFn,
+): string {
   const disease = result.topDisease as
     | {
         name?: string;
@@ -242,19 +262,19 @@ function formatScanResultMessage(result: IScanStatusResponse): string {
     | undefined;
 
   const predictions = result.predictions || [];
-  const diseaseName = disease?.name || "Không xác định";
+  const diseaseName = disease?.name || t("scan.unknownDisease");
   const confidence = predictions[0]?.confidence
     ? Math.round(predictions[0].confidence * 100)
     : 0;
 
   const lines: string[] = [];
-  lines.push("## Kết quả chẩn đoán");
-  lines.push(`**Bệnh phát hiện:** ${diseaseName.replace(/_/g, " ")}`);
-  lines.push(`**Độ tin cậy:** ${confidence}%`);
+  lines.push(`## ${t("scan.resultHeading")}`);
+  lines.push(`**${t("scan.diseaseDetected")}** ${diseaseName.replace(/_/g, " ")}`);
+  lines.push(`**${t("scan.confidence")}** ${confidence}%`);
 
   if (disease?.symptoms?.length) {
     lines.push("---");
-    lines.push("## Triệu chứng");
+    lines.push(`## ${t("scan.symptomsHeading")}`);
     disease.symptoms.forEach((s) => lines.push(`- ${s}`));
   }
 
@@ -265,21 +285,22 @@ function formatScanResultMessage(result: IScanStatusResponse): string {
     treatments?.preventive?.length
   ) {
     lines.push("---");
-    lines.push("## Phương pháp xử lý");
+    lines.push(`## ${t("scan.treatmentHeading")}`);
 
+    // Đổi tên biến lặp thành `item` để không che mất tham số `t`
     if (treatments?.biological?.length) {
-      lines.push("### Sinh học");
-      treatments.biological.forEach((t) => lines.push(`- ${t}`));
+      lines.push(`### ${t("scan.treatmentBiological")}`);
+      treatments.biological.forEach((item) => lines.push(`- ${item}`));
     }
 
     if (treatments?.chemical?.length) {
-      lines.push("### Hóa học");
-      treatments.chemical.forEach((t) => lines.push(`- ${t}`));
+      lines.push(`### ${t("scan.treatmentChemical")}`);
+      treatments.chemical.forEach((item) => lines.push(`- ${item}`));
     }
 
     if (treatments?.preventive?.length) {
-      lines.push("### Phòng ngừa");
-      treatments.preventive.forEach((t) => lines.push(`- ${t}`));
+      lines.push(`### ${t("scan.treatmentPrevention")}`);
+      treatments.preventive.forEach((item) => lines.push(`- ${item}`));
     }
   }
 
@@ -287,6 +308,7 @@ function formatScanResultMessage(result: IScanStatusResponse): string {
 }
 
 export function Scanner() {
+  const t = useT();
   const router = useRouter();
   const [history, setHistory] = useState<IChatSession[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -467,14 +489,15 @@ export function Scanner() {
           const statusResult = await scanApi.scanImageAndWait(fileToUpload);
 
           if (statusResult.status === "COMPLETED") {
-            const diseaseName = statusResult.topDisease?.name || "Không xác định";
+            const diseaseName =
+              statusResult.topDisease?.name || t("scan.unknownDisease");
             setCurrentScanLabel(diseaseName);
 
             setMessages((prev) => [
               ...prev,
               {
                 id: (Date.now() + 1).toString(),
-                text: formatScanResultMessage(statusResult),
+                text: formatScanResultMessage(statusResult, t),
                 sender: "bot",
                 timestamp: new Date(),
               },
@@ -486,7 +509,7 @@ export function Scanner() {
                 id: (Date.now() + 1).toString(),
                 text:
                   statusResult.message ||
-                  "⚠️ Không thể hoàn tất phân tích ảnh. Vui lòng thử lại.",
+                  t("scan.analysisFailed"),
                 sender: "bot",
                 timestamp: new Date(),
               },
@@ -521,7 +544,7 @@ export function Scanner() {
           ...prev,
           {
             id: (Date.now() + 1).toString(),
-            text: response.answer || "Trợ lý chưa có phản hồi.",
+            text: response.answer || t("scan.noAnswer"),
             sender: "bot",
             timestamp: new Date(),
           },
@@ -541,8 +564,8 @@ export function Scanner() {
 
         const errorText =
           status === 401
-            ? "Bạn cần đăng nhập để sử dụng tính năng quét ảnh."
-            : "Có lỗi xảy ra. Vui lòng thử lại.";
+            ? t("scan.loginRequired")
+            : t("scan.genericError");
 
         setMessages((prev) => [
           ...prev,
@@ -635,21 +658,21 @@ export function Scanner() {
             className="w-full flex items-center gap-3 px-3 py-3 rounded-lg border border-green-700/50 hover:bg-green-800/50 transition-colors text-sm text-left mb-4 bg-green-800/20 text-white"
           >
             <Plus size={16} />
-            <span className="truncate">Cuộc trò chuyện mới</span>
+            <span className="truncate">{t("scan.newChat")}</span>
           </button>
 
-          {["Hôm nay", "Hôm qua", "7 ngày trước", "30 ngày trước"].map(
-            (group) => {
+          {DATE_GROUP_KEYS.map(
+            (groupKey) => {
               const groupSessions = history.filter(
-                (h) => getDateGroup(h.updatedAt) === group,
+                (h) => getDateGroup(h.updatedAt) === groupKey,
               );
 
               if (groupSessions.length === 0) return null;
 
               return (
-                <div key={group}>
+                <div key={groupKey}>
                   <div className="mt-4 mb-2 px-3 text-xs font-medium text-green-200/70">
-                    {group}
+                    {t(groupKey)}
                   </div>
 
                   {groupSessions.map((h) => (
@@ -680,9 +703,11 @@ export function Scanner() {
               <Zap size={16} className="fill-white" />
             </div>
             <div className="flex flex-col overflow-hidden">
-              <span className="font-medium truncate">Nâng cấp gói</span>
+              <span className="font-medium truncate">
+                {t("scan.upgradePlan")}
+              </span>
               <span className="text-xs text-green-300/70 truncate">
-                Mở khóa tính năng cao cấp
+                {t("scan.upgradeSubtitle")}
               </span>
             </div>
           </button>
@@ -734,7 +759,7 @@ export function Scanner() {
                 transition={{ duration: 0.3, delay: 0.1 }}
                 className="text-3xl font-bold text-gray-900 mb-3"
               >
-                Xin chào, tôi có thể giúp gì cho bạn?
+                {t("scan.welcomeTitle")}
               </motion.h2>
 
               <motion.p
@@ -743,8 +768,7 @@ export function Scanner() {
                 transition={{ duration: 0.3, delay: 0.2 }}
                 className="text-gray-500 mb-10 max-w-md text-lg"
               >
-                Hỏi tôi về bệnh cây trồng, cách chăm sóc hoặc gửi ảnh để chẩn
-                đoán chính xác.
+                {t("scan.welcomeSubtitle")}
               </motion.p>
 
               <motion.div
@@ -753,17 +777,17 @@ export function Scanner() {
                 transition={{ duration: 0.4, delay: 0.3 }}
                 className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl"
               >
-                {SUGGESTIONS.map((suggestion, idx) => (
+                {SUGGESTIONS.map((suggestion) => (
                   <button
-                    key={idx}
-                    onClick={() => handleSuggestion(suggestion.text)}
+                    key={suggestion.key}
+                    onClick={() => handleSuggestion(t(suggestion.key))}
                     className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-emerald-200 hover:shadow-sm transition-all text-left group"
                   >
                     <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                       {suggestion.icon}
                     </div>
                     <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700">
-                      {suggestion.text}
+                      {t(suggestion.key)}
                     </span>
                   </button>
                 ))}
@@ -810,7 +834,9 @@ export function Scanner() {
                     >
                       <div className="text-xs text-gray-400 mb-1 px-1 flex items-center gap-1.5">
                         <span className="font-medium text-gray-500">
-                          {msg.sender === "user" ? "Bạn" : "Agri-Scan AI"}
+                          {msg.sender === "user"
+                            ? t("scan.senderYou")
+                            : t("scan.senderAssistant")}
                         </span>
                         <span className="text-gray-300">·</span>
                         <span>
@@ -913,7 +939,7 @@ export function Scanner() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors shrink-0 mb-0.5"
-                title="Tải ảnh lên"
+                title={t("scan.uploadImage")}
               >
                 <Plus size={22} />
               </button>
@@ -931,7 +957,7 @@ export function Scanner() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Hỏi Agri-Scan AI bất cứ điều gì..."
+                placeholder={t("scan.inputPlaceholder")}
                 className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none outline-none pt-1 pb-3 px-2 text-gray-900 placeholder-gray-400 resize-none max-h-37.5 text-base leading-relaxed overflow-hidden"
                 rows={1}
               />
@@ -940,7 +966,7 @@ export function Scanner() {
                 <button
                   onClick={() => setIsCameraOpen(true)}
                   className="p-2.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
-                  title="Chụp ảnh"
+                  title={t("scan.takePhoto")}
                 >
                   <Camera size={22} />
                 </button>
@@ -967,8 +993,7 @@ export function Scanner() {
 
             <div className="text-center mt-3">
               <p className="text-xs text-gray-400">
-                Agri-Scan AI có thể mắc lỗi. Hãy kiểm tra lại thông tin quan
-                trọng.
+                {t("scan.disclaimer")}
               </p>
             </div>
           </div>

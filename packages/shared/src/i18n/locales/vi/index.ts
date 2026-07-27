@@ -6,10 +6,14 @@
 import { common } from "./common";
 import { nav, footer } from "./nav";
 import { auth } from "./auth";
+import { landing } from "./landing";
+import { scan } from "./scan";
 
 export const vi = {
   common,
   nav,
   footer,
   auth,
+  landing,
+  scan,
 } as const;
