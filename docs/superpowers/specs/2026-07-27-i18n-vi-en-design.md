@@ -186,12 +186,17 @@ dữ liệu demo điền sẵn form ở `CheckoutPage`, và comment tiếng Vi�
   "Tiếng Việt" với `onPress` rỗng.
 - Đã chuyển: `components/ui/Footer.tsx` (dùng chung `footer.*` với web),
   `app/index.tsx`, `app/community.tsx`, `app/shop.tsx`, `app/my-cart.tsx`,
-  `app/setting.tsx`.
+  `app/setting.tsx`, `app/weather.tsx`.
+- **Từ điển mô tả thời tiết OpenWeatherMap** trước đây là một object tiếng Việt
+  hardcode trong `app/weather.tsx`. Đã chuyển sang `weather.conditions.*` trong
+  shared, keyed bằng đúng chuỗi `description` mà OWM trả về. Nhờ vậy bản tiếng
+  Anh cũng được chuẩn hoá (viết hoa) thay vì hiện chuỗi thô. Kèm theo
+  `weather.summaries.*`, `weather.moonPhases.*`, `weather.alerts.*`.
 - **`npx tsc --noEmit` trên `apps/mobile` sạch** — khác web, mobile typecheck được,
   nên đây là cửa kiểm tra thật cho phần còn lại.
 
-**Còn lại 39 file** (~800 dòng), sắp theo khối lượng giảm dần:
-`weather`(78) `scan`(57) `tree-dictionary`(42) `garden-setup`(40) `my-garden`(37)
+**Còn lại 38 file** (~720 dòng), sắp theo khối lượng giảm dần:
+`scan`(57) `tree-dictionary`(42) `garden-setup`(40) `my-garden`(37)
 `upgrade`(35) `garden-detail`(35) `user`(30) `payment`(29) `add-product`(29)
 `profile`(27) `feedback`(26) `auth/login`(25) `admin`(24) `buy-detail`(23)
 `checkout`(20) `auth/register`(20) `product-detail`(19) `my-orders`(17)
