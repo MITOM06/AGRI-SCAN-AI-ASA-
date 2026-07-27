@@ -23,8 +23,10 @@ import {
 } from "lucide-react-native";
 
 import { productApi, orderApi, formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
 export default function MyShopScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -83,7 +85,7 @@ export default function MyShopScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Gian hàng của tôi</Text>
+        <Text style={styles.headerTitle}>{t("shop.mMyShopTitle")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -106,7 +108,7 @@ export default function MyShopScreen() {
               >
                 <DollarSign size={24} color="#16a34a" />
               </View>
-              <Text style={styles.statLabel}>Tổng Doanh Thu</Text>
+              <Text style={styles.statLabel}>{t("shop.mTotalRevenue")}</Text>
               <Text style={styles.statValueGreen}>
                 {formatCurrency(revenue)}
               </Text>
@@ -117,22 +119,24 @@ export default function MyShopScreen() {
               >
                 <Package size={24} color="#0284c7" />
               </View>
-              <Text style={styles.statLabel}>Đơn khách đặt</Text>
-              <Text style={styles.statValueBlue}>{orders.length} đơn</Text>
+              <Text style={styles.statLabel}>{t("shop.mCustomerOrders")}</Text>
+              <Text style={styles.statValueBlue}>
+                {t("shop.mOrderCount", { count: orders.length })}
+              </Text>
             </View>
           </View>
 
           {/* QUẢN LÝ SẢN PHẨM */}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
-              Sản phẩm đang bán ({products.length})
+              {t("shop.mProductsOnSale", { count: products.length })}
             </Text>
             <TouchableOpacity
               style={styles.addBtn}
               onPress={() => router.push("/add-product" as any)}
             >
               <PlusCircle size={18} color="#16a34a" />
-              <Text style={styles.addBtnText}>Thêm mới</Text>
+              <Text style={styles.addBtnText}>{t("shop.mAddNew")}</Text>
             </TouchableOpacity>
           </View>
 
@@ -140,7 +144,7 @@ export default function MyShopScreen() {
             <View style={styles.emptyBox}>
               <Box size={40} color="#cbd5e1" />
               <Text style={styles.emptyText}>
-                Bạn chưa đăng bán sản phẩm nào.
+                {t("shop.mNoProductsListed")}
               </Text>
             </View>
           ) : (
@@ -161,7 +165,9 @@ export default function MyShopScreen() {
                   </Text>
                   <View style={styles.productMeta}>
                     <Text style={styles.stockText}>Kho: {item.stock}</Text>
-                    <Text style={styles.soldText}>Đã bán: {item.sold}</Text>
+                    <Text style={styles.soldText}>
+                      {t("shop.mSoldInline", { count: item.sold })}
+                    </Text>
                   </View>
                 </View>
               </View>

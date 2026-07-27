@@ -10,8 +10,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { CheckCircle, ShoppingBag, FileText } from "lucide-react-native";
+import { useT } from "../context/I18nContext";
 
 export default function SuccessOrderScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { orderId } = useLocalSearchParams(); // Nhận mã đơn hàng giả để hiển thị
@@ -40,22 +42,21 @@ export default function SuccessOrderScreen() {
           <CheckCircle size={80} color="#16a34a" />
         </Animated.View>
 
-        <Text style={styles.title}>Thanh toán thành công!</Text>
+        <Text style={styles.title}>{t("shop.mSuccessTitle")}</Text>
         <Text style={styles.subtitle}>
-          Đơn hàng của bạn đã được ghi nhận. Gian hàng sẽ sớm chuẩn bị và giao
-          hàng đến bạn.
+          {t("shop.mSuccessDesc")}
         </Text>
 
         <View style={styles.orderInfoBox}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Mã đơn hàng</Text>
+            <Text style={styles.infoLabel}>{t("shop.mOrderCodeLabel")}</Text>
             <Text style={styles.infoValue}>
               #{orderId || Math.floor(Math.random() * 1000000)}
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Phương thức</Text>
-            <Text style={styles.infoValue}>Thanh toán khi nhận hàng (COD)</Text>
+            <Text style={styles.infoLabel}>{t("shop.mMethodLabel")}</Text>
+            <Text style={styles.infoValue}>{t("shop.mCod")}</Text>
           </View>
         </View>
       </View>
@@ -68,7 +69,7 @@ export default function SuccessOrderScreen() {
           onPress={() => router.replace("/my-orders" as any)} // Chuyển sang xem lịch sử mua
         >
           <FileText size={20} color="#fff" />
-          <Text style={styles.primaryBtnText}>Xem Đơn Hàng</Text>
+          <Text style={styles.primaryBtnText}>{t("shop.mViewOrders")}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -76,7 +77,9 @@ export default function SuccessOrderScreen() {
           onPress={() => router.replace("/shop" as any)} // Quay lại chợ mua tiếp
         >
           <ShoppingBag size={20} color="#16a34a" />
-          <Text style={styles.secondaryBtnText}>Tiếp tục mua sắm</Text>
+          <Text style={styles.secondaryBtnText}>
+            {t("shop.continueShopping")}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

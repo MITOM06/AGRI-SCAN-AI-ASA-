@@ -21,8 +21,10 @@ import {
 } from "lucide-react-native";
 
 import { orderApi, formatCurrencyVN as formatCurrency } from "@agri-scan/shared";
+import { useT } from "../context/I18nContext";
 
 export default function CheckoutScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -42,9 +44,9 @@ export default function CheckoutScreen() {
   // Tìm hàm này trong file checkout.tsx của bạn
   const handleCreateOrder = async () => {
     if (!address.trim())
-      return Alert.alert("Lỗi", "Vui lòng nhập địa chỉ nhận hàng!");
+      return Alert.alert(t("common.error"), t("shop.mErrorNoAddress"));
     if (!phone.trim())
-      return Alert.alert("Lỗi", "Vui lòng nhập số điện thoại liên hệ!");
+      return Alert.alert(t("common.error"), t("shop.mErrorNoPhone"));
 
     try {
       setIsSubmitting(true);
@@ -71,8 +73,8 @@ export default function CheckoutScreen() {
       } as any);
     } catch (error: any) {
       Alert.alert(
-        "Lỗi đặt hàng",
-        error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại.",
+        t("shop.mOrderErrorTitle"),
+        error.response?.data?.message || t("shop.mOrderErrorMessage"),
       );
     } finally {
       setIsSubmitting(false);
@@ -86,7 +88,9 @@ export default function CheckoutScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Xác nhận Đơn Hàng</Text>
+        <Text style={styles.headerTitle}>
+          {t("shop.mConfirmOrderTitle")}
+        </Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -96,7 +100,7 @@ export default function CheckoutScreen() {
       >
         {/* THÔNG TIN NHẬN HÀNG */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Thông tin nhận hàng</Text>
+          <Text style={styles.sectionTitle}>{t("shop.mDeliveryInfo")}</Text>
 
           <View style={styles.inputGroup}>
             <View style={styles.iconWrapper}>
@@ -104,7 +108,7 @@ export default function CheckoutScreen() {
             </View>
             <TextInput
               style={styles.input}
-              placeholder="Nhập địa chỉ giao hàng cụ thể..."
+              placeholder={t("shop.mAddressPlaceholder")}
               value={address}
               onChangeText={setAddress}
             />
@@ -116,7 +120,7 @@ export default function CheckoutScreen() {
             </View>
             <TextInput
               style={styles.input}
-              placeholder="Số điện thoại liên hệ..."
+              placeholder={t("shop.mPhonePlaceholder")}
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}
@@ -126,7 +130,9 @@ export default function CheckoutScreen() {
 
         {/* THÔNG TIN SẢN PHẨM */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sản phẩm đã chọn</Text>
+          <Text style={styles.sectionTitle}>
+            {t("shop.mSelectedProducts")}
+          </Text>
           <View style={styles.productRow}>
             <Image
               source={{ uri: (image as string) || "https://placehold.co/100" }}
@@ -143,7 +149,7 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={styles.quantityRow}>
-            <Text style={styles.quantityLabel}>Số lượng mua:</Text>
+            <Text style={styles.quantityLabel}>{t("shop.mQuantityToBuy")}</Text>
             <View style={styles.quantityControl}>
               <TouchableOpacity
                 style={styles.qtyBtn}
@@ -164,32 +170,34 @@ export default function CheckoutScreen() {
 
         {/* PHƯƠNG THỨC THANH TOÁN */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Phương thức thanh toán</Text>
+          <Text style={styles.sectionTitle}>{t("shop.mPaymentMethod")}</Text>
           <View style={styles.paymentMethodBox}>
             <CreditCard size={24} color="#16a34a" />
             <Text style={styles.paymentMethodText}>
-              Thanh toán khi nhận hàng (COD)
+              {t("shop.mCod")}
             </Text>
           </View>
         </View>
 
         {/* CHI TIẾT THANH TOÁN */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Chi tiết thanh toán</Text>
+          <Text style={styles.sectionTitle}>{t("shop.mPaymentDetail")}</Text>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tiền hàng</Text>
+            <Text style={styles.summaryLabel}>{t("shop.mGoodsTotal")}</Text>
             <Text style={styles.summaryValue}>
               {formatCurrency(productPrice * quantity)}
             </Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Phí vận chuyển</Text>
+            <Text style={styles.summaryLabel}>{t("shop.mShippingFee")}</Text>
             <Text style={styles.summaryValue}>
               {formatCurrency(shippingFee)}
             </Text>
           </View>
           <View style={[styles.summaryRow, styles.summaryTotalRow]}>
-            <Text style={styles.summaryTotalLabel}>Tổng thanh toán</Text>
+            <Text style={styles.summaryTotalLabel}>
+              {t("shop.mGrandTotal")}
+            </Text>
             <Text style={styles.summaryTotalValue}>
               {formatCurrency(totalAmount)}
             </Text>
@@ -205,7 +213,7 @@ export default function CheckoutScreen() {
         ]}
       >
         <View style={{ flex: 1 }}>
-          <Text style={styles.bottomTotalLabel}>Tổng cộng</Text>
+          <Text style={styles.bottomTotalLabel}>{t("shop.mTotalShort")}</Text>
           <Text style={styles.bottomTotalValue}>
             {formatCurrency(totalAmount)}
           </Text>
@@ -218,7 +226,7 @@ export default function CheckoutScreen() {
           {isSubmitting ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitBtnText}>Đặt Hàng</Text>
+            <Text style={styles.submitBtnText}>{t("shop.mPlaceOrder")}</Text>
           )}
         </TouchableOpacity>
       </View>
