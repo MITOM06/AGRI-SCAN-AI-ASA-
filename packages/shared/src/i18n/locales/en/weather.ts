@@ -53,4 +53,101 @@ export const weather = {
   cityDalatStatus: "Light fog",
   regionalNote:
     "Satellite data for other regions is being extracted in real time.",
+
+  // ── Mobile ────────────────────────────────────────────────────────────
+  locating: "Finding your location...",
+  yourLocation: "Your location",
+  currentLocationWeb: "Current location (web)",
+  loadFailed: "Could not load weather data.",
+  loadingStation: "Fetching weather station data...",
+
+  labelHumidityShort: "Humidity",
+  labelWindShort: "Wind",
+  labelRainShort: "Rain",
+  labelPressure: "Pressure",
+  labelVisibility: "Visibility",
+  labelSunrise: "Sunrise",
+  labelSunset: "Sunset",
+  moonTonight: "Tonight's moon",
+
+  goldenHourTitle: "The ideal window",
+  goldenHourGood:
+    "Calm wind, dry foliage. Great for spraying and fertilising.",
+  goldenHourBad:
+    "Conditions are poor today — avoid spraying chemicals.",
+  forecast8Days: "8-day forecast",
+  weatherDetail: "Weather detail",
+  plantDoctorAnalysis: "Plant doctor analysis",
+  noAdviceToday: "No specific advice for this day.",
+  next24Hours: "🕒 Next 24 hours",
+  nowShort: "Now",
+
+  // Weekdays (multi-day forecast)
+  tomorrow: "Tomorrow",
+  sunday: "Sunday",
+  weekdayN: "Day {n}",
+
+  /** OpenWeatherMap condition descriptions, keyed by the raw OWM string. */
+  conditions: {
+    "clear sky": "Clear sky",
+    "few clouds": "Few clouds",
+    "scattered clouds": "Scattered clouds",
+    "broken clouds": "Broken clouds",
+    "overcast clouds": "Overcast",
+    "light rain": "Light rain",
+    "moderate rain": "Moderate rain",
+    "heavy intensity rain": "Heavy rain",
+    "very heavy rain": "Very heavy rain",
+    "extreme rain": "Extreme rain",
+    "freezing rain": "Freezing rain",
+    "light intensity shower rain": "Light showers",
+    "shower rain": "Showers",
+    "heavy intensity shower rain": "Heavy showers",
+    thunderstorm: "Thunderstorm",
+    "thunderstorm with light rain": "Thunderstorm with light rain",
+    "thunderstorm with rain": "Thunderstorm with rain",
+    "thunderstorm with heavy rain": "Thunderstorm with heavy rain",
+    snow: "Snow",
+    mist: "Mist",
+    fog: "Fog",
+    haze: "Haze",
+    dust: "Dust",
+  },
+
+  /** Daily summary sentences derived from the OWM summary. */
+  summaries: {
+    cloudyWithSun: "Expect a mix of cloud and dry sunshine.",
+    cloudyWithRain: "Expect a cloudy day with rain.",
+    partlyCloudy: "Expect a mostly cloudy day.",
+    clear: "Clear skies and bright sunshine.",
+    rain: "Rain expected — damp conditions.",
+  },
+
+  /** Moon phases. */
+  moonPhases: {
+    new: "New moon",
+    waxingCrescent: "Waxing crescent",
+    firstQuarter: "First quarter",
+    waxingGibbous: "Waxing gibbous",
+    full: "Full moon",
+    waningGibbous: "Waning gibbous",
+    lastQuarter: "Last quarter",
+    waningCrescent: "Waning crescent",
+  },
+
+  /** Farmer alerts. */
+  alerts: {
+    heatTitle: "🔥 Severe heat",
+    heatMessage:
+      "Temperatures up to {temp}°C. Water deeply in the early morning or cool afternoon.",
+    rainTitle: "🌧️ Heavy rain risk",
+    rainMessage:
+      "{pop}% chance of rain. Pause chemical spraying and check your drainage.",
+    windTitle: "💨 Strong wind warning",
+    windMessage:
+      "Wind at {speed}m/s. Reinforce trellises and stake ornamental plants.",
+    goodTitle: "🌱 Favourable weather",
+    goodMessage:
+      "Ideal growing conditions — good for fertilising, spraying and pruning.",
+  },
 } as const;
