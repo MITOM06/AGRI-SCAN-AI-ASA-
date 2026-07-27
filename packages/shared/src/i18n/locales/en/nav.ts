@@ -22,6 +22,8 @@ export const nav = {
   myProfile: "My profile",
   myOrders: "My orders",
   feedback: "Feedback & Support",
+  settings: "Settings",
+  notifications: "Notifications",
 
   greeting: "Hello, {name}",
   login: "Sign in",

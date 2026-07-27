@@ -20,8 +20,10 @@ import { billing } from "./billing";
 import { privacy, terms, about } from "./static-pages";
 import { settings } from "./settings";
 import { home } from "./home";
+import { notifications } from "./notifications";
 
 export const vi = {
+  notifications,
   settings,
   home,
   admin,

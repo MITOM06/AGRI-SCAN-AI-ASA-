@@ -21,6 +21,13 @@ export const API_RETRY_COUNT = 3;
 export const HEALTHY_CONDITION = 'Khỏe mạnh';
 
 /**
+ * Tên bệnh lưu trong collection `diseases` cho trường hợp "không có bệnh"
+ * (`disease.name`). Dữ liệu → không dịch; client chỉ so sánh để không đếm nó
+ * vào số bệnh đã phát hiện. Nhãn hiển thị tương ứng là `myGarden.plantHealthy`.
+ */
+export const HEALTHY_DISEASE_NAME = 'Cây khỏe mạnh';
+
+/**
  * Tên cây mặc định khi AI không nhận diện được, GỬI LÊN API trong payload
  * addPlant. Cũng là dữ liệu → không dịch. Nhãn hiển thị: `myGarden.defaultPlantName`.
  */

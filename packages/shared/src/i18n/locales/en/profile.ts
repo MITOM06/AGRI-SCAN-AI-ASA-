@@ -32,4 +32,31 @@ export const profile = {
   sampleActivityMeta: "Tomato plant • 2 hours ago",
   sampleActivityRisk: "High risk",
   viewAllActivity: "View all activity",
+
+  // ─── Mobile profile screen (app/profile.tsx), `m` prefix ───
+  mLogoutAccount: "Sign out of account",
+  mUpgrade: "Upgrade",
+
+  mPlanFree: "Free plan",
+  mPlanFreeDesc: "The basics",
+  mPlanPlus: "Plus plan",
+  mPlanPlusDesc: "Unlock the full power of AI",
+  mPlanVip: "VIP plan (Pro)",
+  mPlanVipDesc: "No feature limits",
+
+  mStatsTitle: "Usage statistics",
+  mStatScans: "Photos scanned",
+  mStatChats: "AI chats",
+
+  mActivityHistory: "Activity history",
+  mNoActivity: "No activity yet",
+  mCollapseList: "Collapse list",
+  mViewAllCount: "View all ({count})",
+
+  // Labels for each activity row built from scan / chat history
+  mActivityScanTitle: "Diagnosis: {name}",
+  mActivityUnknownDisease: "Unidentified",
+  mActivityChatTitle: "Chat with the AI",
+  mRiskHigh: "High risk",
+  mRiskWatch: "Keep watching",
 } as const;

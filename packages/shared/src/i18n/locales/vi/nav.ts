@@ -22,6 +22,8 @@ export const nav = {
   myProfile: "Hồ sơ của tôi",
   myOrders: "Đơn hàng của tôi",
   feedback: "Góp ý & Phản hồi",
+  settings: "Cài đặt",
+  notifications: "Thông báo",
 
   greeting: "Xin chào, {name}",
   login: "Đăng nhập",

@@ -29,4 +29,45 @@ export const home = {
   menuGuide: "Xem hướng dẫn ứng dụng",
   menuAbout: "Về chúng tôi",
   menuLogin: "Đăng nhập / Đăng ký",
+
+  // ─── Màn hình chính sau khi đăng nhập (app/user.tsx), tiền tố `u` ───
+  uDrawerTitle: "Tài khoản",
+  uFallbackName: "Người Dùng",
+  uLoadingEmail: "Đang tải email...",
+  uMenuAdmin: "Quản trị Hệ thống",
+  uMenuShopBuy: "Cửa hàng vật tư (Mua)",
+  uMenuMyShopSell: "Gian hàng của tôi (Bán)",
+  uMenuMyGarden: "Vườn của tôi",
+  uMenuFeedback: "Gửi phản hồi & Hỗ trợ",
+
+  uHeroLine1: "Bác Sĩ",
+  uHeroHighlight: "Cây Trồng",
+  uHeroLine2: "Thông Minh",
+  uHeroSubtitle:
+    "Chẩn đoán bệnh cây trồng tức thì bằng AI. Nhận phác đồ điều trị khoa học và lộ trình chăm sóc bền vững.",
+  uCtaScan: "Chẩn đoán ngay",
+
+  uFeaturesEyebrow: "HỆ SINH THÁI TÍNH NĂNG",
+  uFeaturesTitleLine1: "Công nghệ tiên phong",
+  uFeaturesTitleLine2: "cho nông nghiệp bền vững",
+
+  uFeatScanTitle: "AI Diagnosis",
+  uFeatScanDesc:
+    "Nhận diện bệnh cây qua ảnh chụp tức thời với độ chính xác cao.",
+  uFeatDictTitle: "Từ điển cây",
+  uFeatDictDesc:
+    "Tra cứu thông tin chi tiết về các loại bệnh và cách phòng trừ.",
+  uFeatWeatherTitle: "Agri-Weather",
+  uFeatWeatherDesc:
+    "Dự báo thời tiết chuyên sâu và khuyến nghị chăm sóc theo ngày.",
+  uFeatShopTitle: "Agri-Shop",
+  uFeatShopDesc:
+    "Chợ vật tư nông nghiệp, phân bón và thuốc sinh học chính hãng.",
+  uFeatMyShopTitle: "Gian hàng của tôi",
+  uFeatMyShopDesc: "Đăng bán nông sản, vật tư và quản lý đơn khách đặt.",
+  uFeatGardenTitle: "My Garden",
+  uFeatGardenDesc: "Quản lý danh sách cây trồng và theo dõi lịch chăm sóc.",
+  uFeatTipsTitle: "Farming Tips",
+  uFeatTipsDesc:
+    "Cẩm nang kiến thức, bí quyết bón phân và chăm sóc cây trồng.",
 } as const;

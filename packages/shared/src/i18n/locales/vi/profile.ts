@@ -31,4 +31,31 @@ export const profile = {
   sampleActivityMeta: "Cây Cà chua • 2 giờ trước",
   sampleActivityRisk: "Nguy cơ cao",
   viewAllActivity: "Xem tất cả hoạt động",
+
+  // ─── Màn hồ sơ trên mobile (app/profile.tsx), tiền tố `m` ───
+  mLogoutAccount: "Đăng xuất tài khoản",
+  mUpgrade: "Nâng cấp",
+
+  mPlanFree: "Gói Free",
+  mPlanFreeDesc: "Trải nghiệm cơ bản",
+  mPlanPlus: "Gói Plus",
+  mPlanPlusDesc: "Mở khóa sức mạnh AI",
+  mPlanVip: "Gói VIP (Pro)",
+  mPlanVipDesc: "Không giới hạn tính năng",
+
+  mStatsTitle: "Thống kê tương tác",
+  mStatScans: "Ảnh đã quét",
+  mStatChats: "Đoạn chat AI",
+
+  mActivityHistory: "Lịch sử hoạt động",
+  mNoActivity: "Chưa có hoạt động nào",
+  mCollapseList: "Thu gọn danh sách",
+  mViewAllCount: "Xem tất cả ({count})",
+
+  // Nhãn cho từng dòng hoạt động dựng từ lịch sử quét / chat
+  mActivityScanTitle: "Chẩn đoán: {name}",
+  mActivityUnknownDisease: "Không xác định",
+  mActivityChatTitle: "Trò chuyện với AI",
+  mRiskHigh: "Nguy cơ cao",
+  mRiskWatch: "Cần theo dõi",
 } as const;

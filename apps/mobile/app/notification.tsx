@@ -18,40 +18,43 @@ import {
   Bell, // 🔥 ĐÃ THÊM IMPORT BELL Ở ĐÂY ĐỂ HẾT LỖI
 } from "lucide-react-native";
 
+import { useT } from "../context/I18nContext";
+
 export default function NotificationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const t = useT();
 
   const notifications = [
     {
       id: "1",
-      title: "Phát hiện nguy cơ nấm lá",
-      desc: "Thời tiết độ ẩm cao trong 3 ngày tới có thể gây nấm cho cây cà chua của bạn. Hãy phòng ngừa bằng dung dịch sinh học.",
-      time: "2 giờ trước",
+      title: t("notifications.sample1Title"),
+      desc: t("notifications.sample1Desc"),
+      time: t("notifications.sample1Time"),
       type: "alert",
       isRead: false,
     },
     {
       id: "2",
-      title: "Đã cập nhật mô hình AI v2.0",
-      desc: "Bác sĩ AI giờ đây có thể nhận diện thêm 50 loại bệnh mới với độ chính xác lên tới 98%. Thử quét ngay!",
-      time: "Hôm qua",
+      title: t("notifications.sample2Title"),
+      desc: t("notifications.sample2Desc"),
+      time: t("notifications.sample2Time"),
       type: "system",
       isRead: true,
     },
     {
       id: "3",
-      title: "Chẩn đoán thành công",
-      desc: "Bệnh Đốm Mắt Cua trên cây hoa hồng đã được lưu vào lịch sử. Vui lòng làm theo phác đồ điều trị.",
-      time: "2 ngày trước",
+      title: t("notifications.sample3Title"),
+      desc: t("notifications.sample3Desc"),
+      time: t("notifications.sample3Time"),
       type: "success",
       isRead: true,
     },
     {
       id: "4",
-      title: "Mẹo chăm sóc tuần này",
-      desc: "Cách ủ phân hữu cơ tại nhà không gây mùi, giúp cây sinh trưởng nhanh gấp đôi.",
-      time: "3 ngày trước",
+      title: t("notifications.sample4Title"),
+      desc: t("notifications.sample4Desc"),
+      time: t("notifications.sample4Time"),
       type: "tip",
       isRead: true,
     },
@@ -96,9 +99,11 @@ export default function NotificationsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thông báo</Text>
+        <Text style={styles.headerTitle}>{t("notifications.title")}</Text>
         <TouchableOpacity>
-          <Text style={styles.markAllRead}>Đọc tất cả</Text>
+          <Text style={styles.markAllRead}>
+            {t("notifications.markAllRead")}
+          </Text>
         </TouchableOpacity>
       </View>
 

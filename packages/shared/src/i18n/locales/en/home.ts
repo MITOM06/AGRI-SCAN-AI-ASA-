@@ -29,4 +29,46 @@ export const home = {
   menuGuide: "View the app guide",
   menuAbout: "About us",
   menuLogin: "Sign in / Sign up",
+
+  // ─── Signed-in home screen (app/user.tsx), `u` prefix ───
+  uDrawerTitle: "Account",
+  uFallbackName: "User",
+  uLoadingEmail: "Loading email...",
+  uMenuAdmin: "System administration",
+  uMenuShopBuy: "Supplies store (buy)",
+  uMenuMyShopSell: "My storefront (sell)",
+  uMenuMyGarden: "My garden",
+  uMenuFeedback: "Feedback & support",
+
+  uHeroLine1: "Your Smart",
+  uHeroHighlight: "Plant",
+  uHeroLine2: "Doctor",
+  uHeroSubtitle:
+    "Diagnose plant disease instantly with AI. Get a science-based treatment plan and a sustainable care roadmap.",
+  uCtaScan: "Diagnose now",
+
+  uFeaturesEyebrow: "FEATURE ECOSYSTEM",
+  uFeaturesTitleLine1: "Pioneering technology",
+  uFeaturesTitleLine2: "for sustainable farming",
+
+  uFeatScanTitle: "AI Diagnosis",
+  uFeatScanDesc:
+    "Identify plant disease from a photo instantly, with high accuracy.",
+  uFeatDictTitle: "Plant dictionary",
+  uFeatDictDesc:
+    "Look up detailed information on diseases and how to prevent them.",
+  uFeatWeatherTitle: "Agri-Weather",
+  uFeatWeatherDesc:
+    "In-depth weather forecasts and daily care recommendations.",
+  uFeatShopTitle: "Agri-Shop",
+  uFeatShopDesc:
+    "A market for genuine farming supplies, fertiliser and biological treatments.",
+  uFeatMyShopTitle: "My storefront",
+  uFeatMyShopDesc:
+    "List produce and supplies for sale and manage customer orders.",
+  uFeatGardenTitle: "My Garden",
+  uFeatGardenDesc: "Manage your plant list and follow the care schedule.",
+  uFeatTipsTitle: "Farming Tips",
+  uFeatTipsDesc:
+    "A knowledge handbook with fertilising and plant-care know-how.",
 } as const;
