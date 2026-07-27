@@ -15,9 +15,11 @@ import { myGarden } from "./my-garden";
 import { community } from "./community";
 import { profile } from "./profile";
 import { admin } from "./admin";
+import { feedback } from "./feedback";
 
 export const en: Dictionary = {
   admin,
+  feedback,
   weather,
   shop,
   myGarden,
