@@ -9,8 +9,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Users, Sparkles, Wrench } from "lucide-react-native";
+import { useT } from "../context/I18nContext";
 
 export default function CommunityScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -33,7 +35,9 @@ export default function CommunityScreen() {
         >
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Cộng đồng</Text>
+        <Text style={styles.headerTitle}>
+          {t("community.mobileHeaderTitle")}
+        </Text>
         <View style={{ width: 40 }} /> {/* Spacer để cân bằng Header */}
       </View>
 
@@ -55,17 +59,13 @@ export default function CommunityScreen() {
           </View>
         </View>
 
-        <Text style={styles.title}>Tính năng đang phát triển</Text>
+        <Text style={styles.title}>{t("community.mobileTitle")}</Text>
 
-        <Text style={styles.description}>
-          Chúng tôi đang xây dựng một không gian kết nối dành riêng cho nhà
-          nông. Nơi bạn có thể chia sẻ kinh nghiệm, hỏi đáp cùng các chuyên gia
-          và học hỏi các kỹ thuật canh tác bền vững.
-        </Text>
+        <Text style={styles.description}>{t("community.mobileDesc")}</Text>
 
         <View style={styles.badgeContainer}>
           <Text style={styles.badgeText}>
-            🚀 Sẽ ra mắt trong giai đoạn tiếp theo!
+            {t("community.mobileComingSoon")}
           </Text>
         </View>
 
@@ -74,7 +74,9 @@ export default function CommunityScreen() {
           activeOpacity={0.8}
           onPress={() => router.back()}
         >
-          <Text style={styles.actionBtnText}>Quay lại trang trước</Text>
+          <Text style={styles.actionBtnText}>
+            {t("community.mobileGoBack")}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

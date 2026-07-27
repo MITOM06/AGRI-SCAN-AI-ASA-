@@ -19,9 +19,11 @@ import { feedback } from "./feedback";
 import { billing } from "./billing";
 import { privacy, terms, about } from "./static-pages";
 import { settings } from "./settings";
+import { home } from "./home";
 
 export const en: Dictionary = {
   settings,
+  home,
   admin,
   feedback,
   billing,

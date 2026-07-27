@@ -14,31 +14,47 @@ import {
   ShieldCheck,
   Smartphone,
 } from "lucide-react-native";
+import { useT } from "../../context/I18nContext";
 
 export function Footer() {
+  const t = useT();
+
+  // Chính sách: dùng chung key với footer bên web
+  const policyKeys = [
+    "footer.terms",
+    "footer.privacy",
+    "footer.paymentPolicy",
+    "footer.scanGuide",
+    "footer.complaints",
+  ];
+
   return (
     <View style={styles.container}>
       {/* Cột 1: Tải ứng dụng & Mạng xã hội */}
       <View style={styles.section}>
-        <Text style={styles.heading}>TẢI ỨNG DỤNG AGRI-SCAN</Text>
+        <Text style={styles.heading}>{t("footer.downloadApp")}</Text>
         <View style={styles.btnGroup}>
           <TouchableOpacity style={styles.downloadBtn} activeOpacity={0.8}>
             <Smartphone size={20} color="#fff" style={styles.btnIcon} />
             <View>
-              <Text style={styles.btnSubText}>Download on the</Text>
+              <Text style={styles.btnSubText}>
+                {t("footer.downloadOnThe")}
+              </Text>
               <Text style={styles.btnMainText}>App Store</Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity style={styles.downloadBtn} activeOpacity={0.8}>
             <Globe size={20} color="#fff" style={styles.btnIcon} />
             <View>
-              <Text style={styles.btnSubText}>Get it on</Text>
+              <Text style={styles.btnSubText}>{t("footer.getItOn")}</Text>
               <Text style={styles.btnMainText}>Google Play</Text>
             </View>
           </TouchableOpacity>
         </View>
 
-        <Text style={[styles.heading, { marginTop: 24 }]}>KẾT NỐI</Text>
+        <Text style={[styles.heading, { marginTop: 24 }]}>
+          {t("footer.connect")}
+        </Text>
         <View style={styles.socialGroup}>
           <TouchableOpacity style={styles.socialIcon}>
             <Facebook size={24} color="#6EE7B7" />
@@ -54,9 +70,11 @@ export function Footer() {
 
       {/* Cột 2: Tổng đài hỗ trợ */}
       <View style={styles.section}>
-        <Text style={styles.heading}>TỔNG ĐÀI HỖ TRỢ</Text>
+        <Text style={styles.heading}>{t("footer.hotline")}</Text>
         <View style={styles.contactItem}>
-          <Text style={styles.contactLabel}>Tư vấn kỹ thuật (Miễn phí)</Text>
+          <Text style={styles.contactLabel}>
+            {t("footer.technicalSupport")}
+          </Text>
           <Text
             style={styles.contactValue}
             onPress={() => Linking.openURL("tel:18006601")}
@@ -65,7 +83,7 @@ export function Footer() {
           </Text>
         </View>
         <View style={styles.contactItem}>
-          <Text style={styles.contactLabel}>Hỗ trợ tài khoản (8h-22h)</Text>
+          <Text style={styles.contactLabel}>{t("footer.accountSupport")}</Text>
           <Text
             style={styles.contactValue}
             onPress={() => Linking.openURL("tel:18006602")}
@@ -74,7 +92,7 @@ export function Footer() {
           </Text>
         </View>
         <View style={styles.contactItem}>
-          <Text style={styles.contactLabel}>Email</Text>
+          <Text style={styles.contactLabel}>{t("footer.email")}</Text>
           <Text
             style={styles.contactValue}
             onPress={() => Linking.openURL("mailto:hotro@agriscan.ai")}
@@ -86,36 +104,29 @@ export function Footer() {
 
       {/* Cột 3: Chính sách */}
       <View style={styles.section}>
-        <Text style={styles.heading}>CHÍNH SÁCH</Text>
-        {[
-          "Điều khoản sử dụng",
-          "Chính sách bảo mật",
-          "Chính sách thanh toán",
-          "Hướng dẫn chẩn đoán",
-          "Gửi góp ý & Khiếu nại",
-        ].map((item, index) => (
-          <TouchableOpacity key={index} style={styles.policyLink}>
-            <Text style={styles.policyText}>{item}</Text>
+        <Text style={styles.heading}>{t("footer.policies")}</Text>
+        {policyKeys.map((key) => (
+          <TouchableOpacity key={key} style={styles.policyLink}>
+            <Text style={styles.policyText}>{t(key)}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {/* Cột 4: Địa chỉ */}
       <View style={styles.section}>
-        <Text style={styles.heading}>ĐỊA CHỈ</Text>
+        <Text style={styles.heading}>{t("footer.address")}</Text>
         <View style={styles.addressRow}>
           <MapPin size={18} color="#A7F3D0" style={{ marginTop: 2 }} />
-          <Text style={styles.addressText}>
-            Lô E2a-7, Đường D1, Khu Công nghệ cao, P. Long Thạnh Mỹ, TP. Thủ
-            Đức, TP. Hồ Chí Minh
-          </Text>
+          <Text style={styles.addressText}>{t("footer.addressValue")}</Text>
         </View>
 
         <View style={styles.certDivider}>
           <View style={styles.certRow}>
             <View style={styles.certBox}>
               <ShieldCheck size={14} color="#059669" />
-              <Text style={styles.certBCT}>BỘ CÔNG THƯƠNG</Text>
+              <Text style={styles.certBCT}>
+                {t("footer.motCertification")}
+              </Text>
             </View>
             <View style={styles.certBox}>
               <Text style={styles.certDMCA}>DMCA</Text>
@@ -138,12 +149,8 @@ export function Footer() {
 
       {/* Bottom */}
       <View style={styles.bottomFooter}>
-        <Text style={styles.bottomText}>
-          © 2026 Công Ty Cổ Phần Công Nghệ Nông Nghiệp Agri-Scan AI.
-        </Text>
-        <Text style={styles.bottomText}>
-          Website & AI Innovation Contest 2026 - Foundation Track
-        </Text>
+        <Text style={styles.bottomText}>{t("footer.copyright")}</Text>
+        <Text style={styles.bottomText}>{t("footer.contest")}</Text>
       </View>
     </View>
   );

@@ -15,4 +15,12 @@ export const community = {
   featureChallengeTitle: "Growing challenges",
   featureChallengeDesc:
     "Join events and challenges to earn badges and rewards.",
+
+  // The mobile version uses its own wording
+  mobileHeaderTitle: "Community",
+  mobileTitle: "Feature in development",
+  mobileDesc:
+    "We're building a space made for farmers — somewhere you can share experience, ask experts questions and learn sustainable growing techniques.",
+  mobileComingSoon: "🚀 Launching in the next phase!",
+  mobileGoBack: "Go back",
 } as const;
