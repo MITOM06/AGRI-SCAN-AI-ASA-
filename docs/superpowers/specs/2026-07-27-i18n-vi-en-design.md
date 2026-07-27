@@ -168,12 +168,40 @@ encyclopedia, weather, shop (toàn bộ: danh sách, chi tiết, giỏ, thanh to
 hàng), my-garden (toàn bộ 6 file), community, profile, feedback, billing/UpdatePlan,
 app pages, shell admin, hooks (useScan, useMyGarden), CartContext, constants/shop.
 
-**Còn lại 8 file web:**
-`components/billing/Payment.tsx`, `components/static/{AboutPage,Terms,Privacy}.tsx`,
-`components/admin/{Dashboard,Reports,Users,Feedbacks}.tsx`.
+### apps/web — XONG
 
-**Còn lại toàn bộ `apps/mobile` (43 file)** — chưa có `I18nContext` lẫn
-`LanguageSwitcher`; lõi trong `@agri-scan/shared` đã sẵn sàng dùng lại.
+Tất cả 17 cụm đã chuyển sang `t()`. `pnpm --filter web build` xanh.
+Còn sót **có chủ ý**: `metadata` của Server Component (xem giới hạn bên dưới),
+dữ liệu demo điền sẵn form ở `CheckoutPage`, và comment tiếng Việt (§2 CLAUDE.md).
+
+### apps/mobile — hạ tầng xong, còn 39/43 file nội dung
+
+**Đã xong:**
+- `context/I18nContext.tsx` — bản song song của web, lưu bằng `AsyncStorage`.
+  Đặt ở `context/` chứ KHÔNG ở `app/` (mọi file dưới `app/` là một route expo-router).
+- `components/ui/LanguageSwitcher.tsx`.
+- `I18nProvider` bọc `Stack` trong `app/_layout.tsx`.
+- **Nút chuyển ngôn ngữ ở 2 chỗ:** header màn chính (`app/index.tsx`) và hàng
+  "Ngôn ngữ" ở màn Cài đặt (`app/setting.tsx`) — hàng này trước chỉ hiển thị
+  "Tiếng Việt" với `onPress` rỗng.
+- Đã chuyển: `components/ui/Footer.tsx` (dùng chung `footer.*` với web),
+  `app/index.tsx`, `app/community.tsx`, `app/shop.tsx`, `app/my-cart.tsx`,
+  `app/setting.tsx`.
+- **`npx tsc --noEmit` trên `apps/mobile` sạch** — khác web, mobile typecheck được,
+  nên đây là cửa kiểm tra thật cho phần còn lại.
+
+**Còn lại 39 file** (~800 dòng), sắp theo khối lượng giảm dần:
+`weather`(78) `scan`(57) `tree-dictionary`(42) `garden-setup`(40) `my-garden`(37)
+`upgrade`(35) `garden-detail`(35) `user`(30) `payment`(29) `add-product`(29)
+`profile`(27) `feedback`(26) `auth/login`(25) `admin`(24) `buy-detail`(23)
+`checkout`(20) `auth/register`(20) `product-detail`(19) `my-orders`(17)
+`auth/reset-password`(17) `auth/set-password`(16) `about`(15) `notification`(14)
+`tips`(12) `components/admin/*`(31 tổng) `success-order`(11) `onboarding`(9)
+`auth/otp-verification`(9) `my-shop`(8) `auth/forgot-password`(7) …
+
+Nhiều màn mobile trùng nội dung với web → **ưu tiên dùng lại namespace có sẵn**
+(`nav`, `auth`, `shop`, `myGarden`, `weather`, `scan`, `encyclopedia`, `feedback`,
+`billing`, `about`) thay vì tạo key mới.
 
 ### Hai giới hạn đã biết
 
