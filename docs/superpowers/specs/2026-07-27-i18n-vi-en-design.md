@@ -174,7 +174,7 @@ Tất cả 17 cụm đã chuyển sang `t()`. `pnpm --filter web build` xanh.
 Còn sót **có chủ ý**: `metadata` của Server Component (xem giới hạn bên dưới),
 dữ liệu demo điền sẵn form ở `CheckoutPage`, và comment tiếng Việt (§2 CLAUDE.md).
 
-### apps/mobile — hạ tầng xong, còn 39/43 file nội dung
+### apps/mobile — XONG
 
 **Đã xong:**
 - `context/I18nContext.tsx` — bản song song của web, lưu bằng `AsyncStorage`.
@@ -203,29 +203,53 @@ cụm `app/auth/` (6 màn)**.
 `success-order`, `my-shop`, `my-orders`, `product-detail`, `add-product`,
 `buy-detail`, `payment`.
 
-**Còn lại 18 file** (~120 dòng):
-- **admin** (5 file): `app/admin.tsx` + `components/admin/{DashboardTab,UsersTab,ReportTab,FeedbackTab}.tsx`
-- **tài khoản** (3): `user`(30) `profile`(27) `notification`(14)
-- **phản hồi** (1): `feedback`(26)
-- **tĩnh** (3): `about`(15) `tips`(12) `onboarding`(9)
-- **lẻ** (2): `components/ui/Input`(1) `components/auth/AuthHeader`
+Đã chuyển thêm (các cụm cuối):
+- **admin** (5 file): `app/admin.tsx` + `components/admin/{DashboardTab,UsersTab,ReportTab,FeedbackTab}.tsx` → `admin.m*`
+- **tài khoản** (3): `user`, `profile`, `notification` → `home.u*`, `profile.m*`,
+  namespace mới `notifications`
+- **phản hồi** (1): `feedback` → `feedback.m*`
+- **tĩnh** (3): `about` → `about.m*`; `tips` + `onboarding` → namespace mới
+  `guides.ts` (xuất `tips` và `onboarding`)
+- `components/ui/Input.tsx` và `components/auth/AuthHeader.tsx`: **không cần sửa** —
+  tiếng Việt trong hai file này chỉ nằm ở comment.
 
-### Cách làm hiệu quả cho phần còn lại
+Hai chuỗi sót phát hiện ở lượt grep cuối, đã xử lý:
+`app/add-product.tsx` alert `"LỖI ĐĂNG BÁN: "` → `shop.mProductCreateErrorPrefix`;
+`app/weather.tsx` tên vị trí mặc định `"TP.Hồ Chí Minh"` → `weather.defaultCity`
+(đây là nhãn hiển thị, không phải tham số gọi API — API dùng lat/lon).
+
+Nhiều màn mobile trùng nội dung với web → đã **dùng lại namespace có sẵn**
+(`nav`, `common`, `auth`, `shop`, `myGarden`, `weather`, `scan`, `encyclopedia`,
+`feedback`, `billing`, `about`, `footer`) thay vì tạo key mới.
+
+### Cách làm đã dùng (giữ lại làm khuôn mẫu)
 
 Làm **theo cụm namespace**, không theo từng file: soạn hết key của cụm vào
 `locales/vi/<ns>.ts` + `en/<ns>.ts` trong một lượt, build packages, rồi mới sửa
 các component. Cụm auth (6 màn, ~94 dòng) làm xong trong một lượt theo cách này.
 
-Cụm tiếp theo nên gộp:
-- **shop/đơn hàng** (`payment`, `checkout`, `buy-detail`, `product-detail`,
-  `my-orders`, `success-order`, `my-shop`, `add-product`) → `shop.*` + `billing.*`
-- **admin** (`admin.tsx` + 4 file `components/admin/*`) → `admin.*`
-- **tài khoản** (`user`, `profile`, `notification`) → `profile.*`
-- **tĩnh** (`about`, `tips`, `onboarding`) → `about.*` + namespace mới `tips`
+**Bẫy lặp lại nhiều nhất: nhãn hiển thị vs. giá trị dữ liệu.** Rất nhiều chuỗi
+tiếng Việt trong UI thực ra là *dữ liệu* — đem so sánh với MongoDB hoặc gửi lên
+API. Dịch chúng sẽ làm hỏng logic **âm thầm, không có lỗi biên dịch**. Các trường
+hợp đã gặp và cách xử lý:
 
-Nhiều màn mobile trùng nội dung với web → **ưu tiên dùng lại namespace có sẵn**
-(`nav`, `auth`, `shop`, `myGarden`, `weather`, `scan`, `encyclopedia`, `feedback`,
-`billing`, `about`) thay vì tạo key mới.
+| Chỗ | Chuỗi | Xử lý |
+|-----|-------|-------|
+| `TreeDictionary` (web + mobile) | `growthRate`, `light`, `water`, `category` | tách `{ value, labelKey }`, `value` giữ tiếng Việt |
+| `my-garden`, `garden-detail`, `garden-setup` | `currentCondition` | hằng `HEALTHY_CONDITION` |
+| `scan`, `garden-setup` | tên cây gửi trong payload | hằng `DEFAULT_PLANT_NAME` |
+| `TrackingView` | `fertilizerAction` | hằng `NO_FERTILIZER_NEEDED` |
+| `profile` (mobile) | `disease.name` khi cây khoẻ | hằng `HEALTHY_DISEASE_NAME` |
+| `add-product` | `brand: … \|\| "Đang cập nhật"` | **lưu vào DB** → giữ tiếng Việt, có comment |
+| mã category / status của shop, đơn hàng, phản hồi | `BUG`, `PENDING`, … | shape `{ id, labelKey }` |
+
+Ngày/giờ dùng `DATE_LOCALES[locale]` thay vì `"vi-VN"` cứng.
+
+Với constant/hàm ở cấp module (không gọi được hook) → cho nó giữ **key** rồi dịch
+lúc render (`app/onboarding.tsx`), hoặc nhận `t: TranslateFn` làm tham số.
+
+Ở `app/profile.tsx` (mobile), state chỉ giữ **dữ liệu thô** của từng dòng hoạt
+động, nhãn được dựng lúc render — nhờ vậy đổi ngôn ngữ không phải gọi lại API.
 
 ### Hai giới hạn đã biết
 
@@ -236,7 +260,26 @@ Nhiều màn mobile trùng nội dung với web → **ưu tiên dùng lại name
 2. **Giá tiền luôn định dạng `vi-VN` + "đ"** ở cả hai ngôn ngữ. Đúng theo §7:
    sản phẩm bán bằng VNĐ nên không đổi theo ngôn ngữ giao diện.
 
-Cách làm cho phần còn lại đã thành khuôn mẫu, lặp lại đúng 3 bước:
+### Chuỗi tiếng Việt còn sót — đều có chủ ý
+
+- **Comment** trong code (§2 CLAUDE.md cho phép) và `console.log/error`.
+- **Giá trị dữ liệu** (bảng ở trên) — dịch là hỏng logic.
+- **Dữ liệu demo hardcode** ở các màn chưa nối API: `app/buy-detail.tsx`,
+  `app/my-cart.tsx` (tên sản phẩm, tên khách, địa chỉ), web `CheckoutPage`.
+  Sẽ tự hết khi các màn này nối API thật.
+- `metadata` của Server Component (giới hạn 1 ở trên).
+
+### Kiểm tra lại (đã chạy, kết quả sạch)
+
+```bash
+pnpm run build:packages          # Done
+cd apps/mobile && npx tsc --noEmit   # exit 0
+pnpm --filter web build          # xanh
+pnpm --filter backend build      # xanh
+sh scripts/find-vietnamese-ui-text.sh apps/mobile   # chỉ còn các mục "có chủ ý"
+```
+
+Khuôn mẫu 3 bước để thêm chuỗi mới về sau:
 1. `grep` chuỗi tiếng Việt bằng `scripts/find-vietnamese-ui-text.sh`;
 2. thêm namespace vào `locales/vi/<ns>.ts` **và** `locales/en/<ns>.ts`, khai báo ở
    cả hai `index.ts`;
