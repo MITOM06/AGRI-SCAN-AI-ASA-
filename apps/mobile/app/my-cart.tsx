@@ -11,8 +11,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Trash2, Minus, Plus } from "lucide-react-native";
+import { useT } from "../context/I18nContext";
 
 export default function MyCartScreen() {
+  const t = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [items, setItems] = useState([
@@ -55,7 +57,7 @@ export default function MyCartScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#374151" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Giỏ hàng của tôi</Text>
+        <Text style={styles.headerTitle}>{t("shop.cartTitle")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -64,7 +66,7 @@ export default function MyCartScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {items.length === 0 ? (
-          <Text style={styles.emptyText}>Giỏ hàng đang trống.</Text>
+          <Text style={styles.emptyText}>{t("shop.cartEmpty")}</Text>
         ) : (
           items.map((item) => (
             <View key={item.id} style={styles.cartItem}>
@@ -113,7 +115,7 @@ export default function MyCartScreen() {
           ]}
         >
           <View style={styles.totalBox}>
-            <Text style={styles.totalLabel}>Tổng thanh toán:</Text>
+            <Text style={styles.totalLabel}>{t("shop.totalPayment")}</Text>
             <Text style={styles.totalPrice}>
               {total.toLocaleString("vi-VN")}đ
             </Text>
@@ -122,7 +124,7 @@ export default function MyCartScreen() {
             style={styles.checkoutBtn}
             onPress={() => router.push("/buy-detail")}
           >
-            <Text style={styles.checkoutText}>Thanh toán</Text>
+            <Text style={styles.checkoutText}>{t("shop.checkout")}</Text>
           </TouchableOpacity>
         </View>
       )}
