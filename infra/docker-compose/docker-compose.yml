@@ -7,10 +7,11 @@ services:
     container_name: asa-mongodb
     restart: always
     ports:
-      - "27018:27017"
+      - "127.0.0.1:27018:27017"
+      - "${TAILSCALE_IP}:27018:27017"   # chi MacBook Air qua Tailscale
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-secretPassword}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:?can .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:?can .env}
     volumes:
       - asa-mongo-data:/data/db
     networks:
@@ -21,8 +22,10 @@ services:
     image: redis:7.4-alpine
     container_name: asa-redis
     restart: always
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
     ports:
-      - "6380:6379"
+      - "127.0.0.1:6380:6379"
+      - "${TAILSCALE_IP}:6380:6379"   # chi MacBook Air qua Tailscale
     volumes:
       - asa-redis-data:/data
     networks:
@@ -34,11 +37,13 @@ services:
     container_name: asa-rabbitmq
     restart: always
     ports:
-      - "5672:5672"   # Cổng kết nối AMQP
-      - "15672:15672" # Cổng quản lý UI (Username/Pass: guest/guest)
+      - "127.0.0.1:5672:5672"   # Cổng kết nối AMQP
+      - "${TAILSCALE_IP}:5672:5672"   # chi MacBook Air qua Tailscale
+      - "127.0.0.1:15672:15672" # Cổng quản lý UI (tài khoản trong .env)
+      - "${TAILSCALE_IP}:15672:15672"   # chi MacBook Air qua Tailscale
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -52,7 +57,8 @@ services:
     container_name: asa-ai
     restart: always
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+      - "${TAILSCALE_IP}:8000:8000"   # chi MacBook Air qua Tailscale
     depends_on:
       - rabbitmq
     env_file:
@@ -70,7 +76,8 @@ services:
     container_name: asa-backend
     restart: always
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
+      - "${TAILSCALE_IP}:4000:4000"   # chi MacBook Air qua Tailscale
     depends_on:
       - mongodb
       - redis
@@ -89,7 +96,8 @@ services:
     container_name: asa-web
     restart: always
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+      - "${TAILSCALE_IP}:3000:3000"   # chi MacBook Air qua Tailscale
     depends_on:
       - backend
     env_file:
